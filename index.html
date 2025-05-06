@@ -62,63 +62,49 @@
             font-weight: 400;
         }
 
-        /* --- Resume Preview Area --- */
+        /* --- Resume Preview Area (for absolute positioning of button) --- */
         .resume-preview-area {
             width: 100%;
-            max-width: 600px;
-            position: relative; /* For positioning the button */
-            margin: 0 auto 25px auto;
+            max-width: 600px; /* Control max width of preview image container */
+            position: relative; /* THIS IS KEY for positioning the button absolutely within it */
+            margin: 0 auto 25px auto; /* Center it */
             border-radius: 10px;
-            overflow: hidden;
+            overflow: hidden; /* Ensure button doesn't overflow rounded corners IF it were near edge */
             box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            background-color: var(--container-bg-purple);
-            display: flex; /* Enable flexbox for centering the button */
-            flex-direction: column; /* Stack image and button vertically */
-            align-items: center; /* Center items horizontally */
+            background-color: var(--container-bg-purple); /* Fallback if image is transparent */
         }
 
         #resumeStaticPreviewImage {
             display: block;
             width: 100%;
-            height: auto;
-            border-top-left-radius: 8px; /* Round top corners if image is part of container */
-            border-top-right-radius: 8px;
-            /* If the button is OUTSIDE the image but WITHIN the preview-area,
-               then the image doesn't need bottom radius.
-               If the button OVERLAPS the image, the image can have full radius.
-               For this bottom-center approach, let's assume the button is below the image
-               but within the rounded preview-area.
-            */
+            height: auto; /* Maintain aspect ratio */
+            border-radius: 8px; /* Round the image corners itself */
         }
 
+        /* --- Button positioned bottom-center OVER the image --- */
         #openPdfModalButton {
-            /* Removed position: absolute */
-            background-color: var(--accent-purple); /* Solid color for more prominence */
-            color: var(--text-on-accent);
-            border: none; /* Remove border, solid bg is enough */
-            padding: 12px 25px; /* Slightly larger padding */
-            font-size: 1em; /* Slightly larger font */
+            position: absolute; /* Position relative to .resume-preview-area */
+            bottom: 15px;       /* Distance from the bottom of the preview area */
+            left: 50%;          /* Start at 50% from the left */
+            transform: translateX(-50%); /* Shift left by half its own width to center it */
+            background-color: rgba(0,0,0,0.65); /* Semi-transparent dark background */
+            color: var(--primary-text-color);
+            border: 1px solid var(--accent-purple);
+            padding: 10px 20px; /* Adjust padding as needed */
+            font-size: 0.95em;
             font-weight: 600;
-            border-radius: 25px; /* Pill shape */
+            border-radius: 20px;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            z-index: 10;
-            margin-top: -25px; /* Pull button up to overlap bottom of image slightly */
-                               /* Adjust this value based on button height and desired overlap */
-            margin-bottom: 15px; /* Space below the button within the preview area */
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            z-index: 10; /* Ensure it's above the image */
+            white-space: nowrap; /* Prevent text wrapping if button is narrow */
         }
         @media (hover: hover) and (pointer: fine) {
             #openPdfModalButton:hover {
-                background-color: #A070D0; /* Darker accent */
-                transform: translateY(-2px) scale(1.03); /* Add subtle scale */
-                box-shadow: 0 4px 10px var(--button-glow-color);
+                background-color: var(--accent-purple);
+                color: var(--text-on-accent);
+                transform: translateX(-50%) scale(1.05); /* Maintain centering with scale */
             }
-        }
-        /* Active state for touch feedback */
-        #openPdfModalButton:active {
-            transform: translateY(1px);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
 
@@ -237,7 +223,7 @@
             .resume-preview-area {
                 margin-bottom: 30px;
             }
-            #openPdfModalButton {
+            #openPdfModalButton { /* Adjust padding/font for larger screens if needed */
                 padding: 12px 22px;
                 font-size: 1em;
             }
@@ -299,32 +285,27 @@
 
         // Function to open the PDF modal
         function openModal() {
-            // Set the iframe src only when opening to ensure it loads correctly
-            // and to potentially save initial page load resources.
-            // The #view=FitH can be hit or miss depending on browser/PDF plugin.
             pdfFrame.src = 'Resume.pdf#view=FitH';
             pdfModal.classList.add('active');
-            body.style.overflow = 'hidden'; // Prevent background scrolling
+            body.style.overflow = 'hidden';
         }
 
         // Function to close the PDF modal
         function closeModal() {
             pdfModal.classList.remove('active');
-            pdfFrame.src = ''; // Clear src to stop PDF processing/sound if any
-            body.style.overflow = ''; // Restore background scrolling
+            pdfFrame.src = '';
+            body.style.overflow = '';
         }
 
         openPdfModalButton.addEventListener('click', openModal);
         closePdfModalButton.addEventListener('click', closeModal);
 
-        // Close modal if user clicks outside the content (optional, but good UX)
         pdfModal.addEventListener('click', (event) => {
-            if (event.target === pdfModal) { // Clicked on the backdrop
+            if (event.target === pdfModal) {
                 closeModal();
             }
         });
 
-        // Close modal with Escape key
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && pdfModal.classList.contains('active')) {
                 closeModal();
