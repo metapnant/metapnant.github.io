@@ -65,43 +65,60 @@
         /* --- Resume Preview Area --- */
         .resume-preview-area {
             width: 100%;
-            max-width: 600px; /* Control max width of preview image container */
+            max-width: 600px;
             position: relative; /* For positioning the button */
-            margin: 0 auto 25px auto; /* Center it */
+            margin: 0 auto 25px auto;
             border-radius: 10px;
-            overflow: hidden; /* Ensure button doesn't overflow rounded corners */
+            overflow: hidden;
             box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            background-color: var(--container-bg-purple); /* Fallback if image is transparent */
+            background-color: var(--container-bg-purple);
+            display: flex; /* Enable flexbox for centering the button */
+            flex-direction: column; /* Stack image and button vertically */
+            align-items: center; /* Center items horizontally */
         }
 
         #resumeStaticPreviewImage {
             display: block;
             width: 100%;
-            height: auto; /* Maintain aspect ratio */
-            border-radius: 8px; /* Slight rounding if image itself is sharp */
+            height: auto;
+            border-top-left-radius: 8px; /* Round top corners if image is part of container */
+            border-top-right-radius: 8px;
+            /* If the button is OUTSIDE the image but WITHIN the preview-area,
+               then the image doesn't need bottom radius.
+               If the button OVERLAPS the image, the image can have full radius.
+               For this bottom-center approach, let's assume the button is below the image
+               but within the rounded preview-area.
+            */
         }
 
         #openPdfModalButton {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background-color: rgba(0,0,0,0.6); /* Semi-transparent dark background */
-            color: var(--primary-text-color);
-            border: 1px solid var(--accent-purple);
-            padding: 10px 18px;
-            font-size: 0.9em;
+            /* Removed position: absolute */
+            background-color: var(--accent-purple); /* Solid color for more prominence */
+            color: var(--text-on-accent);
+            border: none; /* Remove border, solid bg is enough */
+            padding: 12px 25px; /* Slightly larger padding */
+            font-size: 1em; /* Slightly larger font */
             font-weight: 600;
-            border-radius: 20px;
+            border-radius: 25px; /* Pill shape */
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
             z-index: 10;
+            margin-top: -25px; /* Pull button up to overlap bottom of image slightly */
+                               /* Adjust this value based on button height and desired overlap */
+            margin-bottom: 15px; /* Space below the button within the preview area */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         @media (hover: hover) and (pointer: fine) {
             #openPdfModalButton:hover {
-                background-color: var(--accent-purple);
-                color: var(--text-on-accent);
-                transform: scale(1.05);
+                background-color: #A070D0; /* Darker accent */
+                transform: translateY(-2px) scale(1.03); /* Add subtle scale */
+                box-shadow: 0 4px 10px var(--button-glow-color);
             }
+        }
+        /* Active state for touch feedback */
+        #openPdfModalButton:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
 
