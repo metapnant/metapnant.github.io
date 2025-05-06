@@ -4,27 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Joachim Rayski - Resume</title>
-    <!-- Google Fonts: Montserrat -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Zilla Slab -->
+    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         /* CSS Custom Properties (Variables) for easy theme management */
         :root {
             /* Primary Palette from Business Card */
-            --name-color: #8541FF;          /* Vibrant Purple for Name */
-            --title-color: #DED4EB;         /* Light Lavender for Title */
-            --background-main: #0D0022;     /* Very Dark Blue/Purple for Body Background */
+            --name-color: #8541FF;
+            --title-color: #DED4EB;
+            --background-main: #0D0022;
 
             /* Derived & Accent Colors */
-            --accent-color-button: #8541FF; /* Using Name Color for main action buttons */
-            --text-on-accent-button: #FFFFFF;/* White text on accent buttons for contrast */
-            --preview-button-bg: rgba(0, 0, 0, 0.65); /* Semi-transparent black for button over image */
-            --preview-button-border: #8541FF; /* Accent border for button over image */
-            --preview-button-text: #FFFFFF;    /* White text for button over image */
+            --accent-color-button-primary-bg: #8541FF; /* For "View PDF" button hover */
+            --text-on-accent-button: #FFFFFF;
+
+            --share-button-bg: #DED4EB; /* Title color for Share button background */
+            --share-button-text: #0D0022; /* Main background color for Share button text (for contrast) */
+            --share-button-hover-bg: #c9bcdb; /* Slightly darker shade of title-color for Share button hover */
+
+
+            --preview-button-bg: rgba(0, 0, 0, 0.65);
+            --preview-button-border: #8541FF;
+            --preview-button-text: #FFFFFF;
 
             /* General Text & UI Colors */
-            --primary-text-color: #F0F0F0;  /* General light text, slightly off-white */
-            --secondary-text-color: #A09CB8;/* For less prominent text like footer (adjusted for new bg) */
-            --glow-color: rgba(133, 65, 255, 0.4); /* Glow effect for buttons, derived from name-color */
+            --primary-text-color: #F0F0F0;
+            --secondary-text-color: #A09CB8;
+            --glow-color: rgba(133, 65, 255, 0.4);
 
             /* Black and White */
             --pure-black: #000000;
@@ -33,13 +39,11 @@
 
         /* Basic Reset and Body Styling */
         body {
-            font-family: 'Montserrat', sans-serif;
+            font-family: 'Zilla Slab', serif; /* NEW FONT FAMILY */
             margin: 0;
             padding: 0;
-            background-color: var(--background-main); /* NEW BACKGROUND */
-            /* Optional: Subtle radial gradient, adjusted for new background */
-            /* background-image: radial-gradient(circle at top center, rgba(40, 20, 70, 0.3), var(--background-main) 70%); */
-            color: var(--primary-text-color); /* Default text color */
+            background-color: var(--background-main);
+            color: var(--primary-text-color);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -66,18 +70,18 @@
         }
 
         .header h1 {
-            color: var(--name-color); /* NEW NAME COLOR */
-            font-size: 2.2em;
+            color: var(--name-color);
+            font-size: 2.4em; /* Adjusted slightly for Zilla Slab's presence */
             margin-bottom: 5px;
-            font-weight: 700;
+            font-weight: 700; /* Bold Zilla Slab */
             line-height: 1.2;
         }
 
         .header p.subtitle {
-            color: var(--title-color); /* NEW TITLE COLOR */
-            font-size: 1.1em;
+            color: var(--title-color);
+            font-size: 1.2em; /* Adjusted slightly for Zilla Slab */
             margin-top: 0;
-            font-weight: 400;
+            font-weight: 400; /* Regular Zilla Slab */
         }
 
         /* Resume Preview Area */
@@ -88,8 +92,7 @@
             margin: 0 auto 25px auto;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.4); /* Slightly stronger shadow on dark bg */
-            /* background-color: #1a1032; */ /* Optional darker shade for preview area background */
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
         }
 
         #resumeStaticPreviewImage {
@@ -105,12 +108,12 @@
             bottom: 15px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: var(--preview-button-bg); /* Semi-transparent black */
-            color: var(--preview-button-text);          /* White text */
-            border: 1px solid var(--preview-button-border); /* Accent border */
+            background-color: var(--preview-button-bg);
+            color: var(--preview-button-text);
+            border: 1px solid var(--preview-button-border);
             padding: 10px 20px;
             font-size: 0.95em;
-            font-weight: 600;
+            font-weight: 600; /* Semi-bold Zilla Slab */
             border-radius: 20px;
             text-decoration: none;
             cursor: pointer;
@@ -120,46 +123,46 @@
         }
         @media (hover: hover) and (pointer: fine) {
             #viewPdfButton:hover {
-                background-color: var(--accent-color-button); /* Solid accent on hover */
-                color: var(--text-on-accent-button);      /* White text on accent */
-                border-color: var(--accent-color-button); /* Match border to bg */
+                background-color: var(--accent-color-button-primary-bg);
+                color: var(--text-on-accent-button);
+                border-color: var(--accent-color-button-primary-bg);
                 transform: translateX(-50%) scale(1.05);
             }
         }
 
-        /* Action Buttons Section (e.g., Share Link) */
+        /* Action Buttons Section (Share Link) */
         .actions {
             text-align: center;
             margin-bottom: 20px;
             width: 100%;
         }
 
-        .actions button { /* Share button */
-            background-color: var(--accent-color-button); /* Accent color */
-            color: var(--text-on-accent-button);      /* White text */
+        .actions button#shareButton { /* Share button */
+            background-color: var(--share-button-bg); /* NEW: Title color for BG */
+            color: var(--share-button-text);      /* NEW: Dark text for contrast */
             border: none;
             padding: 12px 28px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
             font-size: 1em;
-            font-weight: 600;
+            font-weight: 600; /* Semi-bold Zilla Slab */
             margin: 8px 5px;
             cursor: pointer;
             border-radius: 25px;
             transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Shadow from pure black */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Softer shadow against light button */
         }
         @media (hover: hover) and (pointer: fine) {
-            .actions button:hover {
-                background-color: #6a30cc; /* Darker shade of accent-color-button for hover */
+            .actions button#shareButton:hover {
+                background-color: var(--share-button-hover-bg); /* Darker shade of title-color for hover */
                 transform: translateY(-2px);
-                box-shadow: 0 4px 8px var(--glow-color);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.25);
             }
         }
-        .actions button:active {
+        .actions button#shareButton:active {
             transform: translateY(1px);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3); /* Shadow from pure black */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
         /* Footer Styling */
@@ -168,7 +171,8 @@
             padding: 15px 0;
             text-align: center;
             font-size: 0.85em;
-            color: var(--secondary-text-color); /* Adjusted for new bg */
+            font-weight: 400; /* Regular Zilla Slab */
+            color: var(--secondary-text-color);
             margin-top: auto;
             box-sizing: border-box;
         }
@@ -176,10 +180,10 @@
         /* Responsive adjustments */
         @media (min-width: 600px) {
             .header h1 {
-                font-size: 2.8em;
+                font-size: 3em; /* Zilla Slab is quite impactful */
             }
             .header p.subtitle {
-                font-size: 1.3em;
+                font-size: 1.35em;
             }
             .resume-preview-area {
                 margin-bottom: 30px;
@@ -190,7 +194,7 @@
             }
         }
         @media (min-width: 768px) {
-            .actions button {
+            .actions button#shareButton {
                  padding: 14px 35px;
             }
         }
@@ -222,7 +226,7 @@
 
         const shareButton = document.getElementById('shareButton');
         shareButton.addEventListener('click', () => {
-            const urlToShare = window.location.href;
+            const urlToShare = window.loca_modeltion.href;
             if (navigator.share) {
                 navigator.share({
                     title: document.title,
