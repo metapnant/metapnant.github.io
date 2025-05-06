@@ -4,117 +4,161 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Joachim Rayski - Resume</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-dark-purple: #1A0B2E;
+            --container-bg-purple: #2B1A4D;
+            --accent-purple: #BE93FD;
+            --light-lavender: #D8BFD8;
+            --text-on-accent: #1A0B2E;
+            --primary-text-color: #F0E6FF; /* Slightly brighter white/lavender */
+            --secondary-text-color: #b3a2c7;
+        }
+
         body {
             font-family: 'Montserrat', sans-serif;
             margin: 0;
-            padding: 20px 0; /* Added some padding top and bottom */
-            background-color: #1A0B2E; /* Dark Purple from card */
-            color: #F5F5F5; /* Off-white for general text */
+            padding: 0; /* Remove default padding for full control */
+            background-color: var(--bg-dark-purple);
+            /* Subtle radial gradient for depth */
+            background-image: radial-gradient(circle at top center, rgba(74, 48, 110, 0.3), var(--bg-dark-purple) 60%);
+            color: var(--primary-text-color);
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            box-sizing: border-box; /* Ensures padding/border don't add to width/height */
+        }
+
+        .main-content {
+            width: 100%;
+            max-width: 950px; /* Max width for larger screens */
+            padding: 20px; /* Padding for content within the viewport width */
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center children like header and iframe container */
+            flex-grow: 1; /* Allow this to take up available space */
         }
-        .container {
-            width: 90%;
-            max-width: 900px;
-            background-color: #2B1A4D; /* Slightly lighter dark purple for content box */
-            padding: 25px;
-            box-shadow: 0 0 20px rgba(190, 147, 253, 0.3); /* Subtle glow with accent purple */
-            border-radius: 10px;
-            text-align: center; /* Center align content within container */
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
         }
+
         .header h1 {
-            color: #BE93FD; /* Accent Purple from card */
-            font-size: 2.5em;
+            color: var(--accent-purple);
+            font-size: 2.2em; /* Responsive font size */
             margin-bottom: 5px;
             font-weight: 700;
+            line-height: 1.2;
         }
+
         .header p.subtitle {
-            color: #D8BFD8; /* Lighter lavender for subtitle */
-            font-size: 1.2em;
+            color: var(--light-lavender);
+            font-size: 1.1em; /* Responsive font size */
             margin-top: 0;
-            margin-bottom: 30px;
             font-weight: 400;
         }
+
+        .resume-container {
+            width: 100%;
+            background-color: var(--container-bg-purple);
+            padding: 15px; /* Padding around the iframe */
+            box-shadow: 0 5px 25px rgba(190, 147, 253, 0.2);
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-sizing: border-box;
+        }
+
         .resume-viewer {
             width: 100%;
-            height: 70vh; /* Adjusted height */
-            border: 2px solid #BE93FD; /* Accent purple border */
-            border-radius: 5px;
-            margin-bottom: 25px;
-            background-color: #FFF; /* Keep PDF background white for readability if PDF is standard */
+            height: 80vh; /* Generous height for mobile */
+            border: 1px solid var(--accent-purple);
+            border-radius: 6px;
+            background-color: #FFF; /* White background for the PDF itself */
+            display: block; /* Remove extra space below iframe */
         }
+
         .actions {
             text-align: center;
             margin-bottom: 20px;
+            width: 100%; /* Make actions container take full width for button centering */
         }
+
         .actions button, .actions a {
-            background-color: #BE93FD; /* Accent Purple from card */
-            color: #1A0B2E; /* Dark purple text for contrast on button */
+            background-color: var(--accent-purple);
+            color: var(--text-on-accent);
             border: none;
-            padding: 12px 25px;
+            padding: 12px 28px;
             text-align: center;
             text-decoration: none;
-            display: inline-block;
+            display: inline-block; /* Default for side-by-side */
             font-size: 1em;
-            font-weight: 700;
+            font-weight: 600;
             margin: 8px 5px;
             cursor: pointer;
-            border-radius: 5px;
-            transition: background-color 0.3s ease, transform 0.2s ease;
+            border-radius: 25px; /* Pill-shaped buttons */
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
+
         .actions button:hover, .actions a:hover {
-            background-color: #A070D0; /* Darker shade of accent purple for hover */
+            background-color: #A070D0; /* Darker shade for hover */
             transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(190, 147, 253, 0.3);
         }
+
         .footer {
-            margin-top: auto;
-            padding: 20px;
+            width: 100%; /* Ensure footer spans width */
+            padding: 15px 0;
             text-align: center;
-            font-size: 0.9em;
-            color: #aaa; /* Dimmed color for footer */
+            font-size: 0.85em;
+            color: var(--secondary-text-color);
+            margin-top: auto; /* Pushes footer to bottom if content is short */
+            box-sizing: border-box;
         }
-        /* Basic responsive adjustments */
-        @media (max-width: 768px) {
+
+        /* Larger screens adjustments */
+        @media (min-width: 600px) {
             .header h1 {
-                font-size: 2em;
+                font-size: 2.8em;
             }
             .header p.subtitle {
-                font-size: 1em;
+                font-size: 1.3em;
             }
-            .resume-viewer {
-                height: 60vh;
+            .resume-container {
+                padding: 20px;
             }
         }
-        @media (max-width: 600px) {
+
+        @media (min-width: 768px) {
+            .resume-viewer {
+                height: 75vh; /* Slightly adjust for wider screens if needed */
+            }
             .actions button, .actions a {
-                display: block;
-                width: 80%;
-                margin: 10px auto;
+                 padding: 14px 35px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="main-content">
         <div class="header">
             <h1>Joachim Rayski</h1>
             <p class="subtitle">Multi-Skilled Support Specialist</p>
         </div>
 
-        <!-- PDF Viewer -->
-        <iframe src="Resume.pdf" class="resume-viewer" title="Joachim Rayski Resume">
-            <p>Your browser does not support PDFs. Please download the PDF to view it.</p>
-        </iframe>
+        <div class="resume-container">
+            <!-- Added #view=FitH as a hint to fit width, behavior varies by browser -->
+            <iframe src="Resume.pdf#view=FitH" class="resume-viewer" title="Joachim Rayski Resume">
+                <p>Your browser does not support embedded PDFs. Please <a href="Resume.pdf" download="Resume.pdf" style="color: var(--accent-purple);">download the PDF</a> to view it.</p>
+            </iframe>
+        </div>
 
-        <!-- Action Buttons -->
         <div class="actions">
             <a href="Resume.pdf" target="_blank" title="View PDF in a new tab">View Fullscreen</a>
-            <a href="Resume.pdf" download="Resume.pdf" title="Download PDF">Download PDF</a>
             <button id="shareButton" title="Copy link to clipboard">Share Link</button>
         </div>
     </div>
@@ -129,13 +173,24 @@
         const shareButton = document.getElementById('shareButton');
         shareButton.addEventListener('click', () => {
             const urlToShare = window.location.href;
-            navigator.clipboard.writeText(urlToShare).then(() => {
-                alert('Link copied to clipboard!');
-            }).catch(err => {
-                console.error('Failed to copy link: ', err);
-                // Fallback for older browsers or if clipboard API fails
-                prompt("Could not copy automatically. Please copy this link:", urlToShare);
-            });
+            if (navigator.share) { // Use Web Share API if available
+                navigator.share({
+                    title: document.title,
+                    url: urlToShare
+                }).then(() => {
+                    console.log('Thanks for sharing!');
+                })
+                .catch(console.error);
+            } else if (navigator.clipboard) { // Fallback to clipboard
+                navigator.clipboard.writeText(urlToShare).then(() => {
+                    alert('Link copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy link: ', err);
+                    prompt("Could not copy automatically. Please copy this link:", urlToShare);
+                });
+            } else { // Final fallback
+                prompt("To share, please copy this link:", urlToShare);
+            }
         });
     </script>
 </body>
