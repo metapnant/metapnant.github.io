@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Joachim Rayski - Resume</title>
-    <!-- Google Fonts: Zilla Slab -->
+    <!-- Google Fonts: Zilla Slab (including italic for name) -->
     <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet">
     <style>
         /* CSS Custom Properties (Variables) for easy theme management */
@@ -15,9 +15,10 @@
             --background-main: #0D0022;
 
             /* Derived & Accent Colors */
-            --share-button-bg: #6a30cc;
+            /* SWAPPED Share Button Colors */
+            --share-button-bg: #5225a4; /* NEW DEFAULT: Even darker purple */
             --share-button-text: #FFFFFF;
-            --share-button-hover-bg: #5225a4; /* This will now also be used for #viewPdfButton hover */
+            --share-button-hover-bg: #6a30cc; /* NEW HOVER: Slightly lighter purple (original default) */
 
             --preview-button-bg: rgba(0, 0, 0, 0.65);
             --preview-button-border: #8541FF;
@@ -26,7 +27,8 @@
             /* General Text & UI Colors */
             --primary-text-color: #F0F0F0;
             --secondary-text-color: #A09CB8;
-            --glow-color: rgba(106, 48, 204, 0.5);
+            /* Glow color for share button, based on its new hover state (brighter color) */
+            --glow-color: rgba(106, 48, 204, 0.6);
 
 
             /* Black and White */
@@ -70,8 +72,8 @@
             color: var(--name-color);
             font-size: 2.4em;
             margin-bottom: 5px;
-            font-weight: 700; /* Bold Zilla Slab */
-            font-style: italic; /* NEW: Make name italic */
+            font-weight: 700;
+            font-style: italic;
             line-height: 1.2;
         }
 
@@ -79,7 +81,7 @@
             color: var(--title-color);
             font-size: 1.2em;
             margin-top: 0;
-            font-weight: 400; /* Regular Zilla Slab */
+            font-weight: 400;
         }
 
         /* Resume Preview Area */
@@ -121,9 +123,9 @@
         }
         @media (hover: hover) and (pointer: fine) {
             #viewPdfButton:hover {
-                background-color: var(--share-button-hover-bg); /* NEW: Use Share button's hover color */
-                color: var(--pure-white); /* Keep text white for contrast */
-                border-color: var(--share-button-hover-bg); /* Match border to new background */
+                background-color: var(--share-button-hover-bg); /* Uses the new hover of share btn (was #6a30cc) */
+                color: var(--pure-white);
+                border-color: var(--share-button-hover-bg); /* Match border */
                 transform: translateX(-50%) scale(1.05);
             }
         }
@@ -136,7 +138,7 @@
         }
 
         .actions button#shareButton { /* Share button */
-            background-color: var(--share-button-bg);
+            background-color: var(--share-button-bg); /* NOW the darker purple #5225a4 */
             color: var(--share-button-text);
             border: none;
             padding: 12px 28px;
@@ -153,7 +155,7 @@
         }
         @media (hover: hover) and (pointer: fine) {
             .actions button#shareButton:hover {
-                background-color: var(--share-button-hover-bg);
+                background-color: var(--share-button-hover-bg); /* NOW the lighter purple #6a30cc */
                 transform: translateY(-2px);
                 box-shadow: 0 4px 8px var(--glow-color);
             }
