@@ -4,44 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Joachim Rayski - Resume</title>
+    <!-- Google Fonts: Montserrat for a clean, modern look -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* CSS Custom Properties (Variables) for easy theme management */
         :root {
             --bg-dark-purple: #1A0B2E;
-            --container-bg-purple: #2B1A4D;
+            --container-bg-purple: #2B1A4D; /* Not used in this version, kept for potential future use */
             --accent-purple: #BE93FD;
             --light-lavender: #D8BFD8;
-            --text-on-accent: #1A0B2E;
-            --primary-text-color: #F0E6FF;
-            --secondary-text-color: #b3a2c7;
-            --button-glow-color: rgba(190, 147, 253, 0.4);
+            --text-on-accent: #1A0B2E; /* Text color for elements with accent background */
+            --primary-text-color: #F0E6FF; /* Main text color */
+            --secondary-text-color: #b3a2c7; /* For less prominent text like footer */
+            --button-glow-color: rgba(190, 147, 253, 0.4); /* Glow effect for buttons */
         }
 
+        /* Basic Reset and Body Styling */
         body {
             font-family: 'Montserrat', sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 0; /* Ensure no unexpected spacing */
             background-color: var(--bg-dark-purple);
+            /* Subtle radial gradient for visual depth */
             background-image: radial-gradient(circle at top center, rgba(74, 48, 110, 0.3), var(--bg-dark-purple) 70%);
             color: var(--primary-text-color);
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
+            flex-direction: column; /* Stack content vertically */
+            align-items: center; /* Center content horizontally */
+            min-height: 100vh; /* Ensure footer stays at bottom on short pages */
+            box-sizing: border-box; /* Consistent box model */
         }
 
+        /* Main Content Wrapper */
         .main-content {
             width: 100%;
-            max-width: 900px; /* Max width for content area */
-            padding: 20px;
+            max-width: 900px; /* Max width for content area for readability */
+            padding: 20px; /* Spacing around content */
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
             align-items: center;
-            flex-grow: 1;
+            flex-grow: 1; /* Allow content to fill available vertical space */
         }
 
+        /* Header Section: Name and Subtitle */
         .header {
             text-align: center;
             margin-bottom: 30px;
@@ -49,7 +55,7 @@
 
         .header h1 {
             color: var(--accent-purple);
-            font-size: 2.2em;
+            font-size: 2.2em; /* Responsive font size */
             margin-bottom: 5px;
             font-weight: 700;
             line-height: 1.2;
@@ -57,162 +63,110 @@
 
         .header p.subtitle {
             color: var(--light-lavender);
-            font-size: 1.1em;
+            font-size: 1.1em; /* Responsive font size */
             margin-top: 0;
             font-weight: 400;
         }
 
-        /* --- Resume Preview Area (for absolute positioning of button) --- */
+        /* Resume Preview Area: Contains static image and "View PDF" button */
         .resume-preview-area {
             width: 100%;
-            max-width: 600px; /* Control max width of preview image container */
-            position: relative; /* THIS IS KEY for positioning the button absolutely within it */
-            margin: 0 auto 25px auto; /* Center it */
-            border-radius: 10px;
-            overflow: hidden; /* Ensure button doesn't overflow rounded corners IF it were near edge */
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            background-color: var(--container-bg-purple); /* Fallback if image is transparent */
+            max-width: 600px; /* Control max width of the preview image container */
+            position: relative; /* Crucial for absolute positioning of the child button */
+            margin: 0 auto 25px auto; /* Center the preview area */
+            border-radius: 10px; /* Rounded corners for the container */
+            overflow: hidden; /* Clips any child content (like button edges) that might go outside */
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3); /* Subtle shadow for depth */
+            /* background-color: var(--container-bg-purple); */ /* Fallback if image is transparent or fails to load - can be enabled */
         }
 
+        /* Static Preview Image of the Resume */
         #resumeStaticPreviewImage {
-            display: block;
+            display: block; /* Removes any extra space below the image */
             width: 100%;
             height: auto; /* Maintain aspect ratio */
-            border-radius: 8px; /* Round the image corners itself */
+            border-radius: 8px; /* Slightly rounded corners for the image itself */
         }
 
-        /* --- Button positioned bottom-center OVER the image --- */
-        #openPdfModalButton {
-            position: absolute; /* Position relative to .resume-preview-area */
-            bottom: 15px;       /* Distance from the bottom of the preview area */
-            left: 50%;          /* Start at 50% from the left */
-            transform: translateX(-50%); /* Shift left by half its own width to center it */
-            background-color: rgba(0,0,0,0.65); /* Semi-transparent dark background */
+        /* "View PDF" Button - Styled as an <a> tag for direct linking */
+        /* Positioned absolutely at the bottom-center OVER the preview image */
+        #viewPdfButton {
+            position: absolute;
+            bottom: 15px;       /* Distance from the bottom of .resume-preview-area */
+            left: 50%;          /* Start positioning from the horizontal center */
+            transform: translateX(-50%); /* Shift left by half its own width to truly center it */
+            background-color: rgba(0,0,0,0.65); /* Semi-transparent dark background for readability */
             color: var(--primary-text-color);
-            border: 1px solid var(--accent-purple);
-            padding: 10px 20px; /* Adjust padding as needed */
+            border: 1px solid var(--accent-purple); /* Accent border */
+            padding: 10px 20px; /* Comfortable padding */
             font-size: 0.95em;
             font-weight: 600;
-            border-radius: 20px;
+            border-radius: 20px; /* Rounded corners for button shape */
+            text-decoration: none; /* Remove default underline from <a> tag */
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            z-index: 10; /* Ensure it's above the image */
-            white-space: nowrap; /* Prevent text wrapping if button is narrow */
+            transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
+            z-index: 10; /* Ensure it's visually on top of the preview image */
+            white-space: nowrap; /* Prevent button text from wrapping */
         }
+        /* Hover effects only for devices that support true hover (e.g., mouse) */
         @media (hover: hover) and (pointer: fine) {
-            #openPdfModalButton:hover {
-                background-color: var(--accent-purple);
-                color: var(--text-on-accent);
-                transform: translateX(-50%) scale(1.05); /* Maintain centering with scale */
+            #viewPdfButton:hover {
+                background-color: var(--accent-purple); /* Change background on hover */
+                color: var(--text-on-accent); /* Change text color for contrast */
+                transform: translateX(-50%) scale(1.05); /* Slight scale up, maintaining center */
             }
         }
 
-
-        /* --- PDF Modal --- */
-        .pdf-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0,0,0,0.85); /* Dark overlay */
-            display: none; /* Hidden by default */
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 10px; /* Small padding around the iframe */
-            box-sizing: border-box;
-        }
-        .pdf-modal.active {
-            display: flex;
-        }
-        .pdf-modal-content {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        #pdfFrame {
-            flex-grow: 1; /* Take available space */
-            border: none; /* No border for the iframe itself */
-            background-color: #fff; /* White background for PDF area */
-            border-radius: 5px;
-        }
-        #closePdfModalButton {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background-color: var(--accent-purple);
-            color: var(--text-on-accent);
-            border: none;
-            width: 35px;
-            height: 35px;
-            font-size: 1.5em;
-            line-height: 35px; /* Vertically center X */
-            text-align: center;
-            border-radius: 50%;
-            cursor: pointer;
-            z-index: 1010; /* Above iframe */
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-        @media (hover: hover) and (pointer: fine) {
-            #closePdfModalButton:hover {
-                background-color: #A070D0;
-            }
-        }
-
-
-        /* --- Main Action Buttons (Share, etc.) --- */
+        /* Action Buttons Section (e.g., Share Link) */
         .actions {
             text-align: center;
             margin-bottom: 20px;
-            width: 100%;
+            width: 100%; /* Ensure buttons within can be centered if display:block */
         }
 
-        .actions button, .actions a {
+        /* Styling for general action buttons */
+        .actions button { /* Targeting the Share button specifically */
             background-color: var(--accent-purple);
             color: var(--text-on-accent);
             border: none;
             padding: 12px 28px;
             text-align: center;
             text-decoration: none;
-            display: inline-block;
+            display: inline-block; /* Allows side-by-side placement if multiple buttons */
             font-size: 1em;
             font-weight: 600;
             margin: 8px 5px;
             cursor: pointer;
-            border-radius: 25px;
+            border-radius: 25px; /* Pill-shaped buttons */
             transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Subtle shadow */
         }
-
-        /* Only apply hover effects on devices that can truly hover */
+        /* Hover effects for general action buttons, only on hover-capable devices */
         @media (hover: hover) and (pointer: fine) {
-            .actions button:hover, .actions a:hover {
-                background-color: #A070D0;
-                transform: translateY(-2px);
-                box-shadow: 0 4px 8px var(--button-glow-color);
+            .actions button:hover {
+                background-color: #A070D0; /* Darker shade on hover */
+                transform: translateY(-2px); /* Slight lift effect */
+                box-shadow: 0 4px 8px var(--button-glow-color); /* Enhanced glow */
             }
         }
-        /* Add active state for touch feedback without sticky hover */
-        .actions button:active, .actions a:active {
-            transform: translateY(1px);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        /* Active state for touch feedback on general action buttons */
+        .actions button:active {
+            transform: translateY(1px); /* Slight press-down effect */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2); /* Reduced shadow on press */
         }
 
-
+        /* Footer Styling */
         .footer {
             width: 100%;
-            padding: 15px 0;
+            padding: 15px 0; /* Vertical padding */
             text-align: center;
             font-size: 0.85em;
             color: var(--secondary-text-color);
-            margin-top: auto;
+            margin-top: auto; /* Pushes footer to the bottom if page content is short */
             box-sizing: border-box;
         }
 
-        /* Larger screens adjustments */
+        /* Responsive adjustments for larger screens */
         @media (min-width: 600px) {
             .header h1 {
                 font-size: 2.8em;
@@ -221,117 +175,83 @@
                 font-size: 1.3em;
             }
             .resume-preview-area {
-                margin-bottom: 30px;
+                margin-bottom: 30px; /* More space below preview on larger screens */
             }
-            #openPdfModalButton { /* Adjust padding/font for larger screens if needed */
+            /* Adjust "View PDF" button for larger screens if needed */
+            #viewPdfButton {
                 padding: 12px 22px;
                 font-size: 1em;
             }
         }
         @media (min-width: 768px) {
-            .actions button, .actions a {
+            /* Adjust general action buttons for larger screens if needed */
+            .actions button {
                  padding: 14px 35px;
-            }
-            .pdf-modal {
-                padding: 20px; /* More padding for iframe on larger screens */
             }
         }
     </style>
 </head>
 <body>
+    <!-- Main container for all visible content -->
     <div class="main-content">
+
+        <!-- Header section with name and title -->
         <div class="header">
             <h1>Joachim Rayski</h1>
             <p class="subtitle">Multi-Skilled Support Specialist</p>
         </div>
 
-        <!-- Resume Preview Area -->
+        <!-- Resume Preview Area: Displays a static image of the resume -->
         <div class="resume-preview-area">
-            <!-- IMPORTANT: Create and upload Resume_Preview.png to your repository -->
+            <!-- IMPORTANT: Ensure 'Resume_Preview.png' exists in the same directory -->
             <img src="Resume_Preview.png" alt="Preview of Joachim Rayski's Resume" id="resumeStaticPreviewImage">
-            <button id="openPdfModalButton" aria-label="View Full Resume">View PDF</button>
+            <!-- Button to open the PDF in a new tab -->
+            <a href="Resume.pdf" target="_blank" id="viewPdfButton" aria-label="View Full Resume in New Tab">View PDF</a>
         </div>
 
-        <!-- Main Action Buttons -->
+        <!-- Action Buttons: e.g., Share Link -->
         <div class="actions">
-            <a href="Resume.pdf" target="_blank" title="View PDF in a new tab (direct)" style="display: none;">Hidden Direct View</a> <!-- Keep for direct linking if needed, but hide -->
             <button id="shareButton" title="Copy link to clipboard">Share Link</button>
         </div>
-    </div>
 
+    </div> <!-- End of .main-content -->
+
+    <!-- Footer section -->
     <footer class="footer">
         <p>© <span id="currentYear"></span> Joachim Rayski. All rights reserved.</p>
     </footer>
 
-    <!-- PDF Modal -->
-    <div class="pdf-modal" id="pdfModal">
-        <div class="pdf-modal-content">
-            <button id="closePdfModalButton" aria-label="Close PDF viewer">×</button>
-            <iframe id="pdfFrame" src="" title="Joachim Rayski Resume Full View">
-                <p>Your browser does not support embedded PDFs. Please <a href="Resume.pdf" download="Resume.pdf" style="color: var(--accent-purple);">download the PDF</a> to view it.</p>
-            </iframe>
-        </div>
-    </div>
-
     <script>
+        // Dynamically set the current year in the footer
         document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-        const shareButton = document.getElementById('shareButton');
-        const openPdfModalButton = document.getElementById('openPdfModalButton');
-        const closePdfModalButton = document.getElementById('closePdfModalButton');
-        const pdfModal = document.getElementById('pdfModal');
-        const pdfFrame = document.getElementById('pdfFrame');
-        const body = document.body;
-
-        // Function to open the PDF modal
-        function openModal() {
-            pdfFrame.src = 'Resume.pdf#view=FitH';
-            pdfModal.classList.add('active');
-            body.style.overflow = 'hidden';
-        }
-
-        // Function to close the PDF modal
-        function closeModal() {
-            pdfModal.classList.remove('active');
-            pdfFrame.src = '';
-            body.style.overflow = '';
-        }
-
-        openPdfModalButton.addEventListener('click', openModal);
-        closePdfModalButton.addEventListener('click', closeModal);
-
-        pdfModal.addEventListener('click', (event) => {
-            if (event.target === pdfModal) {
-                closeModal();
-            }
-        });
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && pdfModal.classList.contains('active')) {
-                closeModal();
-            }
-        });
-
-
         // Share Button Logic
+        const shareButton = document.getElementById('shareButton');
         shareButton.addEventListener('click', () => {
-            const urlToShare = window.location.href;
+            const urlToShare = window.location.href; // URL of the current page
+
+            // Try using the modern Web Share API (primarily for mobile)
             if (navigator.share) {
                 navigator.share({
-                    title: document.title,
+                    title: document.title, // Title of the current page
                     url: urlToShare
                 }).then(() => {
                     console.log('Thanks for sharing!');
                 })
-                .catch(console.error);
-            } else if (navigator.clipboard) {
+                .catch(console.error); // Log any errors if sharing fails
+            }
+            // Fallback to copying the link to the clipboard
+            else if (navigator.clipboard) {
                 navigator.clipboard.writeText(urlToShare).then(() => {
-                    alert('Link copied to clipboard!');
+                    alert('Link copied to clipboard!'); // Confirmation message
                 }).catch(err => {
                     console.error('Failed to copy link: ', err);
+                    // Further fallback if clipboard API fails (e.g., due to permissions or older browser)
                     prompt("Could not copy automatically. Please copy this link:", urlToShare);
                 });
-            } else {
+            }
+            // Final fallback if neither Web Share nor Clipboard API is available
+            else {
                 prompt("To share, please copy this link:", urlToShare);
             }
         });
