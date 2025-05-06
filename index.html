@@ -15,18 +15,19 @@
             --background-main: #0D0022;
 
             /* Derived & Accent Colors */
-            --share-button-bg: #8541FF; /* NEW: Name color for Share button background */
-            --share-button-text: #FFFFFF; /* NEW: White text for Share button for contrast */
-            --share-button-hover-bg: #6a30cc; /* Darker shade of name-color for Share button hover */
+            --share-button-bg: #6a30cc; /* NEW: Darker purple for Share button background */
+            --share-button-text: #FFFFFF; /* White text for Share button */
+            --share-button-hover-bg: #5225a4; /* NEW: Even darker purple for Share button hover */
 
             --preview-button-bg: rgba(0, 0, 0, 0.65);
-            --preview-button-border: #8541FF;
+            --preview-button-border: #8541FF; /* Name color for border */
             --preview-button-text: #FFFFFF;
 
             /* General Text & UI Colors */
             --primary-text-color: #F0F0F0;
             --secondary-text-color: #A09CB8;
-            --glow-color: rgba(133, 65, 255, 0.4); /* This is the glow for the Share button, derived from name-color */
+            --glow-color: rgba(106, 48, 204, 0.5); /* Adjusted glow to match new share button base */
+
 
             /* Black and White */
             --pure-black: #000000;
@@ -119,7 +120,7 @@
         }
         @media (hover: hover) and (pointer: fine) {
             #viewPdfButton:hover {
-                background-color: var(--name-color); /* Use name-color for hover on this button too */
+                background-color: var(--name-color); /* Bright name-color for this button's hover */
                 color: var(--pure-white);
                 border-color: var(--name-color);
                 transform: translateX(-50%) scale(1.05);
@@ -134,8 +135,8 @@
         }
 
         .actions button#shareButton { /* Share button */
-            background-color: var(--share-button-bg); /* Name color for BG */
-            color: var(--share-button-text);      /* White text for contrast */
+            background-color: var(--share-button-bg); /* NEW base color */
+            color: var(--share-button-text);      /* White text */
             border: none;
             padding: 12px 28px;
             text-align: center;
@@ -147,18 +148,18 @@
             cursor: pointer;
             border-radius: 25px;
             transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Shadow from pure black */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
         @media (hover: hover) and (pointer: fine) {
             .actions button#shareButton:hover {
-                background-color: var(--share-button-hover-bg); /* Darker shade of name-color for hover */
+                background-color: var(--share-button-hover-bg); /* NEW hover color */
                 transform: translateY(-2px);
-                box-shadow: 0 4px 8px var(--glow-color); /* Use defined glow color */
+                box-shadow: 0 4px 8px var(--glow-color); /* Adjusted glow */
             }
         }
         .actions button#shareButton:active {
             transform: translateY(1px);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3); /* Shadow from pure black */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
 
         /* Footer Styling */
