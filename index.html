@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Joachim Rayski - Resume</title>
     <!-- Google Fonts: Zilla Slab -->
-    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet">
     <style>
         /* CSS Custom Properties (Variables) for easy theme management */
         :root {
@@ -15,18 +15,18 @@
             --background-main: #0D0022;
 
             /* Derived & Accent Colors */
-            --share-button-bg: #6a30cc; /* NEW: Darker purple for Share button background */
-            --share-button-text: #FFFFFF; /* White text for Share button */
-            --share-button-hover-bg: #5225a4; /* NEW: Even darker purple for Share button hover */
+            --share-button-bg: #6a30cc;
+            --share-button-text: #FFFFFF;
+            --share-button-hover-bg: #5225a4; /* This will now also be used for #viewPdfButton hover */
 
             --preview-button-bg: rgba(0, 0, 0, 0.65);
-            --preview-button-border: #8541FF; /* Name color for border */
+            --preview-button-border: #8541FF;
             --preview-button-text: #FFFFFF;
 
             /* General Text & UI Colors */
             --primary-text-color: #F0F0F0;
             --secondary-text-color: #A09CB8;
-            --glow-color: rgba(106, 48, 204, 0.5); /* Adjusted glow to match new share button base */
+            --glow-color: rgba(106, 48, 204, 0.5);
 
 
             /* Black and White */
@@ -70,7 +70,8 @@
             color: var(--name-color);
             font-size: 2.4em;
             margin-bottom: 5px;
-            font-weight: 700;
+            font-weight: 700; /* Bold Zilla Slab */
+            font-style: italic; /* NEW: Make name italic */
             line-height: 1.2;
         }
 
@@ -78,7 +79,7 @@
             color: var(--title-color);
             font-size: 1.2em;
             margin-top: 0;
-            font-weight: 400;
+            font-weight: 400; /* Regular Zilla Slab */
         }
 
         /* Resume Preview Area */
@@ -114,15 +115,15 @@
             border-radius: 20px;
             text-decoration: none;
             cursor: pointer;
-            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
             z-index: 10;
             white-space: nowrap;
         }
         @media (hover: hover) and (pointer: fine) {
             #viewPdfButton:hover {
-                background-color: var(--name-color); /* Bright name-color for this button's hover */
-                color: var(--pure-white);
-                border-color: var(--name-color);
+                background-color: var(--share-button-hover-bg); /* NEW: Use Share button's hover color */
+                color: var(--pure-white); /* Keep text white for contrast */
+                border-color: var(--share-button-hover-bg); /* Match border to new background */
                 transform: translateX(-50%) scale(1.05);
             }
         }
@@ -135,8 +136,8 @@
         }
 
         .actions button#shareButton { /* Share button */
-            background-color: var(--share-button-bg); /* NEW base color */
-            color: var(--share-button-text);      /* White text */
+            background-color: var(--share-button-bg);
+            color: var(--share-button-text);
             border: none;
             padding: 12px 28px;
             text-align: center;
@@ -152,9 +153,9 @@
         }
         @media (hover: hover) and (pointer: fine) {
             .actions button#shareButton:hover {
-                background-color: var(--share-button-hover-bg); /* NEW hover color */
+                background-color: var(--share-button-hover-bg);
                 transform: translateY(-2px);
-                box-shadow: 0 4px 8px var(--glow-color); /* Adjusted glow */
+                box-shadow: 0 4px 8px var(--glow-color);
             }
         }
         .actions button#shareButton:active {
