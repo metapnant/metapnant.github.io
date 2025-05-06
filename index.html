@@ -15,20 +15,21 @@
             --background-main: #0D0022;
 
             /* Derived & Accent Colors */
-            /* SWAPPED Share Button Colors */
-            --share-button-bg: #5225a4; /* NEW DEFAULT: Even darker purple */
+            --share-button-bg: #5225a4; /* Darker purple - Share Button Default */
             --share-button-text: #FFFFFF;
-            --share-button-hover-bg: #6a30cc; /* NEW HOVER: Slightly lighter purple (original default) */
+            --share-button-hover-bg: #6a30cc; /* Lighter purple - Share Button Hover */
 
-            --preview-button-bg: rgba(0, 0, 0, 0.65);
+            --preview-button-bg: rgba(0, 0, 0, 0.65); /* View PDF Button Default */
             --preview-button-border: #8541FF;
             --preview-button-text: #FFFFFF;
+            /* View PDF Button Hover will now use Share Button Default BG */
+            --preview-button-hover-bg: var(--share-button-bg); /* Link to #5225a4 */
+
 
             /* General Text & UI Colors */
             --primary-text-color: #F0F0F0;
             --secondary-text-color: #A09CB8;
-            /* Glow color for share button, based on its new hover state (brighter color) */
-            --glow-color: rgba(106, 48, 204, 0.6);
+            --glow-color: rgba(106, 48, 204, 0.6); /* For Share button hover */
 
 
             /* Black and White */
@@ -123,9 +124,9 @@
         }
         @media (hover: hover) and (pointer: fine) {
             #viewPdfButton:hover {
-                background-color: var(--share-button-hover-bg); /* Uses the new hover of share btn (was #6a30cc) */
+                background-color: var(--preview-button-hover-bg); /* Uses var(--share-button-bg) */
                 color: var(--pure-white);
-                border-color: var(--share-button-hover-bg); /* Match border */
+                border-color: var(--preview-button-hover-bg); /* Match border to new background */
                 transform: translateX(-50%) scale(1.05);
             }
         }
@@ -138,7 +139,7 @@
         }
 
         .actions button#shareButton { /* Share button */
-            background-color: var(--share-button-bg); /* NOW the darker purple #5225a4 */
+            background-color: var(--share-button-bg); /* Darker purple #5225a4 */
             color: var(--share-button-text);
             border: none;
             padding: 12px 28px;
@@ -155,7 +156,7 @@
         }
         @media (hover: hover) and (pointer: fine) {
             .actions button#shareButton:hover {
-                background-color: var(--share-button-hover-bg); /* NOW the lighter purple #6a30cc */
+                background-color: var(--share-button-hover-bg); /* Lighter purple #6a30cc */
                 transform: translateY(-2px);
                 box-shadow: 0 4px 8px var(--glow-color);
             }
