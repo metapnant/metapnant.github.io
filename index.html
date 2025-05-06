@@ -15,13 +15,9 @@
             --background-main: #0D0022;
 
             /* Derived & Accent Colors */
-            --accent-color-button-primary-bg: #8541FF; /* For "View PDF" button hover */
-            --text-on-accent-button: #FFFFFF;
-
-            --share-button-bg: #DED4EB; /* Title color for Share button background */
-            --share-button-text: #0D0022; /* Main background color for Share button text (for contrast) */
-            --share-button-hover-bg: #c9bcdb; /* Slightly darker shade of title-color for Share button hover */
-
+            --share-button-bg: #8541FF; /* NEW: Name color for Share button background */
+            --share-button-text: #FFFFFF; /* NEW: White text for Share button for contrast */
+            --share-button-hover-bg: #6a30cc; /* Darker shade of name-color for Share button hover */
 
             --preview-button-bg: rgba(0, 0, 0, 0.65);
             --preview-button-border: #8541FF;
@@ -30,7 +26,7 @@
             /* General Text & UI Colors */
             --primary-text-color: #F0F0F0;
             --secondary-text-color: #A09CB8;
-            --glow-color: rgba(133, 65, 255, 0.4);
+            --glow-color: rgba(133, 65, 255, 0.4); /* This is the glow for the Share button, derived from name-color */
 
             /* Black and White */
             --pure-black: #000000;
@@ -39,7 +35,7 @@
 
         /* Basic Reset and Body Styling */
         body {
-            font-family: 'Zilla Slab', serif; /* NEW FONT FAMILY */
+            font-family: 'Zilla Slab', serif;
             margin: 0;
             padding: 0;
             background-color: var(--background-main);
@@ -71,17 +67,17 @@
 
         .header h1 {
             color: var(--name-color);
-            font-size: 2.4em; /* Adjusted slightly for Zilla Slab's presence */
+            font-size: 2.4em;
             margin-bottom: 5px;
-            font-weight: 700; /* Bold Zilla Slab */
+            font-weight: 700;
             line-height: 1.2;
         }
 
         .header p.subtitle {
             color: var(--title-color);
-            font-size: 1.2em; /* Adjusted slightly for Zilla Slab */
+            font-size: 1.2em;
             margin-top: 0;
-            font-weight: 400; /* Regular Zilla Slab */
+            font-weight: 400;
         }
 
         /* Resume Preview Area */
@@ -113,7 +109,7 @@
             border: 1px solid var(--preview-button-border);
             padding: 10px 20px;
             font-size: 0.95em;
-            font-weight: 600; /* Semi-bold Zilla Slab */
+            font-weight: 600;
             border-radius: 20px;
             text-decoration: none;
             cursor: pointer;
@@ -123,9 +119,9 @@
         }
         @media (hover: hover) and (pointer: fine) {
             #viewPdfButton:hover {
-                background-color: var(--accent-color-button-primary-bg);
-                color: var(--text-on-accent-button);
-                border-color: var(--accent-color-button-primary-bg);
+                background-color: var(--name-color); /* Use name-color for hover on this button too */
+                color: var(--pure-white);
+                border-color: var(--name-color);
                 transform: translateX(-50%) scale(1.05);
             }
         }
@@ -138,31 +134,31 @@
         }
 
         .actions button#shareButton { /* Share button */
-            background-color: var(--share-button-bg); /* NEW: Title color for BG */
-            color: var(--share-button-text);      /* NEW: Dark text for contrast */
+            background-color: var(--share-button-bg); /* Name color for BG */
+            color: var(--share-button-text);      /* White text for contrast */
             border: none;
             padding: 12px 28px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
             font-size: 1em;
-            font-weight: 600; /* Semi-bold Zilla Slab */
+            font-weight: 600;
             margin: 8px 5px;
             cursor: pointer;
             border-radius: 25px;
             transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Softer shadow against light button */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Shadow from pure black */
         }
         @media (hover: hover) and (pointer: fine) {
             .actions button#shareButton:hover {
-                background-color: var(--share-button-hover-bg); /* Darker shade of title-color for hover */
+                background-color: var(--share-button-hover-bg); /* Darker shade of name-color for hover */
                 transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+                box-shadow: 0 4px 8px var(--glow-color); /* Use defined glow color */
             }
         }
         .actions button#shareButton:active {
             transform: translateY(1px);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3); /* Shadow from pure black */
         }
 
         /* Footer Styling */
@@ -171,7 +167,7 @@
             padding: 15px 0;
             text-align: center;
             font-size: 0.85em;
-            font-weight: 400; /* Regular Zilla Slab */
+            font-weight: 400;
             color: var(--secondary-text-color);
             margin-top: auto;
             box-sizing: border-box;
@@ -180,7 +176,7 @@
         /* Responsive adjustments */
         @media (min-width: 600px) {
             .header h1 {
-                font-size: 3em; /* Zilla Slab is quite impactful */
+                font-size: 3em;
             }
             .header p.subtitle {
                 font-size: 1.35em;
@@ -226,7 +222,7 @@
 
         const shareButton = document.getElementById('shareButton');
         shareButton.addEventListener('click', () => {
-            const urlToShare = window.loca_modeltion.href;
+            const urlToShare = window.location.href;
             if (navigator.share) {
                 navigator.share({
                     title: document.title,
