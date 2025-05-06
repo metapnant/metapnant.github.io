@@ -12,44 +12,44 @@
             --accent-purple: #BE93FD;
             --light-lavender: #D8BFD8;
             --text-on-accent: #1A0B2E;
-            --primary-text-color: #F0E6FF; /* Slightly brighter white/lavender */
+            --primary-text-color: #F0E6FF;
             --secondary-text-color: #b3a2c7;
+            --button-glow-color: rgba(190, 147, 253, 0.4);
         }
 
         body {
             font-family: 'Montserrat', sans-serif;
             margin: 0;
-            padding: 0; /* Remove default padding for full control */
+            padding: 0;
             background-color: var(--bg-dark-purple);
-            /* Subtle radial gradient for depth */
-            background-image: radial-gradient(circle at top center, rgba(74, 48, 110, 0.3), var(--bg-dark-purple) 60%);
+            background-image: radial-gradient(circle at top center, rgba(74, 48, 110, 0.3), var(--bg-dark-purple) 70%);
             color: var(--primary-text-color);
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            box-sizing: border-box; /* Ensures padding/border don't add to width/height */
+            box-sizing: border-box;
         }
 
         .main-content {
             width: 100%;
-            max-width: 950px; /* Max width for larger screens */
-            padding: 20px; /* Padding for content within the viewport width */
+            max-width: 900px; /* Max width for content area */
+            padding: 20px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            align-items: center; /* Center children like header and iframe container */
-            flex-grow: 1; /* Allow this to take up available space */
+            align-items: center;
+            flex-grow: 1;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
 
         .header h1 {
             color: var(--accent-purple);
-            font-size: 2.2em; /* Responsive font size */
+            font-size: 2.2em;
             margin-bottom: 5px;
             font-weight: 700;
             line-height: 1.2;
@@ -57,34 +57,114 @@
 
         .header p.subtitle {
             color: var(--light-lavender);
-            font-size: 1.1em; /* Responsive font size */
+            font-size: 1.1em;
             margin-top: 0;
             font-weight: 400;
         }
 
-        .resume-container {
+        /* --- Resume Preview Area --- */
+        .resume-preview-area {
             width: 100%;
-            background-color: var(--container-bg-purple);
-            padding: 15px; /* Padding around the iframe */
-            box-shadow: 0 5px 25px rgba(190, 147, 253, 0.2);
+            max-width: 600px; /* Control max width of preview image container */
+            position: relative; /* For positioning the button */
+            margin: 0 auto 25px auto; /* Center it */
             border-radius: 10px;
-            margin-bottom: 25px;
+            overflow: hidden; /* Ensure button doesn't overflow rounded corners */
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            background-color: var(--container-bg-purple); /* Fallback if image is transparent */
+        }
+
+        #resumeStaticPreviewImage {
+            display: block;
+            width: 100%;
+            height: auto; /* Maintain aspect ratio */
+            border-radius: 8px; /* Slight rounding if image itself is sharp */
+        }
+
+        #openPdfModalButton {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: rgba(0,0,0,0.6); /* Semi-transparent dark background */
+            color: var(--primary-text-color);
+            border: 1px solid var(--accent-purple);
+            padding: 10px 18px;
+            font-size: 0.9em;
+            font-weight: 600;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            z-index: 10;
+        }
+        @media (hover: hover) and (pointer: fine) {
+            #openPdfModalButton:hover {
+                background-color: var(--accent-purple);
+                color: var(--text-on-accent);
+                transform: scale(1.05);
+            }
+        }
+
+
+        /* --- PDF Modal --- */
+        .pdf-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0,0,0,0.85); /* Dark overlay */
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 10px; /* Small padding around the iframe */
             box-sizing: border-box;
         }
-
-        .resume-viewer {
+        .pdf-modal.active {
+            display: flex;
+        }
+        .pdf-modal-content {
             width: 100%;
-            height: 80vh; /* Generous height for mobile */
-            border: 1px solid var(--accent-purple);
-            border-radius: 6px;
-            background-color: #FFF; /* White background for the PDF itself */
-            display: block; /* Remove extra space below iframe */
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        #pdfFrame {
+            flex-grow: 1; /* Take available space */
+            border: none; /* No border for the iframe itself */
+            background-color: #fff; /* White background for PDF area */
+            border-radius: 5px;
+        }
+        #closePdfModalButton {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: var(--accent-purple);
+            color: var(--text-on-accent);
+            border: none;
+            width: 35px;
+            height: 35px;
+            font-size: 1.5em;
+            line-height: 35px; /* Vertically center X */
+            text-align: center;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 1010; /* Above iframe */
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        @media (hover: hover) and (pointer: fine) {
+            #closePdfModalButton:hover {
+                background-color: #A070D0;
+            }
         }
 
+
+        /* --- Main Action Buttons (Share, etc.) --- */
         .actions {
             text-align: center;
             margin-bottom: 20px;
-            width: 100%; /* Make actions container take full width for button centering */
+            width: 100%;
         }
 
         .actions button, .actions a {
@@ -94,29 +174,38 @@
             padding: 12px 28px;
             text-align: center;
             text-decoration: none;
-            display: inline-block; /* Default for side-by-side */
+            display: inline-block;
             font-size: 1em;
             font-weight: 600;
             margin: 8px 5px;
             cursor: pointer;
-            border-radius: 25px; /* Pill-shaped buttons */
+            border-radius: 25px;
             transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        .actions button:hover, .actions a:hover {
-            background-color: #A070D0; /* Darker shade for hover */
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(190, 147, 253, 0.3);
+        /* Only apply hover effects on devices that can truly hover */
+        @media (hover: hover) and (pointer: fine) {
+            .actions button:hover, .actions a:hover {
+                background-color: #A070D0;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px var(--button-glow-color);
+            }
+        }
+        /* Add active state for touch feedback without sticky hover */
+        .actions button:active, .actions a:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
+
         .footer {
-            width: 100%; /* Ensure footer spans width */
+            width: 100%;
             padding: 15px 0;
             text-align: center;
             font-size: 0.85em;
             color: var(--secondary-text-color);
-            margin-top: auto; /* Pushes footer to bottom if content is short */
+            margin-top: auto;
             box-sizing: border-box;
         }
 
@@ -128,17 +217,20 @@
             .header p.subtitle {
                 font-size: 1.3em;
             }
-            .resume-container {
-                padding: 20px;
+            .resume-preview-area {
+                margin-bottom: 30px;
+            }
+            #openPdfModalButton {
+                padding: 12px 22px;
+                font-size: 1em;
             }
         }
-
         @media (min-width: 768px) {
-            .resume-viewer {
-                height: 75vh; /* Slightly adjust for wider screens if needed */
-            }
             .actions button, .actions a {
                  padding: 14px 35px;
+            }
+            .pdf-modal {
+                padding: 20px; /* More padding for iframe on larger screens */
             }
         }
     </style>
@@ -150,15 +242,16 @@
             <p class="subtitle">Multi-Skilled Support Specialist</p>
         </div>
 
-        <div class="resume-container">
-            <!-- Added #view=FitH as a hint to fit width, behavior varies by browser -->
-            <iframe src="Resume.pdf#view=FitH" class="resume-viewer" title="Joachim Rayski Resume">
-                <p>Your browser does not support embedded PDFs. Please <a href="Resume.pdf" download="Resume.pdf" style="color: var(--accent-purple);">download the PDF</a> to view it.</p>
-            </iframe>
+        <!-- Resume Preview Area -->
+        <div class="resume-preview-area">
+            <!-- IMPORTANT: Create and upload Resume_Preview.png to your repository -->
+            <img src="Resume_Preview.png" alt="Preview of Joachim Rayski's Resume" id="resumeStaticPreviewImage">
+            <button id="openPdfModalButton" aria-label="View Full Resume">View PDF</button>
         </div>
 
+        <!-- Main Action Buttons -->
         <div class="actions">
-            <a href="Resume.pdf" target="_blank" title="View PDF in a new tab">View Fullscreen</a>
+            <a href="Resume.pdf" target="_blank" title="View PDF in a new tab (direct)" style="display: none;">Hidden Direct View</a> <!-- Keep for direct linking if needed, but hide -->
             <button id="shareButton" title="Copy link to clipboard">Share Link</button>
         </div>
     </div>
@@ -167,13 +260,65 @@
         <p>© <span id="currentYear"></span> Joachim Rayski. All rights reserved.</p>
     </footer>
 
+    <!-- PDF Modal -->
+    <div class="pdf-modal" id="pdfModal">
+        <div class="pdf-modal-content">
+            <button id="closePdfModalButton" aria-label="Close PDF viewer">×</button>
+            <iframe id="pdfFrame" src="" title="Joachim Rayski Resume Full View">
+                <p>Your browser does not support embedded PDFs. Please <a href="Resume.pdf" download="Resume.pdf" style="color: var(--accent-purple);">download the PDF</a> to view it.</p>
+            </iframe>
+        </div>
+    </div>
+
     <script>
         document.getElementById('currentYear').textContent = new Date().getFullYear();
 
         const shareButton = document.getElementById('shareButton');
+        const openPdfModalButton = document.getElementById('openPdfModalButton');
+        const closePdfModalButton = document.getElementById('closePdfModalButton');
+        const pdfModal = document.getElementById('pdfModal');
+        const pdfFrame = document.getElementById('pdfFrame');
+        const body = document.body;
+
+        // Function to open the PDF modal
+        function openModal() {
+            // Set the iframe src only when opening to ensure it loads correctly
+            // and to potentially save initial page load resources.
+            // The #view=FitH can be hit or miss depending on browser/PDF plugin.
+            pdfFrame.src = 'Resume.pdf#view=FitH';
+            pdfModal.classList.add('active');
+            body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        // Function to close the PDF modal
+        function closeModal() {
+            pdfModal.classList.remove('active');
+            pdfFrame.src = ''; // Clear src to stop PDF processing/sound if any
+            body.style.overflow = ''; // Restore background scrolling
+        }
+
+        openPdfModalButton.addEventListener('click', openModal);
+        closePdfModalButton.addEventListener('click', closeModal);
+
+        // Close modal if user clicks outside the content (optional, but good UX)
+        pdfModal.addEventListener('click', (event) => {
+            if (event.target === pdfModal) { // Clicked on the backdrop
+                closeModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && pdfModal.classList.contains('active')) {
+                closeModal();
+            }
+        });
+
+
+        // Share Button Logic
         shareButton.addEventListener('click', () => {
             const urlToShare = window.location.href;
-            if (navigator.share) { // Use Web Share API if available
+            if (navigator.share) {
                 navigator.share({
                     title: document.title,
                     url: urlToShare
@@ -181,14 +326,14 @@
                     console.log('Thanks for sharing!');
                 })
                 .catch(console.error);
-            } else if (navigator.clipboard) { // Fallback to clipboard
+            } else if (navigator.clipboard) {
                 navigator.clipboard.writeText(urlToShare).then(() => {
                     alert('Link copied to clipboard!');
                 }).catch(err => {
                     console.error('Failed to copy link: ', err);
                     prompt("Could not copy automatically. Please copy this link:", urlToShare);
                 });
-            } else { // Final fallback
+            } else {
                 prompt("To share, please copy this link:", urlToShare);
             }
         });
