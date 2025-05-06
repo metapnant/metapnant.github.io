@@ -4,47 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Joachim Rayski - Resume</title>
-    <!-- Google Fonts: Montserrat for a clean, modern look -->
+    <!-- Google Fonts: Montserrat -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         /* CSS Custom Properties (Variables) for easy theme management */
         :root {
-            --bg-dark-purple: #1A0B2E;
-            --container-bg-purple: #2B1A4D; /* Not used in this version, kept for potential future use */
-            --accent-purple: #BE93FD;
-            --light-lavender: #D8BFD8;
-            --text-on-accent: #1A0B2E; /* Text color for elements with accent background */
-            --primary-text-color: #F0E6FF; /* Main text color */
-            --secondary-text-color: #b3a2c7; /* For less prominent text like footer */
-            --button-glow-color: rgba(190, 147, 253, 0.4); /* Glow effect for buttons */
+            /* Primary Palette from Business Card */
+            --name-color: #8541FF;          /* Vibrant Purple for Name */
+            --title-color: #DED4EB;         /* Light Lavender for Title */
+            --background-main: #0D0022;     /* Very Dark Blue/Purple for Body Background */
+
+            /* Derived & Accent Colors */
+            --accent-color-button: #8541FF; /* Using Name Color for main action buttons */
+            --text-on-accent-button: #FFFFFF;/* White text on accent buttons for contrast */
+            --preview-button-bg: rgba(0, 0, 0, 0.65); /* Semi-transparent black for button over image */
+            --preview-button-border: #8541FF; /* Accent border for button over image */
+            --preview-button-text: #FFFFFF;    /* White text for button over image */
+
+            /* General Text & UI Colors */
+            --primary-text-color: #F0F0F0;  /* General light text, slightly off-white */
+            --secondary-text-color: #A09CB8;/* For less prominent text like footer (adjusted for new bg) */
+            --glow-color: rgba(133, 65, 255, 0.4); /* Glow effect for buttons, derived from name-color */
+
+            /* Black and White */
+            --pure-black: #000000;
+            --pure-white: #FFFFFF;
         }
 
         /* Basic Reset and Body Styling */
         body {
             font-family: 'Montserrat', sans-serif;
             margin: 0;
-            padding: 0; /* Ensure no unexpected spacing */
-            background-color: var(--bg-dark-purple);
-            /* Subtle radial gradient for visual depth */
-            background-image: radial-gradient(circle at top center, rgba(74, 48, 110, 0.3), var(--bg-dark-purple) 70%);
-            color: var(--primary-text-color);
+            padding: 0;
+            background-color: var(--background-main); /* NEW BACKGROUND */
+            /* Optional: Subtle radial gradient, adjusted for new background */
+            /* background-image: radial-gradient(circle at top center, rgba(40, 20, 70, 0.3), var(--background-main) 70%); */
+            color: var(--primary-text-color); /* Default text color */
             display: flex;
-            flex-direction: column; /* Stack content vertically */
-            align-items: center; /* Center content horizontally */
-            min-height: 100vh; /* Ensure footer stays at bottom on short pages */
-            box-sizing: border-box; /* Consistent box model */
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
 
         /* Main Content Wrapper */
         .main-content {
             width: 100%;
-            max-width: 900px; /* Max width for content area for readability */
-            padding: 20px; /* Spacing around content */
+            max-width: 900px;
+            padding: 20px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
             align-items: center;
-            flex-grow: 1; /* Allow content to fill available vertical space */
+            flex-grow: 1;
         }
 
         /* Header Section: Name and Subtitle */
@@ -54,66 +66,64 @@
         }
 
         .header h1 {
-            color: var(--accent-purple);
-            font-size: 2.2em; /* Responsive font size */
+            color: var(--name-color); /* NEW NAME COLOR */
+            font-size: 2.2em;
             margin-bottom: 5px;
             font-weight: 700;
             line-height: 1.2;
         }
 
         .header p.subtitle {
-            color: var(--light-lavender);
-            font-size: 1.1em; /* Responsive font size */
+            color: var(--title-color); /* NEW TITLE COLOR */
+            font-size: 1.1em;
             margin-top: 0;
             font-weight: 400;
         }
 
-        /* Resume Preview Area: Contains static image and "View PDF" button */
+        /* Resume Preview Area */
         .resume-preview-area {
             width: 100%;
-            max-width: 600px; /* Control max width of the preview image container */
-            position: relative; /* Crucial for absolute positioning of the child button */
-            margin: 0 auto 25px auto; /* Center the preview area */
-            border-radius: 10px; /* Rounded corners for the container */
-            overflow: hidden; /* Clips any child content (like button edges) that might go outside */
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3); /* Subtle shadow for depth */
-            /* background-color: var(--container-bg-purple); */ /* Fallback if image is transparent or fails to load - can be enabled */
+            max-width: 600px;
+            position: relative;
+            margin: 0 auto 25px auto;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4); /* Slightly stronger shadow on dark bg */
+            /* background-color: #1a1032; */ /* Optional darker shade for preview area background */
         }
 
-        /* Static Preview Image of the Resume */
         #resumeStaticPreviewImage {
-            display: block; /* Removes any extra space below the image */
+            display: block;
             width: 100%;
-            height: auto; /* Maintain aspect ratio */
-            border-radius: 8px; /* Slightly rounded corners for the image itself */
+            height: auto;
+            border-radius: 8px;
         }
 
-        /* "View PDF" Button - Styled as an <a> tag for direct linking */
-        /* Positioned absolutely at the bottom-center OVER the preview image */
+        /* "View PDF" Button - Over Image */
         #viewPdfButton {
             position: absolute;
-            bottom: 15px;       /* Distance from the bottom of .resume-preview-area */
-            left: 50%;          /* Start positioning from the horizontal center */
-            transform: translateX(-50%); /* Shift left by half its own width to truly center it */
-            background-color: rgba(0,0,0,0.65); /* Semi-transparent dark background for readability */
-            color: var(--primary-text-color);
-            border: 1px solid var(--accent-purple); /* Accent border */
-            padding: 10px 20px; /* Comfortable padding */
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--preview-button-bg); /* Semi-transparent black */
+            color: var(--preview-button-text);          /* White text */
+            border: 1px solid var(--preview-button-border); /* Accent border */
+            padding: 10px 20px;
             font-size: 0.95em;
             font-weight: 600;
-            border-radius: 20px; /* Rounded corners for button shape */
-            text-decoration: none; /* Remove default underline from <a> tag */
+            border-radius: 20px;
+            text-decoration: none;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
-            z-index: 10; /* Ensure it's visually on top of the preview image */
-            white-space: nowrap; /* Prevent button text from wrapping */
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+            z-index: 10;
+            white-space: nowrap;
         }
-        /* Hover effects only for devices that support true hover (e.g., mouse) */
         @media (hover: hover) and (pointer: fine) {
             #viewPdfButton:hover {
-                background-color: var(--accent-purple); /* Change background on hover */
-                color: var(--text-on-accent); /* Change text color for contrast */
-                transform: translateX(-50%) scale(1.05); /* Slight scale up, maintaining center */
+                background-color: var(--accent-color-button); /* Solid accent on hover */
+                color: var(--text-on-accent-button);      /* White text on accent */
+                border-color: var(--accent-color-button); /* Match border to bg */
+                transform: translateX(-50%) scale(1.05);
             }
         }
 
@@ -121,52 +131,49 @@
         .actions {
             text-align: center;
             margin-bottom: 20px;
-            width: 100%; /* Ensure buttons within can be centered if display:block */
+            width: 100%;
         }
 
-        /* Styling for general action buttons */
-        .actions button { /* Targeting the Share button specifically */
-            background-color: var(--accent-purple);
-            color: var(--text-on-accent);
+        .actions button { /* Share button */
+            background-color: var(--accent-color-button); /* Accent color */
+            color: var(--text-on-accent-button);      /* White text */
             border: none;
             padding: 12px 28px;
             text-align: center;
             text-decoration: none;
-            display: inline-block; /* Allows side-by-side placement if multiple buttons */
+            display: inline-block;
             font-size: 1em;
             font-weight: 600;
             margin: 8px 5px;
             cursor: pointer;
-            border-radius: 25px; /* Pill-shaped buttons */
+            border-radius: 25px;
             transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Subtle shadow */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Shadow from pure black */
         }
-        /* Hover effects for general action buttons, only on hover-capable devices */
         @media (hover: hover) and (pointer: fine) {
             .actions button:hover {
-                background-color: #A070D0; /* Darker shade on hover */
-                transform: translateY(-2px); /* Slight lift effect */
-                box-shadow: 0 4px 8px var(--button-glow-color); /* Enhanced glow */
+                background-color: #6a30cc; /* Darker shade of accent-color-button for hover */
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px var(--glow-color);
             }
         }
-        /* Active state for touch feedback on general action buttons */
         .actions button:active {
-            transform: translateY(1px); /* Slight press-down effect */
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2); /* Reduced shadow on press */
+            transform: translateY(1px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3); /* Shadow from pure black */
         }
 
         /* Footer Styling */
         .footer {
             width: 100%;
-            padding: 15px 0; /* Vertical padding */
+            padding: 15px 0;
             text-align: center;
             font-size: 0.85em;
-            color: var(--secondary-text-color);
-            margin-top: auto; /* Pushes footer to the bottom if page content is short */
+            color: var(--secondary-text-color); /* Adjusted for new bg */
+            margin-top: auto;
             box-sizing: border-box;
         }
 
-        /* Responsive adjustments for larger screens */
+        /* Responsive adjustments */
         @media (min-width: 600px) {
             .header h1 {
                 font-size: 2.8em;
@@ -175,16 +182,14 @@
                 font-size: 1.3em;
             }
             .resume-preview-area {
-                margin-bottom: 30px; /* More space below preview on larger screens */
+                margin-bottom: 30px;
             }
-            /* Adjust "View PDF" button for larger screens if needed */
             #viewPdfButton {
                 padding: 12px 22px;
                 font-size: 1em;
             }
         }
         @media (min-width: 768px) {
-            /* Adjust general action buttons for larger screens if needed */
             .actions button {
                  padding: 14px 35px;
             }
@@ -192,65 +197,49 @@
     </style>
 </head>
 <body>
-    <!-- Main container for all visible content -->
     <div class="main-content">
-
-        <!-- Header section with name and title -->
         <div class="header">
             <h1>Joachim Rayski</h1>
             <p class="subtitle">Multi-Skilled Support Specialist</p>
         </div>
 
-        <!-- Resume Preview Area: Displays a static image of the resume -->
         <div class="resume-preview-area">
-            <!-- IMPORTANT: Ensure 'Resume_Preview.png' exists in the same directory -->
             <img src="Resume_Preview.png" alt="Preview of Joachim Rayski's Resume" id="resumeStaticPreviewImage">
-            <!-- Button to open the PDF in a new tab -->
             <a href="Resume.pdf" target="_blank" id="viewPdfButton" aria-label="View Full Resume in New Tab">View PDF</a>
         </div>
 
-        <!-- Action Buttons: e.g., Share Link -->
         <div class="actions">
             <button id="shareButton" title="Copy link to clipboard">Share Link</button>
         </div>
+    </div>
 
-    </div> <!-- End of .main-content -->
-
-    <!-- Footer section -->
     <footer class="footer">
         <p>© <span id="currentYear"></span> Joachim Rayski. All rights reserved.</p>
     </footer>
 
     <script>
-        // Dynamically set the current year in the footer
         document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-        // Share Button Logic
         const shareButton = document.getElementById('shareButton');
         shareButton.addEventListener('click', () => {
-            const urlToShare = window.location.href; // URL of the current page
-
-            // Try using the modern Web Share API (primarily for mobile)
+            const urlToShare = window.location.href;
             if (navigator.share) {
                 navigator.share({
-                    title: document.title, // Title of the current page
+                    title: document.title,
                     url: urlToShare
                 }).then(() => {
                     console.log('Thanks for sharing!');
                 })
-                .catch(console.error); // Log any errors if sharing fails
+                .catch(console.error);
             }
-            // Fallback to copying the link to the clipboard
             else if (navigator.clipboard) {
                 navigator.clipboard.writeText(urlToShare).then(() => {
-                    alert('Link copied to clipboard!'); // Confirmation message
+                    alert('Link copied to clipboard!');
                 }).catch(err => {
                     console.error('Failed to copy link: ', err);
-                    // Further fallback if clipboard API fails (e.g., due to permissions or older browser)
                     prompt("Could not copy automatically. Please copy this link:", urlToShare);
                 });
             }
-            // Final fallback if neither Web Share nor Clipboard API is available
             else {
                 prompt("To share, please copy this link:", urlToShare);
             }
