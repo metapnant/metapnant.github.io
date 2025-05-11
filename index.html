@@ -4,40 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Joachim Rayski - Resume</title>
+    <!-- Favicon -->
+    <link rel="icon" href="favicon.png" type="image/png">
     <!-- Google Fonts: Zilla Slab (including italic for name) -->
     <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet">
     <style>
-        /* CSS Custom Properties (Variables) for easy theme management */
+        /* CSS Custom Properties (Variables) */
         :root {
-            /* Primary Palette from Business Card */
             --name-color: #8541FF;
             --title-color: #DED4EB;
             --background-main: #0D0022;
 
-            /* Derived & Accent Colors */
-            --share-button-bg: #5225a4; /* Darker purple - Share Button Default */
+            --share-button-bg: #5225a4;
             --share-button-text: #FFFFFF;
-            --share-button-hover-bg: #6a30cc; /* Lighter purple - Share Button Hover */
+            --share-button-hover-bg: #6a30cc;
 
-            --preview-button-bg: rgba(0, 0, 0, 0.65); /* View PDF Button Default */
+            --explore-button-bg: #3a2c5f; /* A new, slightly different dark purple for Explore */
+            --explore-button-text: #DED4EB; /* Using title color for text */
+            --explore-button-hover-bg: #4c3a7a; /* Lighter version of explore bg for hover */
+            --explore-button-border: #8541FF; /* Accent border to tie it in */
+
+
+            --preview-button-bg: rgba(0, 0, 0, 0.65);
             --preview-button-border: #8541FF;
             --preview-button-text: #FFFFFF;
-            /* View PDF Button Hover will now use Share Button Default BG */
-            --preview-button-hover-bg: var(--share-button-bg); /* Link to #5225a4 */
+            --preview-button-hover-bg: var(--share-button-bg);
 
 
-            /* General Text & UI Colors */
             --primary-text-color: #F0F0F0;
             --secondary-text-color: #A09CB8;
-            --glow-color: rgba(106, 48, 204, 0.6); /* For Share button hover */
+            --glow-color: rgba(106, 48, 204, 0.6);
 
 
-            /* Black and White */
             --pure-black: #000000;
             --pure-white: #FFFFFF;
         }
 
-        /* Basic Reset and Body Styling */
         body {
             font-family: 'Zilla Slab', serif;
             margin: 0;
@@ -51,7 +53,6 @@
             box-sizing: border-box;
         }
 
-        /* Main Content Wrapper */
         .main-content {
             width: 100%;
             max-width: 900px;
@@ -63,7 +64,6 @@
             flex-grow: 1;
         }
 
-        /* Header Section: Name and Subtitle */
         .header {
             text-align: center;
             margin-bottom: 30px;
@@ -85,7 +85,6 @@
             font-weight: 400;
         }
 
-        /* Resume Preview Area */
         .resume-preview-area {
             width: 100%;
             max-width: 600px;
@@ -103,7 +102,6 @@
             border-radius: 8px;
         }
 
-        /* "View PDF" Button - Over Image */
         #viewPdfButton {
             position: absolute;
             bottom: 15px;
@@ -124,49 +122,79 @@
         }
         @media (hover: hover) and (pointer: fine) {
             #viewPdfButton:hover {
-                background-color: var(--preview-button-hover-bg); /* Uses var(--share-button-bg) */
+                background-color: var(--preview-button-hover-bg);
                 color: var(--pure-white);
-                border-color: var(--preview-button-hover-bg); /* Match border to new background */
+                border-color: var(--preview-button-hover-bg);
                 transform: translateX(-50%) scale(1.05);
             }
         }
 
-        /* Action Buttons Section (Share Link) */
         .actions {
             text-align: center;
             margin-bottom: 20px;
             width: 100%;
+            display: flex; /* Use flexbox for button alignment */
+            flex-direction: column; /* Stack buttons vertically */
+            align-items: center; /* Center buttons horizontally */
+            gap: 10px; /* Space between buttons */
         }
 
-        .actions button#shareButton { /* Share button */
-            background-color: var(--share-button-bg); /* Darker purple #5225a4 */
-            color: var(--share-button-text);
-            border: none;
+        /* General styling for action buttons (<a> and <button>) */
+        .actions .action-btn {
             padding: 12px 28px;
             text-align: center;
             text-decoration: none;
-            display: inline-block;
             font-size: 1em;
             font-weight: 600;
-            margin: 8px 5px;
+            margin: 0; /* Removed individual margins, using gap now */
             cursor: pointer;
             border-radius: 25px;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            min-width: 180px; /* Ensure buttons have a decent minimum width */
+            box-sizing: border-box;
+        }
+
+        /* Share Button Specifics */
+        button#shareButton.action-btn {
+            background-color: var(--share-button-bg);
+            color: var(--share-button-text);
+            border: none;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
         @media (hover: hover) and (pointer: fine) {
-            .actions button#shareButton:hover {
-                background-color: var(--share-button-hover-bg); /* Lighter purple #6a30cc */
+            button#shareButton.action-btn:hover {
+                background-color: var(--share-button-hover-bg);
                 transform: translateY(-2px);
                 box-shadow: 0 4px 8px var(--glow-color);
             }
         }
-        .actions button#shareButton:active {
+        button#shareButton.action-btn:active {
             transform: translateY(1px);
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
 
-        /* Footer Styling */
+        /* Explore Button Specifics (styled as an <a> tag) */
+        a#exploreButton.action-btn {
+            background-color: var(--explore-button-bg);
+            color: var(--explore-button-text);
+            border: 1px solid var(--explore-button-border); /* Added border */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        @media (hover: hover) and (pointer: fine) {
+            a#exploreButton.action-btn:hover {
+                background-color: var(--explore-button-hover-bg);
+                border-color: var(--explore-button-hover-bg); /* Match border to bg on hover */
+                color: var(--pure-white); /* Brighter text on hover */
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(133, 65, 255, 0.3); /* Use name-color derived glow */
+            }
+        }
+        a#exploreButton.action-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+
         .footer {
             width: 100%;
             padding: 15px 0;
@@ -178,7 +206,6 @@
             box-sizing: border-box;
         }
 
-        /* Responsive adjustments */
         @media (min-width: 600px) {
             .header h1 {
                 font-size: 3em;
@@ -186,8 +213,12 @@
             .header p.subtitle {
                 font-size: 1.35em;
             }
-            .resume-preview-area {
-                margin-bottom: 30px;
+            .actions {
+                flex-direction: row; /* Buttons side-by-side on larger screens */
+                justify-content: center; /* Center them in the row */
+            }
+            .actions .action-btn {
+                margin: 0 5px; /* Add horizontal margin back for row layout */
             }
             #viewPdfButton {
                 padding: 12px 22px;
@@ -195,7 +226,7 @@
             }
         }
         @media (min-width: 768px) {
-            .actions button#shareButton {
+            .actions .action-btn { /* Target both buttons for padding */
                  padding: 14px 35px;
             }
         }
@@ -214,7 +245,9 @@
         </div>
 
         <div class="actions">
-            <button id="shareButton" title="Copy link to clipboard">Share Link</button>
+            <button id="shareButton" class="action-btn" title="Copy link to clipboard">Share Link</button>
+            <!-- New Explore Button linking to creative.html -->
+            <a href="creative.html" id="exploreButton" class="action-btn">Explore Creative Side</a>
         </div>
     </div>
 
