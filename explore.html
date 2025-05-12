@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joachim Rayski - Explore</title>
+    <!-- Favicon -->
+    <link rel="icon" href="favicon.png" type="image/png">
+    <!-- Google Fonts: Zilla Slab -->
+    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet">
+    <style>
+        /* Reusing CSS Variables for consistency */
+        :root {
+            --name-color: #8541FF;
+            --title-color: #DED4EB;
+            --background-main: #0D0022;
+            --primary-text-color: #F0F0F0;
+            --secondary-text-color: #A09CB8;
+        }
+
+        body {
+            font-family: 'Zilla Slab', serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--background-main);
+            color: var(--primary-text-color);
+            min-height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column; /* To push footer down */
+        }
+
+        .explore-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            flex-grow: 1; /* Allow content to take up space */
+        }
+
+        .explore-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-top: 10px;
+        }
+
+        .explore-header h1 {
+            color: var(--name-color);
+            font-size: 2.2em;
+            font-style: italic;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .explore-header .back-link {
+            display: inline-block;
+            margin-top: 10px;
+            text-decoration: none;
+            color: var(--title-color);
+            border: 1px solid var(--title-color);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .explore-header .back-link:hover {
+            background-color: var(--title-color);
+            color: var(--background-main);
+        }
+
+        .content-placeholder {
+            text-align: center;
+            padding: 40px 20px;
+            border: 2px dashed var(--secondary-text-color); /* Dashed border for placeholder */
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .content-placeholder p {
+            font-size: 1.2em;
+            color: var(--secondary-text-color);
+            line-height: 1.6;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px 0 10px 0;
+            font-size: 0.85em;
+            color: var(--secondary-text-color);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            margin-top: 40px; /* Space above footer */
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 600px) {
+            .explore-header h1 {
+                font-size: 2.8em;
+            }
+            .content-placeholder p {
+                font-size: 1.3em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="explore-container">
+        <header class="explore-header">
+            <h1>Creative Sandbox</h1> <!-- Simplified Title -->
+            <a href="index.html" class="back-link">« Back to Resume</a>
+        </header>
+
+        <main class="content-placeholder">
+            <p>This is where I'll showcase various creative projects and ideas.<br>Stay tuned for updates!</p>
+            <!--
+                ADD YOUR CONTENT HERE
+                You can replace this entire 'main' element or add sections within it.
+                Consider using <section>, <div>, <img>, <p>, <a>, etc.
+                For example:
+                <section class="project">
+                    <h2>Project Title</h2>
+                    <img src="your-project-image.png" alt="Description">
+                    <p>Details about your project...</p>
+                    <a href="#">Link to project (if any)</a>
+                </section>
+            -->
+        </main>
+
+    </div> <!-- End of .explore-container -->
+
+    <footer class="footer">
+        <p>© <span id="currentYear"></span> Joachim Rayski. All rights reserved.</p>
+    </footer>
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

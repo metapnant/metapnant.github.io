@@ -19,12 +19,6 @@
             --share-button-text: #FFFFFF;
             --share-button-hover-bg: #6a30cc;
 
-            --explore-button-bg: #3a2c5f; /* A new, slightly different dark purple for Explore */
-            --explore-button-text: #DED4EB; /* Using title color for text */
-            --explore-button-hover-bg: #4c3a7a; /* Lighter version of explore bg for hover */
-            --explore-button-border: #8541FF; /* Accent border to tie it in */
-
-
             --preview-button-bg: rgba(0, 0, 0, 0.65);
             --preview-button-border: #8541FF;
             --preview-button-text: #FFFFFF;
@@ -44,6 +38,7 @@
             font-family: 'Zilla Slab', serif;
             margin: 0;
             padding: 0;
+            padding-top: 75px; /* Space for the fixed explore button */
             background-color: var(--background-main);
             color: var(--primary-text-color);
             display: flex;
@@ -52,6 +47,34 @@
             min-height: 100vh;
             box-sizing: border-box;
         }
+
+        /* Explore Creative Side - Image Button (Fixed Top Left - Rounded Square) */
+        #exploreImageButton {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px; /* Rounded square corners */
+            overflow: hidden; /* Clip image to rounded square */
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: block;
+        }
+        #exploreImageButton img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Image covers the square, cropping if necessary */
+            display: block;
+        }
+        @media (hover: hover) and (pointer: fine) {
+            #exploreImageButton:hover {
+                transform: scale(1.1);
+                box-shadow: 0 3px 10px rgba(133, 65, 255, 0.4); /* Glow with name color */
+            }
+        }
+
 
         .main-content {
             width: 100%;
@@ -67,6 +90,7 @@
         .header {
             text-align: center;
             margin-bottom: 30px;
+            margin-top: 0;
         }
 
         .header h1 {
@@ -133,67 +157,37 @@
             text-align: center;
             margin-bottom: 20px;
             width: 100%;
-            display: flex; /* Use flexbox for button alignment */
-            flex-direction: column; /* Stack buttons vertically */
-            align-items: center; /* Center buttons horizontally */
-            gap: 10px; /* Space between buttons */
         }
 
-        /* General styling for action buttons (<a> and <button>) */
-        .actions .action-btn {
-            padding: 12px 28px;
-            text-align: center;
-            text-decoration: none;
-            font-size: 1em;
-            font-weight: 600;
-            margin: 0; /* Removed individual margins, using gap now */
-            cursor: pointer;
-            border-radius: 25px;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-            min-width: 180px; /* Ensure buttons have a decent minimum width */
-            box-sizing: border-box;
-        }
-
-        /* Share Button Specifics */
-        button#shareButton.action-btn {
+        .actions button#shareButton {
             background-color: var(--share-button-bg);
             color: var(--share-button-text);
             border: none;
+            padding: 12px 28px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 1em;
+            font-weight: 600;
+            margin: 8px 5px;
+            cursor: pointer;
+            border-radius: 25px;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            min-width: 180px;
+            box-sizing: border-box;
         }
         @media (hover: hover) and (pointer: fine) {
-            button#shareButton.action-btn:hover {
+            .actions button#shareButton:hover {
                 background-color: var(--share-button-hover-bg);
                 transform: translateY(-2px);
                 box-shadow: 0 4px 8px var(--glow-color);
             }
         }
-        button#shareButton.action-btn:active {
+        .actions button#shareButton:active {
             transform: translateY(1px);
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
-
-        /* Explore Button Specifics (styled as an <a> tag) */
-        a#exploreButton.action-btn {
-            background-color: var(--explore-button-bg);
-            color: var(--explore-button-text);
-            border: 1px solid var(--explore-button-border); /* Added border */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        @media (hover: hover) and (pointer: fine) {
-            a#exploreButton.action-btn:hover {
-                background-color: var(--explore-button-hover-bg);
-                border-color: var(--explore-button-hover-bg); /* Match border to bg on hover */
-                color: var(--pure-white); /* Brighter text on hover */
-                transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(133, 65, 255, 0.3); /* Use name-color derived glow */
-            }
-        }
-        a#exploreButton.action-btn:active {
-            transform: translateY(1px);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-
 
         .footer {
             width: 100%;
@@ -213,12 +207,14 @@
             .header p.subtitle {
                 font-size: 1.35em;
             }
-            .actions {
-                flex-direction: row; /* Buttons side-by-side on larger screens */
-                justify-content: center; /* Center them in the row */
+             #exploreImageButton {
+                width: 45px;
+                height: 45px;
+                top: 20px;
+                left: 20px;
             }
-            .actions .action-btn {
-                margin: 0 5px; /* Add horizontal margin back for row layout */
+            body {
+                padding-top: 80px; /* Adjust if explore button size changes */
             }
             #viewPdfButton {
                 padding: 12px 22px;
@@ -226,13 +222,18 @@
             }
         }
         @media (min-width: 768px) {
-            .actions .action-btn { /* Target both buttons for padding */
+            .actions button#shareButton {
                  padding: 14px 35px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Explore Image Button (links to explore.html) -->
+    <a href="explore.html" id="exploreImageButton" title="Explore Creative Side">
+        <img src="design.png" alt="Explore creative projects">
+    </a>
+
     <div class="main-content">
         <div class="header">
             <h1>Joachim Rayski</h1>
@@ -245,9 +246,7 @@
         </div>
 
         <div class="actions">
-            <button id="shareButton" class="action-btn" title="Copy link to clipboard">Share Link</button>
-            <!-- New Explore Button linking to creative.html -->
-            <a href="creative.html" id="exploreButton" class="action-btn">Explore Creative Side</a>
+            <button id="shareButton" title="Copy link to clipboard">Share Link</button>
         </div>
     </div>
 
@@ -256,6 +255,7 @@
     </footer>
 
     <script>
+        // JavaScript remains the same
         document.getElementById('currentYear').textContent = new Date().getFullYear();
 
         const shareButton = document.getElementById('shareButton');
