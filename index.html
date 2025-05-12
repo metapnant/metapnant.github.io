@@ -4,41 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Joachim Rayski - Resume</title>
-    <!-- Favicon -->
     <link rel="icon" href="favicon.png" type="image/png">
-    <!-- Google Fonts: Zilla Slab (including italic for name) -->
     <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet">
     <style>
-        /* CSS Custom Properties (Variables) */
         :root {
             --name-color: #8541FF;
             --title-color: #DED4EB;
             --background-main: #0D0022;
-
             --share-button-bg: #5225a4;
             --share-button-text: #FFFFFF;
             --share-button-hover-bg: #6a30cc;
-
             --preview-button-bg: rgba(0, 0, 0, 0.65);
             --preview-button-border: #8541FF;
             --preview-button-text: #FFFFFF;
             --preview-button-hover-bg: var(--share-button-bg);
-
-
             --primary-text-color: #F0F0F0;
             --secondary-text-color: #A09CB8;
             --glow-color: rgba(106, 48, 204, 0.6);
-
-
             --pure-black: #000000;
             --pure-white: #FFFFFF;
+
+            --explore-button-preferred-size: 8vw;
+            --explore-button-min-size: 40px;
+            --explore-button-max-size: 65px;
+            --explore-button-current-size: clamp(var(--explore-button-min-size), var(--explore-button-preferred-size), var(--explore-button-max-size));
+
+            --explore-button-top-offset: calc(var(--explore-button-current-size) * 0.4);
+            --explore-button-left-offset: calc(var(--explore-button-current-size) * 0.5);
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
             font-family: 'Zilla Slab', serif;
             margin: 0;
-            padding: 0;
-            padding-top: 75px; /* Space for the fixed explore button */
+            padding: 0 20px 20px 20px;
             background-color: var(--background-main);
             color: var(--primary-text-color);
             display: flex;
@@ -48,49 +50,53 @@
             box-sizing: border-box;
         }
 
-        /* Explore Creative Side - Image Button (Fixed Top Left - Rounded Square) */
         #exploreImageButton {
             position: fixed;
-            top: 15px;
-            left: 15px;
+            top: var(--explore-button-top-offset);
+            left: var(--explore-button-left-offset);
             z-index: 100;
-            width: 40px;
-            height: 40px;
-            border-radius: 8px; /* Rounded square corners */
-            overflow: hidden; /* Clip image to rounded square */
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            width: var(--explore-button-current-size);
+            height: var(--explore-button-current-size);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
             display: block;
+            background-color: rgba(255,255,255,0.05);
+            transform: translateY(-150%);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease-out, width 0.2s ease, height 0.2s ease, top 0.2s ease, left 0.2s ease;
+        }
+        #exploreImageButton.visible {
+            transform: translateY(0);
+            opacity: 1;
         }
         #exploreImageButton img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Image covers the square, cropping if necessary */
+            object-fit: cover;
             display: block;
         }
         @media (hover: hover) and (pointer: fine) {
-            #exploreImageButton:hover {
-                transform: scale(1.1);
-                box-shadow: 0 3px 10px rgba(133, 65, 255, 0.4); /* Glow with name color */
+            #exploreImageButton.visible:hover {
+                transform: scale(1.12);
+                box-shadow: 0 4px 15px rgba(133, 65, 255, 0.5);
             }
         }
-
 
         .main-content {
             width: 100%;
             max-width: 900px;
-            padding: 20px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
             align-items: center;
             flex-grow: 1;
+            padding-top: 4vh;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            margin-top: 0;
+            margin-bottom: 15px; /* ADJUSTED: Was 30px, then 20px */
         }
 
         .header h1 {
@@ -107,6 +113,16 @@
             font-size: 1.2em;
             margin-top: 0;
             font-weight: 400;
+        }
+
+        .resume-label {
+            font-size: 0.95em;
+            color: var(--secondary-text-color);
+            text-align: center;
+            margin-bottom: 8px; /* ADJUSTED: Was 10px */
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .resume-preview-area {
@@ -207,14 +223,12 @@
             .header p.subtitle {
                 font-size: 1.35em;
             }
-             #exploreImageButton {
-                width: 45px;
-                height: 45px;
-                top: 20px;
-                left: 20px;
+            .main-content {
+                padding-top: 5vh;
             }
-            body {
-                padding-top: 80px; /* Adjust if explore button size changes */
+            .resume-label {
+                font-size: 1em;
+                margin-bottom: 10px; /* ADJUSTED: Was 12px */
             }
             #viewPdfButton {
                 padding: 12px 22px;
@@ -229,7 +243,6 @@
     </style>
 </head>
 <body>
-    <!-- Explore Image Button (links to explore.html) -->
     <a href="explore.html" id="exploreImageButton" title="Explore Creative Side">
         <img src="design.png" alt="Explore creative projects">
     </a>
@@ -239,6 +252,8 @@
             <h1>Joachim Rayski</h1>
             <p class="subtitle">Multi-Skilled Support Specialist</p>
         </div>
+
+        <p class="resume-label">Resume</p>
 
         <div class="resume-preview-area">
             <img src="Resume_Preview.png" alt="Preview of Joachim Rayski's Resume" id="resumeStaticPreviewImage">
@@ -262,25 +277,66 @@
         shareButton.addEventListener('click', () => {
             const urlToShare = window.location.href;
             if (navigator.share) {
-                navigator.share({
-                    title: document.title,
-                    url: urlToShare
-                }).then(() => {
-                    console.log('Thanks for sharing!');
-                })
-                .catch(console.error);
-            }
-            else if (navigator.clipboard) {
-                navigator.clipboard.writeText(urlToShare).then(() => {
-                    alert('Link copied to clipboard!');
-                }).catch(err => {
-                    console.error('Failed to copy link: ', err);
-                    prompt("Could not copy automatically. Please copy this link:", urlToShare);
-                });
-            }
-            else {
+                navigator.share({ title: document.title, url: urlToShare })
+                    .then(() => console.log('Thanks for sharing!'))
+                    .catch(console.error);
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(urlToShare)
+                    .then(() => alert('Link copied to clipboard!'))
+                    .catch(err => {
+                        console.error('Failed to copy link: ', err);
+                        prompt("Could not copy automatically. Please copy this link:", urlToShare);
+                    });
+            } else {
                 prompt("To share, please copy this link:", urlToShare);
             }
+        });
+
+
+        const exploreButton = document.getElementById('exploreImageButton');
+        let lastScrollTop = 0;
+        const scrollThreshold = 5;
+
+        function handleScroll() {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+            if (Math.abs(scrollTop - lastScrollTop) <= scrollThreshold && scrollTop > 0) {
+                return;
+            }
+
+            if (scrollTop > lastScrollTop && scrollTop > 30) {
+                exploreButton.classList.remove('visible');
+            } else {
+                if (scrollTop < lastScrollTop || scrollTop <= 10 ) {
+                     exploreButton.classList.add('visible');
+                }
+            }
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+        }
+        
+        window.addEventListener('scroll', handleScroll);
+
+        window.addEventListener('load', () => {
+            const headerTitle = document.querySelector('.header h1');
+            if (headerTitle) {
+                const offset = 20; 
+                const elementPosition = headerTitle.getBoundingClientRect().top + window.pageYOffset;
+                const offsetPosition = elementPosition - offset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'auto' 
+                });
+            }
+
+            setTimeout(() => {
+                if (window.pageYOffset > 10) {
+                   exploreButton.classList.add('visible');
+                } else {
+                    exploreButton.classList.remove('visible');
+                }
+                lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            }, 50); 
         });
     </script>
 </body>
