@@ -15,7 +15,7 @@
   --secondary-text-color: #a09cb8;
 }
 
-/* FIX: Ensure the entire background is dark to eliminate the white bar */
+/* FIX: Ensures the entire page background is dark to eliminate the white bar */
 html {
   background-color: var(--background-main);
 }
@@ -131,7 +131,9 @@ body.loaded .pdf-container {
   transform: scale(1);
 }
 
-.pdf-container iframe {
+/* Target both iframe and embed for safety, though only embed is used now */
+.pdf-container iframe,
+.pdf-container embed { /* UPDATED: Added embed to CSS selector */
   position: absolute;
   top: 0;
   left: 0;
@@ -152,7 +154,6 @@ body.loaded .pdf-container {
   font-weight: 600;
   padding: 12px 22px;
   border-radius: 30px;
-  /* box-shadow is now managed by the animation */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Initial static shadow kept for load state */
   opacity: 0;
   transform: translateY(10px);
@@ -197,10 +198,12 @@ body.loaded .pdf-button {
 
     <main>
       <div class="pdf-container">
-        <iframe
+        <!-- CHANGED: Replaced <iframe> with <embed> to increase the chance of displaying the PDF preview inline instead of forcing a download -->
+        <embed
           src="A%20Story%20of%20Mirthful%20Reflection.pdf"
+          type="application/pdf"
           title="A Story of Mirthful Reflection PDF"
-        ></iframe>
+        />
       </div>
     </main>
   </div>
