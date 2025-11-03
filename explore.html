@@ -1,211 +1,344 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>METAPNANT - Explore</title>
-<link rel="icon" href="favicon.png" type="image/png" />
-<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet" />
-<style>
-:root {
-  --name-color: #8541ff;
-  --title-color: #ded4eb;
-  --background-main: #0d0022;
-  --primary-text-color: #f0f0f0;
-  --secondary-text-color: #a09cb8;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joachim Rayski - Resume</title>
+    <link rel="icon" href="favicon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --name-color: #8541FF;
+            --title-color: #DED4EB;
+            --background-main: #0D0022;
 
-/* dark animated gradient */
-body {
-  font-family: "Zilla Slab", serif;
-  margin: 0;
-  padding: 20px;
-  min-height: 100vh;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  color: var(--primary-text-color);
-  background: linear-gradient(
-    135deg,
-    #0b001f,
-    #180033,
-    #0d0022,
-    #1c003a,
-    #0b001f
-  );
-  background-size: 600% 600%;
-  animation: darkShift 30s ease infinite;
-  overflow-x: hidden;
-}
+            --share-button-bg: #5225a4;
+            --share-button-text: #FFFFFF;
+            --share-button-hover-bg: #6a30cc;
 
-@keyframes darkShift {
-  0%   {background-position: 0% 50%;}
-  25%  {background-position: 50% 50%;}
-  50%  {background-position: 100% 50%;}
-  75%  {background-position: 50% 50%;}
-  100% {background-position: 0% 50%;}
-}
+            /* Contact button variables removed as it's now a text link */
 
-.explore-container {
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  flex-grow: 1;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 1.2s ease, transform 1s ease;
-}
-body.loaded .explore-container {
-  opacity: 1;
-  transform: translateY(0);
-}
+            --preview-button-bg: rgba(0, 0, 0, 0.65);
+            --preview-button-border: #8541FF;
+            --preview-button-text: #FFFFFF;
+            --preview-button-hover-bg: var(--share-button-bg);
 
-.explore-header {
-  text-align: center;
-  margin-bottom: 30px;
-  padding-top: 10px;
-}
+            --primary-text-color: #F0F0F0;
+            --secondary-text-color: #A09CB8; /* Used for footer text and new contact link */
+            --glow-color: rgba(106, 48, 204, 0.6);
+            --pure-black: #000000;
+            --pure-white: #FFFFFF;
 
-.explore-header h1 {
-  color: var(--name-color);
-  font-size: 2.8em;
-  font-style: italic;
-  font-weight: 700;
-  margin-bottom: 10px;
-  letter-spacing: 1px;
-  opacity: 0;
-  transform: translateY(-10px);
-  transition: opacity 1s ease, transform 1s ease;
-}
-body.loaded .explore-header h1 {
-  opacity: 1;
-  transform: translateY(0);
-}
+            --explore-button-preferred-size: 8vw;
+            --explore-button-min-size: 40px;
+            --explore-button-max-size: 65px;
+            --explore-button-current-size: clamp(var(--explore-button-min-size), var(--explore-button-preferred-size), var(--explore-button-max-size));
 
-.explore-header .back-link {
-  display: inline-block;
-  margin-top: 10px;
-  text-decoration: none;
-  color: var(--title-color);
-  border: 1px solid var(--title-color);
-  padding: 8px 15px;
-  border-radius: 20px;
-  font-size: 0.9em;
-  font-weight: 600;
-  transition: background-color 0.3s, color 0.3s;
-}
-.explore-header .back-link:hover {
-  background-color: var(--title-color);
-  color: var(--background-main);
-}
+            --explore-button-top-offset: calc(var(--explore-button-current-size) * 0.4);
+            --explore-button-left-offset: calc(var(--explore-button-current-size) * 0.5);
+        }
 
-/* PDF container */
-.pdf-container {
-  position: relative;
-  padding-top: 75%;
-  overflow: hidden;
-  border-radius: 8px;
-  border: 2px solid var(--secondary-text-color);
-  background-color: rgba(255, 255, 255, 0.03);
-  opacity: 0;
-  transform: scale(0.98);
-  transition: opacity 1.2s ease, transform 1s ease;
-}
-body.loaded .pdf-container {
-  opacity: 1;
-  transform: scale(1);
-}
+        html {
+            scroll-behavior: smooth;
+        }
 
-.pdf-container iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-}
+        body {
+            font-family: 'Zilla Slab', serif;
+            margin: 0;
+            padding: 0 20px 20px 20px;
+            background-color: var(--background-main);
+            color: var(--primary-text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
 
-/* Fixed button with fade-in */
-.pdf-button {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  z-index: 1000;
-  background-color: var(--name-color);
-  color: var(--background-main);
-  text-decoration: none;
-  font-weight: 600;
-  padding: 12px 22px;
-  border-radius: 30px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 1s ease, transform 1s ease, background-color 0.3s;
-}
-body.loaded .pdf-button {
-  opacity: 1;
-  transform: translateY(0);
-}
-.pdf-button:hover {
-  background-color: #a678ff;
-}
+        #exploreImageButton {
+            position: fixed;
+            top: var(--explore-button-top-offset);
+            left: var(--explore-button-left-offset);
+            z-index: 100;
+            width: var(--explore-button-current-size);
+            height: var(--explore-button-current-size);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            display: block;
+            background-color: rgba(255,255,255,0.05);
+            transform: translateY(-150%);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease-out, width 0.2s ease, height 0.2s ease, top 0.2s ease, left 0.2s ease;
+        }
+        #exploreImageButton.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        #exploreImageButton img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        @media (hover: hover) and (pointer: fine) {
+            #exploreImageButton.visible:hover {
+                transform: scale(1.12);
+                box-shadow: 0 4px 15px rgba(133, 65, 255, 0.5);
+            }
+        }
 
-.footer {
-  text-align: center;
-  padding: 20px 0 10px 0;
-  font-size: 0.85em;
-  color: var(--secondary-text-color);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  margin-top: 40px;
-}
+        .main-content {
+            width: 100%;
+            max-width: 900px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1;
+            padding-top: 4vh;
+        }
 
-@media (max-width: 599px) {
-  .pdf-container {
-    padding-top: 130%;
-  }
-  .pdf-button {
-    right: 10px;
-    bottom: 10px;
-    padding: 10px 18px;
-    font-size: 0.9em;
-  }
-}
-</style>
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            color: var(--name-color);
+            font-size: 2.4em;
+            margin-bottom: 5px;
+            font-weight: 700;
+            font-style: italic;
+            line-height: 1.2;
+        }
+
+        .header p.subtitle {
+            color: var(--title-color);
+            font-size: 1.2em;
+            margin-top: 0;
+            font-weight: 400;
+        }
+
+        .resume-label {
+            font-size: 0.95em;
+            color: var(--secondary-text-color);
+            text-align: center;
+            margin-bottom: 8px;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .resume-preview-area {
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            margin: 0 auto 25px auto;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        }
+
+        #resumeStaticPreviewImage {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        #viewPdfButton {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--preview-button-bg);
+            color: var(--preview-button-text);
+            border: 1px solid var(--preview-button-border);
+            padding: 10px 20px;
+            font-size: 0.95em;
+            font-weight: 600;
+            border-radius: 20px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+            z-index: 10;
+            white-space: nowrap;
+        }
+        @media (hover: hover) and (pointer: fine) {
+            #viewPdfButton:hover {
+                background-color: var(--preview-button-hover-bg);
+                color: var(--pure-white);
+                border-color: var(--preview-button-hover-bg);
+                transform: translateX(-50%) scale(1.05);
+            }
+        }
+
+        .actions { /* Now only contains the Share button */
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        /* Common styles for action buttons/links - now primarily for Share button */
+        .action-btn {
+            padding: 12px 28px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 25px;
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            min-width: 200px;
+            box-sizing: border-box;
+            display: inline-block;
+        }
+
+        button#shareButton.action-btn {
+            background-color: var(--share-button-bg);
+            color: var(--share-button-text);
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        @media (hover: hover) and (pointer: fine) {
+            button#shareButton.action-btn:hover {
+                background-color: var(--share-button-hover-bg);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px var(--glow-color);
+            }
+        }
+        button#shareButton.action-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        /* Footer Styling */
+        .footer {
+            width: 100%;
+            padding: 15px 0;
+            text-align: center;
+            font-size: 0.85em;
+            color: var(--secondary-text-color);
+            margin-top: auto;
+            box-sizing: border-box;
+        }
+        /* NEW: Styling for the text-based "Add to Contacts" link in footer */
+        .footer-contact-link {
+            display: block; /* Makes it take its own line */
+            margin-bottom: 8px; /* Space above the copyright */
+            font-size: 0.9em; /* Slightly smaller or same as footer text */
+            color: var(--secondary-text-color); /* Consistent with footer text */
+            text-decoration: underline; /* Common for text links */
+            text-decoration-color: var(--title-color); /* Use a subtle accent for underline */
+            transition: color 0.3s, text-decoration-color 0.3s;
+        }
+        .footer-contact-link:hover {
+            color: var(--title-color); /* Brighter on hover */
+            text-decoration-color: var(--name-color); /* More prominent underline on hover */
+        }
+
+
+        @media (min-width: 600px) {
+            .header h1 {
+                font-size: 3em;
+            }
+            .header p.subtitle {
+                font-size: 1.35em;
+            }
+            /* .actions related media query for flex-direction:row removed as it's single button now */
+            .main-content {
+                padding-top: 5vh;
+            }
+            .resume-label {
+                font-size: 1em;
+                margin-bottom: 10px;
+            }
+            #viewPdfButton {
+                padding: 12px 22px;
+                font-size: 1em;
+            }
+        }
+        @media (min-width: 768px) {
+            .action-btn { /* Share button padding */
+                 padding: 14px 35px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="explore-container">
-    <header class="explore-header">
-      <h1>METAPNANT</h1>
-      <a href="index.html" class="back-link">« Back to Resume</a>
-    </header>
+    <a href="explore.html" id="exploreImageButton" title="Explore Creative Side">
+        <img src="design.png" alt="Explore creative projects">
+    </a>
 
-    <main>
-      <div class="pdf-container">
-        <iframe
-          src="A%20Story%20of%20Mirthful%20Reflection.pdf"
-          title="A Story of Mirthful Reflection PDF"
-        ></iframe>
-      </div>
-    </main>
-  </div>
+    <div class="main-content">
+        <div class="header">
+            <h1>Joachim Rayski</h1>
+            <p class="subtitle">Multi-Skilled Support Specialist</p>
+        </div>
 
-  <a
-    href="A%20Story%20of%20Mirthful%20Reflection.pdf"
-    target="_blank"
-    class="pdf-button"
-  >
-    📖 Open Fullscreen / Download
-  </a>
+        <p class="resume-label">Resume</p>
 
-  <footer class="footer">
-    <p>© <span id="currentYear"></span> Joachim Rayski. All rights reserved.</p>
-  </footer>
+        <div class="resume-preview-area">
+            <img src="Resume_Preview.png" alt="Preview of Joachim Rayski's Resume" id="resumeStaticPreviewImage">
+            <a href="Resume.pdf" target="_blank" id="viewPdfButton" aria-label="View Full Resume in New Tab">View PDF</a>
+        </div>
 
-  <script>
-    document.getElementById("currentYear").textContent = new Date().getFullYear();
-    window.addEventListener("load", () => {
-      document.body.classList.add("loaded");
-    });
-  </script>
+        <div class="actions"> <!-- Now only contains Share Button -->
+            <button id="shareButton" class="action-btn" title="Copy link to clipboard">Share Link</button>
+            <!-- "Add to Contacts" button removed from here -->
+        </div>
+    </div>
+
+    <footer class="footer">
+        <!-- NEW "Add to Contacts" Link -->
+        <a href="Joachim_Rayski_Contact.vcf" class="footer-contact-link" download>Add to Contacts</a>
+        <p>© <span id="currentYear"></span> Joachim Rayski. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // JavaScript remains the same
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        const shareButton = document.getElementById('shareButton');
+        shareButton.addEventListener('click', () => {
+            const urlToShare = window.location.href;
+            if (navigator.share) {
+                navigator.share({ title: document.title, url: urlToShare })
+                    .then(() => console.log('Thanks for sharing!'))
+                    .catch(console.error);
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(urlToShare)
+                    .then(() => alert('Link copied to clipboard!'))
+                    .catch(err => {
+                        console.error('Failed to copy link: ', err);
+                        prompt("Could not copy automatically. Please copy this link:", urlToShare);
+                    });
+            } else {
+                prompt("To share, please copy this link:", urlToShare);
+            }
+        });
+
+
+        const exploreButton = document.getElementById('exploreImageButton');
+        // ... (explore button scroll logic remains the same) ...
+        function handleExploreButtonVisibility() {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            if (scrollTop === 0) { exploreButton.classList.add('visible'); }
+            else { exploreButton.classList.remove('visible'); }
+        }
+        window.addEventListener('scroll', handleExploreButtonVisibility, false);
+        window.addEventListener('load', () => {
+            const headerTitle = document.querySelector('.header h1');
+            if (headerTitle) {
+                const offset = 20; 
+                const elementPosition = headerTitle.getBoundingClientRect().top + window.pageYOffset;
+                const offsetPosition = elementPosition - offset;
+                window.scrollTo({ top: offsetPosition, behavior: 'auto' });
+            }
+            setTimeout(() => { handleExploreButtonVisibility(); }, 50); 
+        });
+    </script>
 </body>
 </html>
