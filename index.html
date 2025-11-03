@@ -15,6 +15,11 @@
   --secondary-text-color: #a09cb8;
 }
 
+/* FIX: Ensure the entire background is dark to eliminate the white bar */
+html {
+  background-color: var(--background-main);
+}
+
 /* dark animated gradient */
 body {
   font-family: "Zilla Slab", serif;
@@ -45,6 +50,16 @@ body {
   75%  {background-position: 50% 50%;}
   100% {background-position: 0% 50%;}
 }
+
+/* Button pulse animation - synced to the 30s background rhythm */
+@keyframes buttonGlow {
+  0%   { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); filter: brightness(100%); }
+  25%  { box-shadow: 0 4px 25px rgba(133, 65, 255, 0.5); filter: brightness(110%); }
+  50%  { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); filter: brightness(100%); }
+  75%  { box-shadow: 0 4px 25px rgba(133, 65, 255, 0.5); filter: brightness(110%); }
+  100% { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); filter: brightness(100%); }
+}
+
 
 .explore-container {
   width: 100%;
@@ -125,7 +140,7 @@ body.loaded .pdf-container {
   border: none;
 }
 
-/* Fixed button with fade-in */
+/* Fixed button with fade-in and new pulse animation */
 .pdf-button {
   position: fixed;
   right: 20px;
@@ -137,10 +152,12 @@ body.loaded .pdf-container {
   font-weight: 600;
   padding: 12px 22px;
   border-radius: 30px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  /* box-shadow is now managed by the animation */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Initial static shadow kept for load state */
   opacity: 0;
   transform: translateY(10px);
   transition: opacity 1s ease, transform 1s ease, background-color 0.3s;
+  animation: buttonGlow 30s ease infinite; /* New animation for the subtle pulse */
 }
 body.loaded .pdf-button {
   opacity: 1;
