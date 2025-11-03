@@ -1,133 +1,211 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Joachim Rayski - Explore</title>
-    <!-- Favicon -->
-    <link rel="icon" href="favicon.png" type="image/png">
-    <!-- Google Fonts: Zilla Slab -->
-    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet">
-    <style>
-        /* Reusing CSS Variables for consistency */
-        :root {
-            --name-color: #8541FF;
-            --title-color: #DED4EB;
-            --background-main: #0D0022;
-            --primary-text-color: #F0F0F0;
-            --secondary-text-color: #A09CB8;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>METAPNANT - Explore</title>
+<link rel="icon" href="favicon.png" type="image/png" />
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --name-color: #8541ff;
+  --title-color: #ded4eb;
+  --background-main: #0d0022;
+  --primary-text-color: #f0f0f0;
+  --secondary-text-color: #a09cb8;
+}
 
-        body {
-            font-family: 'Zilla Slab', serif;
-            margin: 0;
-            padding: 20px;
-            background-color: var(--background-main);
-            color: var(--primary-text-color);
-            min-height: 100vh;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column; /* To push footer down */
-        }
+/* dark animated gradient */
+body {
+  font-family: "Zilla Slab", serif;
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  color: var(--primary-text-color);
+  background: linear-gradient(
+    135deg,
+    #0b001f,
+    #180033,
+    #0d0022,
+    #1c003a,
+    #0b001f
+  );
+  background-size: 600% 600%;
+  animation: darkShift 30s ease infinite;
+  overflow-x: hidden;
+}
 
-        .explore-container {
-            width: 100%;
-            max-width: 900px;
-            margin: 0 auto;
-            flex-grow: 1; /* Allow content to take up space */
-        }
+@keyframes darkShift {
+  0%   {background-position: 0% 50%;}
+  25%  {background-position: 50% 50%;}
+  50%  {background-position: 100% 50%;}
+  75%  {background-position: 50% 50%;}
+  100% {background-position: 0% 50%;}
+}
 
-        .explore-header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-top: 10px;
-        }
+.explore-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  flex-grow: 1;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 1.2s ease, transform 1s ease;
+}
+body.loaded .explore-container {
+  opacity: 1;
+  transform: translateY(0);
+}
 
-        .explore-header h1 {
-            color: var(--name-color);
-            font-size: 2.2em;
-            font-style: italic;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
+.explore-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-top: 10px;
+}
 
-        .explore-header .back-link {
-            display: inline-block;
-            margin-top: 10px;
-            text-decoration: none;
-            color: var(--title-color);
-            border: 1px solid var(--title-color);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: 600;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        .explore-header .back-link:hover {
-            background-color: var(--title-color);
-            color: var(--background-main);
-        }
+.explore-header h1 {
+  color: var(--name-color);
+  font-size: 2.8em;
+  font-style: italic;
+  font-weight: 700;
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 1s ease, transform 1s ease;
+}
+body.loaded .explore-header h1 {
+  opacity: 1;
+  transform: translateY(0);
+}
 
-        .content-placeholder {
-            text-align: center;
-            padding: 40px 20px;
-            border: 2px dashed var(--secondary-text-color); /* Dashed border for placeholder */
-            border-radius: 8px;
-            margin-top: 20px;
-        }
+.explore-header .back-link {
+  display: inline-block;
+  margin-top: 10px;
+  text-decoration: none;
+  color: var(--title-color);
+  border: 1px solid var(--title-color);
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 0.9em;
+  font-weight: 600;
+  transition: background-color 0.3s, color 0.3s;
+}
+.explore-header .back-link:hover {
+  background-color: var(--title-color);
+  color: var(--background-main);
+}
 
-        .content-placeholder p {
-            font-size: 1.2em;
-            color: var(--secondary-text-color);
-            line-height: 1.6;
-        }
+/* PDF container */
+.pdf-container {
+  position: relative;
+  padding-top: 75%;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 2px solid var(--secondary-text-color);
+  background-color: rgba(255, 255, 255, 0.03);
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 1.2s ease, transform 1s ease;
+}
+body.loaded .pdf-container {
+  opacity: 1;
+  transform: scale(1);
+}
 
-        .footer {
-            text-align: center;
-            padding: 20px 0 10px 0;
-            font-size: 0.85em;
-            color: var(--secondary-text-color);
-            border-top: 1px solid rgba(255,255,255,0.08);
-            margin-top: 40px; /* Space above footer */
-        }
+.pdf-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
 
-        /* Responsive adjustments */
-        @media (min-width: 600px) {
-            .explore-header h1 {
-                font-size: 2.8em;
-            }
-            .content-placeholder p {
-                font-size: 1.3em;
-            }
-        }
-    </style>
+/* Fixed button with fade-in */
+.pdf-button {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1000;
+  background-color: var(--name-color);
+  color: var(--background-main);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 12px 22px;
+  border-radius: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 1s ease, transform 1s ease, background-color 0.3s;
+}
+body.loaded .pdf-button {
+  opacity: 1;
+  transform: translateY(0);
+}
+.pdf-button:hover {
+  background-color: #a678ff;
+}
+
+.footer {
+  text-align: center;
+  padding: 20px 0 10px 0;
+  font-size: 0.85em;
+  color: var(--secondary-text-color);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 40px;
+}
+
+@media (max-width: 599px) {
+  .pdf-container {
+    padding-top: 130%;
+  }
+  .pdf-button {
+    right: 10px;
+    bottom: 10px;
+    padding: 10px 18px;
+    font-size: 0.9em;
+  }
+}
+</style>
 </head>
 <body>
-    <div class="explore-container">
-        <header class="explore-header">
-            <h1>Tef Riin</h1>
-            <a href="index.html" class="back-link">« Back to Resume</a>
-        </header>
+  <div class="explore-container">
+    <header class="explore-header">
+      <h1>METAPNANT</h1>
+      <a href="index.html" class="back-link">« Back to Resume</a>
+    </header>
 
-        <main class="content-placeholder">
-            <!-- PDF Embed -->
-            <iframe 
-                src="A%20Story%20of%20Mirthful%20Reflection.pdf"
-                width="100%"
-                height="800px"
-                style="border:none; border-radius:8px;"
-                title="A Story of Mirthful Reflection PDF">
-            </iframe>
-        </main>
-        
+    <main>
+      <div class="pdf-container">
+        <iframe
+          src="A%20Story%20of%20Mirthful%20Reflection.pdf"
+          title="A Story of Mirthful Reflection PDF"
+        ></iframe>
+      </div>
+    </main>
+  </div>
 
-    </div> <!-- End of .explore-container -->
+  <a
+    href="A%20Story%20of%20Mirthful%20Reflection.pdf"
+    target="_blank"
+    class="pdf-button"
+  >
+    📖 Open Fullscreen / Download
+  </a>
 
-    <footer class="footer">
-        <p>© <span id="currentYear"></span> Joachim Rayski. All rights reserved.</p>
-    </footer>
-    <script>
-        document.getElementById('currentYear').textContent = new Date().getFullYear();
-    </script>
+  <footer class="footer">
+    <p>© <span id="currentYear"></span> Joachim Rayski. All rights reserved.</p>
+  </footer>
+
+  <script>
+    document.getElementById("currentYear").textContent = new Date().getFullYear();
+    window.addEventListener("load", () => {
+      document.body.classList.add("loaded");
+    });
+  </script>
 </body>
 </html>
