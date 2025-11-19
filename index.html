@@ -1,195 +1,281 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>METAPNANT - Explore</title>
-<link rel="icon" href="favicon.png" type="image/png" />
-<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet" />
-<style>
-:root {
-  --name-color: #8541ff;
-  --title-color: #ded4eb;
-  --background-main: #0d0022;
-  --primary-text-color: #f0f0f0;
-  --secondary-text-color: #a09cb8;
-}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>METAPNANT - Explore</title>
+  <link rel="icon" href="favicon.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --name-color: #8541ff;
+      --title-color: #ded4eb;
+      --background-main: #0d0022;
+      --primary-text-color: #f0f0f0;
+      --secondary-text-color: #a09cb8;
+    }
 
-/* FIX: Ensures the entire page background is dark to eliminate the white bar */
-html {
-  background-color: var(--background-main);
-}
+    /* FIX: Ensures the entire page background is dark to eliminate the white bar */
+    html {
+      background-color: var(--background-main);
+    }
 
-/* dark animated gradient */
-body {
-  font-family: "Zilla Slab", serif;
-  margin: 0;
-  padding: 20px;
-  min-height: 100vh;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  color: var(--primary-text-color);
-  background: linear-gradient(
-    135deg,
-    #0b001f,
-    #180033,
-    #0d0022,
-    #1c003a,
-    #0b001f
-  );
-  background-size: 600% 600%;
-  animation: darkShift 30s ease infinite;
-  overflow-x: hidden;
-}
+    /* dark animated gradient */
+    body {
+      font-family: "Zilla Slab", serif;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      color: var(--primary-text-color);
+      background: linear-gradient(135deg,
+          #0b001f,
+          #180033,
+          #0d0022,
+          #1c003a,
+          #0b001f);
+      background-size: 600% 600%;
+      animation: darkShift 30s ease infinite;
+      overflow-x: hidden;
+    }
 
-@keyframes darkShift {
-  0%   {background-position: 0% 50%;}
-  25%  {background-position: 50% 50%;}
-  50%  {background-position: 100% 50%;}
-  75%  {background-position: 50% 50%;}
-  100% {background-position: 0% 50%;}
-}
+    @keyframes darkShift {
+      0% {
+        background-position: 0% 50%;
+      }
 
-/* Button pulse animation - synced to the 30s background rhythm */
-@keyframes buttonGlow {
-  0%   { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); filter: brightness(100%); }
-  25%  { box-shadow: 0 4px 25px rgba(133, 65, 255, 0.5); filter: brightness(110%); }
-  50%  { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); filter: brightness(100%); }
-  75%  { box-shadow: 0 4px 25px rgba(133, 65, 255, 0.5); filter: brightness(110%); }
-  100% { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); filter: brightness(100%); }
-}
+      25% {
+        background-position: 50% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      75% {
+        background-position: 50% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    /* Button pulse animation - synced to the 30s background rhythm */
+    @keyframes buttonGlow {
+      0% {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        filter: brightness(100%);
+      }
+
+      25% {
+        box-shadow: 0 4px 25px rgba(133, 65, 255, 0.5);
+        filter: brightness(110%);
+      }
+
+      50% {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        filter: brightness(100%);
+      }
+
+      75% {
+        box-shadow: 0 4px 25px rgba(133, 65, 255, 0.5);
+        filter: brightness(110%);
+      }
+
+      100% {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        filter: brightness(100%);
+      }
+    }
 
 
-.explore-container {
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  flex-grow: 1;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 1.2s ease, transform 1s ease;
-}
-body.loaded .explore-container {
-  opacity: 1;
-  transform: translateY(0);
-}
+    .explore-container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      flex-grow: 1;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 1.2s ease, transform 1s ease;
+    }
 
-.explore-header {
-  text-align: center;
-  margin-bottom: 30px;
-  padding-top: 10px;
-}
+    body.loaded .explore-container {
+      opacity: 1;
+      transform: translateY(0);
+    }
 
-.explore-header h1 {
-  color: var(--name-color);
-  font-size: 2.8em;
-  font-style: italic;
-  font-weight: 700;
-  margin-bottom: 10px;
-  letter-spacing: 1px;
-  opacity: 0;
-  transform: translateY(-10px);
-  transition: opacity 1s ease, transform 1s ease;
-}
-body.loaded .explore-header h1 {
-  opacity: 1;
-  transform: translateY(0);
-}
+    .explore-header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-top: 10px;
+    }
 
-.explore-header .back-link {
-  display: inline-block;
-  margin-top: 10px;
-  text-decoration: none;
-  color: var(--title-color);
-  border: 1px solid var(--title-color);
-  padding: 8px 15px;
-  border-radius: 20px;
-  font-size: 0.9em;
-  font-weight: 600;
-  transition: background-color 0.3s, color 0.3s;
-}
-.explore-header .back-link:hover {
-  background-color: var(--title-color);
-  color: var(--background-main);
-}
+    .explore-header h1 {
+      color: var(--name-color);
+      font-size: 2.8em;
+      font-style: italic;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 1s ease, transform 1s ease;
+    }
 
-/* PDF container */
-.pdf-container {
-  position: relative;
-  padding-top: 75%;
-  overflow: hidden;
-  border-radius: 8px;
-  border: 2px solid var(--secondary-text-color);
-  background-color: rgba(255, 255, 255, 0.03);
-  opacity: 0;
-  transform: scale(0.98);
-  transition: opacity 1.2s ease, transform 1s ease;
-}
-body.loaded .pdf-container {
-  opacity: 1;
-  transform: scale(1);
-}
+    body.loaded .explore-header h1 {
+      opacity: 1;
+      transform: translateY(0);
+    }
 
-/* Target both iframe and embed for safety, though only embed is used now */
-.pdf-container iframe,
-.pdf-container embed { /* UPDATED: Added embed to CSS selector */
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-}
+    .explore-header .back-link {
+      display: inline-block;
+      margin-top: 10px;
+      text-decoration: none;
+      color: var(--title-color);
+      border: 1px solid var(--title-color);
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 0.9em;
+      font-weight: 600;
+      transition: background-color 0.3s, color 0.3s;
+    }
 
-/* Fixed button with fade-in and new pulse animation */
-.pdf-button {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  z-index: 1000;
-  background-color: var(--name-color);
-  color: var(--background-main);
-  text-decoration: none;
-  font-weight: 600;
-  padding: 12px 22px;
-  border-radius: 30px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Initial static shadow kept for load state */
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 1s ease, transform 1s ease, background-color 0.3s;
-  animation: buttonGlow 30s ease infinite; /* New animation for the subtle pulse */
-}
-body.loaded .pdf-button {
-  opacity: 1;
-  transform: translateY(0);
-}
-.pdf-button:hover {
-  background-color: #a678ff;
-}
+    .explore-header .back-link:hover {
+      background-color: var(--title-color);
+      color: var(--background-main);
+    }
 
-.footer {
-  text-align: center;
-  padding: 20px 0 10px 0;
-  font-size: 0.85em;
-  color: var(--secondary-text-color);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  margin-top: 40px;
-}
+    /* PDF container */
+    .pdf-container {
+      position: relative;
+      /* padding-top: 75%; */
+      /* Removed as canvas will define height */
+      overflow-y: auto;
+      /* Allow vertical scrolling */
+      border-radius: 8px;
+      /* Border removed as requested */
+      /* border: 2px solid var(--secondary-text-color); */
+      background-color: rgba(255, 255, 255, 0.03);
+      opacity: 0;
+      transform: scale(0.98);
+      transition: opacity 1.2s ease, transform 1s ease;
+      display: flex;
+      /* Added for controls */
+      flex-direction: column;
+      /* Added for controls */
+      align-items: center;
+      /* Added for controls */
+      /* justify-content: center; */
+      /* Removed to allow pages to stack from top */
+      min-height: 400px;
+      /* Ensure container has some height before PDF loads */
+      padding: 10px;
+      /* Add some padding around the pages */
+      gap: 15px;
+      /* Space between pages */
+    }
 
-@media (max-width: 599px) {
-  .pdf-container {
-    padding-top: 130%;
-  }
-  .pdf-button {
-    right: 10px;
-    bottom: 10px;
-    padding: 10px 18px;
-    font-size: 0.9em;
-  }
-}
-</style>
+    body.loaded .pdf-container {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Target both iframe and embed for safety, though only embed is used now */
+    .pdf-container iframe,
+    .pdf-container embed {
+      /* UPDATED: Added embed to CSS selector */
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Canvas styling for PDF.js */
+    .pdf-page-canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      background-color: #fff;
+      /* PDF background */
+      border-radius: 4px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      /* Crop right side to remove white lines */
+      clip-path: inset(0 3px 0 0);
+    }
+
+
+    #loading-message {
+      color: var(--secondary-text-color);
+      font-size: 1.2em;
+      text-align: center;
+      padding: 20px;
+    }
+
+
+    /* Fixed button with fade-in and new pulse animation */
+    .pdf-button {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 1000;
+      background-color: var(--name-color);
+      color: var(--background-main);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 12px 22px;
+      border-radius: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      /* Initial static shadow kept for load state */
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 1s ease, transform 1s ease, background-color 0.3s;
+      animation: buttonGlow 30s ease infinite;
+      /* New animation for the subtle pulse */
+    }
+
+    body.loaded .pdf-button {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .pdf-button:hover {
+      background-color: #a678ff;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 20px 0 10px 0;
+      font-size: 0.85em;
+      color: var(--secondary-text-color);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      margin-top: 40px;
+    }
+
+    @media (max-width: 599px) {
+      .pdf-container {
+        /* padding-top: 130%; */
+        /* Removed as canvas will define height */
+        min-height: 300px;
+      }
+
+      .pdf-button {
+        right: 10px;
+        bottom: 10px;
+        padding: 10px 18px;
+        font-size: 0.9em;
+      }
+    }
+  </style>
 </head>
+
 <body>
   <div class="explore-container">
     <header class="explore-header">
@@ -197,22 +283,14 @@ body.loaded .pdf-button {
     </header>
 
     <main>
-      <div class="pdf-container">
-        <!-- CHANGED: Replaced <iframe> with <embed> to increase the chance of displaying the PDF preview inline instead of forcing a download -->
-        <embed
-          src="A%20Story%20of%20Mirthful%20Reflection.pdf"
-          type="application/pdf"
-          title="A Story of Mirthful Reflection PDF"
-        />
+      <div class="pdf-container" id="pdf-wrapper">
+        <div id="loading-message">Loading Story...</div>
+        <!-- Canvases will be injected here -->
       </div>
     </main>
   </div>
 
-  <a
-    href="A%20Story%20of%20Mirthful%20Reflection.pdf"
-    target="_blank"
-    class="pdf-button"
-  >
+  <a href="#" target="_blank" class="pdf-button" id="download-btn">
     📖 Open Fullscreen / Download
   </a>
 
@@ -220,11 +298,108 @@ body.loaded .pdf-button {
     <p> <span id="currentYear"></span> Tef Riin ∞ All rights reserved.</p>
   </footer>
 
+  <!-- PDF.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
+    // Set PDF.js worker source
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
     document.getElementById("currentYear").textContent = new Date().getFullYear();
-    window.addEventListener("load", () => {
+
+    const url = 'A%20Story%20of%20Mirthful%20Reflection.pdf';
+    // Cache busting: Append timestamp to force new download
+    const cacheBustedUrl = url + '?t=' + new Date().getTime();
+
+    // Update download button with fresh link
+    document.getElementById('download-btn').href = cacheBustedUrl;
+
+    const pdfWrapper = document.getElementById('pdf-wrapper');
+    let pdfDoc = null;
+    let scale = 1.5;
+
+    /**
+     * Render a specific page of the PDF
+     */
+    function renderPage(num) {
+      return pdfDoc.getPage(num).then(function (page) {
+        const canvas = document.createElement('canvas');
+        canvas.className = 'pdf-page-canvas';
+        pdfWrapper.appendChild(canvas);
+
+        const ctx = canvas.getContext('2d');
+
+        // Adjust scale based on container width
+        const wrapperWidth = pdfWrapper.clientWidth;
+        const viewport = page.getViewport({ scale: 1 });
+
+        // Calculate scale to fit width (minus padding)
+        // On mobile, we want it to fill most of the width
+        const desiredScale = (wrapperWidth - 20) / viewport.width;
+        const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
+
+        const scaledViewport = page.getViewport({ scale: finalScale });
+
+        canvas.height = scaledViewport.height;
+        canvas.width = scaledViewport.width;
+
+        const renderContext = {
+          canvasContext: ctx,
+          viewport: scaledViewport
+        };
+
+        return page.render(renderContext).promise;
+      });
+    }
+
+    /**
+     * Load and render all pages sequentially
+     */
+    async function renderAllPages() {
+      // Clear existing content (except loading message if we wanted to keep it, but we'll hide it)
+      // We keep the loading message until the first page is done or we can just clear it now
+      const loadingMsg = document.getElementById('loading-message');
+
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        await renderPage(i);
+        // Hide loading message after first page is rendered so user sees something
+        if (i === 1 && loadingMsg) {
+          loadingMsg.style.display = 'none';
+          document.body.classList.add("loaded");
+        }
+      }
+    }
+
+    /**
+     * Initialize PDF loading
+     */
+    pdfjsLib.getDocument(cacheBustedUrl).promise.then(function (pdfDoc_) {
+      pdfDoc = pdfDoc_;
+      renderAllPages();
+    }).catch(function (error) {
+      console.error('Error loading PDF:', error);
+      const loadingMsg = document.getElementById('loading-message');
+      if (loadingMsg) {
+        loadingMsg.textContent = 'Error loading PDF. Please use the download button below.';
+        loadingMsg.style.color = '#ff6b6b';
+      }
       document.body.classList.add("loaded");
+    });
+
+    // Handle resize - debounced re-render
+    let resizeTimeout;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(function () {
+        if (pdfDoc) {
+          // Remove all canvases
+          const canvases = document.querySelectorAll('.pdf-page-canvas');
+          canvases.forEach(c => c.remove());
+          // Show loading again? Or just re-render
+          renderAllPages();
+        }
+      }, 500);
     });
   </script>
 </body>
+
 </html>
