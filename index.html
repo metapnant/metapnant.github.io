@@ -189,6 +189,38 @@
       border: none;
     }
 
+    /* Wrapper for the Glass Shimmer Effect */
+    .pdf-page-wrapper {
+      position: relative;
+      margin: 0 auto;
+      border-radius: 4px;
+      overflow: hidden;
+      /* Keeps the shimmer inside */
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease;
+    }
+
+    /* The Shimmer Overlay */
+    .pdf-page-wrapper::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      /* A subtle diagonal sheen */
+      background: linear-gradient(120deg,
+          rgba(255, 255, 255, 0) 30%,
+          rgba(255, 255, 255, 0.15) 50%,
+          rgba(255, 255, 255, 0) 70%);
+      background-size: 200% 200%;
+      /* This makes the gradient stay fixed relative to viewport, causing it to 'move' across the element as you scroll */
+      background-attachment: fixed;
+      pointer-events: none;
+      z-index: 10;
+      mix-blend-mode: overlay;
+    }
+
     /* Canvas styling for PDF.js */
     .pdf-page-canvas {
       width: 100%;
@@ -197,13 +229,9 @@
       margin: 0 auto;
       background-color: #fff;
       /* PDF background */
-      border-radius: 4px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
       /* Crop right side to remove white lines */
       clip-path: inset(0 3px 0 0);
-      /* Performance optimizations REMOVED to fix flickering */
     }
-
 
     #loading-message {
       color: var(--secondary-text-color);
@@ -212,6 +240,22 @@
       padding: 20px;
     }
 
+    /* Loading Spinner */
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top-color: var(--name-color);
+      animation: spin 1s ease-in-out infinite;
+      margin: 40px auto;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
     /* Fixed button with fade-in and new pulse animation */
     .pdf-button {
@@ -291,7 +335,10 @@
 
     <main>
       <div class="pdf-container" id="pdf-wrapper">
-        <div id="loading-message">Loading Story...</div>
+        <div id="loading-message">
+          <div class="loading-spinner"></div>
+          <span>Loading Story...</span>
+        </div>
         <!-- Canvases will be injected here -->
       </div>
     </main>
@@ -322,19 +369,24 @@
 
     const pdfWrapper = document.getElementById('pdf-wrapper');
     let pdfDoc = null;
-    let scale = 1.5;
 
     /**
      * Render a specific page of the PDF
      */
     function renderPage(num) {
       return pdfDoc.getPage(num).then(function (page) {
+        // Create wrapper for the shimmer effect
+        const wrapper = document.createElement('div');
+        wrapper.className = 'pdf-page-wrapper';
+
         const canvas = document.createElement('canvas');
         canvas.className = 'pdf-page-canvas';
         // Start hidden to prevent white flicker
         canvas.style.opacity = '0';
-        canvas.style.transition = 'opacity 0.4s ease-in-out';
-        pdfWrapper.appendChild(canvas);
+        canvas.style.transition = 'opacity 0.6s ease-in-out';
+
+        wrapper.appendChild(canvas);
+        pdfWrapper.appendChild(wrapper);
 
         const ctx = canvas.getContext('2d');
 
@@ -343,14 +395,13 @@
         const viewport = page.getViewport({ scale: 1 });
 
         // Calculate scale to fit width (minus padding)
-        // On mobile, we want it to fill most of the width
-        const desiredScale = (wrapperWidth - 20) / viewport.width;
+        const desiredScale = (wrapperWidth - 40) / viewport.width; // 40px padding total
         const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
 
-        // FIX: Increase resolution for high DPI screens (mobile)
-        // We multiply by devicePixelRatio to get sharp text
-        // We also add a slight boost (1.5x) to allow for some pinch-zooming without immediate blur
-        const outputScale = (window.devicePixelRatio || 1) * 1.5;
+        // FIX: Optimize resolution for performance and stability
+        // Cap at 2.0x DPR to prevent memory crashes on mobile while maintaining good quality
+        const dpr = window.devicePixelRatio || 1;
+        const outputScale = Math.min(dpr, 2.0);
 
         const scaledViewport = page.getViewport({ scale: finalScale * outputScale });
 
@@ -373,17 +424,20 @@
      * Load and render all pages sequentially
      */
     async function renderAllPages() {
-      // Clear existing content (except loading message if we wanted to keep it, but we'll hide it)
-      // We keep the loading message until the first page is done or we can just clear it now
       const loadingMsg = document.getElementById('loading-message');
 
-      for (let i = 1; i <= pdfDoc.numPages; i++) {
+      // Render first page quickly
+      await renderPage(1);
+
+      // Hide loading message immediately after first page
+      if (loadingMsg) {
+        loadingMsg.style.display = 'none';
+        document.body.classList.add("loaded");
+      }
+
+      // Render remaining pages
+      for (let i = 2; i <= pdfDoc.numPages; i++) {
         await renderPage(i);
-        // Hide loading message after first page is rendered so user sees something
-        if (i === 1 && loadingMsg) {
-          loadingMsg.style.display = 'none';
-          document.body.classList.add("loaded");
-        }
       }
     }
 
@@ -397,22 +451,29 @@
       console.error('Error loading PDF:', error);
       const loadingMsg = document.getElementById('loading-message');
       if (loadingMsg) {
-        loadingMsg.textContent = 'Error loading PDF. Please use the download button below.';
-        loadingMsg.style.color = '#ff6b6b';
+        loadingMsg.innerHTML = '<span style="color: #ff6b6b">Error loading PDF.<br>Please use the download button.</span>';
       }
       document.body.classList.add("loaded");
     });
 
-    // Handle resize - debounced re-render
+    // Handle resize - debounced re-render with width check
     let resizeTimeout;
+    let lastWidth = window.innerWidth;
+
     window.addEventListener('resize', function () {
+      // Ignore vertical resizes (address bar on mobile)
+      if (window.innerWidth === lastWidth) return;
+
+      lastWidth = window.innerWidth;
+
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(function () {
         if (pdfDoc) {
-          // Remove all canvases
-          const canvases = document.querySelectorAll('.pdf-page-canvas');
-          canvases.forEach(c => c.remove());
-          // Show loading again? Or just re-render
+          // Remove all canvases and wrappers
+          const wrappers = document.querySelectorAll('.pdf-page-wrapper');
+          wrappers.forEach(w => w.remove());
+
+          // Show loading again briefly? No, just re-render
           renderAllPages();
         }
       }, 500);
