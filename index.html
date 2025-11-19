@@ -32,6 +32,8 @@
       display: flex;
       flex-direction: column;
       color: var(--primary-text-color);
+      background-color: var(--background-main);
+      /* Fallback for gradient */
       background: linear-gradient(135deg,
           #0b001f,
           #180033,
@@ -153,31 +155,19 @@
     /* PDF container */
     .pdf-container {
       position: relative;
-      /* padding-top: 75%; */
-      /* Removed as canvas will define height */
-      overflow-y: auto;
-      /* Allow vertical scrolling */
+      /* overflow-y: auto; REMOVED to prevent scroll conflicts */
       border-radius: 8px;
-      /* Border removed as requested */
-      /* border: 2px solid var(--secondary-text-color); */
+      /* Border removed */
       background-color: rgba(255, 255, 255, 0.03);
       opacity: 0;
       transform: scale(0.98);
       transition: opacity 1.2s ease, transform 1s ease;
       display: flex;
-      /* Added for controls */
       flex-direction: column;
-      /* Added for controls */
       align-items: center;
-      /* Added for controls */
-      /* justify-content: center; */
-      /* Removed to allow pages to stack from top */
       min-height: 400px;
-      /* Ensure container has some height before PDF loads */
       padding: 10px;
-      /* Add some padding around the pages */
       gap: 15px;
-      /* Space between pages */
     }
 
     body.loaded .pdf-container {
@@ -209,6 +199,10 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
       /* Crop right side to remove white lines */
       clip-path: inset(0 3px 0 0);
+      /* Performance optimizations for mobile scrolling */
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      will-change: transform;
     }
 
 
