@@ -199,10 +199,7 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
       /* Crop right side to remove white lines */
       clip-path: inset(0 3px 0 0);
-      /* Performance optimizations for mobile scrolling */
-      transform: translateZ(0);
-      backface-visibility: hidden;
-      will-change: transform;
+      /* Performance optimizations REMOVED to fix flickering */
     }
 
 
@@ -289,7 +286,7 @@
   </a>
 
   <footer class="footer">
-    <p> <span id="currentYear"></span> Tef Riin ∞ All rights reserved.</p>
+    <p> <span id="currentYear"></span> Tef Riin ∞</p>
   </footer>
 
   <!-- PDF.js CDN -->
