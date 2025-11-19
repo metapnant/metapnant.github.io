@@ -331,7 +331,12 @@
         const desiredScale = (wrapperWidth - 20) / viewport.width;
         const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
 
-        const scaledViewport = page.getViewport({ scale: finalScale });
+        // FIX: Increase resolution for high DPI screens (mobile)
+        // We multiply by devicePixelRatio to get sharp text
+        // We also add a slight boost (1.5x) to allow for some pinch-zooming without immediate blur
+        const outputScale = (window.devicePixelRatio || 1) * 1.5;
+
+        const scaledViewport = page.getViewport({ scale: finalScale * outputScale });
 
         canvas.height = scaledViewport.height;
         canvas.width = scaledViewport.width;
