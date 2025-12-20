@@ -77,7 +77,6 @@
       gap: 15px;
     }
 
-    /* --- PDF WRAPPER --- */
     .pdf-page-wrapper {
       position: relative;
       margin: 0 auto;
@@ -85,10 +84,10 @@
       overflow: hidden;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
       transition: transform 0.3s ease;
-      
-      /* Transparent top (for right bar), Dark bottom (for fix) */
       background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%);
       line-height: 0;
+      /* Improve scroll performance */
+      will-change: transform;
     }
 
     .pdf-page-wrapper::after {
@@ -97,13 +96,12 @@
       top: 0; left: 0; right: 0; bottom: 0;
       background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 70%);
       background-size: 200% 200%;
-      background-attachment: fixed;
+      /* Removed 'fixed' attachment to fix mobile scroll jitter */
       pointer-events: none;
       z-index: 10;
       mix-blend-mode: overlay;
     }
 
-    /* Clip Path: Right 3px (Original look), Bottom 2px (Fix) */
     .pdf-page-canvas {
       width: 100%;
       height: auto;
@@ -122,6 +120,8 @@
       align-items: center;
       gap: 80px;
       z-index: 2000;
+      /* Remove tap highlight on mobile */
+      -webkit-tap-highlight-color: transparent;
     }
 
     .nav-arrow {
@@ -130,23 +130,29 @@
       color: var(--arrow-color);
       font-size: 3.5rem;
       cursor: pointer;
-      transition: color 0.3s, transform 0.2s;
+      transition: color 0.2s, transform 0.1s;
       animation: faintFlash 5s infinite ease-in-out;
-      /* Prevent highlighting arrow text */
-      user-select: none; 
+      user-select: none;
       -webkit-user-select: none;
     }
 
-    .nav-arrow:hover {
-      color: var(--name-color);
-      transform: scale(1.2);
-    }
-
-    /* Disabled state for arrows when loading */
     .nav-arrow.disabled {
       opacity: 0.1;
-      cursor: wait;
       pointer-events: none;
+    }
+
+    /* FIX: Only apply hover effects on devices with a mouse */
+    @media (hover: hover) {
+      .nav-arrow:hover {
+        color: var(--name-color);
+        transform: scale(1.2);
+      }
+    }
+
+    /* FIX: Active state for mobile tap feedback */
+    .nav-arrow:active {
+      color: var(--name-color);
+      transform: scale(0.9);
     }
 
     .pdf-button {
@@ -166,16 +172,27 @@
       opacity: 0;
       transition: all 0.3s ease;
       animation: faintFlash 5s infinite ease-in-out;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body.loaded .pdf-button { opacity: 1; }
 
-    .pdf-button:hover {
-      color: var(--name-color);
+    /* FIX: Mouse hover only */
+    @media (hover: hover) {
+      .pdf-button:hover {
+        color: var(--name-color);
+        border-color: var(--name-color);
+        background-color: rgba(152, 0, 235, 0.05);
+        animation: none;
+        opacity: 1;
+      }
+    }
+
+    /* FIX: Mobile tap feedback */
+    .pdf-button:active {
+      background-color: rgba(152, 0, 235, 0.2);
       border-color: var(--name-color);
-      background-color: rgba(152, 0, 235, 0.05);
-      animation: none;
-      opacity: 1;
+      color: var(--name-color);
     }
 
     @media (max-width: 599px) {
@@ -206,8 +223,11 @@
       transition: color 0.1s;
     }
 
-    #song-link:hover {
-      animation: strobe 0.4615s infinite;
+    /* FIX: Mouse hover only for link */
+    @media (hover: hover) {
+      #song-link:hover {
+        animation: strobe 0.4615s infinite;
+      }
     }
 
     @keyframes strobe {
@@ -298,7 +318,6 @@
 
     let currentIndex = 0;
     let pdfDoc = null;
-    // KEY FIX: State flag to prevent rapid-fire glitches
     let isLoading = false;
 
     const pdfWrapper = document.getElementById('pdf-wrapper');
@@ -310,10 +329,7 @@
     const nextArrow = document.getElementById('next-doc');
 
     async function loadDocument(index) {
-      // 1. Safety Check: If already loading, DO NOTHING.
       if (isLoading) return;
-      
-      // 2. Set lock
       isLoading = true;
       prevArrow.classList.add('disabled');
       nextArrow.classList.add('disabled');
@@ -321,18 +337,15 @@
       const loadingMsg = document.getElementById('loading-message');
       loadingMsg.style.display = 'block';
       
-      // 3. Clear existing content immediately
       const existingPages = document.querySelectorAll('.pdf-page-wrapper');
       existingPages.forEach(p => p.remove());
 
       currentIndex = index;
       const currentDoc = library[currentIndex];
-      
       docTitle.textContent = currentDoc.title;
       const finalUrl = currentDoc.url + '?t=' + new Date().getTime();
       downloadBtn.href = finalUrl;
 
-      // Handle Link Logic
       if (currentDoc.songUrl) {
         songLink.href = currentDoc.songUrl;
         songContainer.style.opacity = "1";
@@ -354,7 +367,6 @@
       } catch (err) {
         loadingMsg.innerHTML = "Archive unavailable.";
       } finally {
-        // 4. Release lock ONLY when everything is done
         isLoading = false;
         prevArrow.classList.remove('disabled');
         nextArrow.classList.remove('disabled');
@@ -383,14 +395,14 @@
     }
 
     document.getElementById('next-doc').addEventListener('click', () => {
-      if(isLoading) return; // Double check
+      if(isLoading) return;
       let next = (currentIndex + 1) % library.length;
       window.scrollTo({ top: 0, behavior: 'smooth' });
       loadDocument(next);
     });
 
     document.getElementById('prev-doc').addEventListener('click', () => {
-      if(isLoading) return; // Double check
+      if(isLoading) return;
       let prev = (currentIndex - 1 + library.length) % library.length;
       window.scrollTo({ top: 0, behavior: 'smooth' });
       loadDocument(prev);
@@ -399,8 +411,13 @@
     document.getElementById("currentYear").textContent = new Date().getFullYear();
     loadDocument(0);
 
+    // FIX: Only re-render if WIDTH changes (ignore address bar vertical resizing)
+    let lastWidth = window.innerWidth;
     let resizeTimeout;
     window.addEventListener('resize', () => {
+      if (window.innerWidth === lastWidth) return; // Vertical scroll/address bar check
+      lastWidth = window.innerWidth;
+      
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
         if(!isLoading) loadDocument(currentIndex);
