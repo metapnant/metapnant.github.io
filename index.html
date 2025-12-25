@@ -86,7 +86,6 @@
       transition: transform 0.3s ease;
       background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%);
       line-height: 0;
-      /* Improve scroll performance */
       will-change: transform;
     }
 
@@ -96,7 +95,6 @@
       top: 0; left: 0; right: 0; bottom: 0;
       background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 70%);
       background-size: 200% 200%;
-      /* Removed 'fixed' attachment to fix mobile scroll jitter */
       pointer-events: none;
       z-index: 10;
       mix-blend-mode: overlay;
@@ -110,7 +108,6 @@
       clip-path: inset(0 3px 2px 0);
     }
 
-    /* --- CONTROLS --- */
     .nav-controls {
       position: fixed;
       bottom: 40px;
@@ -120,7 +117,6 @@
       align-items: center;
       gap: 80px;
       z-index: 2000;
-      /* Remove tap highlight on mobile */
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -141,7 +137,6 @@
       pointer-events: none;
     }
 
-    /* FIX: Only apply hover effects on devices with a mouse */
     @media (hover: hover) {
       .nav-arrow:hover {
         color: var(--name-color);
@@ -149,7 +144,6 @@
       }
     }
 
-    /* FIX: Active state for mobile tap feedback */
     .nav-arrow:active {
       color: var(--name-color);
       transform: scale(0.9);
@@ -177,7 +171,6 @@
 
     body.loaded .pdf-button { opacity: 1; }
 
-    /* FIX: Mouse hover only */
     @media (hover: hover) {
       .pdf-button:hover {
         color: var(--name-color);
@@ -188,7 +181,6 @@
       }
     }
 
-    /* FIX: Mobile tap feedback */
     .pdf-button:active {
       background-color: rgba(152, 0, 235, 0.2);
       border-color: var(--name-color);
@@ -223,10 +215,9 @@
       transition: color 0.1s;
     }
 
-    /* FIX: Mouse hover only for link */
     @media (hover: hover) {
       #song-link:hover {
-        animation: strobe 0.4615s infinite;
+        animation: strobe linear infinite;
       }
     }
 
@@ -290,7 +281,7 @@
   <footer class="footer">
     <p><span id="currentYear"></span> Tef Riin ∞</p>
     <div id="song-link-container">
-      <a href="#" id="song-link" target="_blank">In Love With</a>
+      <a href="#" id="song-link" target="_blank">Starflower</a>
     </div>
   </footer>
 
@@ -302,17 +293,23 @@
       { 
         title: "METAPNANT", 
         url: "A%20Story%20of%20Mirthful%20Reflection.pdf",
-        songUrl: "https://www.youtube.com/watch?v=MEPqb4DuCD8" 
+        songUrl: "https://www.youtube.com/watch?v=lAfXv14Q83Q",
+        songTitle: "Starflower",
+        bpm: 94.54 
       },
       { 
         title: "THE REMINDER", 
         url: "The%20Reminder.pdf",
-        songUrl: null 
+        songUrl: null,
+        songTitle: null,
+        bpm: 0 
       },
       { 
         title: "PHOENIX NEST", 
         url: "The%20Phoenix%20Nest.pdf",
-        songUrl: "https://soundcloud.com/metapnant/in-love-with"
+        songUrl: "https://soundcloud.com/metapnant/in-love-with",
+        songTitle: "In Love With",
+        bpm: 130 
       }
     ];
 
@@ -346,8 +343,17 @@
       const finalUrl = currentDoc.url + '?t=' + new Date().getTime();
       downloadBtn.href = finalUrl;
 
+      // Update Song details and BPM flashing speed
       if (currentDoc.songUrl) {
         songLink.href = currentDoc.songUrl;
+        songLink.textContent = currentDoc.songTitle;
+        
+        // Dynamic BPM Calculation (60 / BPM = seconds per cycle)
+        if (currentDoc.bpm > 0) {
+            const duration = (60 / currentDoc.bpm).toFixed(5);
+            songLink.style.animationDuration = duration + "s";
+        }
+
         songContainer.style.opacity = "1";
         songContainer.style.visibility = "visible";
       } else {
@@ -411,11 +417,10 @@
     document.getElementById("currentYear").textContent = new Date().getFullYear();
     loadDocument(0);
 
-    // FIX: Only re-render if WIDTH changes (ignore address bar vertical resizing)
     let lastWidth = window.innerWidth;
     let resizeTimeout;
     window.addEventListener('resize', () => {
-      if (window.innerWidth === lastWidth) return; // Vertical scroll/address bar check
+      if (window.innerWidth === lastWidth) return; 
       lastWidth = window.innerWidth;
       
       clearTimeout(resizeTimeout);
