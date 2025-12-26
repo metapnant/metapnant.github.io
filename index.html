@@ -215,9 +215,10 @@
       transition: color 0.1s;
     }
 
+    /* Restored original syntax with default duration */
     @media (hover: hover) {
       #song-link:hover {
-        animation: strobe linear infinite;
+        animation: strobe 0.4615s infinite;
       }
     }
 
@@ -293,7 +294,7 @@
       { 
         title: "METAPNANT", 
         url: "A%20Story%20of%20Mirthful%20Reflection.pdf",
-        songUrl: "https://www.youtube.com/watch?v=lAfXv14Q83Q",
+        songUrl: "https://www.youtube.com/watch?v=lAfXv14Q83Q", 
         songTitle: "Starflower",
         bpm: 94.54 
       },
@@ -343,15 +344,19 @@
       const finalUrl = currentDoc.url + '?t=' + new Date().getTime();
       downloadBtn.href = finalUrl;
 
-      // Update Song details and BPM flashing speed
+      // UPDATE LINK TEXT AND BPM ANIMATION
       if (currentDoc.songUrl) {
         songLink.href = currentDoc.songUrl;
         songLink.textContent = currentDoc.songTitle;
-        
-        // Dynamic BPM Calculation (60 / BPM = seconds per cycle)
+
+        // Calculate animation duration (60 / BPM = seconds)
+        // If BPM is provided, we override the default CSS duration
         if (currentDoc.bpm > 0) {
             const duration = (60 / currentDoc.bpm).toFixed(5);
             songLink.style.animationDuration = duration + "s";
+        } else {
+            // Reset to CSS default if no BPM specified
+            songLink.style.animationDuration = ""; 
         }
 
         songContainer.style.opacity = "1";
