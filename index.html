@@ -215,7 +215,6 @@
       transition: color 0.1s;
     }
 
-    /* Restored original syntax with default duration */
     @media (hover: hover) {
       #song-link:hover {
         animation: strobe 0.4615s infinite;
@@ -294,23 +293,23 @@
       { 
         title: "METAPNANT", 
         url: "A%20Story%20of%20Mirthful%20Reflection.pdf",
-        songUrl: "https://www.youtube.com/watch?v=lAfXv14Q83Q", 
-        songTitle: "Starflower",
-        bpm: 94.54 
+        songUrl: "https://soundcloud.com/metapnant/in-love-with", 
+        songTitle: "In Love With",
+        bpm: 130 
       },
       { 
         title: "THE REMINDER", 
         url: "The%20Reminder.pdf",
-        songUrl: null,
-        songTitle: null,
-        bpm: 0 
+        songUrl: "https://www.youtube.com/watch?v=JuzzliKBfss", // Add your Breathe Again link here
+        songTitle: "Breathe Again ∞ Timelines",
+        bpm: 120 
       },
       { 
         title: "PHOENIX NEST", 
         url: "The%20Phoenix%20Nest.pdf",
-        songUrl: "https://soundcloud.com/metapnant/in-love-with",
-        songTitle: "In Love With",
-        bpm: 130 
+        songUrl: "https://www.youtube.com/watch?v=lAfXv14Q83Q", // Add Starflower YouTube link here
+        songTitle: "Starflower",
+        bpm: 94.54 
       }
     ];
 
@@ -349,14 +348,12 @@
         songLink.href = currentDoc.songUrl;
         songLink.textContent = currentDoc.songTitle;
 
-        // Calculate animation duration (60 / BPM = seconds)
-        // If BPM is provided, we override the default CSS duration
+        // Calculate animation duration
         if (currentDoc.bpm > 0) {
             const duration = (60 / currentDoc.bpm).toFixed(5);
             songLink.style.animationDuration = duration + "s";
         } else {
-            // Reset to CSS default if no BPM specified
-            songLink.style.animationDuration = ""; 
+            songLink.style.animationDuration = ""; // Defaults to CSS value or 0
         }
 
         songContainer.style.opacity = "1";
