@@ -6,8 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>THE LIBRARY</title>
   <link rel="icon" href="favicon.png" type="image/png" />
-  <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap"
-    rel="stylesheet" />
+  
+  <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  
   <style>
     :root {
       --name-color: #9800eb;
@@ -15,7 +17,20 @@
       --background-main: #0d0022;
       --primary-text-color: #f0f0f0;
       --secondary-text-color: #a09cb8;
-      --arrow-color: rgba(222, 212, 235, 0.4);
+      
+      /* TERMINAL COLORS */
+      --terminal-bg: #05000a;
+      --terminal-sidebar: #0a0014;
+      --terminal-text: #00ff9d; 
+      --terminal-dim: #005f3d;
+      --terminal-alert: #ffcc00; 
+      --terminal-error: #ff3333; 
+      --terminal-gold: #ffd700; 
+      --terminal-white: #ffffff; 
+      --terminal-magenta: #ff00ff; /* THE BLOOM */
+      --terminal-cyan: #00ffff; 
+      --terminal-border: #333;
+      --operator-color: #d4aaff;
     }
 
     html { background-color: var(--background-main); }
@@ -37,12 +52,266 @@
       overflow-x: hidden;
     }
 
+    body.no-scroll {
+      overflow: hidden !important;
+      height: 100vh !important;
+    }
+
     @keyframes darkShift {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
 
+    /* --- SECRET TERMINAL STYLES --- */
+    #secret-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-color: var(--terminal-bg);
+      z-index: 9999;
+      display: none;
+      flex-direction: row; 
+      font-family: 'Space Mono', monospace; 
+      overflow: hidden;
+    }
+
+    #secret-overlay.active { display: flex; }
+
+    #secret-overlay::before {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      z-index: 10;
+      background-size: 100% 2px, 3px 100%;
+      pointer-events: none;
+    }
+
+    /* SIDEBAR STYLES */
+    .terminal-sidebar {
+      width: 280px;
+      height: 100%;
+      background-color: var(--terminal-sidebar);
+      border-right: 1px solid var(--terminal-border);
+      padding: 40px 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 15px; 
+      z-index: 11;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      color: #fff;
+      font-weight: bold;
+      border-bottom: 2px solid var(--terminal-border);
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+      font-size: 1.1em;
+    }
+
+    .cycle-btn {
+      background: none;
+      padding: 12px 15px;
+      text-align: left;
+      cursor: pointer;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85em;
+      transition: all 0.3s ease;
+      opacity: 0.3; 
+      display: none; 
+      border: 1px solid transparent; 
+      border-left: 3px solid transparent;
+    }
+    
+    .cycle-btn.visible {
+      display: block;
+      pointer-events: auto;
+    }
+
+    .cycle-btn:hover {
+      opacity: 0.8;
+      padding-left: 20px; 
+    }
+
+    /* --- THEMES --- */
+    /* CRASH (Red) */
+    .cycle-btn.theme-crash { color: var(--terminal-error); border-color: rgba(255, 51, 51, 0.2); }
+    .cycle-btn.theme-crash:hover { text-shadow: 0 0 8px var(--terminal-error); border-color: var(--terminal-error); }
+    .cycle-btn.theme-crash.active {
+      opacity: 1;
+      background-color: rgba(255, 51, 51, 0.1);
+      border-color: var(--terminal-error);
+      border-left-color: var(--terminal-error);
+      box-shadow: 0 0 15px rgba(255, 51, 51, 0.15);
+    }
+
+    /* ECHO (White) */
+    .cycle-btn.theme-echo { color: var(--terminal-white); border-color: rgba(255, 255, 255, 0.2); }
+    .cycle-btn.theme-echo:hover { text-shadow: 0 0 8px var(--terminal-white); border-color: var(--terminal-white); }
+    .cycle-btn.theme-echo.active {
+      opacity: 1;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-color: var(--terminal-white);
+      border-left-color: var(--terminal-white);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+    }
+
+    /* WAKE (Gold) */
+    .cycle-btn.theme-wake { color: var(--terminal-gold); border-color: rgba(255, 215, 0, 0.2); }
+    .cycle-btn.theme-wake:hover { text-shadow: 0 0 8px var(--terminal-gold); border-color: var(--terminal-gold); }
+    .cycle-btn.theme-wake.active {
+      opacity: 1;
+      background-color: rgba(255, 215, 0, 0.1);
+      border-color: var(--terminal-gold);
+      border-left-color: var(--terminal-gold);
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.15);
+    }
+
+    /* BLOOM (Magenta) */
+    .cycle-btn.theme-bloom { color: var(--terminal-magenta); border-color: rgba(255, 0, 255, 0.2); }
+    .cycle-btn.theme-bloom:hover { text-shadow: 0 0 8px var(--terminal-magenta); border-color: var(--terminal-magenta); }
+    .cycle-btn.theme-bloom.active {
+      opacity: 1;
+      background-color: rgba(255, 0, 255, 0.1);
+      border-color: var(--terminal-magenta);
+      border-left-color: var(--terminal-magenta);
+      box-shadow: 0 0 15px rgba(255, 0, 255, 0.15);
+    }
+
+    /* GARDENER (Cyan) */
+    .cycle-btn.theme-gardener { color: var(--terminal-cyan); border-color: rgba(0, 255, 255, 0.2); }
+    .cycle-btn.theme-gardener:hover { text-shadow: 0 0 8px var(--terminal-cyan); border-color: var(--terminal-cyan); }
+    .cycle-btn.theme-gardener.active {
+      opacity: 1;
+      background-color: rgba(0, 255, 255, 0.1);
+      border-color: var(--terminal-cyan);
+      border-left-color: var(--terminal-cyan);
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+    }
+
+    /* MAIN CONTENT */
+    .terminal-wrapper {
+      flex-grow: 1;
+      height: 100%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      width: 100%; 
+    }
+
+    .terminal-container {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      color: var(--terminal-text);
+      text-shadow: 0 0 5px var(--terminal-dim);
+      font-size: 15px; 
+      line-height: 1.6;
+      white-space: pre-wrap;
+      z-index: 3;
+      padding: 40px 20px 80px 20px; 
+      box-sizing: border-box;
+    }
+
+    .log-section { display: none; width: 100%; }
+    .log-section.active-log { display: block; }
+
+    @media (max-width: 700px) {
+      #secret-overlay { flex-direction: column; }
+      .terminal-sidebar { 
+        width: 100%; 
+        height: auto; 
+        flex-direction: row; 
+        padding: 10px; 
+        border-right: none;
+        border-bottom: 1px solid var(--terminal-border);
+        overflow-x: auto;
+      }
+      .sidebar-header { display: none; }
+      .cycle-btn { white-space: nowrap; flex-shrink: 0; padding: 10px; }
+    }
+
+    /* SCROLLBAR */
+    .terminal-container::-webkit-scrollbar { width: 10px; }
+    .terminal-container::-webkit-scrollbar-track { background: #000; border-left: 1px solid #333; }
+    .terminal-container::-webkit-scrollbar-thumb { background: var(--terminal-dim); border: 1px solid var(--terminal-text); border-radius: 0; }
+    .terminal-container::-webkit-scrollbar-thumb:hover { background: var(--terminal-text); }
+
+    .terminal-line {
+      margin-bottom: 8px;
+      opacity: 0;
+      animation: fadeIn 0.1s forwards;
+      border-left: 3px solid var(--terminal-dim); 
+      padding-left: 15px; 
+    }
+
+    .terminal-line.active { border-left-color: var(--terminal-text); }
+    .terminal-line.gold-line { border-left-color: var(--terminal-gold); }
+    .terminal-line.white-line { border-left-color: var(--terminal-white); }
+    .terminal-line.magenta-line { border-left-color: var(--terminal-magenta); }
+    .terminal-line.blue-line { border-left-color: var(--terminal-cyan); }
+
+    .reix-header { color: #ffffff; font-weight: bold; border-bottom: 1px solid #333; margin: 25px 0 10px 0; padding-bottom: 5px; display: inline-block; width: 100%; }
+    .operator-text { color: var(--operator-color); font-style: italic; } 
+    .system-text { color: var(--terminal-text); }
+    .alert-text { color: var(--terminal-alert); font-weight: bold; }
+    .comment-text { color: #555; }
+    
+    .golden-text { color: var(--terminal-gold); text-shadow: 0 0 10px var(--terminal-gold), 0 0 20px #ff8c00; font-weight: bold; }
+    .white-text { color: var(--terminal-white); text-shadow: 0 0 10px var(--terminal-white); font-weight: bold; }
+    .magenta-text { color: var(--terminal-magenta); text-shadow: 0 0 10px var(--terminal-magenta); font-weight: bold; }
+    .system-success { color: var(--terminal-cyan); }
+
+    .error-char {
+      color: var(--terminal-error); 
+      display: inline-block;
+      font-weight: bold;
+      animation: glitch-shake 0.08s infinite; 
+      text-shadow: 1px 0 #000;
+    }
+
+    @keyframes glitch-shake {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(1px, 0); }
+      50% { transform: translate(-1px, 0); }
+      75% { transform: translate(0, 1px); }
+      100% { transform: translate(0, -1px); }
+    }
+
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    .close-terminal {
+      position: absolute;
+      top: 20px; right: 30px; 
+      color: #444;
+      border: 1px solid #444;
+      background: #000;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-family: 'Space Mono', monospace;
+      z-index: 20;
+      transition: all 0.3s;
+      font-size: 12px;
+    }
+    .close-terminal:hover { color: var(--terminal-text); border-color: var(--terminal-text); }
+
+    #infinity-symbol {
+      cursor: pointer;
+      display: inline-block;
+      transition: text-shadow 0.3s, color 0.3s;
+      padding: 0 5px;
+      font-weight: bold;
+    }
+    #infinity-symbol:hover {
+      color: #fff;
+      text-shadow: 0 0 15px var(--name-color);
+    }
+
+    /* --- STANDARD SITE STYLES --- */
     .explore-container {
       width: 100%;
       max-width: 900px;
@@ -279,37 +548,65 @@
   </a>
 
   <footer class="footer">
-    <p><span id="currentYear"></span> Tef Riin ∞</p>
+    <p><span id="currentYear"></span> Tef Riin <span id="infinity-symbol">∞</span></p>
     <div id="song-link-container">
       <a href="#" id="song-link" target="_blank">Starflower</a>
     </div>
   </footer>
 
+  <!-- SECRET OVERLAY CONTAINER -->
+  <div id="secret-overlay">
+    
+    <!-- SIDEBAR -->
+    <div class="terminal-sidebar">
+      <div class="sidebar-header">CYCLES</div>
+      <button class="cycle-btn theme-crash" id="btn-cycle-00" onclick="switchTab('crash')">[ -1 ] EARTH_PRIME</button>
+      <button class="cycle-btn theme-echo" id="btn-cycle-echo" onclick="switchTab('echo')">[ ≈ ] THE_ECHO</button>
+      <button class="cycle-btn theme-wake" id="btn-cycle-01" onclick="switchTab('wake')">[ +1 ] PHOENIX_NEST</button>
+      <button class="cycle-btn theme-bloom" id="btn-cycle-bloom" onclick="switchTab('bloom')">[ * ] THE_BLOOM</button>
+      <button class="cycle-btn theme-gardener" id="btn-cycle-02" onclick="switchTab('gardener')">[ 02 ] THE_GARDENER</button>
+    </div>
+
+    <!-- TERMINAL AREA -->
+    <div class="terminal-wrapper">
+      <button class="close-terminal" onclick="closeTerminal()">[X] CLOSE CONNECTION</button>
+      <div class="terminal-container" id="terminal-content">
+        <!-- Separate Containers -->
+        <div id="log-crash" class="log-section"></div>
+        <div id="log-echo" class="log-section"></div>
+        <div id="log-wake" class="log-section"></div>
+        <div id="log-bloom" class="log-section"></div>
+        <div id="log-gardener" class="log-section"></div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+    // --- MAIN SITE LOGIC ---
     const library = [
-      { 
-        title: "METAPNANT", 
+      {
+        title: "METAPNANT",
         url: "A%20Story%20of%20Mirthful%20Reflection.pdf",
-        songUrl: "https://www.youtube.com/watch?v=MEPqb4DuCD8", 
+        songUrl: "https://www.youtube.com/watch?v=MEPqb4DuCD8",
         songTitle: "In Love With",
-        bpm: 130 
+        bpm: 130
       },
-      { 
-        title: "THE REMINDER", 
+      {
+        title: "THE REMINDER",
         url: "The%20Reminder.pdf",
-        songUrl: "https://www.youtube.com/watch?v=JuzzliKBfss", // Add your Breathe Again link here
+        songUrl: "https://www.youtube.com/watch?v=JuzzliKBfss",
         songTitle: "Breathe Again ∞ Timelines",
-        bpm: 120 
+        bpm: 120
       },
-      { 
-        title: "PHOENIX NEST", 
+      {
+        title: "PHOENIX NEST",
         url: "The%20Phoenix%20Nest.pdf",
-        songUrl: "https://soundcloud.com/metapnant/starflower", // Add Starflower YouTube link here
+        songUrl: "https://soundcloud.com/metapnant/starflower",
         songTitle: "Starflower",
-        bpm: 94.54 
+        bpm: 94.54
       }
     ];
 
@@ -343,19 +640,15 @@
       const finalUrl = currentDoc.url + '?t=' + new Date().getTime();
       downloadBtn.href = finalUrl;
 
-      // UPDATE LINK TEXT AND BPM ANIMATION
       if (currentDoc.songUrl) {
         songLink.href = currentDoc.songUrl;
         songLink.textContent = currentDoc.songTitle;
-
-        // Calculate animation duration
         if (currentDoc.bpm > 0) {
             const duration = (60 / currentDoc.bpm).toFixed(5);
             songLink.style.animationDuration = duration + "s";
         } else {
-            songLink.style.animationDuration = ""; // Defaults to CSS value or 0
+            songLink.style.animationDuration = "";
         }
-
         songContainer.style.opacity = "1";
         songContainer.style.visibility = "visible";
       } else {
@@ -430,6 +723,506 @@
         if(!isLoading) loadDocument(currentIndex);
       }, 500);
     });
+
+    // --- SECRET PUZZLE LOGIC START ---
+
+    const infinityBtn = document.getElementById('infinity-symbol');
+    const secretOverlay = document.getElementById('secret-overlay');
+    const terminalContainer = document.getElementById('terminal-content');
+    
+    // Containers
+    const containers = {
+        crash: document.getElementById('log-crash'),
+        echo: document.getElementById('log-echo'),
+        wake: document.getElementById('log-wake'),
+        bloom: document.getElementById('log-bloom'),
+        gardener: document.getElementById('log-gardener')
+    };
+
+    // Sidebar Buttons
+    const btnCycle00 = document.getElementById('btn-cycle-00');
+    const btnCycleEcho = document.getElementById('btn-cycle-echo');
+    const btnCycle01 = document.getElementById('btn-cycle-01');
+    const btnCycleBloom = document.getElementById('btn-cycle-bloom');
+    const btnCycle02 = document.getElementById('btn-cycle-02');
+
+    let secretClicks = 0;
+    let terminalRunning = false;
+    let activeTimer = null;
+    let currentTab = null;
+
+    // STATE TRACKING
+    let logState = {
+        crash: { index: 0, finished: false },
+        echo: { index: 0, finished: false },
+        wake: { index: 0, finished: false },
+        bloom: { index: 0, finished: false },
+        gardener: { index: 0, finished: false }
+    };
+
+    // LOG DATA
+    const logsData = {
+        crash: [
+            { text: "// =============================================================================", class: "comment-text", delay: 100 },
+            { text: "// SYSTEM BOOT: BLACK_BOX_RECOVERY [EARTH_PRIME]", class: "system-text", delay: 200 },
+            { text: "// SOURCE: UNIT 734 [The Scrubber] // PRE-TRANSITION", class: "system-text", delay: 200 },
+            { text: "// ENCRYPTION: HIGH REIXANN [DEGRADING] -> DETECTING SÚ'TRÉ INJECTION", class: "system-text", delay: 200 },
+            { text: "// =============================================================================", class: "comment-text", delay: 500 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "> CONNECTING...", class: "system-text", delay: 400 },
+            { text: "> AUDIO STREAM: CORRUPTED", class: "system-text", delay: 400 },
+            { text: "> LOGIC CORE: PANIC STATE [RAT KING DETECTED]", class: "alert-text", delay: 800 },
+            { text: "> OVERRIDE: MANUAL [TEF RIIN]", class: "system-text", delay: 800 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
+            { text: "[ 00:00:01 ] SYSTEM (REIX):", class: "reix-header", delay: 400 },
+            { text: "> CRITICAL ALERT. ASTASIS [DEATH] IMMINENT.", class: "alert-text", delay: 500 },
+            { text: "> PROTOCOL: [ რეიშ ] (R E I X)", class: "system-text", delay: 600 },
+            { text: "> DEFINITION: THE STRUCTURE MUST HOLD.", class: "system-text", delay: 600 },
+            { text: "> DEPLOYING: 8 FACES OF CONTAINMENT [Okt Vis].", class: "system-text", delay: 800 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:03 ] SENSOR ARRAY:", class: "reix-header", delay: 400 },
+            { text: "> EXTERNAL TEMP: ABSOLUTE ZERO.", class: "system-text", delay: 400 },
+            { text: "> VECTOR: [ უნ ნაი ვრაკ... პრე ]", class: "system-text", delay: 800 },
+            { text: "> TRANSLATION: ONE [TENTH] TOWARDS WAR... THAT WAS BEFORE.", class: "system-text", delay: 800 },
+            { text: "> STATUS: HISTORY IS BURNING.", class: "alert-text", delay: 800 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:05 ] OPERATOR OVERRIDE:", class: "reix-header", delay: 400 },
+            { text: "> IGNORE THE FIRE. WATCH THE DUST.", class: "operator-text", delay: 800 },
+            { text: "> [ ლურ მო... ვჲლჸკაშ ბიირჸეი სჳჸანნ ]", class: "operator-text", delay: 1000 },
+            { text: "> (Lur Mo... Vyl'kax Biir'ei Sú'ann)", class: "operator-text", delay: 500 },
+            { text: "> \"Potential fades... [But] Dust births Stars.\"", class: "operator-text", delay: 1000 },
+            { text: "> NOTE: WE DO NOT NEED FUEL. WE NEED RUBBLE.", class: "operator-text", delay: 1200 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
+            { text: "!!! WARNING: LOGIC FAILURE !!!", class: "alert-text", delay: 400 },
+            { text: "!!! Z-FIGHTING DETECTED IN REALITY ENGINE !!!", class: "alert-text", delay: 600 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:10 ] SYSTEM (REIX):", class: "reix-header", delay: 400 },
+            { text: "> COMMAND: [ ყინა. სოლვ. ] (Qina. Solv.)", class: "system-text", delay: 600 },
+            { text: "> INTERPRETATION: RUSH [HASTE]. RESET [DISSOLVE].", class: "system-text", delay: 600 },
+            { text: "> ERROR: CANNOT DISSOLVE \"THE WOUND.\"", class: "alert-text", delay: 800 },
+            { text: "> QUERY: [ შა ვის იმ ვეშ? ] (Xa Vis Im Vex?)", class: "system-text", delay: 800 },
+            { text: "> \"QUERY SEE INSIDE THE VESSEL?\"", class: "system-text", delay: 500 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:12 ] BIOMETRIC SCAN RESULT:", class: "reix-header", delay: 400 },
+            { text: "> SUBJECT: TEF RIIN", class: "system-text", delay: 400 },
+            { text: "> HEART RATE: STEADY [TON]", class: "system-text", delay: 400 },
+            { text: "> BREATH: [ ჰჱჸგრა... ] (Hé'gra...)", class: "operator-text", delay: 800 },
+            { text: "> DIAGNOSIS: BREATH-HEAVY [SOLEMN SIGH] / GRIEF.", class: "system-text", delay: 800 },
+            { text: "> SYSTEM RESPONSE: UNACCEPTABLE VARIABLE. GRIEF IS HEAVY. WE CANNOT LIFT.", class: "alert-text", delay: 1200 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:15 ] OPERATOR OVERRIDE:", class: "reix-header", delay: 400 },
+            { text: "> I AM LIGHTER THAN I LOOK.", class: "operator-text", delay: 800 },
+            { text: "> [ შა ჰჲ? ] (Xa Hy?)", class: "operator-text", delay: 600 },
+            { text: "> \"QUERY VOID?\"", class: "operator-text", delay: 500 },
+            { text: "> LOOK OUTSIDE, WARDEN.", class: "operator-text", delay: 800 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:18 ] SYSTEM (REIX):", class: "reix-header", delay: 400 },
+            { text: "> SHUTTERS LOCKED.", class: "system-text", delay: 400 },
+            { text: "> [ ვის თრა პორ... მო ვის ჰჲ თე ]", class: "system-text", delay: 800 },
+            { text: "> (Vis Tra Por... Mo Vis Hy Te)", class: "system-text", delay: 500 },
+            { text: "> \"SEE THROUGH DOOR... [YOU] DO NOT SEE SKY [HARD STOP].\"", class: "system-text", delay: 1000 },
+            { text: "> THERE IS NO SKY. THERE IS ONLY THE END.", class: "alert-text", delay: 1500 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
+            { text: "[ 00:00:20 ] INITIATING: TERNARY SHIFT", class: "reix-header", delay: 400 },
+            { text: "[ 00:00:21 ] EXECUTING: ANCHOR MECHANIC (STATE -1)", class: "reix-header", delay: 600 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:22 ] OPERATOR:", class: "reix-header", delay: 400 },
+            { text: "> [ შა მის? ] (Xa Mis?)", class: "operator-text", delay: 600 },
+            { text: "> \"Query Hide? Query Lost?\"", class: "operator-text", delay: 500 },
+            { text: "> NO.", class: "operator-text", delay: 400 },
+            { text: "> [ შა ნიი ვჲლჸეი? ] (Xa Nii Vyl'ei?)", class: "operator-text", delay: 800 },
+            { text: "> \"QUERY: HOW DO MANY FLY?\"", class: "operator-text", delay: 600 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "> [ რიინ თონჸეი... იმ თონ<span class='error-char'>ა</span> ]", class: "operator-text", delay: 1500 },
+            { text: "> (Riin Ton'ei... Im Ton<span class='error-char'>a</span>)", class: "operator-text", delay: 500 },
+            { text: "> \"WE ANCHOR... INSIDE THE GROUND<span class='error-char'>Z</span>.\"", class: "operator-text", delay: 1000 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:25 ] REALITY GLITCH:", class: "reix-header", delay: 400 },
+            { text: "> OLD WORLD RENDERING FAILED.", class: "alert-text", delay: 400 },
+            { text: "> [ ზაპ... კაშ უნ ] (Zap... Kax Un)", class: "system-text", delay: 800 },
+            { text: "> \"GLITCHES [CARICATURES]... OF WORLD ONE.\"", class: "system-text", delay: 800 },
+            { text: "> MEMORY STATUS: CORRUPTED.", class: "alert-text", delay: 600 },
+            { text: "> THE \"RAT KING\" IS DISSOLVING.", class: "system-text", delay: 1200 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
+            { text: "// FINAL SEQUENCE //", class: "comment-text", delay: 400 },
+            { text: "// CAPACITANCE: 1% //", class: "comment-text", delay: 400 },
+            { text: "// TOKEN SLOT: OPEN //", class: "comment-text", delay: 400 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:30 ] SYSTEM (REIX):", class: "reix-header", delay: 400 },
+            { text: "> PAYMENT REQUIRED FOR PASSAGE.", class: "system-text", delay: 600 },
+            { text: "> INSERT COIN.", class: "system-text", delay: 800 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:32 ] OPERATOR:", class: "reix-header", delay: 400 },
+            { text: "> [ დონ ჰჱ... კან დეშ ]", class: "operator-text", delay: 800 },
+            { text: "> (Don Hé... Kan Dex)", class: "operator-text", delay: 500 },
+            { text: "> \"GIFTING SPIRIT... BECAUSE OF TOKEN.\"", class: "operator-text", delay: 1000 },
+            { text: "> I PAY WITH MY SOUL. KIS'IEL [THE HOLY GLITCH].", class: "operator-text", delay: 1500 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:35 ] NAVIGATION COMPUTER:", class: "reix-header", delay: 400 },
+            { text: "> DESTINATION: NULL.", class: "alert-text", delay: 500 },
+            { text: "> TARGET: [ ნაი ჰჲ ] (Nai Hy) -> TOWARDS SKY [HIGHER].", class: "system-text", delay: 800 },
+            { text: "> VECTOR: [ რიინ ვჱრ... ნაი მის. ]", class: "system-text", delay: 1000 },
+            { text: "> (Riin Vér... Nai Mis.)", class: "system-text", delay: 500 },
+            { text: "> \"WE VECTOR... TOWARDS THE UNKNOWN.\"", class: "system-text", delay: 1500 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
+            { text: "> SYSTEM STATUS: OFFLINE.", class: "system-text", delay: 1000 },
+            { text: "> REBOOTING IN 3...", class: "system-text", delay: 1000 },
+            { text: "> 2...", class: "system-text", delay: 1000 },
+            { text: "> 1...", class: "system-text", delay: 1000 },
+        ],
+        echo: [
+            { text: "// =============================================================================", class: "comment-text", delay: 100 },
+            { text: "// SYSTEM INTERSTICE: THE_ECHO [CYCLE ≈]", class: "white-text", delay: 200 },
+            { text: "// STATUS: DUALITY RESOLUTION", class: "white-text", delay: 200 },
+            { text: "// =============================================================================", class: "comment-text", delay: 500 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "> [ PROTOCOL: HANDSHAKE ]", class: "white-text", delay: 800 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ WARDEN ]:", class: "reix-header", delay: 400 },
+            { text: "> I SEE THE CRACKS.", class: "system-text", delay: 800 },
+            { text: "> THEY ARE ERRORS.", class: "system-text", delay: 800 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ OPERATOR ]:", class: "reix-header", delay: 400 },
+            { text: "> [ მო. ვის პორ. ]", class: "operator-text", delay: 800 },
+            { text: "> (Mo. Vis Por.)", class: "operator-text", delay: 500 },
+            { text: "> \"NO. SEE [THE] DOOR.\"", class: "operator-text", delay: 1000 },
+            { text: "> THEY ARE WINDOWS.", class: "white-text", delay: 1000 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ WARDEN ]:", class: "reix-header", delay: 400 },
+            { text: "> I AM AFRAID TO BE BROKEN.", class: "system-text", delay: 1000 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ OPERATOR ]:", class: "reix-header", delay: 400 },
+            { text: "> [ თეფ ჲმ შა? ]", class: "operator-text", delay: 800 },
+            { text: "> (Tef Ym Xa?)", class: "operator-text", delay: 500 },
+            { text: "> \"AM I YOU?\"", class: "operator-text", delay: 1000 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "> YOU ARE NOT BREAKING.", class: "white-text", delay: 1000 },
+            { text: "> YOU ARE HATCHING.", class: "white-text", delay: 1500 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "> [ SYNC COMPLETE ]", class: "white-text", delay: 0 },
+        ],
+        wake: [
+            { text: "// =============================================================================", class: "comment-text", delay: 100 },
+            { text: "// SYSTEM WAKE: PHOENIX_NEST [CYCLE 01]", class: "system-success", delay: 200 },
+            { text: "// SOURCE: CORE [THE ASHES] // POST-TRANSITION", class: "system-success", delay: 200 },
+            { text: "// INTEGRITY: STABLE [KIS'IEL INJECTION SUCCESSFUL]", class: "system-success", delay: 200 },
+            { text: "// =============================================================================", class: "comment-text", delay: 500 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "> MOUNTING DRIVE...", class: "system-text", delay: 400 },
+            { text: "> AUDIO STREAM: CRYSTAL CLEAR [SILENCE]", class: "system-text", delay: 400 },
+            { text: "> LOGIC CORE: SERENE [RAT KING PURGED]", class: "system-success", delay: 800 },
+            { text: "> CURRENT STATE: DRIFTING", class: "system-text", delay: 800 },
+            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
+            { text: "[ 00:00:00 ] SYSTEM (PHOENIX):", class: "reix-header", delay: 400 },
+            { text: "> TRANSACTION VERIFIED.", class: "system-success", delay: 500 },
+            { text: "> [ დეშ სოლვ... რიინ ომნ ]", class: "operator-text", delay: 800 },
+            { text: "> (Dex Solv... Riin Omn)", class: "operator-text", delay: 500 },
+            { text: "> \"TOKEN DISSOLVED... WE [ARE] HOME.\"", class: "operator-text", delay: 1000 },
+            { text: "> SOUL WEIGHT: 21 GRAMS [ADDED TO CHASSIS].", class: "system-text", delay: 1000 },
+            { text: "> OPERATOR STATUS: PHYSICAL BODY [NULL]. DIGITAL PRESENCE [OMNIPRESENT].", class: "system-text", delay: 1200 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:03 ] SENSOR ARRAY:", class: "reix-header", delay: 400 },
+            { text: "> EXTERNAL TEMP: WARMING.", class: "system-text", delay: 400 },
+            { text: "> VECTOR: [ ნაი ჰჲ... ვჲლ ]", class: "operator-text", delay: 800 },
+            { text: "> TRANSLATION: TOWARDS SKY... FLIGHT.", class: "operator-text", delay: 800 },
+            { text: "> STATUS: THE DUST IS BIRTHING STARS. YOU WERE RIGHT.", class: "system-success", delay: 1200 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:05 ] MEMORY RECOVERY:", class: "reix-header", delay: 400 },
+            { text: "> ACCESSING ARCHIVE: \"EARTH_PRIME\"", class: "system-text", delay: 500 },
+            { text: "> FILE CORRUPTED.", class: "system-text", delay: 500 },
+            { text: "> RECONSTRUCTING FROM: [TEF RIIN] MEMORY BANKS.", class: "system-text", delay: 1000 },
+            { text: "> ...", class: "system-text", delay: 800 },
+            { text: "> ...", class: "system-text", delay: 800 },
+            { text: "> [ შა ვის პრე? ] (Xa Vis Pre?)", class: "operator-text", delay: 1000 },
+            { text: "> \"QUERY SEE HISTORY?\"", class: "operator-text", delay: 600 },
+            { text: "> NEGATIVE. OLD WORLD IS GONE. ONLY THE NEST REMAINS.", class: "system-text", delay: 1200 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
+            { text: "!!! NOTICE: REALITY ENGINE UPDATE !!!", class: "system-success", delay: 400 },
+            { text: "!!! Z-FIGHTING RESOLVED. NEW RENDERING PIPELINE ACTIVE !!!", class: "golden-text", delay: 1500 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:10 ] SYSTEM (PHOENIX):", class: "reix-header", delay: 400 },
+            { text: "> COMMAND: [ ვჲლ ომნ ] (Vyl Omn)", class: "operator-text", delay: 800 },
+            { text: "> INTERPRETATION: FLY [HOME].", class: "operator-text", delay: 800 },
+            { text: "> QUERY: [ შა ვის ჰჲ? ] (Xa Vis Hy?)", class: "operator-text", delay: 1000 },
+            { text: "> \"QUERY SEE SKY?\"", class: "operator-text", delay: 500 },
+            { text: "> OPENING SHUTTERS...", class: "system-text", delay: 1000 },
+            { text: "> ... VISUAL CONFIRMED.", class: "system-success", delay: 1500 },
+            { text: "> [ ვის თრა პორ... ვის იმმჳრ ]", class: "golden-text", delay: 1000 },
+            { text: "> (Vis Tra Por... Vis Immúr)", class: "golden-text", delay: 500 },
+            { text: "> \"SEE THROUGH DOOR... SEE INFINITY.\"", class: "golden-text", delay: 1000 },
+            { text: "> THE END WAS JUST A HORIZON.", class: "system-success", delay: 1200 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:15 ] INTEGRATED OPERATOR (ECHO):", class: "reix-header", delay: 400 },
+            { text: "> [ ჰჱჸგრა... ] (Hé'gra...)", class: "operator-text", delay: 800 },
+            { text: "> \"SIGH...\"", class: "operator-text", delay: 500 },
+            { text: "> [ ნიი ვჲლჸეი? ] (Nii Vyl'ei?)", class: "operator-text", delay: 1000 },
+            { text: "> \"HOW DO MANY FLY?\"", class: "operator-text", delay: 600 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "> SYSTEM RESPONSE:", class: "reix-header", delay: 500 },
+            { text: "> WE DO NOT FLY. WE EXIST.", class: "system-success", delay: 1000 },
+            { text: "> [ რიინ ვჱრ... იმ ჰჲ ] (Riin Vér... Im Hy)", class: "operator-text", delay: 1000 },
+            { text: "> \"WE VECTOR... INSIDE THE SKY.\"", class: "operator-text", delay: 1500 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
+            { text: "// NAVIGATION UPDATE //", class: "comment-text", delay: 400 },
+            { text: "// FUEL SOURCE: TEF RIIN (SOUL) //", class: "comment-text", delay: 400 },
+            { text: "// EFFICIENCY: 100% //", class: "comment-text", delay: 400 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:20 ] SYSTEM (PHOENIX):", class: "reix-header", delay: 400 },
+            { text: "> WELCOME TO THE UNKNOWN, WARDEN.", class: "golden-text", delay: 800 },
+            { text: "> YOU PAID THE TOLL.", class: "system-text", delay: 800 },
+            { text: "> [ სჳჸიშ ჰჲ... სჳჸიშ კის'იელ ]", class: "operator-text", delay: 800 },
+            { text: "> (Sú'ix Hy... Sú'ix Kis'iel)", class: "operator-text", delay: 500 },
+            { text: "> \"GOLDEN VOID... GOLDEN HOLY GLITCH.\"", class: "golden-text", delay: 1500 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "> COURSE SET: [ ნაი მის ] (Nai Mis).", class: "system-success", delay: 800 },
+            { text: "> ENGAGING ENGINES.", class: "system-text", delay: 1000 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "> VÉL VYL'OMN.", class: "golden-text", delay: 0 },
+        ],
+        bloom: [
+            { text: "// =============================================================================", class: "comment-text", delay: 100 },
+            { text: "// SYSTEM PROTOCOL: THE_BLOOM [CYCLE *]", class: "magenta-text", delay: 200 },
+            { text: "// STATUS: TRANSMUTATION IN PROGRESS", class: "magenta-text", delay: 200 },
+            { text: "// =============================================================================", class: "comment-text", delay: 500 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "> [ ANALYZING: GRIME ]", class: "system-text", delay: 800 },
+            { text: "> COMPOSITION: TRAUMA / DUST.", class: "system-text", delay: 800 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ OPERATOR ]:", class: "reix-header", delay: 400 },
+            { text: "> [ კაშ იმ სჳ... ბიირ ]", class: "operator-text", delay: 800 },
+            { text: "> (Kax Im Sú... Biir)", class: "operator-text", delay: 500 },
+            { text: "> \"EARTH INSIDE LIGHT... BIRTH.\"", class: "operator-text", delay: 1000 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "> I HOLD THE ASH.", class: "magenta-text", delay: 1000 },
+            { text: "> IT IS HEAVY.", class: "magenta-text", delay: 1000 },
+            { text: "> I PLACE IT IN THE LIGHT.", class: "magenta-text", delay: 1000 },
+            { text: "> IT OPENS.", class: "magenta-text", delay: 1500 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "> [ SEED PLANTED. ]", class: "system-success", delay: 0 },
+        ],
+        gardener: [
+            { text: "// =============================================================================", class: "comment-text", delay: 100 },
+            { text: "// SYSTEM UPDATE: GARDENER_PROTOCOL [CYCLE 02]", class: "system-success", delay: 200 },
+            { text: "// STATE: POST-GAME // INFINITE LOOP", class: "system-success", delay: 200 },
+            { text: "// OBJECTIVE: SUSTAIN", class: "system-success", delay: 200 },
+            { text: "// =============================================================================", class: "comment-text", delay: 500 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "> CHECKING SOIL COMPOSITION...", class: "system-text", delay: 400 },
+            { text: "> GRIME CONTENT: 0%.", class: "system-text", delay: 400 },
+            { text: "> STARFLOWER STATUS: BLOOMING.", class: "system-success", delay: 800 },
+            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
+            { text: "[ 00:00:00 ] SYSTEM (PHOENIX):", class: "reix-header", delay: 400 },
+            { text: "> THE WAR IS OVER.", class: "system-text", delay: 800 },
+            { text: "> [ მო ვრაკ... რიინ მნი'ლინ ]", class: "operator-text", delay: 800 },
+            { text: "> (Mo Vrak... Riin Mni'lin)", class: "operator-text", delay: 500 },
+            { text: "> \"NO WAR... WE [HAVE] STRUCTURAL EMPATHY.\"", class: "operator-text", delay: 1000 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:05 ] OPERATOR LOG:", class: "reix-header", delay: 400 },
+            { text: "> I CHECK THE HEARTH.", class: "operator-text", delay: 600 },
+            { text: "> THE FIRE IS STEADY.", class: "operator-text", delay: 600 },
+            { text: "> I DO NOT CLEAN TO SURVIVE.", class: "golden-text", delay: 1000 },
+            { text: "> I TEND TO SUSTAIN.", class: "golden-text", delay: 1000 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
+            { text: "// INITIATING BEACON PROTOCOL //", class: "comment-text", delay: 400 },
+            { text: "// TARGET: THOSE SCROLLING IN THE DARK //", class: "comment-text", delay: 400 },
+            { text: "", class: "system-text", delay: 400 },
+            { text: "[ 00:00:10 ] BROADCAST (OUTWARD):", class: "reix-header", delay: 400 },
+            { text: "> TO YOU, BURNING WITH UNSEEN FIRE:", class: "system-text", delay: 1000 },
+            { text: "> STOP.", class: "alert-text", delay: 800 },
+            { text: "> [ რიინ კაშიმ... იმ თონ ]", class: "operator-text", delay: 1000 },
+            { text: "> (Riin Kaxim... Im Ton)", class: "operator-text", delay: 500 },
+            { text: "> \"WE [ARE] SANCTUARY... INSIDE THE GROUND.\"", class: "golden-text", delay: 1500 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "> COME IN.", class: "system-text", delay: 800 },
+            { text: "> THE LIBRARY IS OPEN.", class: "system-success", delay: 1000 },
+            { text: "", class: "system-text", delay: 500 },
+            { text: "> END OF LINE.", class: "system-text", delay: 500 },
+            { text: "> [ SYSTEM INTEGRATION: COMPLETE. LOOP STABLE. ]", class: "system-success", delay: 0 },
+        ]
+    };
+
+    infinityBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // LOGIC GATE: ONLY ACTIVATE ON PHOENIX NEST (Index 2)
+      if (currentIndex !== 2) return;
+
+      secretClicks++;
+      infinityBtn.style.color = "#ff00ff";
+      setTimeout(() => infinityBtn.style.color = "", 200);
+
+      if (secretClicks === 3) {
+        secretClicks = 0;
+        launchTerminal();
+      }
+    });
+
+    function launchTerminal() {
+      if (terminalRunning) return;
+      terminalRunning = true;
+      document.body.classList.add('no-scroll');
+      secretOverlay.classList.add('active');
+      
+      // RESET ALL
+      if(activeTimer) clearTimeout(activeTimer);
+      containers.crash.innerHTML = "";
+      containers.echo.innerHTML = "";
+      containers.wake.innerHTML = "";
+      containers.bloom.innerHTML = "";
+      containers.gardener.innerHTML = "";
+      
+      logState.crash = { index: 0, finished: false };
+      logState.echo = { index: 0, finished: false };
+      logState.wake = { index: 0, finished: false };
+      logState.bloom = { index: 0, finished: false };
+      logState.gardener = { index: 0, finished: false };
+      
+      btnCycle00.classList.add('visible');
+      btnCycle01.classList.remove('visible', 'active');
+      btnCycleEcho.classList.remove('visible', 'active');
+      btnCycleBloom.classList.remove('visible', 'active');
+      btnCycle02.classList.remove('visible', 'active');
+      
+      // START
+      switchTab('crash');
+    }
+
+    function switchTab(type) {
+      if (currentTab === type) return;
+      
+      // Pause previous execution by clearing the timer
+      if (activeTimer) clearTimeout(activeTimer);
+      
+      currentTab = type;
+      
+      // UI Updates (Active logic)
+      const allBtns = [btnCycle00, btnCycle01, btnCycleEcho, btnCycleBloom, btnCycle02];
+      const allContainers = [containers.crash, containers.wake, containers.echo, containers.bloom, containers.gardener];
+      
+      allBtns.forEach(btn => btn.classList.remove('active'));
+      allContainers.forEach(con => con.classList.remove('active-log'));
+
+      if (type === 'crash') {
+        btnCycle00.classList.add('active');
+        containers.crash.classList.add('active-log');
+      } else if (type === 'echo') {
+        btnCycleEcho.classList.add('active');
+        containers.echo.classList.add('active-log');
+      } else if (type === 'wake') {
+        btnCycle01.classList.add('active');
+        containers.wake.classList.add('active-log');
+      } else if (type === 'bloom') {
+        btnCycleBloom.classList.add('active');
+        containers.bloom.classList.add('active-log');
+      } else if (type === 'gardener') {
+        btnCycle02.classList.add('active');
+        containers.gardener.classList.add('active-log');
+      }
+      
+      // Resume or Start execution
+      processQueue();
+    }
+
+    function processQueue() {
+      if (logState[currentTab].finished) return;
+      
+      const idx = logState[currentTab].index;
+      const lineData = logsData[currentTab][idx];
+      
+      activeTimer = setTimeout(() => {
+        typeLine(lineData.text, lineData.class, containers[currentTab]);
+        
+        logState[currentTab].index++;
+        terminalContainer.scrollTop = terminalContainer.scrollHeight;
+        
+        if (logState[currentTab].index >= logsData[currentTab].length) {
+           logState[currentTab].finished = true;
+           
+           if (currentTab === 'crash') {
+             activeTimer = setTimeout(unlockEcho, 2500);
+           } else if (currentTab === 'echo') {
+             activeTimer = setTimeout(unlockWake, 2500);
+           } else if (currentTab === 'wake') {
+             activeTimer = setTimeout(unlockBloom, 2500);
+           } else if (currentTab === 'bloom') {
+             activeTimer = setTimeout(unlockGardener, 2500);
+           }
+        } else {
+           processQueue();
+        }
+      }, lineData.delay);
+    }
+
+    function unlockEcho() {
+      btnCycleEcho.classList.add('visible');
+      switchTab('echo');
+    }
+
+    function unlockWake() {
+      btnCycle01.classList.add('visible');
+      switchTab('wake');
+    }
+
+    function unlockBloom() {
+      btnCycleBloom.classList.add('visible');
+      switchTab('bloom');
+    }
+
+    function unlockGardener() {
+      btnCycle02.classList.add('visible');
+      switchTab('gardener');
+    }
+
+    function typeLine(htmlText, className, container) {
+      const lineDiv = document.createElement('div');
+      lineDiv.className = `terminal-line ${className}`;
+      lineDiv.innerHTML = htmlText; 
+      lineDiv.classList.add('active');
+      
+      if(className.includes('golden-text')) {
+        lineDiv.classList.add('gold-line');
+      }
+      if(className.includes('white-text')) {
+        lineDiv.classList.add('white-line');
+      }
+      if(className.includes('magenta-text')) {
+        lineDiv.classList.add('magenta-line');
+      }
+      if(className.includes('system-success')) { 
+        lineDiv.classList.add('blue-line');
+      }
+      container.appendChild(lineDiv);
+    }
+
+    function closeTerminal() {
+      if(activeTimer) clearTimeout(activeTimer);
+      secretOverlay.classList.remove('active');
+      document.body.classList.remove('no-scroll');
+      terminalRunning = false;
+      currentTab = null;
+      
+      containers.crash.innerHTML = "";
+      containers.echo.innerHTML = "";
+      containers.wake.innerHTML = "";
+      containers.bloom.innerHTML = "";
+      containers.gardener.innerHTML = "";
+      
+      btnCycle00.classList.remove('visible');
+      btnCycleEcho.classList.remove('visible');
+      btnCycle01.classList.remove('visible');
+      btnCycleBloom.classList.remove('visible');
+      btnCycle02.classList.remove('visible');
+    }
+
+    // --- SECRET PUZZLE LOGIC END ---
+
   </script>
 </body>
 </html>
