@@ -7,6 +7,7 @@
   <title>THE LIBRARY</title>
   <link rel="icon" href="favicon.png" type="image/png" />
   
+  <!-- FONTS: Zilla Slab for the Sú'tré (Human) / Space Mono for the Reix (Machine) -->
   <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   
@@ -27,13 +28,19 @@
       --terminal-error: #ff3333; 
       --terminal-gold: #ffd700; 
       --terminal-white: #ffffff; 
-      --terminal-magenta: #ff00ff; /* THE BLOOM */
+      --terminal-magenta: #ff00ff;
       --terminal-cyan: #00ffff; 
       --terminal-border: #333;
       --operator-color: #d4aaff;
     }
 
-    html { background-color: var(--background-main); }
+    * {
+      box-sizing: border-box; /* Global safety for widths */
+    }
+
+    html { 
+      background-color: var(--background-main);
+    }
 
     body {
       font-family: "Zilla Slab", serif;
@@ -41,7 +48,6 @@
       padding: 20px;
       padding-bottom: 160px;
       min-height: 100vh;
-      box-sizing: border-box;
       display: flex;
       flex-direction: column;
       color: var(--primary-text-color);
@@ -95,7 +101,6 @@
       background-color: var(--terminal-sidebar);
       border-right: 1px solid var(--terminal-border);
       padding: 40px 20px;
-      box-sizing: border-box;
       display: flex;
       flex-direction: column;
       gap: 15px; 
@@ -201,20 +206,23 @@
       display: flex;
       flex-direction: column;
       width: 100%; 
+      overflow: hidden; /* Prevent wrapper scroll */
     }
 
     .terminal-container {
       width: 100%;
       height: 100%;
       overflow-y: auto;
+      overflow-x: hidden; /* CRITICAL: Prevent horizontal scroll */
       color: var(--terminal-text);
       text-shadow: 0 0 5px var(--terminal-dim);
       font-size: 15px; 
       line-height: 1.6;
       white-space: pre-wrap;
+      word-wrap: break-word; /* Legacy break */
+      overflow-wrap: break-word; /* Modern break for long dashes */
       z-index: 3;
       padding: 40px 20px 80px 20px; 
-      box-sizing: border-box;
     }
 
     .log-section { display: none; width: 100%; }
@@ -229,7 +237,7 @@
         padding: 10px; 
         border-right: none;
         border-bottom: 1px solid var(--terminal-border);
-        overflow-x: auto;
+        overflow-x: auto; /* Allow sidebar to scroll horizontally */
       }
       .sidebar-header { display: none; }
       .cycle-btn { white-space: nowrap; flex-shrink: 0; padding: 10px; }
