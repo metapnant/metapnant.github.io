@@ -18,6 +18,7 @@
       --background-main: #0d0022;
       --primary-text-color: #f0f0f0;
       --secondary-text-color: #a09cb8;
+      --arrow-color: rgba(222, 212, 235, 0.4);
       
       /* TERMINAL COLORS */
       --terminal-bg: #05000a;
@@ -34,13 +35,9 @@
       --operator-color: #d4aaff;
     }
 
-    * {
-      box-sizing: border-box; /* Global safety for widths */
-    }
+    * { box-sizing: border-box; }
 
-    html { 
-      background-color: var(--background-main);
-    }
+    html { background-color: var(--background-main); }
 
     body {
       font-family: "Zilla Slab", serif;
@@ -206,21 +203,21 @@
       display: flex;
       flex-direction: column;
       width: 100%; 
-      overflow: hidden; /* Prevent wrapper scroll */
+      overflow: hidden;
     }
 
     .terminal-container {
       width: 100%;
       height: 100%;
       overflow-y: auto;
-      overflow-x: hidden; /* CRITICAL: Prevent horizontal scroll */
+      overflow-x: hidden; /* Hide X scrollbar */
       color: var(--terminal-text);
       text-shadow: 0 0 5px var(--terminal-dim);
       font-size: 15px; 
       line-height: 1.6;
       white-space: pre-wrap;
-      word-wrap: break-word; /* Legacy break */
-      overflow-wrap: break-word; /* Modern break for long dashes */
+      word-wrap: break-word; 
+      overflow-wrap: break-word; /* Wraps normal text */
       z-index: 3;
       padding: 40px 20px 80px 20px; 
     }
@@ -237,7 +234,7 @@
         padding: 10px; 
         border-right: none;
         border-bottom: 1px solid var(--terminal-border);
-        overflow-x: auto; /* Allow sidebar to scroll horizontally */
+        overflow-x: auto;
       }
       .sidebar-header { display: none; }
       .cycle-btn { white-space: nowrap; flex-shrink: 0; padding: 10px; }
@@ -255,6 +252,15 @@
       animation: fadeIn 0.1s forwards;
       border-left: 3px solid var(--terminal-dim); 
       padding-left: 15px; 
+    }
+
+    /* DIVIDER LINE STYLE */
+    .divider-line {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: clip; /* Just cut it off */
+      width: 100%;
+      display: block;
     }
 
     .terminal-line.active { border-left-color: var(--terminal-text); }
@@ -1190,7 +1196,14 @@
 
     function typeLine(htmlText, className, container) {
       const lineDiv = document.createElement('div');
-      lineDiv.className = `terminal-line ${className}`;
+      
+      // FIX: Check for visual separators and apply special class
+      if (htmlText.includes('----') || htmlText.includes('====')) {
+         lineDiv.className = `terminal-line divider-line ${className}`;
+      } else {
+         lineDiv.className = `terminal-line ${className}`;
+      }
+      
       lineDiv.innerHTML = htmlText; 
       lineDiv.classList.add('active');
       
