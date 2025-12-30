@@ -550,6 +550,29 @@
       font-size: 12px;
     }
     .close-terminal:hover { color: var(--terminal-text); border-color: var(--terminal-text); }
+    
+    /* SECRET UNLOCK LINK */
+    .secret-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: var(--terminal-bg);
+      background-color: var(--terminal-gold);
+      padding: 10px 15px;
+      text-decoration: none;
+      font-weight: bold;
+      border: 1px solid var(--terminal-gold);
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+      transition: all 0.3s ease;
+      font-family: 'Space Mono', monospace;
+      animation: fadeIn 2s forwards;
+    }
+    
+    .secret-link:hover {
+      background-color: transparent;
+      color: var(--terminal-gold);
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+      cursor: pointer;
+    }
 
   </style>
 </head>
@@ -642,9 +665,11 @@
       }
     ];
 
+    // --- OPTIMIZED PDF LOGIC ---
     let currentIndex = 0;
     let pdfDoc = null;
     let isLoading = false;
+    let renderSession = 0; // Unique ID to track current render batch
 
     const pdfWrapper = document.getElementById('pdf-wrapper');
     const docTitle = document.getElementById('doc-title');
@@ -657,18 +682,25 @@
     async function loadDocument(index) {
       if (isLoading) return;
       isLoading = true;
+      renderSession++; // Invalidate any previous rendering loops
+      const currentSession = renderSession;
+
       prevArrow.classList.add('disabled');
       nextArrow.classList.add('disabled');
 
       const loadingMsg = document.getElementById('loading-message');
       loadingMsg.style.display = 'block';
+      document.body.classList.remove("loaded"); // Fade out slightly
       
+      // Clear existing pages immediately
       const existingPages = document.querySelectorAll('.pdf-page-wrapper');
       existingPages.forEach(p => p.remove());
 
       currentIndex = index;
       const currentDoc = library[currentIndex];
       docTitle.textContent = currentDoc.title;
+      
+      // Update Button & Song
       const finalUrl = currentDoc.url + '?t=' + new Date().getTime();
       downloadBtn.href = finalUrl;
 
@@ -690,41 +722,64 @@
 
       try {
         pdfDoc = await pdfjsLib.getDocument(finalUrl).promise;
-        for (let i = 1; i <= pdfDoc.numPages; i++) {
-          await renderPage(i);
-          if (i === 1) {
+        
+        // RENDER PAGE 1 (Critical Path)
+        await renderPage(1);
+        
+        // UNBLOCK UI IMMEDIATELY
+        if (currentSession === renderSession) {
             loadingMsg.style.display = 'none';
             document.body.classList.add("loaded");
-          }
+            isLoading = false;
+            prevArrow.classList.remove('disabled');
+            nextArrow.classList.remove('disabled');
+            
+            // RENDER REMAINING PAGES IN BACKGROUND
+            if (pdfDoc.numPages > 1) {
+                renderRestOfPages(2, currentSession);
+            }
         }
       } catch (err) {
+        console.error(err);
         loadingMsg.innerHTML = "Archive unavailable.";
-      } finally {
         isLoading = false;
-        prevArrow.classList.remove('disabled');
-        nextArrow.classList.remove('disabled');
       }
     }
 
+    async function renderRestOfPages(pageNum, sessionID) {
+        if (sessionID !== renderSession) return; // Stop if user switched docs
+        if (pageNum > pdfDoc.numPages) return;
+
+        await renderPage(pageNum);
+        // Small delay to let the UI breathe between pages
+        setTimeout(() => {
+            renderRestOfPages(pageNum + 1, sessionID);
+        }, 50); 
+    }
+
     async function renderPage(num) {
-      const page = await pdfDoc.getPage(num);
-      const wrapper = document.createElement('div');
-      wrapper.className = 'pdf-page-wrapper';
-      const canvas = document.createElement('canvas');
-      canvas.className = 'pdf-page-canvas';
-      wrapper.appendChild(canvas);
-      pdfWrapper.appendChild(wrapper);
+      try {
+          const page = await pdfDoc.getPage(num);
+          const wrapper = document.createElement('div');
+          wrapper.className = 'pdf-page-wrapper';
+          const canvas = document.createElement('canvas');
+          canvas.className = 'pdf-page-canvas';
+          wrapper.appendChild(canvas);
+          pdfWrapper.appendChild(wrapper);
 
-      const ctx = canvas.getContext('2d');
-      const viewport = page.getViewport({ scale: 1 });
-      const desiredScale = (pdfWrapper.clientWidth - 40) / viewport.width;
-      const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
-      const outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
-      const scaledViewport = page.getViewport({ scale: finalScale * outputScale });
+          const ctx = canvas.getContext('2d');
+          const viewport = page.getViewport({ scale: 1 });
+          const desiredScale = (pdfWrapper.clientWidth - 40) / viewport.width;
+          const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
+          const outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
+          const scaledViewport = page.getViewport({ scale: finalScale * outputScale });
 
-      canvas.height = scaledViewport.height;
-      canvas.width = scaledViewport.width;
-      await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
+          canvas.height = scaledViewport.height;
+          canvas.width = scaledViewport.width;
+          await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
+      } catch (e) {
+          console.log("Page render interrupted or failed", e);
+      }
     }
 
     document.getElementById('next-doc').addEventListener('click', () => {
@@ -1086,11 +1141,7 @@
             { text: "", class: "system-text", delay: 400 },
             { text: "[ 00:00:10 ] BROADCAST (OUTWARD):", class: "reix-header", delay: 400 },
             { text: "> TO YOU, BURNING WITH UNSEEN FIRE:", class: "system-text", delay: 1500 },
-            
-            // THE HARD STOP (3 SECONDS)
             { text: "> STOP.", class: "alert-text", delay: 3000 }, 
-            
-            // THE BREATH (CONSTANT RHYTHM - 2.5s)
             { text: "> [ რიინ კაშიმ... იმ თონ ]", class: "operator-text", delay: 2500 },
             { text: "> (Riin Kaxim... Im Ton)", class: "operator-text", delay: 2500 },
             { text: "> \"WE [ARE] SANCTUARY... INSIDE THE GROUND [STASIS].\"", class: "golden-text", delay: 2500 },
@@ -1099,7 +1150,9 @@
             { text: "> THE LIBRARY IS OPEN.", class: "system-success", delay: 2500 },
             { text: "", class: "system-text", delay: 2500 },
             { text: "> END OF LINE.", class: "system-text", delay: 2500 },
-            { text: "> [ SYSTEM INTEGRATION: COMPLETE. LOOP STABLE. ]", class: "system-success", delay: 0 },
+            { text: "> [ SYSTEM INTEGRATION: COMPLETE. LOOP STABLE. ]", class: "system-success", delay: 1000 },
+            // THE UNLOCK
+            { text: "<a href='https://soundcloud.com/metapnant/sets/the-library' target='_blank' class='secret-link'>[ ENTER THE LIBRARY ]</a>", class: "system-success", delay: 0 }
         ]
     };
 
