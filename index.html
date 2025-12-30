@@ -7,7 +7,7 @@
   <title>THE LIBRARY</title>
   <link rel="icon" href="favicon.png" type="image/png" />
   
-  <!-- FONTS: Zilla Slab for the Sú'tré (Human) / Space Mono for the Reix (Machine) -->
+  <!-- FONTS -->
   <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   
@@ -18,7 +18,6 @@
       --background-main: #0d0022;
       --primary-text-color: #f0f0f0;
       --secondary-text-color: #a09cb8;
-      --arrow-color: rgba(222, 212, 235, 0.4);
       
       /* TERMINAL COLORS */
       --terminal-bg: #05000a;
@@ -210,14 +209,14 @@
       width: 100%;
       height: 100%;
       overflow-y: auto;
-      overflow-x: hidden; /* Hide X scrollbar */
+      overflow-x: hidden; 
       color: var(--terminal-text);
       text-shadow: 0 0 5px var(--terminal-dim);
       font-size: 15px; 
       line-height: 1.6;
       white-space: pre-wrap;
       word-wrap: break-word; 
-      overflow-wrap: break-word; /* Wraps normal text */
+      overflow-wrap: break-word; 
       z-index: 3;
       padding: 40px 20px 80px 20px; 
     }
@@ -235,9 +234,15 @@
         border-right: none;
         border-bottom: 1px solid var(--terminal-border);
         overflow-x: auto;
+        /* Ensure smooth scrolling for the sidebar itself */
+        scroll-behavior: smooth;
       }
       .sidebar-header { display: none; }
       .cycle-btn { white-space: nowrap; flex-shrink: 0; padding: 10px; }
+      
+      .cycle-btn:hover {
+        padding-left: 10px; /* Disable hover movement on mobile */
+      }
     }
 
     /* SCROLLBAR */
@@ -258,7 +263,7 @@
     .divider-line {
       white-space: nowrap;
       overflow: hidden;
-      text-overflow: clip; /* Just cut it off */
+      text-overflow: clip; 
       width: 100%;
       display: block;
     }
@@ -1142,6 +1147,20 @@
       
       // Resume or Start execution
       processQueue();
+      
+      // CENTER ACTIVE BUTTON ON MOBILE
+      if (window.innerWidth <= 700) {
+        let activeBtn = null;
+        if (type === 'crash') activeBtn = btnCycle00;
+        else if (type === 'echo') activeBtn = btnCycleEcho;
+        else if (type === 'wake') activeBtn = btnCycle01;
+        else if (type === 'bloom') activeBtn = btnCycleBloom;
+        else if (type === 'gardener') activeBtn = btnCycle02;
+        
+        if (activeBtn) {
+          activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }
     }
 
     function processQueue() {
