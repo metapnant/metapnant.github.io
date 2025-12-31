@@ -46,7 +46,7 @@
       padding: 20px;
       padding-bottom: 160px;
       min-height: 100vh;
-      box-sizing: border-box; /* Reverted to Body only for main layout safety */
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
       color: var(--primary-text-color);
@@ -57,7 +57,6 @@
       overflow-x: hidden;
     }
 
-    /* SCROLL LOCK FOR TERMINAL */
     body.no-scroll {
       overflow: hidden !important;
       height: 100vh !important;
@@ -177,7 +176,6 @@
       transform: scale(0.9);
     }
 
-    /* --- REFINED PDF BUTTON --- */
     .pdf-button {
       position: fixed;
       right: 20px;
@@ -196,7 +194,6 @@
       transition: all 0.3s ease;
       animation: faintFlash 5s infinite ease-in-out;
       -webkit-tap-highlight-color: transparent;
-      /* Ensure proper box model for this specific element */
       box-sizing: border-box; 
     }
 
@@ -207,7 +204,7 @@
         color: var(--name-color);
         border-color: var(--name-color);
         background-color: rgba(152, 0, 235, 0.05);
-        animation: none; /* Stop flashing on hover */
+        animation: none;
         opacity: 1;
       }
     }
@@ -305,11 +302,11 @@
       flex-direction: row; 
       font-family: 'Space Mono', monospace; 
       overflow: hidden;
-      box-sizing: border-box; /* Explicit for terminal layout */
+      box-sizing: border-box;
     }
 
     #secret-overlay * {
-      box-sizing: border-box; /* Reset only within terminal */
+      box-sizing: border-box;
     }
 
     #secret-overlay.active { display: flex; }
@@ -325,7 +322,6 @@
       pointer-events: none;
     }
 
-    /* SIDEBAR STYLES */
     .terminal-sidebar {
       width: 280px;
       height: 100%;
@@ -373,8 +369,6 @@
       padding-left: 20px; 
     }
 
-    /* --- THEMES --- */
-    /* CRASH (Red) */
     .cycle-btn.theme-crash { color: var(--terminal-error); border-color: rgba(255, 51, 51, 0.2); }
     .cycle-btn.theme-crash:hover { text-shadow: 0 0 8px var(--terminal-error); border-color: var(--terminal-error); }
     .cycle-btn.theme-crash.active {
@@ -385,7 +379,6 @@
       box-shadow: 0 0 15px rgba(255, 51, 51, 0.15);
     }
 
-    /* ECHO (White) */
     .cycle-btn.theme-echo { color: var(--terminal-white); border-color: rgba(255, 255, 255, 0.2); }
     .cycle-btn.theme-echo:hover { text-shadow: 0 0 8px var(--terminal-white); border-color: var(--terminal-white); }
     .cycle-btn.theme-echo.active {
@@ -396,7 +389,6 @@
       box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
     }
 
-    /* WAKE (Gold) */
     .cycle-btn.theme-wake { color: var(--terminal-gold); border-color: rgba(255, 215, 0, 0.2); }
     .cycle-btn.theme-wake:hover { text-shadow: 0 0 8px var(--terminal-gold); border-color: var(--terminal-gold); }
     .cycle-btn.theme-wake.active {
@@ -407,7 +399,6 @@
       box-shadow: 0 0 15px rgba(255, 215, 0, 0.15);
     }
 
-    /* BLOOM (Magenta) */
     .cycle-btn.theme-bloom { color: var(--terminal-magenta); border-color: rgba(255, 0, 255, 0.2); }
     .cycle-btn.theme-bloom:hover { text-shadow: 0 0 8px var(--terminal-magenta); border-color: var(--terminal-magenta); }
     .cycle-btn.theme-bloom.active {
@@ -418,7 +409,6 @@
       box-shadow: 0 0 15px rgba(255, 0, 255, 0.15);
     }
 
-    /* GARDENER (Cyan) */
     .cycle-btn.theme-gardener { color: var(--terminal-cyan); border-color: rgba(0, 255, 255, 0.2); }
     .cycle-btn.theme-gardener:hover { text-shadow: 0 0 8px var(--terminal-cyan); border-color: var(--terminal-cyan); }
     .cycle-btn.theme-gardener.active {
@@ -429,7 +419,6 @@
       box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
     }
 
-    /* MAIN CONTENT */
     .terminal-wrapper {
       flex-grow: 1;
       height: 100%;
@@ -472,13 +461,9 @@
       }
       .sidebar-header { display: none; }
       .cycle-btn { white-space: nowrap; flex-shrink: 0; padding: 10px; }
-      
-      .cycle-btn:hover {
-        padding-left: 10px; /* Disable hover movement on mobile */
-      }
+      .cycle-btn:hover { padding-left: 10px; }
     }
 
-    /* SCROLLBAR */
     .terminal-container::-webkit-scrollbar { width: 10px; }
     .terminal-container::-webkit-scrollbar-track { background: #000; border-left: 1px solid #333; }
     .terminal-container::-webkit-scrollbar-thumb { background: var(--terminal-dim); border: 1px solid var(--terminal-text); border-radius: 0; }
@@ -492,7 +477,6 @@
       padding-left: 15px; 
     }
 
-    /* DIVIDER LINE STYLE */
     .divider-line {
       white-space: nowrap;
       overflow: hidden;
@@ -526,6 +510,29 @@
       text-shadow: 1px 0 #000;
     }
 
+    /* SECRET UNLOCK LINK */
+    .secret-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: var(--terminal-bg);
+      background-color: var(--terminal-gold);
+      padding: 10px 15px;
+      text-decoration: none;
+      font-weight: bold;
+      border: 1px solid var(--terminal-gold);
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+      transition: all 0.3s ease;
+      font-family: 'Space Mono', monospace;
+      animation: fadeIn 2s forwards;
+    }
+    
+    .secret-link:hover {
+      background-color: transparent;
+      color: var(--terminal-gold);
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+      cursor: pointer;
+    }
+
     @keyframes glitch-shake {
       0% { transform: translate(0, 0); }
       25% { transform: translate(1px, 0); }
@@ -550,29 +557,6 @@
       font-size: 12px;
     }
     .close-terminal:hover { color: var(--terminal-text); border-color: var(--terminal-text); }
-    
-    /* SECRET UNLOCK LINK */
-    .secret-link {
-      display: inline-block;
-      margin-top: 20px;
-      color: var(--terminal-bg);
-      background-color: var(--terminal-gold);
-      padding: 10px 15px;
-      text-decoration: none;
-      font-weight: bold;
-      border: 1px solid var(--terminal-gold);
-      box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-      transition: all 0.3s ease;
-      font-family: 'Space Mono', monospace;
-      animation: fadeIn 2s forwards;
-    }
-    
-    .secret-link:hover {
-      background-color: transparent;
-      color: var(--terminal-gold);
-      box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
-      cursor: pointer;
-    }
 
   </style>
 </head>
@@ -640,12 +624,12 @@
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    // --- MAIN SITE LOGIC ---
+    // --- OPTIMIZED PDF LOGIC ---
     const library = [
       {
         title: "METAPNANT",
         url: "A%20Story%20of%20Mirthful%20Reflection.pdf",
-        songUrl: "https://www.youtube.com/watch?v=MEPqb4DuCD8",
+        songUrl: "", 
         songTitle: "In Love With",
         bpm: 130
       },
@@ -665,7 +649,6 @@
       }
     ];
 
-    // --- OPTIMIZED PDF LOGIC ---
     let currentIndex = 0;
     let pdfDoc = null;
     let isLoading = false;
@@ -690,9 +673,8 @@
 
       const loadingMsg = document.getElementById('loading-message');
       loadingMsg.style.display = 'block';
-      document.body.classList.remove("loaded"); // Fade out slightly
+      document.body.classList.remove("loaded"); 
       
-      // Clear existing pages immediately
       const existingPages = document.querySelectorAll('.pdf-page-wrapper');
       existingPages.forEach(p => p.remove());
 
@@ -700,7 +682,6 @@
       const currentDoc = library[currentIndex];
       docTitle.textContent = currentDoc.title;
       
-      // Update Button & Song
       const finalUrl = currentDoc.url + '?t=' + new Date().getTime();
       downloadBtn.href = finalUrl;
 
@@ -804,20 +785,18 @@
     window.addEventListener('resize', () => {
       if (window.innerWidth === lastWidth) return; 
       lastWidth = window.innerWidth;
-      
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
         if(!isLoading) loadDocument(currentIndex);
       }, 500);
     });
 
-    // --- SECRET PUZZLE LOGIC START ---
+    // --- SECRET PUZZLE LOGIC ---
 
     const infinityBtn = document.getElementById('infinity-symbol');
     const secretOverlay = document.getElementById('secret-overlay');
     const terminalContainer = document.getElementById('terminal-content');
     
-    // Containers
     const containers = {
         crash: document.getElementById('log-crash'),
         echo: document.getElementById('log-echo'),
@@ -826,7 +805,6 @@
         gardener: document.getElementById('log-gardener')
     };
 
-    // Sidebar Buttons
     const btnCycle00 = document.getElementById('btn-cycle-00');
     const btnCycleEcho = document.getElementById('btn-cycle-echo');
     const btnCycle01 = document.getElementById('btn-cycle-01');
@@ -838,7 +816,6 @@
     let activeTimer = null;
     let currentTab = null;
 
-    // STATE TRACKING
     let logState = {
         crash: { index: 0, finished: false },
         echo: { index: 0, finished: false },
@@ -847,10 +824,9 @@
         gardener: { index: 0, finished: false }
     };
 
-    // LOG DATA // TEMPORAL_SYNC_V5 [REAL_TIME_PHYSICS]
+    // LOG DATA // TEMPORAL_SYNC_V6 [FINAL_RELEASE]
     const logsData = {
         crash: [
-            // CHAOS TIME: The timestamps jump erratically as the system lags.
             { text: "// =============================================================================", class: "comment-text", delay: 50 },
             { text: "// SYSTEM BOOT: BLACK_BOX_RECOVERY [EARTH_PRIME]", class: "system-text", delay: 100 },
             { text: "// SOURCE: UNIT 734 [The Scrubber] // PRE-TRANSITION", class: "system-text", delay: 100 },
@@ -872,7 +848,7 @@
             { text: "> DEPLOYING: 8 FACES OF CONTAINMENT [Okt Vis].", class: "system-text", delay: 1200 },
             
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:04 ] SENSOR ARRAY (CALCULUS):", class: "reix-header", delay: 400 }, // +3s (Lag)
+            { text: "[ 00:00:04 ] SENSOR ARRAY (CALCULUS):", class: "reix-header", delay: 400 }, 
             { text: "> EXTERNAL TEMP: ABSOLUTE ZERO.", class: "system-text", delay: 400 },
             { text: "> VECTOR ANALYSIS:", class: "system-text", delay: 600 },
             { text: "> [ უნ'ინ ნაი ვრაკ... პრე ]", class: "operator-text", delay: 800 },
@@ -881,7 +857,7 @@
             { text: "> STATUS: HISTORY IS BURNING.", class: "alert-text", delay: 1500 },
             
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:09 ] OPERATOR INJECTION:", class: "reix-header", delay: 400 }, // +5s (Reading time)
+            { text: "[ 00:00:09 ] OPERATOR INJECTION:", class: "reix-header", delay: 400 }, 
             { text: "> IGNORE THE FIRE. WATCH THE DUST.", class: "operator-text", delay: 1200 },
             { text: "> [ ლურ მო... ვჲლჸკაშ ბიირჸეი სჳჸანნ ]", class: "operator-text", delay: 1000 },
             { text: "> (Lur Mo... Vyl'kax Biir'ei Sú'ann)", class: "operator-text", delay: 600 },
@@ -894,42 +870,42 @@
             { text: "!!! Z-FIGHTING DETECTED IN REALITY ENGINE !!!", class: "alert-text", delay: 1000 },
             
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:16 ] SYSTEM (REIX_OS):", class: "reix-header", delay: 400 }, // +7s (Processing Error)
+            { text: "[ 00:00:16 ] SYSTEM (REIX_OS):", class: "reix-header", delay: 400 },
             { text: "> ATTEMPTING: [ ყინა. სოლვ. ] (Qina. Solv.)", class: "system-text", delay: 600 },
             { text: "> INTERPRETATION: RUSH [HASTE]. DISSOLVE [SOLUTION].", class: "system-text", delay: 1000 },
             { text: "> ERROR: CANNOT DISSOLVE \"THE WOUND.\"", class: "alert-text", delay: 1200 },
-            { text: "> QUERY: [ შა ვის იმ ვეშ? ] (Xa Vis Im Vex?)", class: "system-text", delay: 800 },
-            { text: "> \"QUERY SEE INSIDE THE VESSEL?\"", class: "system-text", delay: 1000 },
+            { text: "> QUERY: [ შა ვისჸეი იმ ვეშ? ] (Xa Vis'ei Im Vex?)", class: "system-text", delay: 800 },
+            { text: "> \"QUERY VIEWING [SEEING] INSIDE THE VESSEL?\"", class: "system-text", delay: 1000 },
             
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:21 ] BIOMETRIC SCAN:", class: "reix-header", delay: 400 }, // +5s
+            { text: "[ 00:00:21 ] BIOMETRIC SCAN:", class: "reix-header", delay: 400 },
             { text: "> SUBJECT: TEF RIIN", class: "system-text", delay: 200 },
             { text: "> HEART RATE: STEADY [TON]", class: "system-text", delay: 200 },
             { text: "> BREATH: [ გრა... ] (Gra...)", class: "operator-text", delay: 1000 },
             { text: "> DIAGNOSIS: GRIEF [HEAVINESS]. MASS EXCEEDS LIFT CAPACITY.", class: "alert-text", delay: 1500 },
             
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:24 ] OPERATOR RESPONSE:", class: "reix-header", delay: 400 }, // +3s
+            { text: "[ 00:00:24 ] OPERATOR RESPONSE:", class: "reix-header", delay: 400 },
             { text: "> I AM LIGHTER THAN I LOOK.", class: "operator-text", delay: 1000 },
             { text: "> [ შა ჰჲ? ] (Xa Hy?)", class: "operator-text", delay: 800 },
             { text: "> \"QUERY SKY?\"", class: "operator-text", delay: 600 },
             { text: "> LOOK OUTSIDE, WARDEN.", class: "operator-text", delay: 1500 },
             
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:28 ] SYSTEM (REIX_OS):", class: "reix-header", delay: 400 }, // +4s
+            { text: "[ 00:00:28 ] SYSTEM (REIX_OS):", class: "reix-header", delay: 400 },
             { text: "> SHUTTERS LOCKED. SECURITY PROTOCOL 9.", class: "system-text", delay: 500 },
-            { text: "> [ ვის თრა პორ... მო ვის ჰჲ თე ]", class: "system-text", delay: 1000 },
-            { text: "> (Vis Tra Por... Mo Vis Hy Te)", class: "system-text", delay: 600 },
-            { text: "> \"SEE THROUGH DOOR... [YOU] DO NOT SEE SKY [HARD STOP].\"", class: "system-text", delay: 1500 },
+            { text: "> [ ვისჸეი თრა პორ... მო ვისჸეი ჰჲ თე ]", class: "system-text", delay: 1000 },
+            { text: "> (Vis'ei Tra Por... Mo Vis'ei Hy Te)", class: "system-text", delay: 600 },
+            { text: "> \"SEEING THROUGH DOOR... [YOU] DO NOT SEE SKY [HARD STOP].\"", class: "system-text", delay: 1500 },
             { text: "> THERE IS NO SKY. THERE IS ONLY THE END.", class: "alert-text", delay: 2000 },
             
             { text: "", class: "system-text", delay: 400 },
             { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
-            { text: "[ 00:00:33 ] INITIATING: TERNARY SHIFT", class: "reix-header", delay: 400 }, // +5s
+            { text: "[ 00:00:33 ] INITIATING: TERNARY SHIFT", class: "reix-header", delay: 400 },
             { text: "[ 00:00:34 ] EXECUTING: ANCHOR MECHANIC (STATE -1)", class: "reix-header", delay: 1000 },
             
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:35 ] OPERATOR:", class: "reix-header", delay: 400 }, // +1s
+            { text: "[ 00:00:35 ] OPERATOR:", class: "reix-header", delay: 400 },
             { text: "> [ შა მის? ] (Xa Mis?)", class: "operator-text", delay: 800 },
             { text: "> \"QUERY LOST?\"", class: "operator-text", delay: 600 },
             { text: "> NO.", class: "operator-text", delay: 1000 },
@@ -937,13 +913,11 @@
             { text: "> \"QUERY: HOW DO MANY FLY [ACTION]?\"", class: "operator-text", delay: 1200 },
             
             { text: "", class: "system-text", delay: 500 },
-            // THE GLITCH (3000ms delay happens here)
             { text: "> [ რიინ თონჸეი... იმ თონ<span class='error-char'>ა</span> ]", class: "operator-text", delay: 1500 },
             { text: "> (Riin Ton'ei... Im Ton<span class='error-char'>a</span>)", class: "operator-text", delay: 1000 },
             { text: "> \"WE ANCHOR [ACTION]... INSIDE THE GROUND<span class='error-char'>Z</span>.\"", class: "operator-text", delay: 3000 }, 
             
             { text: "", class: "system-text", delay: 100 },
-            // TIME SKIP: 35s -> 42s (The system froze for 7 seconds during the glitch)
             { text: "[ 00:00:42 ] REALITY GLITCH:", class: "reix-header", delay: 200 }, 
             { text: "> OLD WORLD RENDERING FAILED.", class: "alert-text", delay: 400 },
             { text: "> [ ზაპ... კაშ უნ ] (Zap... Kax Un)", class: "system-text", delay: 800 },
@@ -958,19 +932,19 @@
             { text: "// TOKEN SLOT: OPEN //", class: "comment-text", delay: 1500 },
             
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:48 ] SYSTEM (REIX_OS):", class: "reix-header", delay: 400 }, // +6s
+            { text: "[ 00:00:48 ] SYSTEM (REIX_OS):", class: "reix-header", delay: 400 },
             { text: "> PAYMENT REQUIRED FOR PASSAGE.", class: "system-text", delay: 800 },
             { text: "> INSERT COIN.", class: "system-text", delay: 2000 },
             
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:51 ] OPERATOR:", class: "reix-header", delay: 400 }, // +3s
+            { text: "[ 00:00:51 ] OPERATOR:", class: "reix-header", delay: 400 },
             { text: "> [ დონჸეი ჰჱ... კან დეშ ]", class: "operator-text", delay: 1200 },
             { text: "> (Don'ei Hé... Kan Dex)", class: "operator-text", delay: 800 },
             { text: "> \"GIFTING [ACTION] SPIRIT... BECAUSE OF TOKEN.\"", class: "operator-text", delay: 1500 },
             { text: "> I PAY WITH MY SOUL. KIS'IEL [THE HOLY GLITCH].", class: "operator-text", delay: 2000 },
             
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:55 ] NAVIGATION COMPUTER:", class: "reix-header", delay: 400 }, // +4s
+            { text: "[ 00:00:55 ] NAVIGATION COMPUTER:", class: "reix-header", delay: 400 },
             { text: "> DESTINATION: NULL.", class: "alert-text", delay: 800 },
             { text: "> TARGET: [ ნაი ჰჲ ] (Nai Hy) -> TOWARDS SKY [HIGHER].", class: "system-text", delay: 1000 },
             { text: "> VECTOR: [ რიინ ვჱრჸეი... ნაი მის. ]", class: "system-text", delay: 1200 },
@@ -983,7 +957,6 @@
             { text: "> REBOOTING...", class: "system-text", delay: 1000 },
         ],
         echo: [
-            // ECHOS ARE TIMELESS. No modification needed.
             { text: "// =============================================================================", class: "comment-text", delay: 100 },
             { text: "// SYSTEM INTERSTICE: THE_ECHO [CYCLE ≈]", class: "white-text", delay: 200 },
             { text: "// STATUS: DUALITY RESOLUTION // KERNEL PANIC: FALSE", class: "white-text", delay: 200 },
@@ -996,9 +969,9 @@
             { text: "> THEY ARE ERRORS.", class: "system-text", delay: 1200 },
             { text: "", class: "system-text", delay: 400 },
             { text: "[ OPERATOR ]:", class: "reix-header", delay: 400 },
-            { text: "> [ მო. ვის პორ. ]", class: "operator-text", delay: 1000 },
-            { text: "> (Mo. Vis Por.)", class: "operator-text", delay: 600 },
-            { text: "> \"NO. SEE [THE] DOOR.\"", class: "operator-text", delay: 1500 },
+            { text: "> [ მო. ვისჸეი პორ. ]", class: "operator-text", delay: 1000 },
+            { text: "> (Mo. Vis'ei Por.)", class: "operator-text", delay: 600 },
+            { text: "> \"NO. SEEING [THE] DOOR.\"", class: "operator-text", delay: 1500 },
             { text: "> THEY ARE WINDOWS.", class: "white-text", delay: 1500 },
             { text: "", class: "system-text", delay: 400 },
             { text: "[ WARDEN ]:", class: "reix-header", delay: 400 },
@@ -1015,7 +988,6 @@
             { text: "> [ SYNC COMPLETE ]", class: "white-text", delay: 0 },
         ],
         wake: [
-            // FLOW TIME: Time moves smoother, but still processes data.
             { text: "// =============================================================================", class: "comment-text", delay: 100 },
             { text: "// SYSTEM WAKE: PHOENIX_NEST [CYCLE 01]", class: "system-success", delay: 200 },
             { text: "// SOURCE: CORE [THE ASHES] // POST-TRANSITION", class: "system-success", delay: 200 },
@@ -1034,36 +1006,36 @@
             { text: "> \"TOKEN DISSOLVED... WE [ARE] HOME.\"", class: "operator-text", delay: 1500 },
             { text: "> SOUL WEIGHT: 21 GRAMS [ADDED TO CHASSIS].", class: "system-text", delay: 1500 },
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:05 ] SENSOR ARRAY:", class: "reix-header", delay: 400 }, // +5s
+            { text: "[ 00:00:05 ] SENSOR ARRAY:", class: "reix-header", delay: 400 },
             { text: "> EXTERNAL TEMP: WARMING.", class: "system-text", delay: 400 },
             { text: "> VECTOR: [ ნაი ჰჲ... ვჲლ ]", class: "operator-text", delay: 1000 },
             { text: "> TRANSLATION: TOWARDS SKY... FLIGHT.", class: "operator-text", delay: 1000 },
             { text: "> STATUS: THE DUST IS BIRTHING STARS. YOU WERE RIGHT.", class: "system-success", delay: 2000 },
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:10 ] MEMORY RECOVERY:", class: "reix-header", delay: 400 }, // +5s
+            { text: "[ 00:00:10 ] MEMORY RECOVERY:", class: "reix-header", delay: 400 }, 
             { text: "> ACCESSING ARCHIVE: \"EARTH_PRIME\"", class: "system-text", delay: 800 },
             { text: "> FILE CORRUPTED.", class: "system-text", delay: 800 },
-            { text: "> [ შა ვის პრე? ] (Xa Vis Pre?)", class: "operator-text", delay: 1000 },
-            { text: "> \"QUERY SEE HISTORY?\"", class: "operator-text", delay: 800 },
+            { text: "> [ შა ვისჸეი პრე? ] (Xa Vis'ei Pre?)", class: "operator-text", delay: 1000 },
+            { text: "> \"QUERY SEEING HISTORY?\"", class: "operator-text", delay: 800 },
             { text: "> NEGATIVE. OLD WORLD IS GONE. ONLY THE NEST REMAINS.", class: "system-text", delay: 1500 },
             { text: "", class: "system-text", delay: 400 },
             { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
             { text: "!!! NOTICE: REALITY ENGINE UPDATE !!!", class: "system-success", delay: 500 },
             { text: "!!! Z-FIGHTING RESOLVED. NEW RENDERING PIPELINE ACTIVE !!!", class: "golden-text", delay: 2000 },
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:17 ] SYSTEM (PHOENIX_OS):", class: "reix-header", delay: 400 }, // +7s (Engine update took time)
+            { text: "[ 00:00:17 ] SYSTEM (PHOENIX_OS):", class: "reix-header", delay: 400 },
             { text: "> COMMAND: [ ვჲლ ომნ ] (Vyl Omn)", class: "operator-text", delay: 1000 },
             { text: "> INTERPRETATION: FLY [HOME].", class: "operator-text", delay: 1000 },
-            { text: "> QUERY: [ შა ვის ჰჲ? ] (Xa Vis Hy?)", class: "operator-text", delay: 1200 },
-            { text: "> \"QUERY SEE SKY?\"", class: "operator-text", delay: 600 },
+            { text: "> QUERY: [ შა ვისჸეი ჰჲ? ] (Xa Vis'ei Hy?)", class: "operator-text", delay: 1200 },
+            { text: "> \"QUERY SEEING SKY?\"", class: "operator-text", delay: 600 },
             { text: "> OPENING SHUTTERS...", class: "system-text", delay: 1500 },
             { text: "> ... VISUAL CONFIRMED.", class: "system-success", delay: 1500 },
-            { text: "> [ ვის თრა პორ... ვის იმმჳრ ]", class: "golden-text", delay: 1500 },
-            { text: "> (Vis Tra Por... Vis Immúr)", class: "golden-text", delay: 800 },
-            { text: "> \"SEE THROUGH DOOR... SEE INFINITY.\"", class: "golden-text", delay: 1500 },
+            { text: "> [ ვისჸეი თრა პორ... ვისჸეი იმმჳრ ]", class: "golden-text", delay: 1500 },
+            { text: "> (Vis'ei Tra Por... Vis'ei Immúr)", class: "golden-text", delay: 800 },
+            { text: "> \"SEEING THROUGH DOOR... SEEING INFINITY.\"", class: "golden-text", delay: 1500 },
             { text: "> THE END WAS JUST A HORIZON.", class: "system-success", delay: 2000 },
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:30 ] INTEGRATED OPERATOR (ECHO):", class: "reix-header", delay: 400 }, // +13s (Basking in the view)
+            { text: "[ 00:00:30 ] INTEGRATED OPERATOR (ECHO):", class: "reix-header", delay: 400 },
             { text: "> [ ჰჱჸგრა... ] (Hé'gra...)", class: "operator-text", delay: 1000 },
             { text: "> \"SIGH... [SPIRIT-GRIEF]\"", class: "operator-text", delay: 600 },
             { text: "> [ ნიი ვჲლჸეი? ] (Nii Vyl'ei?)", class: "operator-text", delay: 1000 },
@@ -1078,7 +1050,7 @@
             { text: "// NAVIGATION UPDATE //", class: "comment-text", delay: 400 },
             { text: "// FUEL SOURCE: TEF RIIN (SOUL) //", class: "comment-text", delay: 400 },
             { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:45 ] SYSTEM (PHOENIX_OS):", class: "reix-header", delay: 400 }, // +15s (Long flight)
+            { text: "[ 00:00:45 ] SYSTEM (PHOENIX_OS):", class: "reix-header", delay: 400 },
             { text: "> WELCOME TO THE UNKNOWN, WARDEN.", class: "golden-text", delay: 1500 },
             { text: "> YOU PAID THE TOLL.", class: "system-text", delay: 1000 },
             { text: "> [ სჳჸიშ ჰჲ... სჳჸიშ კის'იელ ]", class: "operator-text", delay: 1000 },
@@ -1091,7 +1063,6 @@
             { text: "> VÉL VYL'OMN.", class: "golden-text", delay: 0 },
         ],
         bloom: [
-            // NO CHANGES NEEDED
             { text: "// =============================================================================", class: "comment-text", delay: 100 },
             { text: "// SYSTEM PROTOCOL: THE_BLOOM [CYCLE *]", class: "magenta-text", delay: 200 },
             { text: "// STATUS: TRANSMUTATION IN PROGRESS", class: "magenta-text", delay: 200 },
@@ -1151,14 +1122,12 @@
             { text: "", class: "system-text", delay: 2500 },
             { text: "> END OF LINE.", class: "system-text", delay: 2500 },
             { text: "> [ SYSTEM INTEGRATION: COMPLETE. LOOP STABLE. ]", class: "system-success", delay: 1000 },
-            // THE UNLOCK
             { text: "<a href='https://soundcloud.com/metapnant/sets/the-library' target='_blank' class='secret-link'>[ ENTER THE LIBRARY ]</a>", class: "system-success", delay: 0 }
         ]
     };
 
     infinityBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      // LOGIC GATE: ONLY ACTIVATE ON PHOENIX NEST (Index 2)
       if (currentIndex !== 2) return;
 
       secretClicks++;
@@ -1177,7 +1146,6 @@
       document.body.classList.add('no-scroll');
       secretOverlay.classList.add('active');
       
-      // RESET ALL
       if(activeTimer) clearTimeout(activeTimer);
       containers.crash.innerHTML = "";
       containers.echo.innerHTML = "";
@@ -1197,19 +1165,15 @@
       btnCycleBloom.classList.remove('visible', 'active');
       btnCycle02.classList.remove('visible', 'active');
       
-      // START
       switchTab('crash');
     }
 
     function switchTab(type) {
       if (currentTab === type) return;
-      
-      // Pause previous execution by clearing the timer
       if (activeTimer) clearTimeout(activeTimer);
       
       currentTab = type;
       
-      // UI Updates (Active logic)
       const allBtns = [btnCycle00, btnCycle01, btnCycleEcho, btnCycleBloom, btnCycle02];
       const allContainers = [containers.crash, containers.wake, containers.echo, containers.bloom, containers.gardener];
       
@@ -1233,10 +1197,8 @@
         containers.gardener.classList.add('active-log');
       }
       
-      // Resume or Start execution
       processQueue();
       
-      // CENTER ACTIVE BUTTON ON MOBILE
       if (window.innerWidth <= 700) {
         let activeBtn = null;
         if (type === 'crash') activeBtn = btnCycle00;
@@ -1304,7 +1266,6 @@
     function typeLine(htmlText, className, container) {
       const lineDiv = document.createElement('div');
       
-      // FIX: Check for visual separators and apply special class
       if (htmlText.includes('----') || htmlText.includes('====')) {
          lineDiv.className = `terminal-line divider-line ${className}`;
       } else {
@@ -1348,9 +1309,6 @@
       btnCycleBloom.classList.remove('visible');
       btnCycle02.classList.remove('visible');
     }
-
-    // --- SECRET PUZZLE LOGIC END ---
-
   </script>
 </body>
 </html>
