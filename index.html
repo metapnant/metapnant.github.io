@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- PREVENT WHITE FLASH ON SCROLL -->
   <meta name="theme-color" content="#0d0022">
   <title>THE LIBRARY</title>
   <link rel="icon" href="favicon.png" type="image/png" />
@@ -14,6 +15,7 @@
     :root {
       --name-color: #9800eb; --title-color: #ded4eb; --background-main: #0d0022;
       --primary-text-color: #f0f0f0; --secondary-text-color: #a09cb8; --arrow-color: rgba(222, 212, 235, 0.4);
+      /* TERMINAL PALETTE */
       --terminal-bg: #05000a; --terminal-sidebar: #0a0014; --terminal-text: #00ff9d; 
       --terminal-dim: #005f3d; --terminal-alert: #ffcc00; --terminal-error: #ff3333; 
       --terminal-gold: #ffd700; --terminal-white: #ffffff; --terminal-magenta: #ff00ff;
@@ -34,6 +36,7 @@
 
     @keyframes darkShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
+    /* LAYOUT */
     .explore-container {
       width: 100%; max-width: 900px; margin: 0 auto; flex-grow: 1;
       opacity: 1; transform: translateY(0); transition: opacity 1.2s ease, transform 1s ease;
@@ -48,11 +51,10 @@
       min-height: 60vh; padding: 10px; gap: 15px; border-radius: 4px;
     }
 
-    /* LOADER OVERLAY */
+    /* LOADER - Pure Overlay */
     #loading-overlay {
       display: none; align-items: center; justify-content: center;
       position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 50;
-      pointer-events: none; 
     }
 
     .loading-spinner {
@@ -63,10 +65,11 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* PDF PAGE - Tear Style & Animations */
     .pdf-page-wrapper {
       position: relative; margin: 0 auto; border-radius: 4px; overflow: hidden;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%);
+      background-color: var(--background-main); /* Dark base to prevent flash */
       line-height: 0; flex-shrink: 0; 
       opacity: 0; animation: fadeContentIn 0.8s ease forwards;
     }
@@ -81,56 +84,70 @@
 
     .pdf-page-canvas { 
         width: 100%; height: auto; display: block; 
-        background-color: #fff; 
-        clip-path: inset(0 3px 2px 0); 
+        background-color: var(--background-main); /* Dark base */
+        clip-path: inset(0 3px 2px 0); /* The Tear */
     }
 
+    /* NAVIGATION */
     .nav-controls {
       position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
       display: flex; align-items: center; gap: 80px; z-index: 2000; -webkit-tap-highlight-color: transparent;
     }
     .nav-arrow {
       background: none; border: none; color: var(--arrow-color); font-size: 3.5rem;
-      cursor: pointer; transition: color 0.2s, transform 0.1s; animation: faintFlash 5s infinite ease-in-out;
+      cursor: pointer; transition: color 0.3s ease, transform 0.2s ease;
+      animation: faintFlash 5s infinite ease-in-out;
       user-select: none; -webkit-user-select: none;
     }
     .nav-arrow.disabled { opacity: 0.1; pointer-events: none; }
-    .nav-arrow:active { color: var(--name-color); transform: scale(0.9); }
+    
+    @media (hover: hover) {
+      .nav-arrow:hover { color: var(--name-color); transform: scale(1.1); animation: none; }
+    }
+    .nav-arrow:active { color: var(--name-color); transform: scale(0.95); }
 
+    /* DOWNLOAD BUTTON */
     .pdf-button {
       position: fixed; right: 20px; bottom: 20px; z-index: 1000;
       background-color: transparent; color: var(--arrow-color);
       border: 1px solid var(--arrow-color); border-radius: 0;
       text-decoration: none; font-weight: 600; padding: 12px 22px;
       font-size: 0.8em; letter-spacing: 1px; opacity: 0;
-      transition: all 0.3s ease; animation: faintFlash 5s infinite ease-in-out;
+      transition: color 0.3s, border-color 0.3s, background-color 0.3s; 
+      animation: faintFlash 5s infinite ease-in-out;
       -webkit-tap-highlight-color: transparent; box-sizing: border-box; 
+      display: flex; align-items: center; justify-content: center; gap: 10px;
     }
     body.loaded .pdf-button { opacity: 1; }
-    .pdf-button:active { background-color: rgba(152, 0, 235, 0.2); border-color: var(--name-color); color: var(--name-color); }
+
+    @media (hover: hover) {
+      .pdf-button:hover {
+        color: var(--name-color); border-color: var(--name-color);
+        background-color: rgba(152, 0, 235, 0.05); animation: none; opacity: 1;
+      }
+    }
+    .pdf-button:active { background-color: rgba(152, 0, 235, 0.15); border-color: var(--name-color); color: var(--name-color); transform: scale(0.98); }
+
     @media (max-width: 599px) {
       .pdf-button {
-        width: 50px; height: 50px; padding: 0; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1.4em; border-color: var(--name-color); background-color: rgba(13, 0, 34, 0.8);
+        width: 50px; height: 50px; padding: 0; border-radius: 0; /* Square */
+        font-size: 1.4em; border-color: var(--arrow-color);
+        background-color: rgba(13, 0, 34, 0.8);
       }
       .pdf-button .btn-text { display: none; }
+      .pdf-button .btn-icon { margin: 0; }
     }
 
+    /* FOOTER & LINKS */
     #song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 10px; }
     #song-link {
       color: var(--name-color); text-decoration: underline;
       text-decoration-color: var(--name-color); text-underline-offset: 2px;
       font-weight: 600; transition: color 0.1s;
     }
-    
-    /* MISSING LOGIC RESTORED HERE */
     @media (hover: hover) {
-      #song-link:hover {
-        animation: strobe 1s infinite; /* Default speed, overriden by JS */
-      }
+      #song-link:hover { animation: strobe 1s infinite; } /* JS overrides speed */
     }
-    
     @keyframes strobe { 0%, 100% { color: var(--name-color); text-decoration-color: var(--name-color); } 50% { color: #ffffff; text-decoration-color: #ffffff; } }
     @keyframes faintFlash { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
 
@@ -218,6 +235,7 @@
     .magenta-text { color: var(--terminal-magenta); text-shadow: 0 0 10px var(--terminal-magenta); font-weight: bold; }
     .system-success { color: var(--terminal-cyan); }
     .error-char { color: var(--terminal-error); display: inline-block; font-weight: bold; animation: glitch-shake 0.08s infinite; text-shadow: 1px 0 #000; }
+    
     .secret-link {
       display: inline-block; margin-top: 20px; color: var(--terminal-bg);
       background-color: var(--terminal-gold); padding: 10px 15px; text-decoration: none;
@@ -646,7 +664,7 @@
             { text: "> [ ჰჱჸგრა... ] (Hé'gra...)", class: "operator-text", delay: 1000 },
             { text: "> \"SIGH... [SPIRIT-GRIEF]\"", class: "operator-text", delay: 600 },
             { text: "> [ შა ნიი ვჲლჸეი? ] (Xa Nii Vyl'ei?)", class: "operator-text", delay: 1000 },
-            { text: "> \"QUERY: HOW DO MANY FLY?\"", class: "operator-text", delay: 600 },
+            { text: "> \"QUERY: DO MANY FLY?\"", class: "operator-text", delay: 600 },
             { text: "", class: "system-text", delay: 500 },
             { text: "> SYSTEM RESPONSE:", class: "reix-header", delay: 500 },
             { text: "> WE DO NOT FLY. WE EXIST.", class: "system-success", delay: 1500 },
