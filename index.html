@@ -75,12 +75,17 @@
       max-width: 900px;
       margin: 0 auto;
       flex-grow: 1;
-      opacity: 0;
-      transform: translateY(20px);
+      /* REVERTED: Ensure it is visible by default to prevent blank screen */
+      opacity: 1; 
+      transform: translateY(0);
       transition: opacity 1.2s ease, transform 1s ease;
     }
-
-    body.loaded .explore-container { opacity: 1; transform: translateY(0); }
+    
+    /* Initial fade in only */
+    body.initial-load .explore-container {
+        opacity: 0;
+        transform: translateY(20px);
+    }
 
     .explore-header { text-align: center; margin-bottom: 30px; }
 
@@ -93,58 +98,32 @@
       letter-spacing: 1px;
     }
 
-    /* PDF CONTAINER - The Stage */
     .pdf-container {
       position: relative;
       background-color: rgba(255, 255, 255, 0.03);
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
       min-height: 60vh; /* Keeps layout stable */
       padding: 10px;
       gap: 15px;
       border-radius: 4px;
-      transition: opacity 0.4s ease-in-out;
-      opacity: 1;
+      overflow: hidden;
     }
 
-    /* Loading State for Container */
-    .pdf-container.faded-out {
-      opacity: 0;
-    }
-
-    /* SPINNER STYLES */
-    .loading-wrapper {
+    /* LOADING OVERLAY - Stable, on top of content */
+    #loading-message {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(13, 0, 34, 0.9); 
+      backdrop-filter: blur(5px);
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: center;
-      height: 100%;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 100%;
+      align-items: center;
+      z-index: 50;
+      transition: opacity 0.3s ease;
     }
-
-    .loading-spinner {
-      width: 40px; height: 40px;
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-top-color: var(--name-color);
-      border-radius: 50%;
-      animation: spin 1s infinite linear;
-      margin-bottom: 15px;
-    }
-
-    .loading-text {
-      font-family: "Space Mono", monospace;
-      font-size: 0.9em;
-      letter-spacing: 1px;
-      color: var(--secondary-text-color);
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
 
     .pdf-page-wrapper {
       position: relative;
@@ -155,12 +134,6 @@
       background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%);
       line-height: 0;
       flex-shrink: 0; 
-      animation: gentleRise 0.5s ease-out;
-    }
-
-    @keyframes gentleRise {
-      from { transform: translateY(10px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
     }
 
     .pdf-page-wrapper::after {
@@ -244,8 +217,6 @@
       box-sizing: border-box; 
     }
 
-    body.loaded .pdf-button { opacity: 1; }
-
     @media (hover: hover) {
       .pdf-button:hover {
         color: var(--name-color);
@@ -306,6 +277,24 @@
       0%, 100% { opacity: 0.3; }
       50% { opacity: 0.8; }
     }
+
+    .loading-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: var(--name-color);
+      border-radius: 50%;
+      animation: spin 1s infinite linear;
+      margin: 0 auto 15px auto;
+    }
+    
+    .loading-text {
+      font-family: "Space Mono", monospace;
+      font-size: 0.9em;
+      letter-spacing: 1px;
+      color: var(--secondary-text-color);
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .footer {
       text-align: center;
@@ -597,7 +586,7 @@
   </style>
 </head>
 
-<body>
+<body class="initial-load">
   <div class="explore-container">
     <header class="explore-header">
       <h1 id="doc-title">METAPNANT</h1>
@@ -606,7 +595,7 @@
     <main>
       <div class="pdf-container" id="pdf-wrapper">
         <!-- THE SPINNER IS NOW STATIC HTML, HIDDEN/SHOWN VIA JS -->
-        <div id="loading-overlay" class="loading-wrapper" style="display:none;">
+        <div id="loading-overlay" class="loading-wrapper">
            <div class="loading-spinner"></div>
            <div class="loading-text">ACCESSING ARCHIVE...</div>
         </div>
@@ -706,24 +695,13 @@
       renderSession++; 
       const currentSession = renderSession;
 
-      // 1. DISABLE ARROWS
+      // 1. DISABLE ARROWS, SHOW OVERLAY
       prevArrow.classList.add('disabled');
       nextArrow.classList.add('disabled');
+      loadingOverlay.style.display = 'flex'; 
+      loadingOverlay.style.opacity = '1';
 
-      // 2. FADE OUT CONTAINER
-      pdfWrapper.classList.add('faded-out');
-      
-      // 3. WAIT FOR FADE OUT (400ms)
-      await new Promise(r => setTimeout(r, 400));
-
-      // 4. THE VOID: CLEAR CONTENT, SHOW SPINNER
-      const existingPages = document.querySelectorAll('.pdf-page-wrapper');
-      existingPages.forEach(p => p.remove());
-      
-      loadingOverlay.style.display = 'flex'; // Show Spinner
-      pdfWrapper.classList.remove('faded-out'); // Fade In Spinner
-
-      // 5. UPDATE DATA
+      // 2. UPDATE DATA
       currentIndex = index;
       const currentDoc = library[currentIndex];
       docTitle.textContent = currentDoc.title;
@@ -747,21 +725,31 @@
         songContainer.style.visibility = "hidden";
       }
 
-      // 6. LOAD PDF
+      // 3. LOAD PDF
       try {
         pdfDoc = await pdfjsLib.getDocument(finalUrl).promise;
         
         // Render Page 1 In Memory
         await renderPage(1);
         
-        // 7. SWAP: FADE OUT SPINNER
-        pdfWrapper.classList.add('faded-out');
-        await new Promise(r => setTimeout(r, 400));
-
-        // 8. FADE IN CONTENT
         if (currentSession === renderSession) {
-            loadingOverlay.style.display = 'none'; // Hide Spinner
-            pdfWrapper.classList.remove('faded-out'); // Fade In Canvas (which is already appended)
+            // Remove OLD pages now (keep only the new one)
+            const allPages = Array.from(pdfWrapper.querySelectorAll('.pdf-page-wrapper'));
+            if (allPages.length > 1) {
+               for(let i=0; i<allPages.length - 1; i++) {
+                   allPages[i].remove();
+               }
+            }
+
+            // HIDE OVERLAY
+            loadingOverlay.style.opacity = '0';
+            setTimeout(() => { 
+                if(currentSession === renderSession) loadingOverlay.style.display = 'none'; 
+            }, 300);
+
+            // REMOVE INITIAL LOAD CLASS (Fades in container if it was hidden)
+            document.body.classList.remove("initial-load");
+            document.body.classList.add("loaded");
             
             isLoading = false;
             prevArrow.classList.remove('disabled');
@@ -774,7 +762,6 @@
       } catch (err) {
         console.error(err);
         loadingOverlay.innerHTML = "<div class='loading-text' style='color:red'>ARCHIVE CORRUPTED.</div>";
-        pdfWrapper.classList.remove('faded-out');
         isLoading = false;
       }
     }
@@ -798,7 +785,7 @@
           canvas.className = 'pdf-page-canvas';
           wrapper.appendChild(canvas);
           
-          // Append immediately (it's invisible due to fade-out or background load)
+          // Append immediately
           pdfWrapper.appendChild(wrapper);
 
           const ctx = canvas.getContext('2d');
