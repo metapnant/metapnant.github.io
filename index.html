@@ -3,38 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- FIX 1: Theme Color prevents white overscroll flash on Android -->
+  <meta name="theme-color" content="#0d0022">
   <title>THE LIBRARY</title>
   <link rel="icon" href="favicon.png" type="image/png" />
   
-  <!-- FONTS -->
   <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   
   <style>
     :root {
-      --name-color: #9800eb;
-      --title-color: #ded4eb;
-      --background-main: #0d0022;
-      --primary-text-color: #f0f0f0;
-      --secondary-text-color: #a09cb8;
-      --arrow-color: rgba(222, 212, 235, 0.4);
-      
-      /* TERMINAL COLORS */
-      --terminal-bg: #05000a;
-      --terminal-sidebar: #0a0014;
-      --terminal-text: #00ff9d; 
-      --terminal-dim: #005f3d;
-      --terminal-alert: #ffcc00; 
-      --terminal-error: #ff3333; 
-      --terminal-gold: #ffd700; 
-      --terminal-white: #ffffff; 
-      --terminal-magenta: #ff00ff;
-      --terminal-cyan: #00ffff; 
-      --terminal-border: #333;
-      --operator-color: #d4aaff;
+      --name-color: #9800eb; --title-color: #ded4eb; --background-main: #0d0022;
+      --primary-text-color: #f0f0f0; --secondary-text-color: #a09cb8; --arrow-color: rgba(222, 212, 235, 0.4);
+      --terminal-bg: #05000a; --terminal-sidebar: #0a0014; --terminal-text: #00ff9d; 
+      --terminal-dim: #005f3d; --terminal-alert: #ffcc00; --terminal-error: #ff3333; 
+      --terminal-gold: #ffd700; --terminal-white: #ffffff; --terminal-magenta: #ff00ff;
+      --terminal-cyan: #00ffff; --terminal-border: #333; --operator-color: #d4aaff;
     }
 
-    html { background-color: var(--background-main); height: 100%; }
+    html { background-color: var(--background-main); height: 100%; overscroll-behavior-y: none; }
 
     body {
       font-family: "Zilla Slab", serif;
@@ -47,25 +34,21 @@
       background-size: 600% 600%;
       animation: darkShift 30s ease infinite;
       overflow-x: hidden;
+      overscroll-behavior-y: none; /* Prevents rubber-banding to white */
     }
 
     body.no-scroll { overflow: hidden !important; height: 100vh !important; }
 
     @keyframes darkShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; }
     }
-
-    /* --- MAIN UI ELEMENTS --- */
 
     .explore-container {
       width: 100%; max-width: 900px; margin: 0 auto; flex-grow: 1;
       opacity: 1; transform: translateY(0);
+      /* Removed initial-load opacity logic to prevent blank screen */
       transition: opacity 1.2s ease, transform 1s ease;
     }
-    
-    body.initial-load .explore-container { opacity: 0; transform: translateY(20px); }
 
     .explore-header { text-align: center; margin-bottom: 30px; }
     .explore-header h1 {
@@ -75,15 +58,15 @@
 
     .pdf-container {
       position: relative; background-color: rgba(255, 255, 255, 0.03);
-      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      display: flex; flex-direction: column; align-items: center;
       min-height: 60vh; padding: 10px; gap: 15px; border-radius: 4px;
     }
 
-    /* LOADER */
+    /* LOADER: Flex by default so it shows immediately */
     #loading-overlay {
-      display: none; flex-direction: column; align-items: center; justify-content: center;
-      position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10;
-      background-color: var(--background-main); /* Hides old content */
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 50;
+      background-color: var(--background-main); /* Hides old content cleanly */
     }
 
     .loading-spinner {
@@ -102,15 +85,15 @@
     .pdf-page-wrapper {
       position: relative; margin: 0 auto; border-radius: 4px; overflow: hidden;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      /* Default dark background to prevent white flash */
-      background-color: var(--background-main);
-      line-height: 0; flex-shrink: 0; 
+      background-color: var(--background-main); /* Dark base */
+      line-height: 0; flex-shrink: 0;
+      /* FIX 3: Reserve aspect ratio space (A4 paper approx) to stop jumping */
+      width: 100%; aspect-ratio: 0.707; 
     }
 
-    /* FLASH FIX: Default to dark background */
     .pdf-page-canvas { 
         width: 100%; height: auto; display: block; 
-        background-color: var(--background-main); 
+        background-color: var(--background-main); /* Dark base */
         clip-path: inset(0 3px 2px 0); 
     }
 
@@ -119,7 +102,6 @@
       display: flex; align-items: center; gap: 80px; z-index: 2000;
       -webkit-tap-highlight-color: transparent;
     }
-
     .nav-arrow {
       background: none; border: none; color: var(--arrow-color); font-size: 3.5rem;
       cursor: pointer; transition: color 0.2s, transform 0.1s;
@@ -140,13 +122,11 @@
     }
     body.loaded .pdf-button { opacity: 1; }
     .pdf-button:active { background-color: rgba(152, 0, 235, 0.2); border-color: var(--name-color); color: var(--name-color); }
-
     @media (max-width: 599px) {
       .pdf-button {
         width: 50px; height: 50px; padding: 0; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        font-size: 1.4em; border-color: var(--name-color);
-        background-color: rgba(13, 0, 34, 0.8);
+        font-size: 1.4em; border-color: var(--name-color); background-color: rgba(13, 0, 34, 0.8);
       }
       .pdf-button .btn-text { display: none; }
     }
@@ -157,17 +137,10 @@
       text-decoration-color: var(--name-color); text-underline-offset: 2px;
       font-weight: 600; transition: color 0.1s;
     }
-    @keyframes strobe {
-      0%, 100% { color: var(--name-color); text-decoration-color: var(--name-color); }
-      50% { color: #ffffff; text-decoration-color: #ffffff; }
-    }
+    @keyframes strobe { 0%, 100% { color: var(--name-color); text-decoration-color: var(--name-color); } 50% { color: #ffffff; text-decoration-color: #ffffff; } }
     @keyframes faintFlash { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
 
-    .footer {
-      text-align: center; padding: 20px 0 10px 0; font-size: 0.85em;
-      color: var(--secondary-text-color); border-top: 1px solid rgba(255, 255, 255, 0.08); margin-top: 40px;
-    }
-
+    .footer { text-align: center; padding: 20px 0 10px 0; font-size: 0.85em; color: var(--secondary-text-color); border-top: 1px solid rgba(255, 255, 255, 0.08); margin-top: 40px; }
     #infinity-symbol { cursor: pointer; display: inline-block; transition: text-shadow 0.3s, color 0.3s; padding: 0 5px; font-weight: bold; }
     #infinity-symbol:hover { color: #fff; text-shadow: 0 0 15px var(--name-color); }
 
@@ -191,11 +164,8 @@
       border-right: 1px solid var(--terminal-border); padding: 40px 20px;
       display: flex; flex-direction: column; gap: 15px; z-index: 11; flex-shrink: 0;
     }
-    .sidebar-header {
-      color: #fff; font-weight: bold; border-bottom: 2px solid var(--terminal-border);
-      padding-bottom: 10px; margin-bottom: 10px; letter-spacing: 2px; font-size: 1.1em;
-    }
-
+    .sidebar-header { color: #fff; font-weight: bold; border-bottom: 2px solid var(--terminal-border); padding-bottom: 10px; margin-bottom: 10px; letter-spacing: 2px; font-size: 1.1em; }
+    
     .cycle-btn {
       background: none; padding: 12px 15px; text-align: left; cursor: pointer;
       font-family: 'Space Mono', monospace; font-size: 0.85em; transition: all 0.3s ease;
@@ -253,7 +223,6 @@
     .white-text { color: var(--terminal-white); text-shadow: 0 0 10px var(--terminal-white); font-weight: bold; }
     .magenta-text { color: var(--terminal-magenta); text-shadow: 0 0 10px var(--terminal-magenta); font-weight: bold; }
     .system-success { color: var(--terminal-cyan); }
-
     .error-char { color: var(--terminal-error); display: inline-block; font-weight: bold; animation: glitch-shake 0.08s infinite; text-shadow: 1px 0 #000; }
     .secret-link {
       display: inline-block; margin-top: 20px; color: var(--terminal-bg);
@@ -279,7 +248,7 @@
   </style>
 </head>
 
-<body class="initial-load">
+<body>
   <div class="explore-container">
     <header class="explore-header">
       <h1 id="doc-title">METAPNANT</h1>
@@ -405,7 +374,6 @@
         
         if (currentSession === renderSession) {
             loadingOverlay.style.display = 'none';
-            document.body.classList.remove("initial-load");
             document.body.classList.add("loaded");
             isLoading = false;
             prevArrow.classList.remove('disabled'); nextArrow.classList.remove('disabled');
@@ -685,7 +653,7 @@
             { text: "> [ ჰჱჸგრა... ] (Hé'gra...)", class: "operator-text", delay: 1000 },
             { text: "> \"SIGH... [SPIRIT-GRIEF]\"", class: "operator-text", delay: 600 },
             { text: "> [ შა ნიი ვჲლჸეი? ] (Xa Nii Vyl'ei?)", class: "operator-text", delay: 1000 },
-            { text: "> \"QUERY: HOW DO MANY FLY?\"", class: "operator-text", delay: 600 },
+            { text: "> \"QUERY: DO MANY FLY?\"", class: "operator-text", delay: 600 },
             { text: "", class: "system-text", delay: 500 },
             { text: "> SYSTEM RESPONSE:", class: "reix-header", delay: 500 },
             { text: "> WE DO NOT FLY. WE EXIST.", class: "system-success", delay: 1500 },
