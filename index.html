@@ -93,23 +93,32 @@
       letter-spacing: 1px;
     }
 
-    /* PDF CONTAINER - SMOOTH FADE */
+    /* PDF CONTAINER - SOLID STATE */
     .pdf-container {
       position: relative;
       background-color: rgba(255, 255, 255, 0.03);
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 400px;
+      min-height: 60vh; /* Prevents collapse */
       padding: 10px;
       gap: 15px;
-      /* The Transition Logic */
-      opacity: 1;
-      transition: opacity 0.3s ease-in-out;
+      border-radius: 4px;
+      overflow: hidden;
     }
 
-    .pdf-container.dissolved {
-      opacity: 0;
+    /* LOADING OVERLAY - THE BLUR */
+    #loading-message {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(13, 0, 34, 0.85); /* Dark semi-transparent */
+      backdrop-filter: blur(8px); /* The Glass Effect */
+      display: none; /* Hidden by default */
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+      transition: none;
     }
 
     .pdf-page-wrapper {
@@ -120,19 +129,7 @@
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
       background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%);
       line-height: 0;
-      /* Ensure pages don't jump around */
       flex-shrink: 0; 
-    }
-
-    .pdf-page-wrapper::after {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 70%);
-      background-size: 200% 200%;
-      pointer-events: none;
-      z-index: 10;
-      mix-blend-mode: overlay;
     }
 
     .pdf-page-canvas {
@@ -140,7 +137,6 @@
       height: auto;
       display: block;
       background-color: #fff;
-      clip-path: inset(0 3px 2px 0);
     }
 
     .nav-controls {
@@ -274,7 +270,7 @@
       border-top-color: var(--name-color);
       border-radius: 50%;
       animation: spin 1s infinite linear;
-      margin: 40px auto;
+      margin: 0 auto 15px auto;
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -679,21 +675,12 @@
       prevArrow.classList.add('disabled');
       nextArrow.classList.add('disabled');
 
+      // SHOW OVERLAY IMMEDIATELY (No Fading, No Movement)
       const loadingMsg = document.getElementById('loading-message');
+      loadingMsg.style.display = 'flex'; // Flex handles centering
       
-      // 1. START FADE OUT
-      pdfWrapper.classList.add('dissolved');
-
-      // 2. WAIT FOR FADE (300ms match css)
-      await new Promise(r => setTimeout(r, 300));
-
-      // 3. THE VOID (Clear old content, Show Spinner)
-      const existingPages = document.querySelectorAll('.pdf-page-wrapper');
-      existingPages.forEach(p => p.remove());
-      loadingMsg.style.display = 'block';
-      document.body.classList.remove("loaded"); 
-
-      // 4. UPDATE DATA
+      // Keep old pages visible underneath the blur until ready to swap
+      
       currentIndex = index;
       const currentDoc = library[currentIndex];
       docTitle.textContent = currentDoc.title;
@@ -717,19 +704,25 @@
         songContainer.style.visibility = "hidden";
       }
 
-      // 5. FADE IN (Show Spinner)
-      pdfWrapper.classList.remove('dissolved');
-
-      // 6. LOAD PDF
       try {
         pdfDoc = await pdfjsLib.getDocument(finalUrl).promise;
         
-        // Render Page 1 in memory/background
-        await renderPage(1);
+        // Render Page 1 in Background
+        await renderPage(1, true); // true = "isFirstPage"
         
-        // 7. REVEAL CONTENT (Hide Spinner, Page 1 is already appended)
+        // THE SWAP (Instant)
         if (currentSession === renderSession) {
-            loadingMsg.style.display = 'none';
+            // New page is appended by renderPage logic.
+            // Remove OLD pages now.
+            const allPages = Array.from(pdfWrapper.querySelectorAll('.pdf-page-wrapper'));
+            // Keep only the LAST added one (the new one)
+            if (allPages.length > 1) {
+               for(let i=0; i<allPages.length - 1; i++) {
+                   allPages[i].remove();
+               }
+            }
+
+            loadingMsg.style.display = 'none'; // Hide overlay
             document.body.classList.add("loaded");
             
             isLoading = false;
@@ -743,7 +736,7 @@
         }
       } catch (err) {
         console.error(err);
-        loadingMsg.innerHTML = "Archive unavailable.";
+        loadingMsg.innerHTML = "<span>Archive unavailable.</span>";
         isLoading = false;
       }
     }
@@ -752,22 +745,23 @@
         if (sessionID !== renderSession) return; 
         if (pageNum > pdfDoc.numPages) return;
 
-        await renderPage(pageNum);
+        await renderPage(pageNum, false);
         setTimeout(() => {
             renderRestOfPages(pageNum + 1, sessionID);
         }, 50); 
     }
 
-    async function renderPage(num) {
+    async function renderPage(num, isFirst) {
       try {
           const page = await pdfDoc.getPage(num);
+          
           const wrapper = document.createElement('div');
           wrapper.className = 'pdf-page-wrapper';
           const canvas = document.createElement('canvas');
           canvas.className = 'pdf-page-canvas';
           wrapper.appendChild(canvas);
-          pdfWrapper.appendChild(wrapper);
-
+          
+          // Render logic
           const ctx = canvas.getContext('2d');
           const viewport = page.getViewport({ scale: 1 });
           const desiredScale = (pdfWrapper.clientWidth - 40) / viewport.width;
@@ -777,7 +771,12 @@
 
           canvas.height = scaledViewport.height;
           canvas.width = scaledViewport.width;
+          
           await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
+          
+          // Append only after full render
+          pdfWrapper.appendChild(wrapper);
+          
       } catch (e) {
           console.log("Page render interrupted or failed", e);
       }
