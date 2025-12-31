@@ -93,33 +93,58 @@
       letter-spacing: 1px;
     }
 
-    /* PDF CONTAINER - SOLID STATE */
+    /* PDF CONTAINER - The Stage */
     .pdf-container {
       position: relative;
       background-color: rgba(255, 255, 255, 0.03);
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 60vh; /* Prevents collapse */
+      justify-content: flex-start;
+      min-height: 60vh; /* Keeps layout stable */
       padding: 10px;
       gap: 15px;
       border-radius: 4px;
-      overflow: hidden;
+      transition: opacity 0.4s ease-in-out;
+      opacity: 1;
     }
 
-    /* LOADING OVERLAY - THE BLUR */
-    #loading-message {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(13, 0, 34, 0.85); /* Dark semi-transparent */
-      backdrop-filter: blur(8px); /* The Glass Effect */
-      display: none; /* Hidden by default */
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 50;
-      transition: none;
+    /* Loading State for Container */
+    .pdf-container.faded-out {
+      opacity: 0;
     }
+
+    /* SPINNER STYLES */
+    .loading-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+    }
+
+    .loading-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: var(--name-color);
+      border-radius: 50%;
+      animation: spin 1s infinite linear;
+      margin-bottom: 15px;
+    }
+
+    .loading-text {
+      font-family: "Space Mono", monospace;
+      font-size: 0.9em;
+      letter-spacing: 1px;
+      color: var(--secondary-text-color);
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .pdf-page-wrapper {
       position: relative;
@@ -130,6 +155,23 @@
       background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%);
       line-height: 0;
       flex-shrink: 0; 
+      animation: gentleRise 0.5s ease-out;
+    }
+
+    @keyframes gentleRise {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .pdf-page-wrapper::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 70%);
+      background-size: 200% 200%;
+      pointer-events: none;
+      z-index: 10;
+      mix-blend-mode: overlay;
     }
 
     .pdf-page-canvas {
@@ -137,6 +179,7 @@
       height: auto;
       display: block;
       background-color: #fff;
+      clip-path: inset(0 3px 2px 0);
     }
 
     .nav-controls {
@@ -263,17 +306,6 @@
       0%, 100% { opacity: 0.3; }
       50% { opacity: 0.8; }
     }
-
-    .loading-spinner {
-      width: 40px; height: 40px;
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-top-color: var(--name-color);
-      border-radius: 50%;
-      animation: spin 1s infinite linear;
-      margin: 0 auto 15px auto;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
 
     .footer {
       text-align: center;
@@ -573,9 +605,10 @@
 
     <main>
       <div class="pdf-container" id="pdf-wrapper">
-        <div id="loading-message">
-          <div class="loading-spinner"></div>
-          <span>Loading Archive...</span>
+        <!-- THE SPINNER IS NOW STATIC HTML, HIDDEN/SHOWN VIA JS -->
+        <div id="loading-overlay" class="loading-wrapper" style="display:none;">
+           <div class="loading-spinner"></div>
+           <div class="loading-text">ACCESSING ARCHIVE...</div>
         </div>
       </div>
     </main>
@@ -659,6 +692,7 @@
     let renderSession = 0; // Unique ID to track current render batch
 
     const pdfWrapper = document.getElementById('pdf-wrapper');
+    const loadingOverlay = document.getElementById('loading-overlay');
     const docTitle = document.getElementById('doc-title');
     const downloadBtn = document.getElementById('download-btn');
     const songContainer = document.getElementById('song-link-container');
@@ -672,15 +706,24 @@
       renderSession++; 
       const currentSession = renderSession;
 
+      // 1. DISABLE ARROWS
       prevArrow.classList.add('disabled');
       nextArrow.classList.add('disabled');
 
-      // SHOW OVERLAY IMMEDIATELY (No Fading, No Movement)
-      const loadingMsg = document.getElementById('loading-message');
-      loadingMsg.style.display = 'flex'; // Flex handles centering
+      // 2. FADE OUT CONTAINER
+      pdfWrapper.classList.add('faded-out');
       
-      // Keep old pages visible underneath the blur until ready to swap
+      // 3. WAIT FOR FADE OUT (400ms)
+      await new Promise(r => setTimeout(r, 400));
+
+      // 4. THE VOID: CLEAR CONTENT, SHOW SPINNER
+      const existingPages = document.querySelectorAll('.pdf-page-wrapper');
+      existingPages.forEach(p => p.remove());
       
+      loadingOverlay.style.display = 'flex'; // Show Spinner
+      pdfWrapper.classList.remove('faded-out'); // Fade In Spinner
+
+      // 5. UPDATE DATA
       currentIndex = index;
       const currentDoc = library[currentIndex];
       docTitle.textContent = currentDoc.title;
@@ -704,39 +747,34 @@
         songContainer.style.visibility = "hidden";
       }
 
+      // 6. LOAD PDF
       try {
         pdfDoc = await pdfjsLib.getDocument(finalUrl).promise;
         
-        // Render Page 1 in Background
-        await renderPage(1, true); // true = "isFirstPage"
+        // Render Page 1 In Memory
+        await renderPage(1);
         
-        // THE SWAP (Instant)
-        if (currentSession === renderSession) {
-            // New page is appended by renderPage logic.
-            // Remove OLD pages now.
-            const allPages = Array.from(pdfWrapper.querySelectorAll('.pdf-page-wrapper'));
-            // Keep only the LAST added one (the new one)
-            if (allPages.length > 1) {
-               for(let i=0; i<allPages.length - 1; i++) {
-                   allPages[i].remove();
-               }
-            }
+        // 7. SWAP: FADE OUT SPINNER
+        pdfWrapper.classList.add('faded-out');
+        await new Promise(r => setTimeout(r, 400));
 
-            loadingMsg.style.display = 'none'; // Hide overlay
-            document.body.classList.add("loaded");
+        // 8. FADE IN CONTENT
+        if (currentSession === renderSession) {
+            loadingOverlay.style.display = 'none'; // Hide Spinner
+            pdfWrapper.classList.remove('faded-out'); // Fade In Canvas (which is already appended)
             
             isLoading = false;
             prevArrow.classList.remove('disabled');
             nextArrow.classList.remove('disabled');
             
-            // Render remaining pages
             if (pdfDoc.numPages > 1) {
                 renderRestOfPages(2, currentSession);
             }
         }
       } catch (err) {
         console.error(err);
-        loadingMsg.innerHTML = "<span>Archive unavailable.</span>";
+        loadingOverlay.innerHTML = "<div class='loading-text' style='color:red'>ARCHIVE CORRUPTED.</div>";
+        pdfWrapper.classList.remove('faded-out');
         isLoading = false;
       }
     }
@@ -745,23 +783,24 @@
         if (sessionID !== renderSession) return; 
         if (pageNum > pdfDoc.numPages) return;
 
-        await renderPage(pageNum, false);
+        await renderPage(pageNum);
         setTimeout(() => {
             renderRestOfPages(pageNum + 1, sessionID);
         }, 50); 
     }
 
-    async function renderPage(num, isFirst) {
+    async function renderPage(num) {
       try {
           const page = await pdfDoc.getPage(num);
-          
           const wrapper = document.createElement('div');
           wrapper.className = 'pdf-page-wrapper';
           const canvas = document.createElement('canvas');
           canvas.className = 'pdf-page-canvas';
           wrapper.appendChild(canvas);
           
-          // Render logic
+          // Append immediately (it's invisible due to fade-out or background load)
+          pdfWrapper.appendChild(wrapper);
+
           const ctx = canvas.getContext('2d');
           const viewport = page.getViewport({ scale: 1 });
           const desiredScale = (pdfWrapper.clientWidth - 40) / viewport.width;
@@ -771,12 +810,7 @@
 
           canvas.height = scaledViewport.height;
           canvas.width = scaledViewport.width;
-          
           await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
-          
-          // Append only after full render
-          pdfWrapper.appendChild(wrapper);
-          
       } catch (e) {
           console.log("Page render interrupted or failed", e);
       }
