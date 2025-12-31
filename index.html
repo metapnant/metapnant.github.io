@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- PREVENT WHITE FLASH ON SCROLL -->
   <meta name="theme-color" content="#0d0022">
   <title>THE LIBRARY</title>
   <link rel="icon" href="favicon.png" type="image/png" />
@@ -15,7 +14,6 @@
     :root {
       --name-color: #9800eb; --title-color: #ded4eb; --background-main: #0d0022;
       --primary-text-color: #f0f0f0; --secondary-text-color: #a09cb8; --arrow-color: rgba(222, 212, 235, 0.4);
-      /* TERMINAL PALETTE */
       --terminal-bg: #05000a; --terminal-sidebar: #0a0014; --terminal-text: #00ff9d; 
       --terminal-dim: #005f3d; --terminal-alert: #ffcc00; --terminal-error: #ff3333; 
       --terminal-gold: #ffd700; --terminal-white: #ffffff; --terminal-magenta: #ff00ff;
@@ -36,7 +34,6 @@
 
     @keyframes darkShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-    /* LAYOUT */
     .explore-container {
       width: 100%; max-width: 900px; margin: 0 auto; flex-grow: 1;
       opacity: 1; transform: translateY(0); transition: opacity 1.2s ease, transform 1s ease;
@@ -51,10 +48,10 @@
       min-height: 60vh; padding: 10px; gap: 15px; border-radius: 4px;
     }
 
-    /* LOADER - Pure Overlay */
     #loading-overlay {
-      display: none; align-items: center; justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 50;
+      background-color: var(--background-main);
     }
 
     .loading-spinner {
@@ -65,11 +62,12 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* PDF PAGE - Tear Style & Animations */
+    /* PDF PAGE - Restored Gradient for "Tears" effect */
     .pdf-page-wrapper {
       position: relative; margin: 0 auto; border-radius: 4px; overflow: hidden;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      background-color: var(--background-main); /* Dark base to prevent flash */
+      /* GRADIENT RESTORED: Creates the visual depth/tear at bottom */
+      background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%);
       line-height: 0; flex-shrink: 0; 
       opacity: 0; animation: fadeContentIn 0.8s ease forwards;
     }
@@ -84,11 +82,11 @@
 
     .pdf-page-canvas { 
         width: 100%; height: auto; display: block; 
-        background-color: var(--background-main); /* Dark base */
-        clip-path: inset(0 3px 2px 0); /* The Tear */
+        /* CANVAS DARK: Prevents the flash before content draws */
+        background-color: var(--background-main); 
+        clip-path: inset(0 3px 2px 0); 
     }
 
-    /* NAVIGATION */
     .nav-controls {
       position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
       display: flex; align-items: center; gap: 80px; z-index: 2000; -webkit-tap-highlight-color: transparent;
@@ -106,7 +104,6 @@
     }
     .nav-arrow:active { color: var(--name-color); transform: scale(0.95); }
 
-    /* DOWNLOAD BUTTON */
     .pdf-button {
       position: fixed; right: 20px; bottom: 20px; z-index: 1000;
       background-color: transparent; color: var(--arrow-color);
@@ -130,7 +127,7 @@
 
     @media (max-width: 599px) {
       .pdf-button {
-        width: 50px; height: 50px; padding: 0; border-radius: 0; /* Square */
+        width: 50px; height: 50px; padding: 0; border-radius: 0;
         font-size: 1.4em; border-color: var(--arrow-color);
         background-color: rgba(13, 0, 34, 0.8);
       }
@@ -138,7 +135,6 @@
       .pdf-button .btn-icon { margin: 0; }
     }
 
-    /* FOOTER & LINKS */
     #song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 10px; }
     #song-link {
       color: var(--name-color); text-decoration: underline;
@@ -146,7 +142,7 @@
       font-weight: 600; transition: color 0.1s;
     }
     @media (hover: hover) {
-      #song-link:hover { animation: strobe 1s infinite; } /* JS overrides speed */
+      #song-link:hover { animation: strobe 1s infinite; }
     }
     @keyframes strobe { 0%, 100% { color: var(--name-color); text-decoration-color: var(--name-color); } 50% { color: #ffffff; text-decoration-color: #ffffff; } }
     @keyframes faintFlash { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
@@ -235,7 +231,6 @@
     .magenta-text { color: var(--terminal-magenta); text-shadow: 0 0 10px var(--terminal-magenta); font-weight: bold; }
     .system-success { color: var(--terminal-cyan); }
     .error-char { color: var(--terminal-error); display: inline-block; font-weight: bold; animation: glitch-shake 0.08s infinite; text-shadow: 1px 0 #000; }
-    
     .secret-link {
       display: inline-block; margin-top: 20px; color: var(--terminal-bg);
       background-color: var(--terminal-gold); padding: 10px 15px; text-decoration: none;
@@ -386,6 +381,9 @@
         if (currentSession === renderSession) {
             loadingOverlay.style.display = 'none';
             document.body.classList.add("loaded");
+            const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
+            if(firstPage) firstPage.classList.add('revealed');
+
             isLoading = false;
             prevArrow.classList.remove('disabled'); nextArrow.classList.remove('disabled');
             if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
@@ -400,6 +398,8 @@
     async function renderRestOfPages(pageNum, sessionID) {
         if (sessionID !== renderSession || pageNum > pdfDoc.numPages) return;
         await renderPage(pageNum);
+        const pages = pdfWrapper.querySelectorAll('.pdf-page-wrapper');
+        if(pages[pageNum-1]) pages[pageNum-1].classList.add('revealed');
         setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 50); 
     }
 
