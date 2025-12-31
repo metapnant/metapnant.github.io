@@ -93,7 +93,7 @@
       letter-spacing: 1px;
     }
 
-    /* PDF CONTAINER WITH DISSOLUTION EFFECT */
+    /* PDF CONTAINER - SMOOTH FADE */
     .pdf-container {
       position: relative;
       background-color: rgba(255, 255, 255, 0.03);
@@ -103,11 +103,12 @@
       min-height: 400px;
       padding: 10px;
       gap: 15px;
-      transition: opacity 0.5s ease-in-out; /* The Dissolution */
+      /* The Transition Logic */
       opacity: 1;
+      transition: opacity 0.3s ease-in-out;
     }
 
-    .pdf-container.dissolving {
+    .pdf-container.dissolved {
       opacity: 0;
     }
 
@@ -117,10 +118,10 @@
       border-radius: 4px;
       overflow: hidden;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      transition: transform 0.3s ease;
       background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%);
       line-height: 0;
-      will-change: transform;
+      /* Ensure pages don't jump around */
+      flex-shrink: 0; 
     }
 
     .pdf-page-wrapper::after {
@@ -672,21 +673,27 @@
     async function loadDocument(index) {
       if (isLoading) return;
       isLoading = true;
-      renderSession++; // Invalidate any previous rendering loops
+      renderSession++; 
       const currentSession = renderSession;
 
       prevArrow.classList.add('disabled');
       nextArrow.classList.add('disabled');
 
       const loadingMsg = document.getElementById('loading-message');
+      
+      // 1. START FADE OUT
+      pdfWrapper.classList.add('dissolved');
+
+      // 2. WAIT FOR FADE (300ms match css)
+      await new Promise(r => setTimeout(r, 300));
+
+      // 3. THE VOID (Clear old content, Show Spinner)
+      const existingPages = document.querySelectorAll('.pdf-page-wrapper');
+      existingPages.forEach(p => p.remove());
       loadingMsg.style.display = 'block';
       document.body.classList.remove("loaded"); 
-      
-      const existingPages = document.querySelectorAll('.pdf-page-wrapper');
-      
-      // DISSOLUTION: Fade out the container before swapping content
-      pdfWrapper.classList.add('dissolving');
 
+      // 4. UPDATE DATA
       currentIndex = index;
       const currentDoc = library[currentIndex];
       docTitle.textContent = currentDoc.title;
@@ -710,28 +717,26 @@
         songContainer.style.visibility = "hidden";
       }
 
+      // 5. FADE IN (Show Spinner)
+      pdfWrapper.classList.remove('dissolved');
+
+      // 6. LOAD PDF
       try {
         pdfDoc = await pdfjsLib.getDocument(finalUrl).promise;
         
-        // RENDER PAGE 1 (Critical Path)
+        // Render Page 1 in memory/background
         await renderPage(1);
         
-        // UNBLOCK UI & REVEAL
+        // 7. REVEAL CONTENT (Hide Spinner, Page 1 is already appended)
         if (currentSession === renderSession) {
-            // Remove old pages NOW that new one is ready
-            existingPages.forEach(p => p.remove());
-            
             loadingMsg.style.display = 'none';
             document.body.classList.add("loaded");
-            
-            // FADE IN
-            pdfWrapper.classList.remove('dissolving');
             
             isLoading = false;
             prevArrow.classList.remove('disabled');
             nextArrow.classList.remove('disabled');
             
-            // RENDER REMAINING PAGES IN BACKGROUND
+            // Render remaining pages
             if (pdfDoc.numPages > 1) {
                 renderRestOfPages(2, currentSession);
             }
@@ -740,16 +745,14 @@
         console.error(err);
         loadingMsg.innerHTML = "Archive unavailable.";
         isLoading = false;
-        pdfWrapper.classList.remove('dissolving'); // ensure we don't stay hidden on error
       }
     }
 
     async function renderRestOfPages(pageNum, sessionID) {
-        if (sessionID !== renderSession) return; // Stop if user switched docs
+        if (sessionID !== renderSession) return; 
         if (pageNum > pdfDoc.numPages) return;
 
         await renderPage(pageNum);
-        // Small delay to let the UI breathe between pages
         setTimeout(() => {
             renderRestOfPages(pageNum + 1, sessionID);
         }, 50); 
