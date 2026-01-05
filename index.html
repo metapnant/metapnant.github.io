@@ -242,8 +242,17 @@
       background-color: var(--terminal-gold); padding: 10px 15px; text-decoration: none;
       font-weight: bold; border: 1px solid var(--terminal-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
       transition: all 0.3s ease; font-family: 'Space Mono', monospace; animation: fadeIn 2s forwards;
-      -webkit-tap-highlight-color: transparent; 
+      -webkit-tap-highlight-color: transparent;
+      outline: none; 
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      transform: translateZ(0);
     }
+    .secret-link:focus {
+      outline: none;
+      background-color: var(--terminal-gold); /* Keep it solid on focus */
+    }
+    
     /* Only allow sticky hover on devices with a mouse */
     @media (hover: hover) {
       .secret-link:hover { 
