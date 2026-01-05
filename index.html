@@ -20,15 +20,26 @@
       --terminal-cyan: #00ffff; --terminal-border: #333; --operator-color: #d4aaff;
     }
 
+    /* --- THE NUCLEAR RESET (Mobile Highlight Killer) --- */
+    * {
+      -webkit-tap-highlight-color: transparent !important;
+      -webkit-touch-callout: none !important;
+      box-sizing: border-box;
+    }
+
     html { background-color: var(--background-main); height: 100%; overscroll-behavior-y: none; }
 
     body {
       font-family: "Zilla Slab", serif; margin: 0; padding: 20px; padding-bottom: 160px;
       min-height: 100dvh; 
-      box-sizing: border-box; display: flex; flex-direction: column;
+      display: flex; flex-direction: column;
       color: var(--primary-text-color); background-color: var(--background-main);
       background: linear-gradient(135deg, #0b001f, #180033, #0d0022, #1c003a, #0b001f);
       background-size: 600% 600%; animation: darkShift 30s ease infinite; overflow-x: hidden;
+      
+      /* Disable text selection globally to prevent ghost boxes */
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     body.no-scroll { 
@@ -39,6 +50,7 @@
 
     @keyframes darkShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
+    /* --- LAYOUT --- */
     .explore-container {
       width: 100%; max-width: 900px; margin: 0 auto; flex-grow: 1;
       opacity: 1; transform: translateY(0); transition: opacity 1.2s ease, transform 1s ease;
@@ -64,7 +76,6 @@
       border-top-color: var(--name-color); border-radius: 50%;
       animation: spin 1s infinite linear;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .pdf-page-wrapper {
@@ -74,7 +85,6 @@
       line-height: 0; flex-shrink: 0; 
       opacity: 0; animation: fadeContentIn 0.8s ease forwards;
     }
-
     @keyframes fadeContentIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     .pdf-page-wrapper::after {
@@ -89,9 +99,8 @@
         clip-path: inset(0 3px 2px 0); 
     }
 
-    /* --- GLOBAL INTERACTIVE ELEMENT RESET --- */
+    /* --- INTERACTIVE ELEMENT RESETS --- */
     button, a {
-      -webkit-tap-highlight-color: transparent !important;
       outline: none !important;
       backface-visibility: hidden;
       transform: translateZ(0);
@@ -108,20 +117,13 @@
       background: none; border: none; color: var(--arrow-color); font-size: 3.5rem;
       cursor: pointer; transition: color 0.2s ease, transform 0.1s ease;
       animation: faintFlash 5s infinite ease-in-out;
-      user-select: none; -webkit-user-select: none;
     }
     .nav-arrow.disabled { opacity: 0.1; pointer-events: none; }
     
-    /* Desktop Hover */
     @media (hover: hover) {
       .nav-arrow:hover { color: var(--name-color); transform: scale(1.1); animation: none; }
     }
-    /* Mobile/Active Press */
-    .nav-arrow:active { 
-        color: var(--name-color); 
-        transform: scale(0.9) translateZ(0); 
-        animation: none;
-    }
+    .nav-arrow:active { color: var(--name-color); transform: scale(0.9); animation: none; }
 
     /* --- DOWNLOAD BUTTON --- */
     .pdf-button {
@@ -132,26 +134,20 @@
       font-size: 0.8em; letter-spacing: 1px; opacity: 0;
       transition: color 0.2s, border-color 0.2s, background-color 0.2s, transform 0.1s;
       animation: faintFlash 5s infinite ease-in-out;
-      box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 10px;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
     }
     body.loaded .pdf-button { opacity: 1; }
 
-    /* Desktop Hover */
     @media (hover: hover) {
       .pdf-button:hover {
         color: var(--name-color); border-color: var(--name-color);
         background-color: rgba(152, 0, 235, 0.05); animation: none; opacity: 1;
       }
     }
-    /* Mobile/Active Press */
     .pdf-button:active { 
-        background-color: rgba(152, 0, 235, 0.15); 
-        border-color: var(--name-color); 
-        color: var(--name-color); 
-        transform: scale(0.96) translateZ(0);
-        animation: none; opacity: 1;
+        background-color: rgba(152, 0, 235, 0.15); border-color: var(--name-color); 
+        color: var(--name-color); transform: scale(0.96); animation: none; opacity: 1;
     }
-
     @media (max-width: 599px) {
       .pdf-button {
         width: 50px; height: 50px; padding: 0; border-radius: 0;
@@ -172,31 +168,27 @@
     @media (hover: hover) {
       #song-link:hover { animation: strobe 1s infinite; }
     }
-    #song-link:active {
-        color: #fff; text-decoration-color: #fff;
-        transform: scale(0.98) translateZ(0);
-    }
+    #song-link:active { color: #fff; text-decoration-color: #fff; transform: scale(0.98); }
     
     @keyframes strobe { 0%, 100% { color: var(--name-color); text-decoration-color: var(--name-color); } 50% { color: #ffffff; text-decoration-color: #ffffff; } }
     @keyframes faintFlash { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
 
+    /* --- FOOTER & INFINITY --- */
     .footer { text-align: center; padding: 20px 0 10px 0; font-size: 0.85em; color: var(--secondary-text-color); border-top: 1px solid rgba(255, 255, 255, 0.08); margin-top: 40px; }
     #infinity-symbol { cursor: pointer; display: inline-block; transition: text-shadow 0.3s, color 0.3s, transform 0.1s; padding: 0 5px; font-weight: bold; }
     @media (hover: hover) {
         #infinity-symbol:hover { color: #fff; text-shadow: 0 0 15px var(--name-color); }
     }
-    #infinity-symbol:active { transform: scale(1.2) translateZ(0); color: #ff00ff; }
+    #infinity-symbol:active { transform: scale(1.2); color: #ff00ff; }
 
-    /* SECRET TERMINAL */
+    /* --- SECRET TERMINAL --- */
     #secret-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background-color: var(--terminal-bg); z-index: 9999;
       display: none; flex-direction: row; font-family: 'Space Mono', monospace; 
-      overflow: hidden; box-sizing: border-box;
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
+      overflow: hidden; 
+      padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
     }
-    #secret-overlay * { box-sizing: border-box; }
     #secret-overlay.active { display: flex; }
     #secret-overlay::before {
       content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
@@ -219,10 +211,8 @@
     }
     .cycle-btn.visible { display: block; pointer-events: auto; }
     
-    @media (hover: hover) {
-        .cycle-btn:hover { opacity: 0.8; padding-left: 20px; }
-    }
-    .cycle-btn:active { transform: scale(0.98) translateZ(0); opacity: 1; }
+    @media (hover: hover) { .cycle-btn:hover { opacity: 0.8; padding-left: 20px; } }
+    .cycle-btn:active { transform: scale(0.98); opacity: 1; }
 
     .cycle-btn.theme-crash { color: var(--terminal-error); border-color: rgba(255, 51, 51, 0.2); }
     .cycle-btn.theme-crash.active { opacity: 1; background-color: rgba(255, 51, 51, 0.1); border-color: var(--terminal-error); border-left-color: var(--terminal-error); }
@@ -236,11 +226,14 @@
     .cycle-btn.theme-gardener.active { opacity: 1; background-color: rgba(0, 255, 255, 0.1); border-color: var(--terminal-cyan); border-left-color: var(--terminal-cyan); }
 
     .terminal-wrapper { flex-grow: 1; height: 100%; position: relative; display: flex; flex-direction: column; width: 100%; overflow: hidden; }
+    
     .terminal-container {
       width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; 
       color: var(--terminal-text); text-shadow: 0 0 5px var(--terminal-dim);
       font-size: 15px; line-height: 1.6; white-space: pre-wrap; z-index: 3; padding: 40px 20px 80px 20px; 
       scrollbar-width: thin; scrollbar-color: var(--terminal-dim) #000;
+      /* RE-ENABLE SELECTION FOR LOGS ONLY */
+      -webkit-user-select: text; user-select: text;
     }
     .log-section { display: none; width: 100%; }
     .log-section.active-log { display: block; }
@@ -276,7 +269,7 @@
     .system-success { color: var(--terminal-cyan); }
     .error-char { color: var(--terminal-error); display: inline-block; font-weight: bold; animation: glitch-shake 0.08s infinite; text-shadow: 1px 0 #000; }
     
-    /* --- SECRET LINK (FINAL FIX) --- */
+    /* --- SECRET LINK (TACTILE FIX) --- */
     .secret-link {
       display: inline-block; 
       margin-top: 20px; 
@@ -301,6 +294,7 @@
       }
     }
 
+    /* Active state for mobile feedback (Scaling only, no transparency to avoid ghosts) */
     .secret-link:active {
       background-color: var(--terminal-gold); 
       color: var(--terminal-bg); 
@@ -430,7 +424,6 @@
       if (isLoading) return;
       isLoading = true; renderSession++; const currentSession = renderSession;
 
-      // Reset song link immediately to prevent flashing old data
       songContainer.style.opacity = "0"; 
       songContainer.style.visibility = "hidden";
       songLink.href = "javascript:void(0)";
@@ -457,7 +450,6 @@
             const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
             if(firstPage) firstPage.classList.add('revealed');
 
-            // Set song link after load is confirmed
             if (currentDoc.songUrl) {
                 songLink.href = currentDoc.songUrl; 
                 songLink.textContent = currentDoc.songTitle;
