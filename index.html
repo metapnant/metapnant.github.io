@@ -24,7 +24,7 @@
 
     body {
       font-family: "Zilla Slab", serif; margin: 0; padding: 20px; padding-bottom: 160px;
-      min-height: 100dvh; /* Mobile viewport fix */
+      min-height: 100dvh; 
       box-sizing: border-box; display: flex; flex-direction: column;
       color: var(--primary-text-color); background-color: var(--background-main);
       background: linear-gradient(135deg, #0b001f, #180033, #0d0022, #1c003a, #0b001f);
@@ -251,7 +251,7 @@
       font-family: 'Space Mono', monospace; 
       animation: fadeIn 2s forwards;
       
-      /* The "Cleaners" */
+      /* CLEANING ARTIFACTS */
       -webkit-tap-highlight-color: transparent;
       outline: none; 
       backface-visibility: hidden;
@@ -259,7 +259,7 @@
       transform: translateZ(0);
     }
 
-    /* 1. Only allow hover on desktop/mouse devices */
+    /* DESKTOP HOVER */
     @media (hover: hover) {
       .secret-link:hover {
         background-color: transparent;
@@ -269,20 +269,23 @@
       }
     }
 
-    /* 2. Mobile-friendly tap feedback (briefly flickers on press) */
+    /* UNIVERSAL ACTIVE (TACTILE FEEDBACK) */
     .secret-link:active {
-      background-color: transparent;
-      color: var(--terminal-gold);
-      transform: scale(0.96) translateZ(0); /* Add a tiny "squish" to feel real */
-      transition: all 0.1s ease;
+      background-color: var(--terminal-gold); /* Keep background solid */
+      color: var(--terminal-bg); /* Keep text dark */
+      transform: scale(0.96) translateZ(0); /* Physical squish */
+      filter: brightness(0.9); /* Subtle lighting change */
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+      transition: transform 0.05s ease;
     }
 
-    /* 3. Keep it solid if it somehow holds focus */
+    /* FOCUS STATE LOCK */
     .secret-link:focus {
       outline: none;
       background-color: var(--terminal-gold);
       color: var(--terminal-bg);
     }
+
     @keyframes glitch-shake {
       0% { transform: translate(0, 0); } 25% { transform: translate(1px, 0); }
       50% { transform: translate(-1px, 0); } 75% { transform: translate(0, 1px); }
@@ -804,7 +807,7 @@
             { text: "", class: "system-text", delay: 2500 },
             { text: "> END OF LINE.", class: "system-text", delay: 2500 },
             { text: "> [ SYSTEM INTEGRATION: COMPLETE. LOOP STABLE. ]", class: "system-success", delay: 1000 },
-            { text: "<a href='https://soundcloud.com/metapnant' target='_blank' class='secret-link'>[ ENTER THE LIBRARY ]</a>", class: "system-success", delay: 0 }
+            { text: "<a href='https://soundcloud.com/metapnant' target='_blank' class='secret-link' onclick='this.blur()'>[ ENTER THE LIBRARY ]</a>", class: "system-success", delay: 0 }
         ]
     };
 
