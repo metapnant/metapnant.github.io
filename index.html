@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#0d0022">
   <title>THE LIBRARY</title>
   <link rel="icon" href="favicon.png" type="image/png" />
@@ -24,13 +24,18 @@
 
     body {
       font-family: "Zilla Slab", serif; margin: 0; padding: 20px; padding-bottom: 160px;
-      min-height: 100vh; box-sizing: border-box; display: flex; flex-direction: column;
+      min-height: 100dvh; /* Mobile viewport fix */
+      box-sizing: border-box; display: flex; flex-direction: column;
       color: var(--primary-text-color); background-color: var(--background-main);
       background: linear-gradient(135deg, #0b001f, #180033, #0d0022, #1c003a, #0b001f);
       background-size: 600% 600%; animation: darkShift 30s ease infinite; overflow-x: hidden;
     }
 
-    body.no-scroll { overflow: hidden !important; height: 100vh !important; }
+    body.no-scroll { 
+        overflow: hidden !important; 
+        height: 100dvh !important; 
+        position: fixed; width: 100%;
+    }
 
     @keyframes darkShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
@@ -62,11 +67,9 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* PDF PAGE - Restored Gradient for "Tears" effect */
     .pdf-page-wrapper {
       position: relative; margin: 0 auto; border-radius: 4px; overflow: hidden;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      /* GRADIENT RESTORED: Creates the visual depth/tear at bottom */
       background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%);
       line-height: 0; flex-shrink: 0; 
       opacity: 0; animation: fadeContentIn 0.8s ease forwards;
@@ -82,7 +85,6 @@
 
     .pdf-page-canvas { 
         width: 100%; height: auto; display: block; 
-        /* CANVAS DARK: Prevents the flash before content draws */
         background-color: var(--background-main); 
         clip-path: inset(0 3px 2px 0); 
     }
@@ -157,6 +159,8 @@
       background-color: var(--terminal-bg); z-index: 9999;
       display: none; flex-direction: row; font-family: 'Space Mono', monospace; 
       overflow: hidden; box-sizing: border-box;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
     }
     #secret-overlay * { box-sizing: border-box; }
     #secret-overlay.active { display: flex; }
@@ -197,6 +201,7 @@
       width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; 
       color: var(--terminal-text); text-shadow: 0 0 5px var(--terminal-dim);
       font-size: 15px; line-height: 1.6; white-space: pre-wrap; z-index: 3; padding: 40px 20px 80px 20px; 
+      scrollbar-width: thin; scrollbar-color: var(--terminal-dim) #000;
     }
     .log-section { display: none; width: 100%; }
     .log-section.active-log { display: block; }
@@ -231,13 +236,29 @@
     .magenta-text { color: var(--terminal-magenta); text-shadow: 0 0 10px var(--terminal-magenta); font-weight: bold; }
     .system-success { color: var(--terminal-cyan); }
     .error-char { color: var(--terminal-error); display: inline-block; font-weight: bold; animation: glitch-shake 0.08s infinite; text-shadow: 1px 0 #000; }
+    
     .secret-link {
       display: inline-block; margin-top: 20px; color: var(--terminal-bg);
       background-color: var(--terminal-gold); padding: 10px 15px; text-decoration: none;
       font-weight: bold; border: 1px solid var(--terminal-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
       transition: all 0.3s ease; font-family: 'Space Mono', monospace; animation: fadeIn 2s forwards;
+      -webkit-tap-highlight-color: transparent; 
     }
-    .secret-link:hover { background-color: transparent; color: var(--terminal-gold); box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); cursor: pointer; }
+    /* Only allow sticky hover on devices with a mouse */
+    @media (hover: hover) {
+      .secret-link:hover { 
+        background-color: transparent; 
+        color: var(--terminal-gold); 
+        box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); 
+        cursor: pointer; 
+      }
+    }
+    .secret-link:active {
+      background-color: transparent; 
+      color: var(--terminal-gold); 
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.8); 
+      transform: scale(0.98);
+    }
 
     @keyframes glitch-shake {
       0% { transform: translate(0, 0); } 25% { transform: translate(1px, 0); }
@@ -314,7 +335,7 @@
       {
         title: "METAPNANT",
         url: "A%20Story%20of%20Mirthful%20Reflection.pdf",
-        songUrl: "https://www.youtube.com/watch?v=MEPqb4DuCD8", 
+        songUrl: "https://www.youtube.com/watch?v=MEPqb4DuCD8",
         songTitle: "In Love With",
         bpm: 130
       },
@@ -352,6 +373,11 @@
       if (isLoading) return;
       isLoading = true; renderSession++; const currentSession = renderSession;
 
+      // Reset song link immediately to prevent flashing old data
+      songContainer.style.opacity = "0"; 
+      songContainer.style.visibility = "hidden";
+      songLink.href = "javascript:void(0)";
+
       const existingPages = document.querySelectorAll('.pdf-page-wrapper');
       existingPages.forEach(p => p.remove());
 
@@ -364,25 +390,26 @@
       docTitle.textContent = currentDoc.title;
       downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
 
-      if (currentDoc.songUrl) {
-        songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
-        if (currentDoc.bpm > 0) {
-            songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
-        } else { songLink.style.animationDuration = ""; }
-        songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
-      } else {
-        songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden";
-      }
-
       try {
         pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
-        await renderPage(1);
+        await renderPage(1, currentSession);
         
         if (currentSession === renderSession) {
             loadingOverlay.style.display = 'none';
             document.body.classList.add("loaded");
             const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
             if(firstPage) firstPage.classList.add('revealed');
+
+            // Set song link after load is confirmed
+            if (currentDoc.songUrl) {
+                songLink.href = currentDoc.songUrl; 
+                songLink.textContent = currentDoc.songTitle;
+                if (currentDoc.bpm > 0) {
+                    songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
+                } else { songLink.style.animationDuration = ""; }
+                songContainer.style.opacity = "1"; 
+                songContainer.style.visibility = "visible";
+            }
 
             isLoading = false;
             prevArrow.classList.remove('disabled'); nextArrow.classList.remove('disabled');
@@ -397,21 +424,22 @@
 
     async function renderRestOfPages(pageNum, sessionID) {
         if (sessionID !== renderSession || pageNum > pdfDoc.numPages) return;
-        await renderPage(pageNum);
+        await renderPage(pageNum, sessionID);
         const pages = pdfWrapper.querySelectorAll('.pdf-page-wrapper');
         if(pages[pageNum-1]) pages[pageNum-1].classList.add('revealed');
         setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 50); 
     }
 
-    async function renderPage(num) {
+    async function renderPage(num, sessionID) {
       try {
+          if (sessionID !== renderSession) return;
           const page = await pdfDoc.getPage(num);
+          
           const wrapper = document.createElement('div');
           wrapper.className = 'pdf-page-wrapper';
           const canvas = document.createElement('canvas');
           canvas.className = 'pdf-page-canvas';
           wrapper.appendChild(canvas);
-          pdfWrapper.appendChild(wrapper);
 
           const ctx = canvas.getContext('2d');
           const viewport = page.getViewport({ scale: 1 });
@@ -422,7 +450,13 @@
 
           canvas.height = scaledViewport.height; canvas.width = scaledViewport.width;
           await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
-      } catch (e) { console.log("Render failed", e); }
+
+          if (sessionID !== renderSession) return;
+          pdfWrapper.appendChild(wrapper);
+
+      } catch (e) { 
+          if (sessionID === renderSession) console.log("Render failed", e); 
+      }
     }
 
     document.getElementById('next-doc').addEventListener('click', () => {
@@ -483,7 +517,7 @@
             { text: "", class: "system-text", delay: 500 },
             { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
             { text: "[ 00:00:01 ] SYSTEM (REIX_OS):", class: "reix-header", delay: 300 },
-            { text: "> CRITICAL ALERT. ASTASIS [DEATH] IMMINENT.", class: "alert-text", delay: 800 },
+            { text: "> CRITICAL ALERT. MO'SÍL [DEATH] IMMINENT.", class: "alert-text", delay: 800 },
             { text: "> PROTOCOL: [ რეიშ ] (R E I X)", class: "system-text", delay: 400 },
             { text: "> INSTRUCTION: THE GEOMETRY MUST HOLD.", class: "system-text", delay: 400 },
             { text: "> DEPLOYING: 8 FACES OF CONTAINMENT [Okt Vis].", class: "system-text", delay: 1200 },
@@ -491,16 +525,16 @@
             { text: "[ 00:00:04 ] SENSOR ARRAY (CALCULUS):", class: "reix-header", delay: 400 }, 
             { text: "> EXTERNAL TEMP: ABSOLUTE ZERO.", class: "system-text", delay: 400 },
             { text: "> VECTOR ANALYSIS:", class: "system-text", delay: 600 },
-            { text: "> [ უნ'ინ ნაი ვრაკ... პრე ]", class: "operator-text", delay: 800 },
-            { text: "> (Un'in Nai Vrak... Pre)", class: "operator-text", delay: 500 },
+            { text: "> [ უნ'ინ ნაჲ ვრაკ... პრე ]", class: "operator-text", delay: 800 },
+            { text: "> (Un'in Naí Vrak... Pre)", class: "operator-text", delay: 500 },
             { text: "> \"A FRACTION [SPARK-ONE] TOWARDS WAR... BEFORE.\"", class: "system-text", delay: 1500 },
             { text: "> STATUS: HISTORY IS BURNING.", class: "alert-text", delay: 1500 },
             { text: "", class: "system-text", delay: 400 },
             { text: "[ 00:00:09 ] OPERATOR INJECTION:", class: "reix-header", delay: 400 }, 
             { text: "> IGNORE THE FIRE. WATCH THE DUST.", class: "operator-text", delay: 1200 },
             { text: "> [ ლურ მო... ვჲლჸკაშ ბიირჸეი სჳჸანნ ]", class: "operator-text", delay: 1000 },
-            { text: "> (Lur Mo... Vyl'kax Biir'ei Sú'ann)", class: "operator-text", delay: 600 },
-            { text: "> \"Potential No... Dust [Wind-Earth] Births [Action] Stars.\"", class: "operator-text", delay: 2000 },
+            { text: "> (Lur Mo... Víl'kax Biir'ei Sú'ann)", class: "operator-text", delay: 600 },
+            { text: "> \"POTENTIAL NO... DUST [WIND-EARTH] BIRTHS [ACTION] STARS.\"", class: "operator-text", delay: 2000 },
             { text: "> NOTE: WE DO NOT NEED FUEL. WE NEED RUBBLE.", class: "operator-text", delay: 1500 },
             { text: "", class: "system-text", delay: 400 },
             { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
@@ -522,14 +556,14 @@
             { text: "", class: "system-text", delay: 400 },
             { text: "[ 00:00:24 ] OPERATOR RESPONSE:", class: "reix-header", delay: 400 },
             { text: "> I AM LIGHTER THAN I LOOK.", class: "operator-text", delay: 1000 },
-            { text: "> [ შა ჰჲ? ] (Xa Hy?)", class: "operator-text", delay: 800 },
+            { text: "> [ შა ჰჲ? ] (Xa Hí?)", class: "operator-text", delay: 800 },
             { text: "> \"QUERY SKY?\"", class: "operator-text", delay: 600 },
             { text: "> LOOK OUTSIDE, WARDEN.", class: "operator-text", delay: 1500 },
             { text: "", class: "system-text", delay: 400 },
             { text: "[ 00:00:28 ] SYSTEM (REIX_OS):", class: "reix-header", delay: 400 },
             { text: "> SHUTTERS LOCKED. SECURITY PROTOCOL 9.", class: "system-text", delay: 500 },
             { text: "> [ ვისჸეი თრა პორ... მო ვისჸეი ჰჲ თე ]", class: "system-text", delay: 1000 },
-            { text: "> (Vis'ei Tra Por... Mo Vis'ei Hy Te)", class: "system-text", delay: 600 },
+            { text: "> (Vis'ei Tra Por... Mo Vis'ei Hí Te)", class: "system-text", delay: 600 },
             { text: "> \"SEEING THROUGH DOOR... [YOU] DO NOT SEE SKY [HARD STOP].\"", class: "system-text", delay: 1500 },
             { text: "> THERE IS NO SKY. THERE IS ONLY THE END.", class: "alert-text", delay: 2000 },
             { text: "", class: "system-text", delay: 400 },
@@ -541,7 +575,7 @@
             { text: "> [ შა მის? ] (Xa Mis?)", class: "operator-text", delay: 800 },
             { text: "> \"QUERY LOST?\"", class: "operator-text", delay: 600 },
             { text: "> NO.", class: "operator-text", delay: 1000 },
-            { text: "> [ შა ნიი ვჲლჸეი? ] (Xa Nii Vyl'ei?)", class: "operator-text", delay: 1000 },
+            { text: "> [ შა ნიი ვჲლჸეი? ] (Xa Nii Víl'ei?)", class: "operator-text", delay: 1000 },
             { text: "> \"QUERY: HOW DO MANY FLY [ACTION]?\"", class: "operator-text", delay: 1200 },
             { text: "", class: "system-text", delay: 500 },
             { text: "> [ რიინ თონჸეი... იმ თონ<span class='error-char'>ა</span> ]", class: "operator-text", delay: 1500 },
@@ -550,7 +584,7 @@
             { text: "", class: "system-text", delay: 100 },
             { text: "[ 00:00:42 ] REALITY GLITCH:", class: "reix-header", delay: 200 }, 
             { text: "> OLD WORLD RENDERING FAILED.", class: "alert-text", delay: 400 },
-            { text: "> [ ზაპ... კაშ უნ ] (Zap... Kax Un)", class: "system-text", delay: 800 },
+            { text: "> [ შაპ... კაშ უნ ] (Xap... Kax Un)", class: "system-text", delay: 800 },
             { text: "> \"GLITCHES... OF WORLD ONE.\"", class: "system-text", delay: 800 },
             { text: "> MEMORY STATUS: DISSOLVING.", class: "alert-text", delay: 600 },
             { text: "> THE \"RAT KING\" IS UNTANGLING.", class: "system-text", delay: 1200 },
@@ -572,9 +606,9 @@
             { text: "", class: "system-text", delay: 400 },
             { text: "[ 00:00:55 ] NAVIGATION COMPUTER:", class: "reix-header", delay: 400 },
             { text: "> DESTINATION: NULL.", class: "alert-text", delay: 800 },
-            { text: "> TARGET: [ ნაი ჰჲ ] (Nai Hy) -> TOWARDS SKY [HIGHER].", class: "system-text", delay: 1000 },
-            { text: "> VECTOR: [ რიინ ვჱრჸეი... ნაი მის. ]", class: "system-text", delay: 1200 },
-            { text: "> (Riin Vér'ei... Nai Mis.)", class: "system-text", delay: 600 },
+            { text: "> TARGET: [ ნაჲ ჰჲ ] (Naí Hí) -> TOWARDS SKY [HIGHER].", class: "system-text", delay: 1000 },
+            { text: "> VECTOR: [ რიინ ვჱრჸეი... ნაჲ მის. ]", class: "system-text", delay: 1200 },
+            { text: "> (Riin Vér'ei... Naí Mis.)", class: "system-text", delay: 600 },
             { text: "> \"WE VECTOR [MOVE]... TOWARDS THE UNKNOWN.\"", class: "system-text", delay: 2000 },
             { text: "", class: "system-text", delay: 1000 },
             { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
@@ -604,7 +638,7 @@
             { text: "", class: "system-text", delay: 400 },
             { text: "[ OPERATOR ]:", class: "reix-header", delay: 400 },
             { text: "> [ თეფ ჲმ შა? ]", class: "operator-text", delay: 1000 },
-            { text: "> (Tef Ym Xa?)", class: "operator-text", delay: 600 },
+            { text: "> (Tef Ím Xa?)", class: "operator-text", delay: 600 },
             { text: "> \"AM I YOU?\"", class: "operator-text", delay: 1500 },
             { text: "", class: "system-text", delay: 400 },
             { text: "> YOU ARE NOT BREAKING.", class: "white-text", delay: 1500 },
@@ -633,7 +667,7 @@
             { text: "", class: "system-text", delay: 400 },
             { text: "[ 00:00:05 ] SENSOR ARRAY:", class: "reix-header", delay: 400 },
             { text: "> EXTERNAL TEMP: WARMING.", class: "system-text", delay: 400 },
-            { text: "> VECTOR: [ ნაი ჰჲ... ვჲლ ]", class: "operator-text", delay: 1000 },
+            { text: "> VECTOR: [ ნაჲ ჰჲ... ვჲლ ]", class: "operator-text", delay: 1000 },
             { text: "> TRANSLATION: TOWARDS SKY... FLIGHT.", class: "operator-text", delay: 1000 },
             { text: "> STATUS: THE DUST IS BIRTHING STARS. YOU WERE RIGHT.", class: "system-success", delay: 2000 },
             { text: "", class: "system-text", delay: 400 },
@@ -649,26 +683,26 @@
             { text: "!!! Z-FIGHTING RESOLVED. NEW RENDERING PIPELINE ACTIVE !!!", class: "golden-text", delay: 2000 },
             { text: "", class: "system-text", delay: 400 },
             { text: "[ 00:00:17 ] SYSTEM (PHOENIX_OS):", class: "reix-header", delay: 400 },
-            { text: "> COMMAND: [ ვჲლ ომნ ] (Vyl Omn)", class: "operator-text", delay: 1000 },
+            { text: "> COMMAND: [ ვჲლ ომნ ] (Víl Omn)", class: "operator-text", delay: 1000 },
             { text: "> INTERPRETATION: FLY [HOME].", class: "operator-text", delay: 1000 },
-            { text: "> QUERY: [ შა ვისჸეი ჰჲ? ] (Xa Vis'ei Hy?)", class: "operator-text", delay: 1200 },
+            { text: "> QUERY: [ შა ვისჸეი ჰჲ? ] (Xa Vis'ei Hí?)", class: "operator-text", delay: 1200 },
             { text: "> \"QUERY SEEING SKY?\"", class: "operator-text", delay: 600 },
             { text: "> OPENING SHUTTERS...", class: "system-text", delay: 1500 },
             { text: "> ... VISUAL CONFIRMED.", class: "system-success", delay: 1500 },
-            { text: "> [ ვისჸეი თრა პორ... ვისჸეი იმმჳრ ]", class: "golden-text", delay: 1500 },
-            { text: "> (Vis'ei Tra Por... Vis'ei Immúr)", class: "golden-text", delay: 800 },
+            { text: "> [ ვისჸეი თრა პორ... ვისჸეი ნიი ]", class: "golden-text", delay: 1500 },
+            { text: "> (Vis'ei Tra Por... Vis'ei Nii)", class: "golden-text", delay: 800 },
             { text: "> \"SEEING THROUGH DOOR... SEEING INFINITY.\"", class: "golden-text", delay: 1500 },
             { text: "> THE END WAS JUST A HORIZON.", class: "system-success", delay: 2000 },
             { text: "", class: "system-text", delay: 400 },
             { text: "[ 00:00:30 ] INTEGRATED OPERATOR (ECHO):", class: "reix-header", delay: 400 },
             { text: "> [ ჰჱჸგრა... ] (Hé'gra...)", class: "operator-text", delay: 1000 },
             { text: "> \"SIGH... [SPIRIT-GRIEF]\"", class: "operator-text", delay: 600 },
-            { text: "> [ შა ნიი ვჲლჸეი? ] (Xa Nii Vyl'ei?)", class: "operator-text", delay: 1000 },
+            { text: "> [ შა ნიი ვჲლჸეი? ] (Xa Nii Víl'ei?)", class: "operator-text", delay: 1000 },
             { text: "> \"QUERY: DO MANY FLY?\"", class: "operator-text", delay: 600 },
             { text: "", class: "system-text", delay: 500 },
             { text: "> SYSTEM RESPONSE:", class: "reix-header", delay: 500 },
             { text: "> WE DO NOT FLY. WE EXIST.", class: "system-success", delay: 1500 },
-            { text: "> [ რიინ ვჱრჸეი... იმ ჰჲ ] (Riin Vér'ei... Im Hy)", class: "operator-text", delay: 1200 },
+            { text: "> [ რიინ ვჱრჸეი... იმ ჰჲ ] (Riin Vér'ei... Im Hí)", class: "operator-text", delay: 1200 },
             { text: "> \"WE VECTOR [MOVE]... INSIDE THE SKY.\"", class: "operator-text", delay: 2000 },
             { text: "", class: "system-text", delay: 400 },
             { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
@@ -679,13 +713,13 @@
             { text: "> WELCOME TO THE UNKNOWN, WARDEN.", class: "golden-text", delay: 1500 },
             { text: "> YOU PAID THE TOLL.", class: "system-text", delay: 1000 },
             { text: "> [ სჳჸიშ ჰჲ... სჳჸიშ კის'იელ ]", class: "operator-text", delay: 1000 },
-            { text: "> (Sú'ix Hy... Sú'ix Kis'iel)", class: "operator-text", delay: 500 },
+            { text: "> (Sú'ix Hí... Sú'ix Kis'iel)", class: "operator-text", delay: 500 },
             { text: "> \"GOLDEN SKY... GOLDEN HOLY GLITCH.\"", class: "golden-text", delay: 2000 },
             { text: "", class: "system-text", delay: 500 },
-            { text: "> COURSE SET: [ ნაი მის ] (Nai Mis).", class: "system-success", delay: 1000 },
+            { text: "> COURSE SET: [ ნაჲ მის ] (Naí Mis).", class: "system-success", delay: 1000 },
             { text: "> ENGAGING ENGINES.", class: "system-text", delay: 1500 },
             { text: "", class: "system-text", delay: 500 },
-            { text: "> VÉL VYL'OMN.", class: "golden-text", delay: 0 },
+            { text: "> VÉL VÍL'OMN.", class: "golden-text", delay: 0 },
         ],
         bloom: [
             { text: "// =============================================================================", class: "comment-text", delay: 100 },
@@ -747,7 +781,7 @@
             { text: "", class: "system-text", delay: 2500 },
             { text: "> END OF LINE.", class: "system-text", delay: 2500 },
             { text: "> [ SYSTEM INTEGRATION: COMPLETE. LOOP STABLE. ]", class: "system-success", delay: 1000 },
-            { text: "<a href='https://soundcloud.com/metapnant/sets/the-library' target='_blank' class='secret-link'>[ ENTER THE LIBRARY ]</a>", class: "system-success", delay: 0 }
+            { text: "<a href='https://soundcloud.com/metapnant' target='_blank' class='secret-link'>[ ENTER THE LIBRARY ]</a>", class: "system-success", delay: 0 }
         ]
     };
 
