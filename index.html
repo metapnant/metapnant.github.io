@@ -89,43 +89,68 @@
         clip-path: inset(0 3px 2px 0); 
     }
 
+    /* --- GLOBAL INTERACTIVE ELEMENT RESET --- */
+    button, a {
+      -webkit-tap-highlight-color: transparent !important;
+      outline: none !important;
+      backface-visibility: hidden;
+      transform: translateZ(0);
+      touch-action: manipulation;
+    }
+    button:focus, a:focus { outline: none !important; }
+
+    /* --- NAVIGATION ARROWS --- */
     .nav-controls {
       position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-      display: flex; align-items: center; gap: 80px; z-index: 2000; -webkit-tap-highlight-color: transparent;
+      display: flex; align-items: center; gap: 80px; z-index: 2000;
     }
     .nav-arrow {
       background: none; border: none; color: var(--arrow-color); font-size: 3.5rem;
-      cursor: pointer; transition: color 0.3s ease, transform 0.2s ease;
+      cursor: pointer; transition: color 0.2s ease, transform 0.1s ease;
       animation: faintFlash 5s infinite ease-in-out;
       user-select: none; -webkit-user-select: none;
     }
     .nav-arrow.disabled { opacity: 0.1; pointer-events: none; }
     
+    /* Desktop Hover */
     @media (hover: hover) {
       .nav-arrow:hover { color: var(--name-color); transform: scale(1.1); animation: none; }
     }
-    .nav-arrow:active { color: var(--name-color); transform: scale(0.95); }
+    /* Mobile/Active Press */
+    .nav-arrow:active { 
+        color: var(--name-color); 
+        transform: scale(0.9) translateZ(0); 
+        animation: none;
+    }
 
+    /* --- DOWNLOAD BUTTON --- */
     .pdf-button {
       position: fixed; right: 20px; bottom: 20px; z-index: 1000;
       background-color: transparent; color: var(--arrow-color);
       border: 1px solid var(--arrow-color); border-radius: 0;
       text-decoration: none; font-weight: 600; padding: 12px 22px;
       font-size: 0.8em; letter-spacing: 1px; opacity: 0;
-      transition: color 0.3s, border-color 0.3s, background-color 0.3s; 
+      transition: color 0.2s, border-color 0.2s, background-color 0.2s, transform 0.1s;
       animation: faintFlash 5s infinite ease-in-out;
-      -webkit-tap-highlight-color: transparent; box-sizing: border-box; 
-      display: flex; align-items: center; justify-content: center; gap: 10px;
+      box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 10px;
     }
     body.loaded .pdf-button { opacity: 1; }
 
+    /* Desktop Hover */
     @media (hover: hover) {
       .pdf-button:hover {
         color: var(--name-color); border-color: var(--name-color);
         background-color: rgba(152, 0, 235, 0.05); animation: none; opacity: 1;
       }
     }
-    .pdf-button:active { background-color: rgba(152, 0, 235, 0.15); border-color: var(--name-color); color: var(--name-color); transform: scale(0.98); }
+    /* Mobile/Active Press */
+    .pdf-button:active { 
+        background-color: rgba(152, 0, 235, 0.15); 
+        border-color: var(--name-color); 
+        color: var(--name-color); 
+        transform: scale(0.96) translateZ(0);
+        animation: none; opacity: 1;
+    }
 
     @media (max-width: 599px) {
       .pdf-button {
@@ -137,21 +162,30 @@
       .pdf-button .btn-icon { margin: 0; }
     }
 
+    /* --- SONG LINK --- */
     #song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 10px; }
     #song-link {
       color: var(--name-color); text-decoration: underline;
       text-decoration-color: var(--name-color); text-underline-offset: 2px;
-      font-weight: 600; transition: color 0.1s;
+      font-weight: 600; transition: color 0.1s, transform 0.1s; display: inline-block;
     }
     @media (hover: hover) {
       #song-link:hover { animation: strobe 1s infinite; }
     }
+    #song-link:active {
+        color: #fff; text-decoration-color: #fff;
+        transform: scale(0.98) translateZ(0);
+    }
+    
     @keyframes strobe { 0%, 100% { color: var(--name-color); text-decoration-color: var(--name-color); } 50% { color: #ffffff; text-decoration-color: #ffffff; } }
     @keyframes faintFlash { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
 
     .footer { text-align: center; padding: 20px 0 10px 0; font-size: 0.85em; color: var(--secondary-text-color); border-top: 1px solid rgba(255, 255, 255, 0.08); margin-top: 40px; }
-    #infinity-symbol { cursor: pointer; display: inline-block; transition: text-shadow 0.3s, color 0.3s; padding: 0 5px; font-weight: bold; }
-    #infinity-symbol:hover { color: #fff; text-shadow: 0 0 15px var(--name-color); }
+    #infinity-symbol { cursor: pointer; display: inline-block; transition: text-shadow 0.3s, color 0.3s, transform 0.1s; padding: 0 5px; font-weight: bold; }
+    @media (hover: hover) {
+        #infinity-symbol:hover { color: #fff; text-shadow: 0 0 15px var(--name-color); }
+    }
+    #infinity-symbol:active { transform: scale(1.2) translateZ(0); color: #ff00ff; }
 
     /* SECRET TERMINAL */
     #secret-overlay {
@@ -181,9 +215,14 @@
       background: none; padding: 12px 15px; text-align: left; cursor: pointer;
       font-family: 'Space Mono', monospace; font-size: 0.85em; transition: all 0.3s ease;
       opacity: 0.3; display: none; border: 1px solid transparent; border-left: 3px solid transparent;
+      transition: opacity 0.3s, padding 0.3s, transform 0.1s;
     }
     .cycle-btn.visible { display: block; pointer-events: auto; }
-    .cycle-btn:hover { opacity: 0.8; padding-left: 20px; }
+    
+    @media (hover: hover) {
+        .cycle-btn:hover { opacity: 0.8; padding-left: 20px; }
+    }
+    .cycle-btn:active { transform: scale(0.98) translateZ(0); opacity: 1; }
 
     .cycle-btn.theme-crash { color: var(--terminal-error); border-color: rgba(255, 51, 51, 0.2); }
     .cycle-btn.theme-crash.active { opacity: 1; background-color: rgba(255, 51, 51, 0.1); border-color: var(--terminal-error); border-left-color: var(--terminal-error); }
@@ -211,7 +250,7 @@
       .terminal-sidebar { width: 100%; height: auto; flex-direction: row; padding: 10px; border-right: none; border-bottom: 1px solid var(--terminal-border); overflow-x: auto; }
       .sidebar-header { display: none; }
       .cycle-btn { white-space: nowrap; flex-shrink: 0; padding: 10px; }
-      .cycle-btn:hover { padding-left: 10px; }
+      @media (hover: hover) { .cycle-btn:hover { padding-left: 10px; } }
     }
 
     .terminal-container::-webkit-scrollbar { width: 10px; }
@@ -237,6 +276,7 @@
     .system-success { color: var(--terminal-cyan); }
     .error-char { color: var(--terminal-error); display: inline-block; font-weight: bold; animation: glitch-shake 0.08s infinite; text-shadow: 1px 0 #000; }
     
+    /* --- SECRET LINK (FINAL FIX) --- */
     .secret-link {
       display: inline-block; 
       margin-top: 20px; 
@@ -250,16 +290,8 @@
       transition: all 0.3s ease; 
       font-family: 'Space Mono', monospace; 
       animation: fadeIn 2s forwards;
-      
-      /* CLEANING ARTIFACTS */
-      -webkit-tap-highlight-color: transparent;
-      outline: none; 
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      transform: translateZ(0);
     }
 
-    /* DESKTOP HOVER */
     @media (hover: hover) {
       .secret-link:hover {
         background-color: transparent;
@@ -269,17 +301,15 @@
       }
     }
 
-    /* UNIVERSAL ACTIVE (TACTILE FEEDBACK) */
     .secret-link:active {
-      background-color: var(--terminal-gold); /* Keep background solid */
-      color: var(--terminal-bg); /* Keep text dark */
-      transform: scale(0.96) translateZ(0); /* Physical squish */
-      filter: brightness(0.9); /* Subtle lighting change */
+      background-color: var(--terminal-gold); 
+      color: var(--terminal-bg); 
+      transform: scale(0.96) translateZ(0); 
+      filter: brightness(0.9);
       box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
       transition: transform 0.05s ease;
     }
 
-    /* FOCUS STATE LOCK */
     .secret-link:focus {
       outline: none;
       background-color: var(--terminal-gold);
@@ -298,7 +328,8 @@
       padding: 5px 10px; cursor: pointer; font-family: 'Space Mono', monospace; z-index: 20;
       transition: all 0.3s; font-size: 12px;
     }
-    .close-terminal:hover { color: var(--terminal-text); border-color: var(--terminal-text); }
+    @media (hover: hover) { .close-terminal:hover { color: var(--terminal-text); border-color: var(--terminal-text); } }
+    .close-terminal:active { transform: scale(0.95) translateZ(0); color: var(--terminal-text); border-color: var(--terminal-text); }
   </style>
 </head>
 
@@ -317,32 +348,32 @@
   </div>
 
   <nav class="nav-controls">
-    <button class="nav-arrow" id="prev-doc">‹</button>
-    <button class="nav-arrow" id="next-doc">›</button>
+    <button class="nav-arrow" id="prev-doc" onclick="this.blur()">‹</button>
+    <button class="nav-arrow" id="next-doc" onclick="this.blur()">›</button>
   </nav>
 
-  <a href="#" target="_blank" class="pdf-button" id="download-btn">
+  <a href="#" target="_blank" class="pdf-button" id="download-btn" onclick="this.blur()">
     <span class="btn-icon">📖</span> <span class="btn-text">FULLSCREEN / DOWNLOAD</span>
   </a>
 
   <footer class="footer">
     <p><span id="currentYear"></span> Tef Riin <span id="infinity-symbol">∞</span></p>
     <div id="song-link-container">
-      <a href="#" id="song-link" target="_blank">Starflower</a>
+      <a href="#" id="song-link" target="_blank" onclick="this.blur()">Starflower</a>
     </div>
   </footer>
 
   <div id="secret-overlay">
     <div class="terminal-sidebar">
       <div class="sidebar-header">CYCLES</div>
-      <button class="cycle-btn theme-crash" id="btn-cycle-00" onclick="switchTab('crash')">[ -1 ] EARTH_PRIME</button>
-      <button class="cycle-btn theme-echo" id="btn-cycle-echo" onclick="switchTab('echo')">[ ≈ ] THE_ECHO</button>
-      <button class="cycle-btn theme-wake" id="btn-cycle-01" onclick="switchTab('wake')">[ +1 ] PHOENIX_NEST</button>
-      <button class="cycle-btn theme-bloom" id="btn-cycle-bloom" onclick="switchTab('bloom')">[ * ] THE_BLOOM</button>
-      <button class="cycle-btn theme-gardener" id="btn-cycle-02" onclick="switchTab('gardener')">[ 02 ] THE_GARDENER</button>
+      <button class="cycle-btn theme-crash" id="btn-cycle-00" onclick="switchTab('crash'); this.blur();">[ -1 ] EARTH_PRIME</button>
+      <button class="cycle-btn theme-echo" id="btn-cycle-echo" onclick="switchTab('echo'); this.blur();">[ ≈ ] THE_ECHO</button>
+      <button class="cycle-btn theme-wake" id="btn-cycle-01" onclick="switchTab('wake'); this.blur();">[ +1 ] PHOENIX_NEST</button>
+      <button class="cycle-btn theme-bloom" id="btn-cycle-bloom" onclick="switchTab('bloom'); this.blur();">[ * ] THE_BLOOM</button>
+      <button class="cycle-btn theme-gardener" id="btn-cycle-02" onclick="switchTab('gardener'); this.blur();">[ 02 ] THE_GARDENER</button>
     </div>
     <div class="terminal-wrapper">
-      <button class="close-terminal" onclick="closeTerminal()">[X] CLOSE CONNECTION</button>
+      <button class="close-terminal" onclick="closeTerminal(); this.blur();">[X] CLOSE CONNECTION</button>
       <div class="terminal-container" id="terminal-content">
         <div id="log-crash" class="log-section"></div>
         <div id="log-echo" class="log-section"></div>
