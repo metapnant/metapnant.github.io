@@ -238,37 +238,51 @@
     .error-char { color: var(--terminal-error); display: inline-block; font-weight: bold; animation: glitch-shake 0.08s infinite; text-shadow: 1px 0 #000; }
     
     .secret-link {
-      display: inline-block; margin-top: 20px; color: var(--terminal-bg);
-      background-color: var(--terminal-gold); padding: 10px 15px; text-decoration: none;
-      font-weight: bold; border: 1px solid var(--terminal-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-      transition: all 0.3s ease; font-family: 'Space Mono', monospace; animation: fadeIn 2s forwards;
+      display: inline-block; 
+      margin-top: 20px; 
+      color: var(--terminal-bg);
+      background-color: var(--terminal-gold); 
+      padding: 10px 15px; 
+      text-decoration: none;
+      font-weight: bold; 
+      border: 1px solid var(--terminal-gold); 
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+      transition: all 0.3s ease; 
+      font-family: 'Space Mono', monospace; 
+      animation: fadeIn 2s forwards;
+      
+      /* The "Cleaners" */
       -webkit-tap-highlight-color: transparent;
       outline: none; 
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
       transform: translateZ(0);
     }
-    .secret-link:focus {
-      outline: none;
-      background-color: var(--terminal-gold); /* Keep it solid on focus */
-    }
-    
-    /* Only allow sticky hover on devices with a mouse */
+
+    /* 1. Only allow hover on desktop/mouse devices */
     @media (hover: hover) {
-      .secret-link:hover { 
-        background-color: transparent; 
-        color: var(--terminal-gold); 
-        box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); 
-        cursor: pointer; 
+      .secret-link:hover {
+        background-color: transparent;
+        color: var(--terminal-gold);
+        box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+        cursor: pointer;
       }
     }
+
+    /* 2. Mobile-friendly tap feedback (briefly flickers on press) */
     .secret-link:active {
-      background-color: transparent; 
-      color: var(--terminal-gold); 
-      box-shadow: 0 0 10px rgba(255, 215, 0, 0.8); 
-      transform: scale(0.98);
+      background-color: transparent;
+      color: var(--terminal-gold);
+      transform: scale(0.96) translateZ(0); /* Add a tiny "squish" to feel real */
+      transition: all 0.1s ease;
     }
 
+    /* 3. Keep it solid if it somehow holds focus */
+    .secret-link:focus {
+      outline: none;
+      background-color: var(--terminal-gold);
+      color: var(--terminal-bg);
+    }
     @keyframes glitch-shake {
       0% { transform: translate(0, 0); } 25% { transform: translate(1px, 0); }
       50% { transform: translate(-1px, 0); } 75% { transform: translate(0, 1px); }
