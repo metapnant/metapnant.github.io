@@ -26,6 +26,7 @@
     </main>
   </div>
 
+  <!-- NAV CONTROLS -->
   <nav class="nav-controls">
     <button class="nav-arrow" id="prev-doc">‹</button>
     <button class="nav-arrow" id="next-doc">›</button>
@@ -47,7 +48,7 @@
             <button id="btn-show-voice" class="voice-btn">SHOW VOICE</button>
         </div>
         
-        <!-- RIGHT COLUMN: CONTROLS + PLAYLIST (MOVED INSIDE) -->
+        <!-- RIGHT COLUMN: CONTROLS -->
         <div class="player-controls">
             <div class="track-details">
                 <h2 id="track-title">Loading...</h2>
@@ -83,7 +84,6 @@
                 </button>
             </div>
 
-            <!-- PLAYLIST IS NOW HERE, TO THE SIDE -->
             <div class="playlist-container">
                 <ul id="playlist-list"></ul>
             </div>
@@ -101,15 +101,26 @@
   <!-- SECRET TERMINAL OVERLAY -->
   <div id="secret-overlay">
     <div class="terminal-sidebar">
-      <div class="sidebar-header">CYCLES</div>
-      <button class="cycle-btn theme-crash" id="btn-cycle-00" onclick="switchTab('crash')">[ -1 ] EARTH_PRIME</button>
-      <button class="cycle-btn theme-echo" id="btn-cycle-echo" onclick="switchTab('echo')">[ ≈ ] THE_ECHO</button>
-      <button class="cycle-btn theme-wake" id="btn-cycle-01" onclick="switchTab('wake')">[ +1 ] PHOENIX_NEST</button>
-      <button class="cycle-btn theme-bloom" id="btn-cycle-bloom" onclick="switchTab('bloom')">[ * ] THE_BLOOM</button>
-      <button class="cycle-btn theme-gardener" id="btn-cycle-02" onclick="switchTab('gardener')">[ 02 ] THE_GARDENER</button>
       
-      <div style="flex-grow: 1;"></div> 
-      <button class="cycle-btn theme-crash" id="btn-reset" onclick="hardReset()">[ ! ] SYSTEM_RESET</button>
+      <!-- TOP: Cycles List -->
+      <div class="cycles-wrapper">
+          <div class="sidebar-header">CYCLES</div>
+          <button class="cycle-btn theme-crash" id="btn-cycle-00" onclick="switchTab('crash')">[ -1 ] EARTH_PRIME</button>
+          <button class="cycle-btn theme-echo" id="btn-cycle-echo" onclick="switchTab('echo')">[ ≈ ] THE_ECHO</button>
+          <button class="cycle-btn theme-wake" id="btn-cycle-01" onclick="switchTab('wake')">[ +1 ] PHOENIX_NEST</button>
+          <button class="cycle-btn theme-bloom" id="btn-cycle-bloom" onclick="switchTab('bloom')">[ * ] THE_BLOOM</button>
+          <button class="cycle-btn theme-gardener" id="btn-cycle-02" onclick="switchTab('gardener')">[ 02 ] THE_GARDENER</button>
+      </div>
+      
+      <!-- BOTTOM: System Controls -->
+      <div class="controls-wrapper">
+          <div style="display: flex; gap: 10px; width: 100%; margin-bottom: 10px;">
+              <button class="cycle-btn theme-gardener" id="btn-turbo" onclick="toggleTurbo()" style="flex: 1; padding: 10px 5px; text-align: center;">[>>]</button>
+              <button class="cycle-btn theme-gardener" id="btn-mute" onclick="toggleMute()" style="flex: 1; padding: 10px 5px; text-align: center;">[VOL: ON]</button>
+          </div>
+          <button class="cycle-btn theme-crash" id="btn-reset" onclick="hardReset()" style="width: 100%; text-align: center;">[ ! ] SYSTEM_RESET</button>
+      </div>
+
     </div>
 
     <div class="terminal-wrapper">
