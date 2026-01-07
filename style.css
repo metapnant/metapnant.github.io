@@ -210,10 +210,9 @@
     box-shadow: 0 0 10px var(--name-color);
 }
 
-/* Visual feedback when holding (Active State) */
 .progress-bar.dragging::after { 
-    background: #fff; /* Turns white when you've successfully grabbed it */
-    box-shadow: 0 0 15px #fff; 
+    background: #ffd700; /* Gold */
+    box-shadow: 0 0 15px #ffd700; 
 }
 
 .time-marker {

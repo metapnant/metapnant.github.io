@@ -304,28 +304,26 @@ function prevTrack() {
     playTrack(prevIdx);
 }
 
-// --- STRICT DRAGGABLE PROGRESS BAR LOGIC ---
+// --- FINAL DRAGGABLE PROGRESS BAR LOGIC (GOLD GLOW CONSISTENCY) ---
 
-function updateProgressVisual(percent) {
+// Updates the CSS width and Time Text (Does NOT change audio position)
+function updateScrubVisual(percent) {
     domProgressBar.style.setProperty('--progress', `${percent}%`);
-}
-
-function handleSeek(e) {
-    const width = progressArea.clientWidth;
-    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-    const rect = progressArea.getBoundingClientRect();
-    
-    let percent = ((clientX - rect.left) / width) * 100;
-    percent = Math.max(0, Math.min(100, percent));
-    
-    updateProgressVisual(percent);
-    
     if (audioPlayer.duration) {
         const seekTime = (percent / 100) * audioPlayer.duration;
         domCurrentTime.textContent = formatTime(seekTime);
-        return seekTime;
     }
-    return 0;
+}
+
+// Calculates percentage based on X position
+function getScrubPercent(e) {
+    const width = progressArea.clientWidth;
+    // Handle coordinates for Mouse or Touch (including end-touches)
+    const clientEvent = e.type.includes('touch') ? (e.touches[0] || e.changedTouches[0]) : e;
+    const rect = progressArea.getBoundingClientRect();
+    
+    let percent = ((clientEvent.clientX - rect.left) / width) * 100;
+    return Math.max(0, Math.min(100, percent));
 }
 
 // Variables
@@ -333,95 +331,74 @@ let touchStartX = 0;
 let touchStartY = 0;
 let holdTimer = null;
 
-// 1. MOUSE EVENTS (Desktop - Instant interaction)
+// 1. MOUSE EVENTS (Desktop)
 const startDragMouse = (e) => {
-    if (e.button !== 0) return;
+    if (e.button !== 0) return; // Left click only
     isDragging = true;
-    handleSeek(e); 
+    domProgressBar.classList.add('dragging'); // Ignite Gold Glow
+    updateScrubVisual(getScrubPercent(e));
 };
 
 const doDragMouse = (e) => {
     if (!isDragging) return;
     e.preventDefault(); 
-    const rect = progressArea.getBoundingClientRect();
-    const y = e.clientY;
-    // Strict vertical bounds check for mouse
-    if (y < rect.top - 20 || y > rect.bottom + 20) {
-        endDragMouse(e);
-        return;
-    }
-    handleSeek(e); 
+    updateScrubVisual(getScrubPercent(e));
 };
 
 const endDragMouse = (e) => { 
     if(isDragging) { 
-        const seekTime = handleSeek(e); 
-        if (isFinite(seekTime)) audioPlayer.currentTime = seekTime; 
+        const percent = getScrubPercent(e);
+        if (audioPlayer.duration) {
+            audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
+        }
         isDragging = false; 
+        domProgressBar.classList.remove('dragging'); // Extinguish Glow
     } 
 };
 
-// 2. TOUCH EVENTS (Mobile - Hold to Grab)
+// 2. TOUCH EVENTS (Mobile - Hold to Grab, Drag Anywhere)
 const startDragTouch = (e) => {
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
-    isDragging = false; // Do not seek yet
+    isDragging = false; 
 
-    // Start Hold Timer
+    // Start Hold Timer (200ms)
     holdTimer = setTimeout(() => {
         isDragging = true;
-        domProgressBar.classList.add('dragging'); // Visual feedback (White glow)
-        // navigator.vibrate(20); // Optional haptic feedback if supported
-        handleSeek(e); // Snap to finger now
-    }, 200); // 200ms hold required
+        domProgressBar.classList.add('dragging'); // Ignite Gold Glow
+        updateScrubVisual(getScrubPercent(e));
+    }, 200); 
 };
 
 const doDragTouch = (e) => {
     if (isDragging) {
-        // We are officially dragging: Lock scroll and scrub
-        e.preventDefault();
-        
-        // Strict Bounds Check
-        const rect = progressArea.getBoundingClientRect();
-        const y = e.touches[0].clientY;
-        if (y < rect.top - 40 || y > rect.bottom + 40) {
-            // Finger slipped too far off - cancel everything
-            endDragTouch(e);
-            return;
-        }
-        
-        handleSeek(e);
+        if (e.cancelable) e.preventDefault(); // Lock Scroll
+        updateScrubVisual(getScrubPercent(e));
     } else {
-        // Waiting for timer... did user move?
         const x = e.touches[0].clientX;
         const y = e.touches[0].clientY;
         const dx = Math.abs(x - touchStartX);
         const dy = Math.abs(y - touchStartY);
-
-        // If moved significantly before timer fired, it's a scroll or swipe. Cancel timer.
         if (dx > 5 || dy > 5) {
-            clearTimeout(holdTimer);
+            clearTimeout(holdTimer); // User is scrolling, cancel the grab
         }
     }
 };
 
 const endDragTouch = (e) => {
-    // Always clear timer on lift
     if (holdTimer) clearTimeout(holdTimer);
 
     if (isDragging) {
-        // Commit seek
         const percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
         if (audioPlayer.duration) {
             audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
         }
         isDragging = false;
-        domProgressBar.classList.remove('dragging');
+        domProgressBar.classList.remove('dragging'); // Extinguish Glow
     }
-    // If not dragging (timer didn't fire), it was a Tap. We DO NOT handle taps.
 };
 
-// Add Listeners
+// Listeners
 progressArea.addEventListener('mousedown', startDragMouse);
 document.addEventListener('mousemove', doDragMouse);
 document.addEventListener('mouseup', endDragMouse);
@@ -430,11 +407,11 @@ progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
 progressArea.addEventListener('touchmove', doDragTouch, { passive: false });
 progressArea.addEventListener('touchend', endDragTouch);
 
-// Update Progress
+// Playback Progress Update
 audioPlayer.addEventListener('timeupdate', () => {
     if (!isDragging && audioPlayer.duration) {
         const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-        updateProgressVisual(percent);
+        domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(audioPlayer.currentTime);
         domDuration.textContent = formatTime(audioPlayer.duration);
     }
