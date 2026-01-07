@@ -100,7 +100,126 @@ let logState = {
 };
 
 // ==========================================
-// 3. DOM ELEMENTS
+// 3. SOUND ENGINE (SYNTHESIZER)
+// ==========================================
+const SimpleSynth = {
+    ctx: null,
+    
+    init: function() {
+        if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    },
+
+    // Generates a tone based on the text class (The "Voice")
+    playTone: function(cssClass) {
+        if (!this.ctx) this.init();
+        
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        
+        // --- VOICE PROFILES ---
+        if (cssClass.includes('operator-text')) {
+            // OPERATOR: Soft, Triangle wave, Lower pitch (Organic)
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(500, t);
+            osc.frequency.linearRampToValueAtTime(450, t + 0.08); // Slight pitch drop like speaking
+            
+            gain.gain.setValueAtTime(0.04, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+            
+            osc.start();
+            osc.stop(t + 0.08);
+
+        } else if (cssClass.includes('alert-text')) {
+            // ALERT: Sawtooth, Buzzy, Low (Warning)
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, t);
+            
+            gain.gain.setValueAtTime(0.06, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+            
+            osc.start();
+            osc.stop(t + 0.1);
+
+        } else if (cssClass.includes('comment-text')) {
+            // COMMENT: Sine, Very High, Very Short (Subtle Metadata Click)
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(3000, t);
+            
+            gain.gain.setValueAtTime(0.015, t); // Very quiet
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01); // Instant decay
+            
+            osc.start();
+            osc.stop(t + 0.01);
+
+        } else if (cssClass.includes('golden-text') || cssClass.includes('white-text') || cssClass.includes('magenta-text')) {
+            // SPECIAL: Sine, Pure, Bell-like decay (Ethereal)
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, t); // A5
+            
+            gain.gain.setValueAtTime(0.08, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); // Longer ringing
+            
+            osc.start();
+            osc.stop(t + 0.2);
+
+        } else if (cssClass.includes('system-success')) {
+            // SUCCESS: Square, Upward Chirp (Positive)
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(1200, t);
+            osc.frequency.linearRampToValueAtTime(2000, t + 0.05);
+            
+            gain.gain.setValueAtTime(0.03, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+            
+            osc.start();
+            osc.stop(t + 0.05);
+
+        } else {
+            // SYSTEM (DEFAULT): Square, Fast decay (Retro Terminal Blip)
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(800, t);
+            osc.frequency.exponentialRampToValueAtTime(100, t + 0.04);
+            
+            gain.gain.setValueAtTime(0.03, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+            
+            osc.start();
+            osc.stop(t + 0.04);
+        }
+    },
+
+    playUnlock: function() {
+        if (!this.ctx) this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        
+        // Unlock Sweep
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.3);
+        
+        gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3);
+        
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.3);
+    }
+};
+
+// ==========================================
+// 4. DOM ELEMENTS
 // ==========================================
 
 const pdfWrapper = document.getElementById('pdf-wrapper');
@@ -146,12 +265,12 @@ const btnReset = document.getElementById('btn-reset');
 
 
 // ==========================================
-// 4. FUNCTIONS
+// 5. FUNCTIONS
 // ==========================================
 
 // --- HELPER: Precise Scroll ---
 function smartScrollTo(element) {
-    const headerOffset = 80; // Buffer from top of screen
+    const headerOffset = 80; 
     const elementPosition = element.getBoundingClientRect().top;
     const offsetPosition = elementPosition + window.scrollY - headerOffset;
 
@@ -257,7 +376,6 @@ async function renderPage(num, sessionID) {
       if (sessionID !== renderSession) return;
       pdfWrapper.appendChild(wrapper);
 
-      // FIX: Scroll with offset logic
       if (num === pendingScrollPage) {
           smartScrollTo(wrapper);
           pendingScrollPage = null; 
@@ -607,6 +725,7 @@ function checkStateIntegrity() {
 }
 
 function launchTerminal() {
+    SimpleSynth.init(); // Initialize audio context on user interaction
     terminalRunning = true; 
     checkStateIntegrity();
   
@@ -677,6 +796,12 @@ function processQueue() {
     
     activeTimer = setTimeout(() => {
       typeLine(lineData.text, lineData.class, containers[currentTab]);
+      
+      // FIX: Play sound only if text is not empty
+      if (lineData.text.trim().length > 0) {
+          SimpleSynth.playTone(lineData.class);
+      }
+      
       logState[currentTab].index++;
       terminalContainer.scrollTop = terminalContainer.scrollHeight;
       
@@ -694,6 +819,9 @@ function markLogFinished(type) {
         appState.finishedLogs.push(type);
         saveState();
     }
+    
+    SimpleSynth.playUnlock();
+
     if (type === 'crash') activeTimer = setTimeout(unlockEcho, 1500);
     else if (type === 'echo') activeTimer = setTimeout(unlockWake, 1500);
     else if (type === 'wake') activeTimer = setTimeout(unlockBloom, 1500);
@@ -738,19 +866,22 @@ function closeTerminal() {
 function revealPlayer() {
     closeTerminal();
     musicSection.style.display = 'block';
+    
     appState.musicUnlocked = true;
     saveState();
+    
+    loadTrack(currentTrackIdx);
+    
     setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100);
 }
 
 // ==========================================
-// 5. EVENT LISTENERS & INITIALIZATION
+// 6. EVENT LISTENERS & INITIALIZATION
 // ==========================================
 
 document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex + 1) % library.length); }});
 document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex - 1 + library.length) % library.length); }});
 
-// Button Listeners with preventDefault for safety
 if(btnPlay) btnPlay.addEventListener('click', (e) => { e.preventDefault(); togglePlay(); });
 if(btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextTrack(false); });
 if(btnPrev) btnPrev.addEventListener('click', (e) => { e.preventDefault(); prevTrack(); });
