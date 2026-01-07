@@ -106,7 +106,7 @@ let logState = {
 };
 
 // ==========================================
-// 3. SOUND ENGINE (SYNTHESIZER)
+// 3. SOUND ENGINE (IOS FIX)
 // ==========================================
 const SimpleSynth = {
     ctx: null,
@@ -116,15 +116,29 @@ const SimpleSynth = {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioContext();
         }
-        if (this.ctx.state === 'suspended') {
+    },
+
+    unlock: function() {
+        this.init();
+        if (this.ctx && this.ctx.state === 'suspended') {
             this.ctx.resume();
+        }
+        // Silent burst to wake hardware
+        if (this.ctx) {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            gain.gain.value = 0.001; 
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(0);
+            osc.stop(0.1);
         }
     },
 
     playTone: function(cssClass) {
-        if (isMuted) return;
-        if (!this.ctx || this.ctx.state === 'suspended') return;
-        
+        if (isMuted || !this.ctx) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
         const t = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -163,8 +177,7 @@ const SimpleSynth = {
     },
 
     playUnlock: function() {
-        if (isMuted) return;
-        if (!this.ctx) return;
+        if (isMuted || !this.ctx) return;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.connect(gain); gain.connect(this.ctx.destination);
@@ -177,14 +190,16 @@ const SimpleSynth = {
 
 // Global Unlock Handler
 function unlockAudioEngine() {
-    SimpleSynth.init();
+    SimpleSynth.unlock();
+    // Don't remove immediately on touchstart, wait for interaction
+    // We keep these active to ensure it catches the first VALID interaction
     document.removeEventListener('click', unlockAudioEngine);
     document.removeEventListener('keydown', unlockAudioEngine);
-    document.removeEventListener('touchstart', unlockAudioEngine);
+    document.removeEventListener('touchend', unlockAudioEngine); 
 }
 document.addEventListener('click', unlockAudioEngine);
 document.addEventListener('keydown', unlockAudioEngine);
-document.addEventListener('touchstart', unlockAudioEngine);
+document.addEventListener('touchend', unlockAudioEngine);
 
 // ==========================================
 // 4. DOM ELEMENTS
@@ -257,7 +272,6 @@ function updateInfinityState() {
 async function loadDocument(index) {
   if (isLoading) return;
   isLoading = true; renderSession++; const currentSession = renderSession;
-
   songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
   const existingPages = document.querySelectorAll('.pdf-page-wrapper');
   existingPages.forEach(p => p.remove());
@@ -310,74 +324,48 @@ async function renderRestOfPages(pageNum, sessionID) {
 async function renderPage(num, sessionID) {
   try {
       if (sessionID !== renderSession) return;
-      
       let docToRender = pdfDoc;
       let pageIndexToRender = num;
-
       if (currentIndex === 0 && num === 8 && appState.musicUnlocked) {
-          if (!lyricsDoc) {
-              lyricsDoc = await pdfjsLib.getDocument('lyrics.pdf').promise;
-          }
-          docToRender = lyricsDoc;
-          pageIndexToRender = currentTrackIdx + 1;
+          if (!lyricsDoc) lyricsDoc = await pdfjsLib.getDocument('lyrics.pdf').promise;
+          docToRender = lyricsDoc; pageIndexToRender = currentTrackIdx + 1;
       }
-
       const page = await docToRender.getPage(pageIndexToRender);
-      
       const wrapper = document.createElement('div');
       wrapper.className = 'pdf-page-wrapper';
       wrapper.id = `page-wrapper-${num}`; 
-      
       const canvas = document.createElement('canvas');
       canvas.className = 'pdf-page-canvas';
       wrapper.appendChild(canvas);
-      
       const ctx = canvas.getContext('2d');
       const viewport = page.getViewport({ scale: 1 });
-      
       const containerWidth = pdfWrapper.getBoundingClientRect().width || window.innerWidth;
       const desiredScale = (containerWidth - 40) / viewport.width;
       const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
-      
       const outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
       const scaledViewport = page.getViewport({ scale: finalScale * outputScale });
-      
-      canvas.height = scaledViewport.height; 
-      canvas.width = scaledViewport.width;
-      
+      canvas.height = scaledViewport.height; canvas.width = scaledViewport.width;
       await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
-      
       if (sessionID !== renderSession) return;
       pdfWrapper.appendChild(wrapper);
-
-      if (num === pendingScrollPage) {
-          smartScrollTo(wrapper);
-          pendingScrollPage = null; 
-      }
-
+      if (num === pendingScrollPage) { smartScrollTo(wrapper); pendingScrollPage = null; }
   } catch (e) { if (sessionID === renderSession) console.log("Render failed", e); }
 }
 
 async function refreshDynamicPage() {
     if (currentIndex !== 0 || !appState.musicUnlocked) return;
-
     const wrapper = document.getElementById('page-wrapper-8');
     if (!wrapper) return; 
-
     try {
         if (!lyricsDoc) lyricsDoc = await pdfjsLib.getDocument('lyrics.pdf').promise;
-        
         const pageNum = currentTrackIdx + 1;
         const page = await lyricsDoc.getPage(pageNum);
-        
         const currentHeight = wrapper.offsetHeight;
         wrapper.style.minHeight = `${currentHeight}px`;
-
         wrapper.innerHTML = '';
         const canvas = document.createElement('canvas');
         canvas.className = 'pdf-page-canvas';
         wrapper.appendChild(canvas);
-
         const ctx = canvas.getContext('2d');
         const viewport = page.getViewport({ scale: 1 });
         const containerWidth = pdfWrapper.getBoundingClientRect().width || window.innerWidth;
@@ -385,17 +373,10 @@ async function refreshDynamicPage() {
         const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
         const outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
         const scaledViewport = page.getViewport({ scale: finalScale * outputScale });
-
-        canvas.height = scaledViewport.height; 
-        canvas.width = scaledViewport.width;
-
+        canvas.height = scaledViewport.height; canvas.width = scaledViewport.width;
         await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
-        
         wrapper.style.minHeight = '';
-
-    } catch (e) {
-        console.error("Failed to refresh lyrics page", e);
-    }
+    } catch (e) { console.error("Failed to refresh lyrics page", e); }
 }
 
 // --- MUSIC FUNCTIONS ---
@@ -453,8 +434,8 @@ function loadTrack(index) {
     currentTrackIdx = index;
     const track = albumTracks[index];
     
-    // START SCRAMBLE ON SONG CHANGE
-    shouldAnimateReveal = true; // Allow animation
+    // Song Change: Trigger Scramble
+    shouldAnimateReveal = true; 
     startLoadingScramble(domTrackTitle);
     
     audioPlayer.src = track.src;
@@ -512,10 +493,13 @@ function getScrubPercent(e) {
 }
 
 const startDragMouse = (e) => {
-    if (isTouch) return; 
-    if (e.button !== 0) return; 
-    
+    if (isTouch || e.button !== 0) return; 
     isDragging = true;
+    
+    // FIX: Kill any existing scramble immediately on interact
+    if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
+    shouldAnimateReveal = false; 
+
     domProgressBar.classList.add('dragging'); 
     updateScrubVisual(getScrubPercent(e));
 };
@@ -545,6 +529,11 @@ const startDragTouch = (e) => {
     holdTimer = setTimeout(() => {
         if (!isScrolling) {
             isDragging = true;
+            
+            // FIX: Kill scramble on mobile grab too
+            if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
+            shouldAnimateReveal = false;
+
             domProgressBar.classList.add('dragging'); 
             updateScrubVisual(getScrubPercent(e));
         }
@@ -593,28 +582,30 @@ const endDragTouch = (e) => {
     setTimeout(() => { isTouch = false; }, 500);
 };
 
-// FIX: COMMIT SEEK WITH FLAG RESET
+// FIX: COMMIT SEEK WITH 800MS BUFFER
 function commitSeek(percent) {
-    // Disable animation flag on manual seek
     shouldAnimateReveal = false; 
+    if (loadingScrambleInterval) clearInterval(loadingScrambleInterval); // Ensure stop
 
     if (audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration !== Infinity) {
         audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
         pendingSeekPercent = null;
         
+        // Only trigger scramble if actually buffering for > 800ms
         if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
         bufferCheckTimer = setTimeout(() => {
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 shouldAnimateReveal = true;
                 startLoadingScramble(domTrackTitle);
             }
-        }, 400);
+        }, 800);
     } else pendingSeekPercent = percent;
 }
 
 // --- TERMINAL FUNCTIONS ---
 function saveState() { localStorage.setItem('metapnant_state', JSON.stringify(appState)); }
 function hardReset() { if (confirm("WARNING: This will wipe the terminal memory and re-seal the Chrysalis. Are you sure?")) { localStorage.removeItem('metapnant_state'); location.reload(); } }
+
 function initTerminalState() {
     if (appState.musicUnlocked) musicSection.style.display = 'block';
     checkStateIntegrity();
@@ -629,6 +620,7 @@ function initTerminalState() {
         btnMute.classList.add('visible');
     }
 }
+
 function checkStateIntegrity() {
     let changed = false;
     if (appState.finishedLogs.includes('crash') && !appState.unlockedTabs.includes('echo')) { appState.unlockedTabs.push('echo'); changed = true; }
@@ -637,38 +629,26 @@ function checkStateIntegrity() {
     if (appState.finishedLogs.includes('bloom') && !appState.unlockedTabs.includes('gardener')) { appState.unlockedTabs.push('gardener'); changed = true; }
     if (changed) saveState();
 }
+
 function launchTerminal() {
-    SimpleSynth.init(); // Initialize audio context on user interaction
+    SimpleSynth.unlock();
     terminalRunning = true; 
     checkStateIntegrity();
-  
     savedScrollTop = window.scrollY || document.documentElement.scrollTop;
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${savedScrollTop}px`;
-    document.body.classList.add('no-scroll');
-    
+    document.body.style.position = 'fixed'; document.body.style.top = `-${savedScrollTop}px`; document.body.classList.add('no-scroll');
     secretOverlay.classList.add('active');
-    btnReset.classList.add('visible');
-    btnCycle00.classList.add('visible');
-    btnTurbo.classList.add('visible');
-    btnMute.classList.add('visible');
-  
-    if (!currentTab) {
-        const lastUnlocked = appState.unlockedTabs[appState.unlockedTabs.length - 1];
-        switchTab(lastUnlocked);
-    } else {
-        processQueue();
-    }
+    btnReset.classList.add('visible'); btnCycle00.classList.add('visible'); btnTurbo.classList.add('visible'); btnMute.classList.add('visible');
+    if (!currentTab) switchTab(appState.unlockedTabs[appState.unlockedTabs.length - 1]); else processQueue();
 }
 
 function switchTab(type) {
+    // FIX: REPLAY LOGIC
     if (currentTab === type) {
-        // REPLAY LOGIC
-        if (logState[type].finished) { 
-            replayLog(null, type); return; 
-        } 
-        // CANCEL LOGIC
-        else if (terminalRunning && appState.finishedLogs.includes(type)) {
+        if (logState[type].finished) {
+            replayLog(null, type);
+            return;
+        } else if (terminalRunning && appState.finishedLogs.includes(type)) {
+            // Cancel/Skip
             if (activeTimer) clearTimeout(activeTimer);
             renderFullLog(type); 
             logState[type].finished = true; 
@@ -685,12 +665,9 @@ function switchTab(type) {
     const allBtns = [btnCycle00, btnCycle01, btnCycleEcho, btnCycleBloom, btnCycle02];
     const allContainers = [containers.crash, containers.wake, containers.echo, containers.bloom, containers.gardener];
     
-    // Reset UI
     allBtns.forEach(btn => {
         btn.classList.remove('active');
-        if (btn.querySelector('.replay-icon')) {
-            btn.removeChild(btn.querySelector('.replay-icon'));
-        }
+        if (btn.querySelector('.replay-icon')) btn.removeChild(btn.querySelector('.replay-icon'));
     });
     allContainers.forEach(con => con.classList.remove('active-log'));
     
@@ -710,7 +687,6 @@ function switchTab(type) {
         if (appState.finishedLogs.includes(type)) updateReplayIcon(type);
     }
   
-    // If finished in state, show full log instantly (fixes "freeze")
     if (appState.finishedLogs.includes(type)) {
         renderFullLog(type);
         logState[type].finished = true;
@@ -720,34 +696,26 @@ function switchTab(type) {
     }
 }
 
-// NEW: Helper to append icon
 function updateReplayIcon(type) {
     let activeBtn = null;
-    if (type === 'crash') activeBtn = btnCycle00;
-    else if (type === 'echo') activeBtn = btnCycleEcho;
-    else if (type === 'wake') activeBtn = btnCycle01;
-    else if (type === 'bloom') activeBtn = btnCycleBloom;
-    else if (type === 'gardener') activeBtn = btnCycle02;
-    
+    if (type === 'crash') activeBtn = btnCycle00; else if (type === 'echo') activeBtn = btnCycleEcho; else if (type === 'wake') activeBtn = btnCycle01; else if (type === 'bloom') activeBtn = btnCycleBloom; else if (type === 'gardener') activeBtn = btnCycle02;
     if (activeBtn && !activeBtn.querySelector('.replay-icon')) {
-        const icon = document.createElement('span');
-        icon.className = 'replay-icon';
-        icon.innerHTML = '↺';
-        icon.onclick = (e) => replayLog(e, type);
+        const icon = document.createElement('span'); icon.className = 'replay-icon'; icon.innerHTML = '↺'; icon.onclick = (e) => replayLog(e, type);
         activeBtn.appendChild(icon);
     }
 }
 
-// NEW: Replay Logic
+// FIX: REPLAY LOGIC
 function replayLog(e, type) {
     if (e) e.stopPropagation(); 
     if (activeTimer) clearTimeout(activeTimer);
     
-    currentTab = type;
+    currentTab = type; // Force context
     containers[type].innerHTML = ""; 
     logState[type].index = 0; 
     logState[type].finished = false;
     
+    // Remove icon while playing
     let activeBtn = null;
     if (type === 'crash') activeBtn = btnCycle00; else if (type === 'echo') activeBtn = btnCycleEcho; else if (type === 'wake') activeBtn = btnCycle01; else if (type === 'bloom') activeBtn = btnCycleBloom; else if (type === 'gardener') activeBtn = btnCycle02;
     if (activeBtn && activeBtn.querySelector('.replay-icon')) activeBtn.removeChild(activeBtn.querySelector('.replay-icon'));
@@ -757,26 +725,19 @@ function replayLog(e, type) {
 
 function toggleTurbo() { turboMode = !turboMode; logSpeedMultiplier = turboMode ? 0.1 : 1; btnTurbo.innerText = turboMode ? "[ >> ] TURBO: ON" : "[ >> ] TURBO: OFF"; if (turboMode) btnTurbo.classList.add('active'); else btnTurbo.classList.remove('active'); }
 function toggleMute() { isMuted = !isMuted; btnMute.innerText = isMuted ? "[VOL: OFF]" : "[VOL: ON]"; if (isMuted) btnMute.classList.add('active'); else btnMute.classList.remove('active'); }
+
 function processQueue() {
     if (!currentTab || !terminalRunning) return;
     if (logState[currentTab].finished) return;
   
     const idx = logState[currentTab].index;
-    
-    if (idx >= logsData[currentTab].length) {
-        markLogFinished(currentTab);
-        return;
-    }
-  
+    if (idx >= logsData[currentTab].length) { markLogFinished(currentTab); return; }
     const lineData = logsData[currentTab][idx];
-    
-    // Apply Turbo Multiplier
     const delay = lineData.delay * logSpeedMultiplier;
 
     activeTimer = setTimeout(() => {
       typeLine(lineData.text, lineData.class, containers[currentTab]);
       
-      // FIX: Play sound for every line (no throttle), unless muted
       if (lineData.text.trim().length > 0) {
           SimpleSynth.playTone(lineData.class);
       }
@@ -804,7 +765,6 @@ function markLogFinished(type) {
         else if (type === 'wake') activeTimer = setTimeout(unlockBloom, 1500 * logSpeedMultiplier); 
         else if (type === 'bloom') activeTimer = setTimeout(unlockGardener, 1500 * logSpeedMultiplier);
     } else {
-        // Re-add icon if this was a replay finishing
         updateReplayIcon(type);
     }
 }
@@ -835,24 +795,17 @@ function typeLine(htmlText, className, container) {
 function closeTerminal() {
     if(activeTimer) clearTimeout(activeTimer);
     secretOverlay.classList.remove('active');
-    
     document.body.classList.remove('no-scroll');
-    document.body.style.position = '';
-    document.body.style.top = '';
-    window.scrollTo(0, savedScrollTop);
-    
+    document.body.style.position = ''; document.body.style.top = ''; window.scrollTo(0, savedScrollTop);
     terminalRunning = false; 
 }
 
 function revealPlayer() {
     closeTerminal();
     musicSection.style.display = 'block';
-    
     appState.musicUnlocked = true;
     saveState();
-    
     loadTrack(currentTrackIdx);
-    
     setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100);
 }
 
@@ -862,142 +815,50 @@ function revealPlayer() {
 
 document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex + 1) % library.length); }});
 document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex - 1 + library.length) % library.length); }});
-
-// Button Listeners with preventDefault for safety
 if(btnPlay) btnPlay.addEventListener('click', (e) => { e.preventDefault(); togglePlay(); });
 if(btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextTrack(false); });
 if(btnPrev) btnPrev.addEventListener('click', (e) => { e.preventDefault(); prevTrack(); });
 if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggleLoop(); });
-
-progressArea.addEventListener('mousedown', startDragMouse);
-document.addEventListener('mousemove', doDragMouse);
-document.addEventListener('mouseup', endDragMouse);
-
-progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
-progressArea.addEventListener('touchmove', doDragTouch, { passive: false });
-progressArea.addEventListener('touchend', endDragTouch);
-
-audioPlayer.addEventListener('timeupdate', () => {
-    if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) {
-        const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-        domProgressBar.style.setProperty('--progress', `${percent}%`);
-        domCurrentTime.textContent = formatTime(audioPlayer.currentTime);
-        domDuration.textContent = formatTime(audioPlayer.duration);
-    }
-});
-
-// NEW: When file is actually playable/loaded
-audioPlayer.addEventListener('canplay', () => {
-    const track = albumTracks[currentTrackIdx];
-    resolveLoadingScramble(domTrackTitle, track.title);
-    
-    domDuration.textContent = formatTime(audioPlayer.duration);
-    
-    if (pendingSeekPercent !== null) {
-        audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration;
-        domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`);
-        pendingSeekPercent = null;
-    }
-});
-
+progressArea.addEventListener('mousedown', startDragMouse); document.addEventListener('mousemove', doDragMouse); document.addEventListener('mouseup', endDragMouse);
+progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); progressArea.addEventListener('touchend', endDragTouch);
+audioPlayer.addEventListener('timeupdate', () => { if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; domProgressBar.style.setProperty('--progress', `${p}%`); domCurrentTime.textContent = formatTime(audioPlayer.currentTime); domDuration.textContent = formatTime(audioPlayer.duration); }});
+audioPlayer.addEventListener('loadedmetadata', () => { domDuration.textContent = formatTime(audioPlayer.duration); if (pendingSeekPercent !== null) { audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); pendingSeekPercent = null; }});
 audioPlayer.addEventListener('ended', () => nextTrack(true));
 
-// NEW: Smart Buffering Resolve
-audioPlayer.addEventListener('playing', () => {
-    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
-    
-    // FIX: Only resolve text if we were actually waiting for a scramble
-    // Use shouldAnimateReveal flag to decide
+// FIX: Added 'seeked' event to catch completion of seek immediately
+audioPlayer.addEventListener('seeked', () => {
+    if(bufferCheckTimer) clearTimeout(bufferCheckTimer);
+    // If we didn't start animating, do nothing. If we did, resolve it.
     if (shouldAnimateReveal) {
-        const track = albumTracks[currentTrackIdx];
-        resolveLoadingScramble(domTrackTitle, track.title);
-        shouldAnimateReveal = false; 
+        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
+        shouldAnimateReveal = false;
     }
 });
 
-// Also handle waiting event properly
 audioPlayer.addEventListener('waiting', () => {
     if(bufferCheckTimer) clearTimeout(bufferCheckTimer);
-    // Don't set flag yet, wait for timer
-    bufferCheckTimer = setTimeout(() => {
-        shouldAnimateReveal = true; // Mark that we are now scrambling
-        startLoadingScramble(domTrackTitle);
-    }, 300);
+    bufferCheckTimer = setTimeout(() => { 
+        shouldAnimateReveal = true; 
+        startLoadingScramble(domTrackTitle); 
+    }, 800); // 800ms tolerance
 });
 
-if (btnShowVoice) {
-    btnShowVoice.addEventListener('click', (e) => {
-        e.preventDefault();
-        // 1. Switch to METAPNANT
-        if (currentIndex !== 0) {
-            loadDocument(0);
-        }
-        // 2. Queue scroll
-        pendingScrollPage = 8;
-        // 3. Try immediate scroll
-        const page8 = document.getElementById('page-wrapper-8');
-        if (page8) {
-            smartScrollTo(page8);
-            pendingScrollPage = null; 
-        }
-    });
-}
-
-infinityBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    
-    SimpleSynth.init();
-
-    if (appState.terminalFound) {
-        launchTerminal();
-        return;
-    }
-    if (currentIndex !== 2) return;
-    secretClicks++; 
-    infinityBtn.style.color = "#ff00ff";
-    setTimeout(() => infinityBtn.style.color = "", 200);
-    if (secretClicks === 3) { 
-        secretClicks = 0; 
-        appState.terminalFound = true; 
-        saveState();
-        updateInfinityState(); 
-        launchTerminal(); 
-    }
+audioPlayer.addEventListener('playing', () => { 
+    if (bufferCheckTimer) clearTimeout(bufferCheckTimer); 
+    if (shouldAnimateReveal) { 
+        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); 
+        shouldAnimateReveal = false; 
+    } 
+});
+audioPlayer.addEventListener('canplay', () => { 
+    if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; } 
 });
 
-// KEYBOARD CONTROLS
-document.addEventListener('keydown', (e) => {
-    // Only capture if user isn't interacting with browser UI
-    // Simple heuristic: if audio is playing or terminal is open, or music section is visible
-    const isPlayerVisible = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500;
-    
-    if (e.code === 'Space') {
-        if (isPlayerVisible || terminalRunning) {
-            e.preventDefault();
-            togglePlay();
-        }
-    }
-    
-    if (e.code === 'ArrowRight') {
-        if (e.shiftKey) { e.preventDefault(); nextTrack(false); }
-        else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime += 5; }
-    }
-    if (e.code === 'ArrowLeft') {
-        if (e.shiftKey) { e.preventDefault(); prevTrack(); }
-        else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; }
-    }
-});
-
-function formatTime(seconds) {
-    if(isNaN(seconds) || seconds === Infinity) return "0:00";
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
-}
+if (btnShowVoice) { btnShowVoice.addEventListener('click', (e) => { e.preventDefault(); if (currentIndex !== 0) loadDocument(0); pendingScrollPage = 8; const p8 = document.getElementById('page-wrapper-8'); if (p8) { smartScrollTo(p8); pendingScrollPage = null; } }); }
+infinityBtn.addEventListener('click', (e) => { e.preventDefault(); SimpleSynth.unlock(); if (appState.terminalFound) { launchTerminal(); return; } if (currentIndex !== 2) return; secretClicks++; infinityBtn.style.color = "#ff00ff"; setTimeout(() => infinityBtn.style.color = "", 200); if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; saveState(); updateInfinityState(); launchTerminal(); } });
+document.addEventListener('keydown', (e) => { const isPlayerVisible = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500; if (e.code === 'Space') { if (isPlayerVisible || terminalRunning) { e.preventDefault(); togglePlay(); } } if (e.code === 'ArrowRight') { if (e.shiftKey) { e.preventDefault(); nextTrack(false); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime += 5; } } if (e.code === 'ArrowLeft') { if (e.shiftKey) { e.preventDefault(); prevTrack(); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; } } });
+function formatTime(s) { if(isNaN(s) || s === Infinity) return "0:00"; const m = Math.floor(s/60); const ss = Math.floor(s%60); return `${m}:${ss<10?'0':''}${ss}`; }
 
 // STARTUP
 document.getElementById("currentYear").textContent = new Date().getFullYear();
-initTerminalState();
-loadDocument(0);
-initPlaylist();
-loadTrack(0);
+initTerminalState(); loadDocument(0); initPlaylist(); loadTrack(0);
