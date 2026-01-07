@@ -150,12 +150,13 @@ const musicSection = document.getElementById('music-section');
 const audioPlayer = new Audio();
 let currentTrackIdx = 0;
 let isPlaying = false;
-let isDragging = false; // Track dragging state
+let isDragging = false; 
+let dragHoldTimer = null; // Timer for mobile hold
 
 // DOM Elements
 const domTrackTitle = document.getElementById('track-title');
 const domProgressBar = document.getElementById('progress-bar');
-const progressArea = document.getElementById('progress-container'); // Correct ID from HTML
+const progressArea = document.getElementById('progress-container');
 const domCurrentTime = document.getElementById('current-time');
 const domDuration = document.getElementById('duration');
 const btnPlay = document.getElementById('btn-play');
@@ -174,31 +175,25 @@ let loopMode = 0;
 
 // --- SCRAMBLE TEXT EFFECT ---
 function scrambleText(element, finalText) {
-    const chars = "!<>-_\\/[]{}—=+*^?#________"; // Cyberpunk char pool
+    const chars = "!<>-_\\/[]{}—=+*^?#________";
     let iterations = 0;
-    
-    // Clear previous interval if any (store it on the element to avoid collisions)
     if (element.dataset.interval) clearInterval(element.dataset.interval);
     
     const interval = setInterval(() => {
         element.innerText = finalText
             .split("")
             .map((letter, index) => {
-                if (index < iterations) {
-                    return finalText[index];
-                }
+                if (index < iterations) return finalText[index];
                 return chars[Math.floor(Math.random() * chars.length)];
             })
             .join("");
 
         if (iterations >= finalText.length) {
             clearInterval(interval);
-            element.innerText = finalText; // Ensure final clean text
+            element.innerText = finalText; 
         }
-
-        iterations += 1 / 2; // Speed of decoding
+        iterations += 1 / 2;
     }, 30);
-
     element.dataset.interval = interval;
 }
 
@@ -217,19 +212,17 @@ function initPlaylist() {
 function loadTrack(index) {
     if (!domTrackTitle) return;
     
-    // 1. Instant Visual Reset
+    // Instant Reset
     domProgressBar.style.setProperty('--progress', '0%');
     domCurrentTime.textContent = "0:00";
-    domDuration.textContent = "0:00"; // Optional: reset duration until load
+    domDuration.textContent = "0:00"; 
     
     currentTrackIdx = index;
     const track = albumTracks[index];
     audioPlayer.src = track.src;
     
-    // 2. Scramble Title
     scrambleText(domTrackTitle, track.title);
     
-    // Highlight active
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -280,7 +273,7 @@ function updateLoopBtn() {
     iconLoopOne.style.display = 'none';
 
     if (loopMode === 0) {
-        // Off
+        // Off (CSS opacity handles dimming)
     } else if (loopMode === 1) {
         btnLoop.classList.add('active');
     } else if (loopMode === 2) {
@@ -313,7 +306,7 @@ function prevTrack() {
     playTrack(prevIdx);
 }
 
-// --- DRAGGABLE PROGRESS BAR LOGIC ---
+// --- DRAGGABLE PROGRESS BAR LOGIC (HOLD TO DRAG ON MOBILE) ---
 
 function updateProgressVisual(percent) {
     domProgressBar.style.setProperty('--progress', `${percent}%`);
@@ -321,17 +314,14 @@ function updateProgressVisual(percent) {
 
 function handleSeek(e) {
     const width = progressArea.clientWidth;
-    // Handle both mouse and touch coordinates
     const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
     const rect = progressArea.getBoundingClientRect();
     
-    // Calculate percentage (clamped 0 to 100)
     let percent = ((clientX - rect.left) / width) * 100;
     percent = Math.max(0, Math.min(100, percent));
     
     updateProgressVisual(percent);
     
-    // Return the time value for this position
     if (audioPlayer.duration) {
         const seekTime = (percent / 100) * audioPlayer.duration;
         domCurrentTime.textContent = formatTime(seekTime);
@@ -340,48 +330,67 @@ function handleSeek(e) {
     return 0;
 }
 
-// Start Dragging
-const startDrag = (e) => {
+// START: Mouse (Immediate)
+const startDragMouse = (e) => {
     isDragging = true;
-    handleSeek(e); // Update immediately on click/touch
+    handleSeek(e); 
 };
 
-// Dragging Movement
+// START: Touch (Delayed - 200ms hold required)
+const startDragTouch = (e) => {
+    // If not holding, do nothing (allows scrolling)
+    dragHoldTimer = setTimeout(() => {
+        isDragging = true;
+        domProgressBar.classList.add('dragging'); // Visual feedback
+        handleSeek(e); // Snap to finger
+    }, 200); 
+};
+
+// MOVE
 const doDrag = (e) => {
-    if (!isDragging) return;
-    e.preventDefault(); // Prevent text selection or scrolling
+    if (!isDragging) {
+        // If we move before the timer fires, cancel the hold (it's a scroll)
+        if(dragHoldTimer) clearTimeout(dragHoldTimer);
+        return; 
+    }
+    e.preventDefault(); // Prevent scroll only if we are officially dragging
     handleSeek(e);
 };
 
-// Stop Dragging & Commit Seek
+// END
 const endDrag = (e) => {
-    if (!isDragging) return;
-    const seekTime = handleSeek(e); // Get final time
-    if (isFinite(seekTime)) audioPlayer.currentTime = seekTime;
-    isDragging = false;
+    if(dragHoldTimer) clearTimeout(dragHoldTimer); // Cancel timer if released too fast
+    
+    if (isDragging) {
+        const seekTime = handleSeek(e); 
+        if (isFinite(seekTime)) audioPlayer.currentTime = seekTime;
+        isDragging = false;
+        domProgressBar.classList.remove('dragging');
+    }
 };
 
-// Event Listeners for Dragging
-progressArea.addEventListener('mousedown', startDrag);
-progressArea.addEventListener('touchstart', startDrag, { passive: false });
+// Listeners
+progressArea.addEventListener('mousedown', startDragMouse);
+progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
 
 document.addEventListener('mousemove', doDrag);
 document.addEventListener('touchmove', doDrag, { passive: false });
 
 document.addEventListener('mouseup', endDrag);
 document.addEventListener('touchend', (e) => {
-    // For touchend, we need the last known position since e.touches is empty
+    if(dragHoldTimer) clearTimeout(dragHoldTimer);
     if(isDragging) {
-        // Just commit the current visual state logic
+        // Commit seek
         const percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
         if (audioPlayer.duration) {
             audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
         }
         isDragging = false;
+        domProgressBar.classList.remove('dragging');
     }
 });
 
-// Update Progress (Only if not dragging)
+// Update Progress
 audioPlayer.addEventListener('timeupdate', () => {
     if (!isDragging && audioPlayer.duration) {
         const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
