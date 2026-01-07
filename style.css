@@ -61,16 +61,18 @@
   .pdf-page-canvas { width: 100%; height: auto; display: block; background-color: var(--background-main); clip-path: inset(0 3px 2px 0); }
   
   /* --- NAVIGATION CONTROLS --- */
-  .nav-controls {
+.nav-controls {
     position: fixed;
-    bottom: 220px; 
+    /* FIX: Adjust for iPhone Safe Area so it doesn't overlap the home bar */
+    bottom: calc(220px + env(safe-area-inset-bottom)); 
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
     max-width: 900px; 
     display: flex;
     justify-content: space-between;
-    padding: 0 60px; 
+    /* Padding keeps them away from edges */
+    padding: 0 40px; 
     box-sizing: border-box;
     z-index: 2000;
     pointer-events: none;
@@ -79,11 +81,23 @@
   
   .nav-arrow {
     pointer-events: auto;
-    background: none; border: none; color: var(--arrow-color);
-    font-size: 6rem; font-weight: 100; line-height: 1;
-    cursor: pointer; transition: all 0.3s ease;
+    background: none; 
+    border: none; 
+    color: var(--arrow-color);
+    font-size: 6rem; 
+    font-weight: 100; 
+    line-height: 1;
+    cursor: pointer; 
+    transition: all 0.3s ease;
     animation: faintFlash 5s infinite ease-in-out;
     user-select: none;
+    
+    /* FIX: Ensure uneven glyph widths don't mess up spacing */
+    width: 80px; 
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
   
   .nav-arrow.disabled { opacity: 0 !important; pointer-events: none; }
@@ -97,8 +111,8 @@
   .nav-arrow:active { transform: scale(0.8); }
   
   @media (max-width: 700px) {
-      .nav-controls { bottom: 180px; padding: 0 30px; }
-      .nav-arrow { font-size: 4.5rem; }
+      .nav-controls { bottom: 180px; padding: 0 20px; }
+      .nav-arrow { font-size: 4.5rem; width: 60px; }
   }
   
   .pdf-button { position: fixed; right: 20px; bottom: 20px; z-index: 1000; background-color: transparent; color: var(--arrow-color); border: 1px solid var(--arrow-color); border-radius: 0; text-decoration: none; font-weight: 600; padding: 12px 22px; font-size: 0.8em; letter-spacing: 1px; opacity: 0; transition: all 0.3s; animation: faintFlash 5s infinite ease-in-out; display: flex; align-items: center; justify-content: center; gap: 10px; }
