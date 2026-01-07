@@ -185,12 +185,14 @@
     font-style: italic;
 }
 
-/* Progress Bar */
+/* Progress Bar - IMPROVED */
 .progress-area {
     width: 100%;
     margin-bottom: 25px;
     cursor: pointer;
-    padding: 10px 0;
+    /* Large touch target */
+    padding: 15px 0; 
+    touch-action: none; /* Prevents scrolling while dragging the bar */
 }
 
 .progress-bar {
@@ -199,9 +201,10 @@
     background: rgba(255,255,255,0.1);
     border-radius: 3px;
     position: relative;
-    overflow: visible; 
+    overflow: hidden; /* Hides the glow spill to keep it clean without dot */
 }
 
+/* The Fill */
 .progress-bar::after {
     content: '';
     position: absolute;
@@ -209,7 +212,7 @@
     width: var(--progress, 0%);
     background: var(--name-color);
     border-radius: 3px;
-    transition: width 0.1s linear;
+    /* Removed transition for 'width' here to make dragging snappy */
     box-shadow: 0 0 10px var(--name-color);
 }
 
@@ -318,15 +321,31 @@
     font-size: 0.85em;
     padding: 10px 12px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.1s; /* Faster transition */
     color: #888;
     display: flex;
     justify-content: space-between;
     border-left: 2px solid transparent;
     margin-bottom: 2px;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent; /* Removes default grey tap box */
 }
 
-.playlist-item:hover { background: rgba(255,255,255,0.03); color: #fff; padding-left: 18px; }
+/* FIX: Only apply hover on devices that have a mouse */
+@media (hover: hover) {
+    .playlist-item:hover { 
+        background: rgba(255,255,255,0.03); 
+        color: #fff; 
+        padding-left: 18px; 
+        transition: all 0.2s;
+    }
+}
+
+/* Active/Touch state for mobile feedback */
+.playlist-item:active {
+    background: rgba(152, 0, 235, 0.1);
+    color: #fff;
+}
 
 .playlist-item.active-track {
     color: var(--name-color);

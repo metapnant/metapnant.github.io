@@ -150,10 +150,12 @@ const musicSection = document.getElementById('music-section');
 const audioPlayer = new Audio();
 let currentTrackIdx = 0;
 let isPlaying = false;
+let isDragging = false; // Track dragging state
 
 // DOM Elements
 const domTrackTitle = document.getElementById('track-title');
 const domProgressBar = document.getElementById('progress-bar');
+const progressArea = document.getElementById('progress-container'); // Correct ID from HTML
 const domCurrentTime = document.getElementById('current-time');
 const domDuration = document.getElementById('duration');
 const btnPlay = document.getElementById('btn-play');
@@ -168,8 +170,37 @@ const btnLoop = document.getElementById('btn-loop');
 const iconLoopAll = document.getElementById('icon-loop-all');
 const iconLoopOne = document.getElementById('icon-loop-one');
 
-// Loop Modes: 0 = Off, 1 = All, 2 = One
 let loopMode = 0; 
+
+// --- SCRAMBLE TEXT EFFECT ---
+function scrambleText(element, finalText) {
+    const chars = "!<>-_\\/[]{}—=+*^?#________"; // Cyberpunk char pool
+    let iterations = 0;
+    
+    // Clear previous interval if any (store it on the element to avoid collisions)
+    if (element.dataset.interval) clearInterval(element.dataset.interval);
+    
+    const interval = setInterval(() => {
+        element.innerText = finalText
+            .split("")
+            .map((letter, index) => {
+                if (index < iterations) {
+                    return finalText[index];
+                }
+                return chars[Math.floor(Math.random() * chars.length)];
+            })
+            .join("");
+
+        if (iterations >= finalText.length) {
+            clearInterval(interval);
+            element.innerText = finalText; // Ensure final clean text
+        }
+
+        iterations += 1 / 2; // Speed of decoding
+    }, 30);
+
+    element.dataset.interval = interval;
+}
 
 function initPlaylist() {
     playlistList.innerHTML = '';
@@ -185,11 +216,20 @@ function initPlaylist() {
 
 function loadTrack(index) {
     if (!domTrackTitle) return;
+    
+    // 1. Instant Visual Reset
+    domProgressBar.style.setProperty('--progress', '0%');
+    domCurrentTime.textContent = "0:00";
+    domDuration.textContent = "0:00"; // Optional: reset duration until load
+    
     currentTrackIdx = index;
     const track = albumTracks[index];
     audioPlayer.src = track.src;
-    domTrackTitle.textContent = track.title;
     
+    // 2. Scramble Title
+    scrambleText(domTrackTitle, track.title);
+    
+    // Highlight active
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -252,7 +292,6 @@ function updateLoopBtn() {
 
 function nextTrack(auto = false) {
     let nextIdx = currentTrackIdx + 1;
-    
     if (auto) {
         if (loopMode === 2) {
             playTrack(currentTrackIdx);
@@ -264,7 +303,6 @@ function nextTrack(auto = false) {
             return;
         }
     }
-
     if (nextIdx >= albumTracks.length) nextIdx = 0;
     playTrack(nextIdx);
 }
@@ -275,31 +313,89 @@ function prevTrack() {
     playTrack(prevIdx);
 }
 
-// Progress Bar & Duration
+// --- DRAGGABLE PROGRESS BAR LOGIC ---
+
+function updateProgressVisual(percent) {
+    domProgressBar.style.setProperty('--progress', `${percent}%`);
+}
+
+function handleSeek(e) {
+    const width = progressArea.clientWidth;
+    // Handle both mouse and touch coordinates
+    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+    const rect = progressArea.getBoundingClientRect();
+    
+    // Calculate percentage (clamped 0 to 100)
+    let percent = ((clientX - rect.left) / width) * 100;
+    percent = Math.max(0, Math.min(100, percent));
+    
+    updateProgressVisual(percent);
+    
+    // Return the time value for this position
+    if (audioPlayer.duration) {
+        const seekTime = (percent / 100) * audioPlayer.duration;
+        domCurrentTime.textContent = formatTime(seekTime);
+        return seekTime;
+    }
+    return 0;
+}
+
+// Start Dragging
+const startDrag = (e) => {
+    isDragging = true;
+    handleSeek(e); // Update immediately on click/touch
+};
+
+// Dragging Movement
+const doDrag = (e) => {
+    if (!isDragging) return;
+    e.preventDefault(); // Prevent text selection or scrolling
+    handleSeek(e);
+};
+
+// Stop Dragging & Commit Seek
+const endDrag = (e) => {
+    if (!isDragging) return;
+    const seekTime = handleSeek(e); // Get final time
+    if (isFinite(seekTime)) audioPlayer.currentTime = seekTime;
+    isDragging = false;
+};
+
+// Event Listeners for Dragging
+progressArea.addEventListener('mousedown', startDrag);
+progressArea.addEventListener('touchstart', startDrag, { passive: false });
+
+document.addEventListener('mousemove', doDrag);
+document.addEventListener('touchmove', doDrag, { passive: false });
+
+document.addEventListener('mouseup', endDrag);
+document.addEventListener('touchend', (e) => {
+    // For touchend, we need the last known position since e.touches is empty
+    if(isDragging) {
+        // Just commit the current visual state logic
+        const percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
+        if (audioPlayer.duration) {
+            audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
+        }
+        isDragging = false;
+    }
+});
+
+// Update Progress (Only if not dragging)
 audioPlayer.addEventListener('timeupdate', () => {
-    if(audioPlayer.duration && !isNaN(audioPlayer.duration)) {
+    if (!isDragging && audioPlayer.duration) {
         const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-        domProgressBar.style.setProperty('--progress', `${percent}%`);
+        updateProgressVisual(percent);
         domCurrentTime.textContent = formatTime(audioPlayer.currentTime);
         domDuration.textContent = formatTime(audioPlayer.duration);
     }
 });
 
-// Load Duration for WAV files
 audioPlayer.addEventListener('loadedmetadata', () => {
     domDuration.textContent = formatTime(audioPlayer.duration);
 });
 
 audioPlayer.addEventListener('ended', () => nextTrack(true));
-
-document.getElementById('progress-container').addEventListener('click', (e) => {
-    const width = e.currentTarget.clientWidth;
-    const clickX = e.offsetX;
-    const duration = audioPlayer.duration;
-    if(duration) {
-        audioPlayer.currentTime = (clickX / width) * duration;
-    }
-});
 
 function formatTime(seconds) {
     if(isNaN(seconds)) return "0:00";
