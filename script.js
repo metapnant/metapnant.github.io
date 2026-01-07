@@ -304,7 +304,7 @@ function prevTrack() {
     playTrack(prevIdx);
 }
 
-// --- FINAL DRAGGABLE PROGRESS BAR LOGIC (GOLD GLOW CONSISTENCY) ---
+// --- STRICT DRAGGABLE PROGRESS BAR LOGIC (GLOW REQUIRED) ---
 
 // Updates the CSS width and Time Text (Does NOT change audio position)
 function updateScrubVisual(percent) {
@@ -318,7 +318,6 @@ function updateScrubVisual(percent) {
 // Calculates percentage based on X position
 function getScrubPercent(e) {
     const width = progressArea.clientWidth;
-    // Handle coordinates for Mouse or Touch (including end-touches)
     const clientEvent = e.type.includes('touch') ? (e.touches[0] || e.changedTouches[0]) : e;
     const rect = progressArea.getBoundingClientRect();
     
@@ -331,11 +330,11 @@ let touchStartX = 0;
 let touchStartY = 0;
 let holdTimer = null;
 
-// 1. MOUSE EVENTS (Desktop)
+// 1. MOUSE EVENTS (Desktop - Click & Drag)
 const startDragMouse = (e) => {
     if (e.button !== 0) return; // Left click only
     isDragging = true;
-    domProgressBar.classList.add('dragging'); // Ignite Gold Glow
+    domProgressBar.classList.add('dragging'); // Ignite Gold Glow immediately
     updateScrubVisual(getScrubPercent(e));
 };
 
@@ -352,42 +351,56 @@ const endDragMouse = (e) => {
             audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
         }
         isDragging = false; 
-        domProgressBar.classList.remove('dragging'); // Extinguish Glow
+        domProgressBar.classList.remove('dragging'); 
     } 
 };
 
-// 2. TOUCH EVENTS (Mobile - Hold to Grab, Drag Anywhere)
+// 2. TOUCH EVENTS (Mobile - Hold Required)
 const startDragTouch = (e) => {
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     isDragging = false; 
 
     // Start Hold Timer (200ms)
+    // If user lifts or moves before this fires, NOTHING happens.
     holdTimer = setTimeout(() => {
         isDragging = true;
         domProgressBar.classList.add('dragging'); // Ignite Gold Glow
+        // Haptic feedback could go here
         updateScrubVisual(getScrubPercent(e));
     }, 200); 
 };
 
 const doDragTouch = (e) => {
     if (isDragging) {
-        if (e.cancelable) e.preventDefault(); // Lock Scroll
+        // --- MODE: SCRUBBING ---
+        // We are locked in. Prevent Scroll.
+        if (e.cancelable) e.preventDefault();
+        
+        // Update visual only. Infinite vertical range allowed.
         updateScrubVisual(getScrubPercent(e));
     } else {
+        // --- MODE: WAITING / SCROLLING ---
         const x = e.touches[0].clientX;
         const y = e.touches[0].clientY;
         const dx = Math.abs(x - touchStartX);
         const dy = Math.abs(y - touchStartY);
+
+        // If moved significantly (>5px) BEFORE the timer fired:
+        // It's a scroll gesture. Kill the timer. 
+        // This ensures the bar NEVER highlights during a scroll.
         if (dx > 5 || dy > 5) {
-            clearTimeout(holdTimer); // User is scrolling, cancel the grab
+            clearTimeout(holdTimer);
         }
     }
 };
 
 const endDragTouch = (e) => {
+    // 1. Kill the timer. 
+    // If the timer hasn't fired yet (short tap), isDragging is still false.
     if (holdTimer) clearTimeout(holdTimer);
 
+    // 2. Only Seek IF we were officially dragging (Glow was active)
     if (isDragging) {
         const percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
         if (audioPlayer.duration) {
@@ -396,6 +409,9 @@ const endDragTouch = (e) => {
         isDragging = false;
         domProgressBar.classList.remove('dragging'); // Extinguish Glow
     }
+    
+    // If isDragging was false (Tap), we do NOTHING.
+    // The bar does not move. The song does not skip.
 };
 
 // Listeners

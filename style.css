@@ -138,16 +138,16 @@
   }
   
   .music-container {
-      background: linear-gradient(180deg, rgba(13,0,34,0.9) 0%, rgba(5,0,10,0.95) 100%);
-      border: 1px solid rgba(152, 0, 235, 0.3);
-      border-radius: 8px;
-      padding: 30px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 30px;
-      box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
-      align-items: center; 
-      align-content: center;
+    background: linear-gradient(180deg, rgba(13,0,34,0.9) 0%, rgba(5,0,10,0.95) 100%);
+    border: 1px solid rgba(152, 0, 235, 0.3);
+    border-radius: 8px;
+    padding: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+    align-items: flex-start; 
+    align-content: flex-start;
   }
   
   /* Album Art */
