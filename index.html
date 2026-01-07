@@ -17,19 +17,14 @@
     <header class="explore-header">
       <h1 id="doc-title">METAPNANT</h1>
     </header>
-    <main>
-      <div class="pdf-container" id="pdf-wrapper">
-        <div id="loading-overlay">
-           <div class="loading-spinner"></div>
-        </div>
-      </div>
-    </main>
+    <!-- Move it inside the pdf-container wrapper -->
+<main>
+  <div class="pdf-container" id="pdf-wrapper">
+    <div id="loading-overlay">
+       <div class="loading-spinner"></div>
+    </div>
   </div>
-
-  <nav class="nav-controls">
-    <button class="nav-arrow" id="prev-doc">‹</button>
-    <button class="nav-arrow" id="next-doc">›</button>
-  </nav>
+</main>
 
   <a href="#" target="_blank" class="pdf-button" id="download-btn">
     <span class="btn-icon">📖</span> <span class="btn-text">FULLSCREEN / DOWNLOAD</span>
@@ -114,6 +109,12 @@
         </div>
     </div>
   </section>
+
+  <!-- MOVE NAV CONTROLS HERE (OUTSIDE CONTAINERS) -->
+  <nav class="nav-controls">
+    <button class="nav-arrow" id="prev-doc">‹</button>
+    <button class="nav-arrow" id="next-doc">›</button>
+  </nav>
 
   <footer class="footer">
     <p><span id="currentYear"></span> Tef Riin <span id="infinity-symbol">∞</span></p>

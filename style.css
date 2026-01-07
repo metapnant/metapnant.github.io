@@ -68,11 +68,79 @@
   .pdf-page-wrapper::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 70%); background-size: 200% 200%; pointer-events: none; z-index: 10; mix-blend-mode: overlay; }
   .pdf-page-canvas { width: 100%; height: auto; display: block; background-color: var(--background-main); clip-path: inset(0 3px 2px 0); }
   
-  .nav-controls { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 80px; z-index: 2000; -webkit-tap-highlight-color: transparent; }
-  .nav-arrow { background: none; border: none; color: var(--arrow-color); font-size: 3.5rem; cursor: pointer; transition: color 0.3s ease, transform 0.2s ease; animation: faintFlash 5s infinite ease-in-out; }
-  .nav-arrow.disabled { opacity: 0.1; pointer-events: none; }
-  @media (hover: hover) { .nav-arrow:hover { color: var(--name-color); transform: scale(1.1); animation: none; } }
-  .nav-arrow:active { color: var(--name-color); transform: scale(0.95); }
+/* --- ENHANCED NAVIGATION CONTROLS --- */
+.nav-controls {
+    position: fixed;
+    /* Adjust height so they float in the middle-bottom area of the PDF viewer, 
+       safely above the music player/footer */
+    bottom: 220px; 
+    
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* Matches your PDF container width */
+    width: 100%;
+    max-width: 900px; 
+    
+    display: flex;
+    justify-content: space-between;
+    
+    /* FIX: "Move them more inside" - Increase padding to push them 
+       further away from the corners and into the document body */
+    padding: 0 60px; 
+    
+    box-sizing: border-box;
+    z-index: 2000;
+    pointer-events: none; /* middle area click-through */
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .nav-arrow {
+    pointer-events: auto;
+    background: none;
+    border: none;
+    color: var(--arrow-color);
+    
+    /* FIX: "Make them larger" */
+    font-size: 6rem; 
+    font-weight: 100; /* Thin, elegant geometric look */
+    line-height: 1;
+    
+    cursor: pointer;
+    transition: all 0.3s ease;
+    animation: faintFlash 5s infinite ease-in-out;
+    user-select: none;
+  }
+  
+  .nav-arrow.disabled { 
+      opacity: 0 !important; 
+      pointer-events: none; 
+  }
+  
+  @media (hover: hover) {
+    .nav-arrow:hover { 
+      color: var(--name-color); 
+      transform: scale(1.2); 
+      animation: none; 
+      opacity: 1;
+      filter: drop-shadow(0 0 20px var(--name-color));
+    }
+  }
+  
+  .nav-arrow:active { 
+      transform: scale(0.8); 
+  }
+  
+  /* Responsive adjustment for mobile */
+  @media (max-width: 700px) {
+      .nav-controls {
+          bottom: 180px;
+          padding: 0 30px;
+      }
+      .nav-arrow {
+          font-size: 4.5rem;
+      }
+  }
   
   .pdf-button { position: fixed; right: 20px; bottom: 20px; z-index: 1000; background-color: transparent; color: var(--arrow-color); border: 1px solid var(--arrow-color); border-radius: 0; text-decoration: none; font-weight: 600; padding: 12px 22px; font-size: 0.8em; letter-spacing: 1px; opacity: 0; transition: all 0.3s; animation: faintFlash 5s infinite ease-in-out; display: flex; align-items: center; justify-content: center; gap: 10px; }
   body.loaded .pdf-button { opacity: 1; }
