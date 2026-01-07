@@ -151,7 +151,6 @@ const audioPlayer = new Audio();
 let currentTrackIdx = 0;
 let isPlaying = false;
 let isDragging = false; 
-let dragHoldTimer = null; // Timer for mobile hold
 
 // DOM Elements
 const domTrackTitle = document.getElementById('track-title');
@@ -212,7 +211,6 @@ function initPlaylist() {
 function loadTrack(index) {
     if (!domTrackTitle) return;
     
-    // Instant Reset
     domProgressBar.style.setProperty('--progress', '0%');
     domCurrentTime.textContent = "0:00";
     domDuration.textContent = "0:00"; 
@@ -273,7 +271,7 @@ function updateLoopBtn() {
     iconLoopOne.style.display = 'none';
 
     if (loopMode === 0) {
-        // Off (CSS opacity handles dimming)
+        // Off
     } else if (loopMode === 1) {
         btnLoop.classList.add('active');
     } else if (loopMode === 2) {
@@ -306,7 +304,7 @@ function prevTrack() {
     playTrack(prevIdx);
 }
 
-// --- DRAGGABLE PROGRESS BAR LOGIC (HOLD TO DRAG ON MOBILE) ---
+// --- STRICT DRAGGABLE PROGRESS BAR LOGIC ---
 
 function updateProgressVisual(percent) {
     domProgressBar.style.setProperty('--progress', `${percent}%`);
@@ -314,6 +312,7 @@ function updateProgressVisual(percent) {
 
 function handleSeek(e) {
     const width = progressArea.clientWidth;
+    // Get X coordinate safely for Mouse or Touch
     const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
     const rect = progressArea.getBoundingClientRect();
     
@@ -330,65 +329,116 @@ function handleSeek(e) {
     return 0;
 }
 
-// START: Mouse (Immediate)
+// Variables to track drag vs scroll
+let touchStartX = 0;
+let touchStartY = 0;
+let isTouchActionDetected = false; // Has the user moved enough to decide X vs Y?
+
+// 1. MOUSE EVENTS (Desktop)
 const startDragMouse = (e) => {
+    // ONLY allow Left Click (button 0). Ignore Middle (1) or Right (2).
+    if (e.button !== 0) return;
+    
     isDragging = true;
     handleSeek(e); 
 };
 
-// START: Touch (Delayed - 200ms hold required)
-const startDragTouch = (e) => {
-    // If not holding, do nothing (allows scrolling)
-    dragHoldTimer = setTimeout(() => {
-        isDragging = true;
-        domProgressBar.classList.add('dragging'); // Visual feedback
-        handleSeek(e); // Snap to finger
-    }, 200); 
-};
+const doDragMouse = (e) => {
+    if (!isDragging) return;
+    e.preventDefault(); 
 
-// MOVE
-const doDrag = (e) => {
-    if (!isDragging) {
-        // If we move before the timer fires, cancel the hold (it's a scroll)
-        if(dragHoldTimer) clearTimeout(dragHoldTimer);
-        return; 
-    }
-    e.preventDefault(); // Prevent scroll only if we are officially dragging
-    handleSeek(e);
-};
-
-// END
-const endDrag = (e) => {
-    if(dragHoldTimer) clearTimeout(dragHoldTimer); // Cancel timer if released too fast
+    // STRICT BOUNDS CHECK: Disengage if cursor leaves the bar vertically
+    const rect = progressArea.getBoundingClientRect();
+    const y = e.clientY;
     
-    if (isDragging) {
+    // Buffer of 10px allow slight slip, but otherwise kill it
+    if (y < rect.top - 10 || y > rect.bottom + 10) {
+        endDragMouse(e);
+        return;
+    }
+
+    handleSeek(e); 
+};
+
+const endDragMouse = (e) => { 
+    if(isDragging) { 
+        // Only commit if we are actually within valid drag state
         const seekTime = handleSeek(e); 
-        if (isFinite(seekTime)) audioPlayer.currentTime = seekTime;
+        if (isFinite(seekTime)) audioPlayer.currentTime = seekTime; 
+        isDragging = false; 
+    } 
+};
+
+// 2. TOUCH EVENTS (Mobile)
+const startDragTouch = (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    isTouchActionDetected = false;
+    isDragging = false;
+    // We do NOT seek immediately on touchstart. We wait for the move direction.
+};
+
+const doDragTouch = (e) => {
+    const x = e.touches[0].clientX;
+    const y = e.touches[0].clientY;
+    
+    // STRICT BOUNDS CHECK: Disengage immediately if finger slides off the bar vertically
+    const rect = progressArea.getBoundingClientRect();
+    // Allow small buffer (20px) for fat fingers, but otherwise drop it
+    if (y < rect.top - 20 || y > rect.bottom + 20) {
+        if (isDragging) endDragTouch(e); // Commit what we have
         isDragging = false;
-        domProgressBar.classList.remove('dragging');
+        return;
+    }
+
+    // Logic: Decide if scrolling or scrubbing
+    if (!isDragging && !isTouchActionDetected) {
+        const dx = Math.abs(x - touchStartX);
+        const dy = Math.abs(y - touchStartY);
+
+        // Threshold to make a decision (5px)
+        if (dx > 5 || dy > 5) {
+            isTouchActionDetected = true;
+            if (dx > dy) {
+                // Horizontal move -> Start Scrubbing
+                isDragging = true;
+                e.preventDefault(); // LOCK SCROLL
+                handleSeek(e);
+            }
+            // Vertical move -> Do nothing, let browser scroll page
+        }
+    } else if (isDragging) {
+        // Already scrubbing -> Continue
+        if (e.cancelable) e.preventDefault(); // Keep scroll locked
+        handleSeek(e);
     }
 };
 
-// Listeners
-progressArea.addEventListener('mousedown', startDragMouse);
-progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
-
-document.addEventListener('mousemove', doDrag);
-document.addEventListener('touchmove', doDrag, { passive: false });
-
-document.addEventListener('mouseup', endDrag);
-document.addEventListener('touchend', (e) => {
-    if(dragHoldTimer) clearTimeout(dragHoldTimer);
-    if(isDragging) {
-        // Commit seek
+const endDragTouch = (e) => {
+    if (isDragging) {
+        // Commit the seek based on CSS visual state (since touches list is empty on end)
         const percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
         if (audioPlayer.duration) {
             audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
         }
         isDragging = false;
-        domProgressBar.classList.remove('dragging');
+    } else if (!isTouchActionDetected) {
+        // If it was just a quick tap (no movement), treat as seek
+        // e.changedTouches gives us the lift-off coordinate
+        handleSeek({ type: 'touch', touches: [e.changedTouches[0]] });
+        const percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
+        if (audioPlayer.duration) audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
     }
-});
+};
+
+// Add Listeners
+progressArea.addEventListener('mousedown', startDragMouse);
+document.addEventListener('mousemove', doDragMouse);
+document.addEventListener('mouseup', endDragMouse);
+
+progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
+progressArea.addEventListener('touchmove', doDragTouch, { passive: false });
+progressArea.addEventListener('touchend', endDragTouch);
 
 // Update Progress
 audioPlayer.addEventListener('timeupdate', () => {

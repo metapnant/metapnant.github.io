@@ -19,6 +19,13 @@
     --operator-color: #d4aaff;
   }
   
+  /* GLOBAL FIX: Removes the "ugly blue text select thing" on Android/iOS */
+  * {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      user-select: none; /* Prevents text selection globally */
+  }
+  
   html { background-color: var(--background-main); height: 100%; overscroll-behavior-y: none; }
   
   body {
@@ -48,7 +55,7 @@
   .pdf-page-canvas { width: 100%; height: auto; display: block; background-color: var(--background-main); clip-path: inset(0 3px 2px 0); }
   
   .nav-controls { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 80px; z-index: 2000; -webkit-tap-highlight-color: transparent; }
-  .nav-arrow { background: none; border: none; color: var(--arrow-color); font-size: 3.5rem; cursor: pointer; transition: color 0.3s ease, transform 0.2s ease; animation: faintFlash 5s infinite ease-in-out; user-select: none; }
+  .nav-arrow { background: none; border: none; color: var(--arrow-color); font-size: 3.5rem; cursor: pointer; transition: color 0.3s ease, transform 0.2s ease; animation: faintFlash 5s infinite ease-in-out; }
   .nav-arrow.disabled { opacity: 0.1; pointer-events: none; }
   @media (hover: hover) { .nav-arrow:hover { color: var(--name-color); transform: scale(1.1); animation: none; } }
   .nav-arrow:active { color: var(--name-color); transform: scale(0.95); }
@@ -111,7 +118,7 @@
   .magenta-text { color: var(--terminal-magenta); text-shadow: 0 0 10px var(--terminal-magenta); font-weight: bold; }
   .system-success { color: var(--terminal-cyan); }
   .error-char { color: var(--terminal-error); display: inline-block; font-weight: bold; animation: glitch-shake 0.08s infinite; text-shadow: 1px 0 #000; }
-  .secret-link { display: inline-block; margin-top: 20px; color: var(--terminal-bg); background-color: var(--terminal-gold); padding: 10px 15px; text-decoration: none; font-weight: bold; border: 1px solid var(--terminal-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); transition: all 0.3s ease; font-family: 'Space Mono', monospace; animation: fadeIn 2s forwards; -webkit-tap-highlight-color: transparent; }
+  .secret-link { display: inline-block; margin-top: 20px; color: var(--terminal-bg); background-color: var(--terminal-gold); padding: 10px 15px; text-decoration: none; font-weight: bold; border: 1px solid var(--terminal-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); transition: all 0.3s ease; font-family: 'Space Mono', monospace; animation: fadeIn 2s forwards; }
   @media (hover: hover) { .secret-link:hover { background-color: transparent; color: var(--terminal-gold); box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); cursor: pointer; } }
   .secret-link:active { background-color: transparent; color: var(--terminal-gold); box-shadow: 0 0 10px rgba(255, 215, 0, 0.8); transform: scale(0.98); }
   @keyframes glitch-shake { 0% { transform: translate(0, 0); } 25% { transform: translate(1px, 0); } 50% { transform: translate(-1px, 0); } 75% { transform: translate(0, 1px); } 100% { transform: translate(0, -1px); } }
@@ -170,13 +177,14 @@
   .track-details h2 { font-family: 'Space Mono', monospace; color: var(--name-color); margin: 0 0 5px 0; font-size: 1.4em; text-shadow: 0 0 10px rgba(152, 0, 235, 0.4); }
   .track-details h3 { font-family: 'Zilla Slab', serif; color: var(--secondary-text-color); margin: 0 0 20px 0; font-weight: 400; font-style: italic; }
   
-  /* Progress Bar - IMPROVED */
   .progress-area {
-      width: 100%;
-      margin-bottom: 25px;
-      cursor: pointer;
-      padding: 15px 0; 
-      touch-action: none; /* Prevents scrolling while dragging the bar */
+    width: 100%;
+    margin-bottom: 25px;
+    cursor: pointer;
+    padding: 15px 0; 
+    /* Important: pan-y allows vertical scrolling to start naturally. 
+       Our JS will call e.preventDefault() to stop it ONLY if moving horizontally. */
+    touch-action: pan-y; 
   }
   
   .progress-bar {
@@ -197,8 +205,6 @@
       border-radius: 3px;
       box-shadow: 0 0 10px var(--name-color);
   }
-  
-  .progress-bar.dragging::after { box-shadow: 0 0 15px #fff; } /* Visual feedback when holding */
   
   .time-marker { display: flex; justify-content: space-between; font-family: 'Space Mono', monospace; font-size: 0.75em; color: #888; margin-top: 5px; }
   
@@ -223,7 +229,6 @@
       transition: transform 0.1s ease, background-color 0.2s ease;
       padding: 0;
       box-shadow: 0 0 5px rgba(152, 0, 235, 0.1);
-      -webkit-tap-highlight-color: transparent;
   }
   
   .ctrl-btn svg { width: 20px; height: 20px; fill: currentColor; filter: drop-shadow(0 0 2px rgba(152,0,235,0.5)); }
@@ -280,6 +285,10 @@
       padding-top: 10px;
       scrollbar-width: thin;
       scrollbar-color: var(--name-color) #000;
+      
+      /* FIX: Allows page scroll when playlist ends */
+      overscroll-behavior: auto; 
+      touch-action: pan-y;
   }
   
   .playlist-container::-webkit-scrollbar { width: 6px; }
@@ -298,8 +307,6 @@
       justify-content: space-between;
       border-left: 2px solid transparent;
       margin-bottom: 2px;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
   }
   
   @media (hover: hover) {
