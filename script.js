@@ -116,26 +116,39 @@ async function renderRestOfPages(pageNum, sessionID) {
 }
 
 async function renderPage(num, sessionID) {
-  try {
-      if (sessionID !== renderSession) return;
-      const page = await pdfDoc.getPage(num);
-      const wrapper = document.createElement('div');
-      wrapper.className = 'pdf-page-wrapper';
-      const canvas = document.createElement('canvas');
-      canvas.className = 'pdf-page-canvas';
-      wrapper.appendChild(canvas);
-      const ctx = canvas.getContext('2d');
-      const viewport = page.getViewport({ scale: 1 });
-      const desiredScale = (pdfWrapper.clientWidth - 40) / viewport.width;
-      const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
-      const outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
-      const scaledViewport = page.getViewport({ scale: finalScale * outputScale });
-      canvas.height = scaledViewport.height; canvas.width = scaledViewport.width;
-      await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
-      if (sessionID !== renderSession) return;
-      pdfWrapper.appendChild(wrapper);
-  } catch (e) { if (sessionID === renderSession) console.log("Render failed", e); }
-}
+    try {
+        if (sessionID !== renderSession) return;
+        const page = await pdfDoc.getPage(num);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'pdf-page-wrapper';
+        const canvas = document.createElement('canvas');
+        canvas.className = 'pdf-page-canvas';
+        wrapper.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        const viewport = page.getViewport({ scale: 1 });
+        
+        // FIX: More robust width calculation
+        // If clientWidth is 0 (hidden/glitched), fallback to window width
+        const containerWidth = pdfWrapper.getBoundingClientRect().width || window.innerWidth;
+        
+        // Calculate scale based on container width minus padding (40px buffer)
+        const desiredScale = (containerWidth - 40) / viewport.width;
+        
+        // Ensure scale stays within reasonable bounds
+        const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
+        
+        const outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
+        const scaledViewport = page.getViewport({ scale: finalScale * outputScale });
+        
+        canvas.height = scaledViewport.height; 
+        canvas.width = scaledViewport.width;
+        
+        await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
+        
+        if (sessionID !== renderSession) return;
+        pdfWrapper.appendChild(wrapper);
+    } catch (e) { if (sessionID === renderSession) console.log("Render failed", e); }
+  }
 
 document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex + 1) % library.length); }});
 document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex - 1 + library.length) % library.length); }});
@@ -306,7 +319,6 @@ function prevTrack() {
 
 // --- STRICT DRAGGABLE PROGRESS BAR LOGIC (GLOW REQUIRED) ---
 
-// Updates the CSS width and Time Text (Does NOT change audio position)
 function updateScrubVisual(percent) {
     domProgressBar.style.setProperty('--progress', `${percent}%`);
     if (audioPlayer.duration) {
@@ -315,7 +327,6 @@ function updateScrubVisual(percent) {
     }
 }
 
-// Calculates percentage based on X position
 function getScrubPercent(e) {
     const width = progressArea.clientWidth;
     const clientEvent = e.type.includes('touch') ? (e.touches[0] || e.changedTouches[0]) : e;
@@ -329,12 +340,16 @@ function getScrubPercent(e) {
 let touchStartX = 0;
 let touchStartY = 0;
 let holdTimer = null;
+let isTouch = false; // Guard to block ghost clicks
 
 // 1. MOUSE EVENTS (Desktop - Click & Drag)
 const startDragMouse = (e) => {
-    if (e.button !== 0) return; // Left click only
+    // IGNORE if triggered by a tap/touch event chain
+    if (isTouch) return; 
+    
+    if (e.button !== 0) return; 
     isDragging = true;
-    domProgressBar.classList.add('dragging'); // Ignite Gold Glow immediately
+    domProgressBar.classList.add('dragging'); 
     updateScrubVisual(getScrubPercent(e));
 };
 
@@ -357,38 +372,30 @@ const endDragMouse = (e) => {
 
 // 2. TOUCH EVENTS (Mobile - Hold Required)
 const startDragTouch = (e) => {
+    isTouch = true; // Flag touch interaction
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     isDragging = false; 
 
     // Start Hold Timer (200ms)
-    // If user lifts or moves before this fires, NOTHING happens.
     holdTimer = setTimeout(() => {
         isDragging = true;
-        domProgressBar.classList.add('dragging'); // Ignite Gold Glow
-        // Haptic feedback could go here
+        domProgressBar.classList.add('dragging'); 
         updateScrubVisual(getScrubPercent(e));
     }, 200); 
 };
 
 const doDragTouch = (e) => {
     if (isDragging) {
-        // --- MODE: SCRUBBING ---
-        // We are locked in. Prevent Scroll.
         if (e.cancelable) e.preventDefault();
-        
-        // Update visual only. Infinite vertical range allowed.
         updateScrubVisual(getScrubPercent(e));
     } else {
-        // --- MODE: WAITING / SCROLLING ---
         const x = e.touches[0].clientX;
         const y = e.touches[0].clientY;
         const dx = Math.abs(x - touchStartX);
         const dy = Math.abs(y - touchStartY);
 
-        // If moved significantly (>5px) BEFORE the timer fired:
-        // It's a scroll gesture. Kill the timer. 
-        // This ensures the bar NEVER highlights during a scroll.
+        // If moved significantly before timer fired, it's a scroll. Cancel timer.
         if (dx > 5 || dy > 5) {
             clearTimeout(holdTimer);
         }
@@ -396,22 +403,19 @@ const doDragTouch = (e) => {
 };
 
 const endDragTouch = (e) => {
-    // 1. Kill the timer. 
-    // If the timer hasn't fired yet (short tap), isDragging is still false.
     if (holdTimer) clearTimeout(holdTimer);
 
-    // 2. Only Seek IF we were officially dragging (Glow was active)
     if (isDragging) {
         const percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
         if (audioPlayer.duration) {
             audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
         }
         isDragging = false;
-        domProgressBar.classList.remove('dragging'); // Extinguish Glow
+        domProgressBar.classList.remove('dragging'); 
     }
     
-    // If isDragging was false (Tap), we do NOTHING.
-    // The bar does not move. The song does not skip.
+    // Reset touch flag after a delay to allow mouse events to return for hybrid devices
+    setTimeout(() => { isTouch = false; }, 500);
 };
 
 // Listeners
