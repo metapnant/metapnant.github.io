@@ -177,34 +177,55 @@
   .track-details h2 { font-family: 'Space Mono', monospace; color: var(--name-color); margin: 0 0 5px 0; font-size: 1.4em; text-shadow: 0 0 10px rgba(152, 0, 235, 0.4); }
   .track-details h3 { font-family: 'Zilla Slab', serif; color: var(--secondary-text-color); margin: 0 0 20px 0; font-weight: 400; font-style: italic; }
   
-  .progress-area {
+  /* Progress Bar - IMPROVED */
+.progress-area {
     width: 100%;
-    margin-bottom: 25px;
+    /* No margin bottom here, we handle it in time-marker now */
     cursor: pointer;
-    padding: 6px 0; 
-    touch-action: pan-y; 
-  }
-  
-  .progress-bar {
-      width: 100%;
-      height: 6px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 3px;
-      position: relative;
-      overflow: hidden; 
-  }
-  
-  .progress-bar::after {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; bottom: 0;
-      width: var(--progress, 0%);
-      background: var(--name-color);
-      border-radius: 3px;
-      box-shadow: 0 0 10px var(--name-color);
-  }
-  
-  .time-marker { display: flex; justify-content: space-between; font-family: 'Space Mono', monospace; font-size: 0.75em; color: #888; margin-top: 5px; }
+    
+    /* THE HITBOX */
+    /* Bar is 6px. Padding 12px adds 12px top/bottom. 
+       Total height = 30px centered on the bar. */
+    padding: 12px 0; 
+    
+    touch-action: pan-y; /* Allow scrolling by default */
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden; 
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: var(--progress, 0%);
+    background: var(--name-color);
+    border-radius: 3px;
+    box-shadow: 0 0 10px var(--name-color);
+}
+
+/* Visual feedback when holding (Active State) */
+.progress-bar.dragging::after { 
+    background: #fff; /* Turns white when you've successfully grabbed it */
+    box-shadow: 0 0 15px #fff; 
+}
+
+.time-marker {
+display: flex;
+justify-content: space-between;
+font-family: 'Space Mono', monospace;
+font-size: 0.75em;
+color: #888;
+margin-top: -5px; /* Pull closer to the bar */
+margin-bottom: 25px; /* Push buttons down */
+pointer-events: none; /* Ensure text doesn't interfere with clicks */
+}
   
   /* Buttons Layout */
   .buttons {
