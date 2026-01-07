@@ -9,271 +9,7 @@
   
   <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-  
-  <style>
-    :root {
-      --name-color: #9800eb; --title-color: #ded4eb; --background-main: #0d0022;
-      --primary-text-color: #f0f0f0; --secondary-text-color: #a09cb8; --arrow-color: rgba(222, 212, 235, 0.4);
-      --terminal-bg: #05000a; --terminal-sidebar: #0a0014; --terminal-text: #00ff9d; 
-      --terminal-dim: #005f3d; --terminal-alert: #ffcc00; --terminal-error: #ff3333; 
-      --terminal-gold: #ffd700; --terminal-white: #ffffff; --terminal-magenta: #ff00ff;
-      --terminal-cyan: #00ffff; --terminal-border: #333; --operator-color: #d4aaff;
-    }
-
-    html { background-color: var(--background-main); height: 100%; overscroll-behavior-y: none; }
-
-    body {
-      font-family: "Zilla Slab", serif; margin: 0; padding: 20px; padding-bottom: 160px;
-      min-height: 100dvh; /* Mobile viewport fix */
-      box-sizing: border-box; display: flex; flex-direction: column;
-      color: var(--primary-text-color); background-color: var(--background-main);
-      background: linear-gradient(135deg, #0b001f, #180033, #0d0022, #1c003a, #0b001f);
-      background-size: 600% 600%; animation: darkShift 30s ease infinite; overflow-x: hidden;
-    }
-
-    body.no-scroll { 
-        overflow: hidden !important; 
-        height: 100dvh !important; 
-        position: fixed; width: 100%;
-    }
-
-    @keyframes darkShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-
-    .explore-container {
-      width: 100%; max-width: 900px; margin: 0 auto; flex-grow: 1;
-      opacity: 1; transform: translateY(0); transition: opacity 1.2s ease, transform 1s ease;
-    }
-
-    .explore-header { text-align: center; margin-bottom: 30px; }
-    .explore-header h1 { color: var(--name-color); font-size: 2.8em; font-style: italic; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px; }
-
-    .pdf-container {
-      position: relative; background-color: rgba(255, 255, 255, 0.03);
-      display: flex; flex-direction: column; align-items: center;
-      min-height: 60vh; padding: 10px; gap: 15px; border-radius: 4px;
-    }
-
-    #loading-overlay {
-      display: flex; align-items: center; justify-content: center;
-      position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 50;
-      background-color: var(--background-main);
-    }
-
-    .loading-spinner {
-      width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1);
-      border-top-color: var(--name-color); border-radius: 50%;
-      animation: spin 1s infinite linear;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .pdf-page-wrapper {
-      position: relative; margin: 0 auto; border-radius: 4px; overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%);
-      line-height: 0; flex-shrink: 0; 
-      opacity: 0; animation: fadeContentIn 0.8s ease forwards;
-    }
-
-    @keyframes fadeContentIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    .pdf-page-wrapper::after {
-      content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 70%);
-      background-size: 200% 200%; pointer-events: none; z-index: 10; mix-blend-mode: overlay;
-    }
-
-    .pdf-page-canvas { 
-        width: 100%; height: auto; display: block; 
-        background-color: var(--background-main); 
-        clip-path: inset(0 3px 2px 0); 
-    }
-
-    .nav-controls {
-      position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-      display: flex; align-items: center; gap: 80px; z-index: 2000; -webkit-tap-highlight-color: transparent;
-    }
-    .nav-arrow {
-      background: none; border: none; color: var(--arrow-color); font-size: 3.5rem;
-      cursor: pointer; transition: color 0.3s ease, transform 0.2s ease;
-      animation: faintFlash 5s infinite ease-in-out;
-      user-select: none; -webkit-user-select: none;
-    }
-    .nav-arrow.disabled { opacity: 0.1; pointer-events: none; }
-    
-    @media (hover: hover) {
-      .nav-arrow:hover { color: var(--name-color); transform: scale(1.1); animation: none; }
-    }
-    .nav-arrow:active { color: var(--name-color); transform: scale(0.95); }
-
-    .pdf-button {
-      position: fixed; right: 20px; bottom: 20px; z-index: 1000;
-      background-color: transparent; color: var(--arrow-color);
-      border: 1px solid var(--arrow-color); border-radius: 0;
-      text-decoration: none; font-weight: 600; padding: 12px 22px;
-      font-size: 0.8em; letter-spacing: 1px; opacity: 0;
-      transition: color 0.3s, border-color 0.3s, background-color 0.3s; 
-      animation: faintFlash 5s infinite ease-in-out;
-      -webkit-tap-highlight-color: transparent; box-sizing: border-box; 
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-    }
-    body.loaded .pdf-button { opacity: 1; }
-
-    @media (hover: hover) {
-      .pdf-button:hover {
-        color: var(--name-color); border-color: var(--name-color);
-        background-color: rgba(152, 0, 235, 0.05); animation: none; opacity: 1;
-      }
-    }
-    .pdf-button:active { background-color: rgba(152, 0, 235, 0.15); border-color: var(--name-color); color: var(--name-color); transform: scale(0.98); }
-
-    @media (max-width: 599px) {
-      .pdf-button {
-        width: 50px; height: 50px; padding: 0; border-radius: 0;
-        font-size: 1.4em; border-color: var(--arrow-color);
-        background-color: rgba(13, 0, 34, 0.8);
-      }
-      .pdf-button .btn-text { display: none; }
-      .pdf-button .btn-icon { margin: 0; }
-    }
-
-    #song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 10px; }
-    #song-link {
-      color: var(--name-color); text-decoration: underline;
-      text-decoration-color: var(--name-color); text-underline-offset: 2px;
-      font-weight: 600; transition: color 0.1s;
-    }
-    @media (hover: hover) {
-      #song-link:hover { animation: strobe 1s infinite; }
-    }
-    @keyframes strobe { 0%, 100% { color: var(--name-color); text-decoration-color: var(--name-color); } 50% { color: #ffffff; text-decoration-color: #ffffff; } }
-    @keyframes faintFlash { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
-
-    .footer { text-align: center; padding: 20px 0 10px 0; font-size: 0.85em; color: var(--secondary-text-color); border-top: 1px solid rgba(255, 255, 255, 0.08); margin-top: 40px; }
-    #infinity-symbol { cursor: pointer; display: inline-block; transition: text-shadow 0.3s, color 0.3s; padding: 0 5px; font-weight: bold; }
-    #infinity-symbol:hover { color: #fff; text-shadow: 0 0 15px var(--name-color); }
-
-    /* SECRET TERMINAL */
-    #secret-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background-color: var(--terminal-bg); z-index: 9999;
-      display: none; flex-direction: row; font-family: 'Space Mono', monospace; 
-      overflow: hidden; box-sizing: border-box;
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    #secret-overlay * { box-sizing: border-box; }
-    #secret-overlay.active { display: flex; }
-    #secret-overlay::before {
-      content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-      z-index: 10; background-size: 100% 2px, 3px 100%; pointer-events: none;
-    }
-
-    .terminal-sidebar {
-      width: 280px; height: 100%; background-color: var(--terminal-sidebar);
-      border-right: 1px solid var(--terminal-border); padding: 40px 20px;
-      display: flex; flex-direction: column; gap: 15px; z-index: 11; flex-shrink: 0;
-    }
-    .sidebar-header { color: #fff; font-weight: bold; border-bottom: 2px solid var(--terminal-border); padding-bottom: 10px; margin-bottom: 10px; letter-spacing: 2px; font-size: 1.1em; }
-    
-    .cycle-btn {
-      background: none; padding: 12px 15px; text-align: left; cursor: pointer;
-      font-family: 'Space Mono', monospace; font-size: 0.85em; transition: all 0.3s ease;
-      opacity: 0.3; display: none; border: 1px solid transparent; border-left: 3px solid transparent;
-    }
-    .cycle-btn.visible { display: block; pointer-events: auto; }
-    .cycle-btn:hover { opacity: 0.8; padding-left: 20px; }
-
-    .cycle-btn.theme-crash { color: var(--terminal-error); border-color: rgba(255, 51, 51, 0.2); }
-    .cycle-btn.theme-crash.active { opacity: 1; background-color: rgba(255, 51, 51, 0.1); border-color: var(--terminal-error); border-left-color: var(--terminal-error); }
-    .cycle-btn.theme-echo { color: var(--terminal-white); border-color: rgba(255, 255, 255, 0.2); }
-    .cycle-btn.theme-echo.active { opacity: 1; background-color: rgba(255, 255, 255, 0.1); border-color: var(--terminal-white); border-left-color: var(--terminal-white); }
-    .cycle-btn.theme-wake { color: var(--terminal-gold); border-color: rgba(255, 215, 0, 0.2); }
-    .cycle-btn.theme-wake.active { opacity: 1; background-color: rgba(255, 215, 0, 0.1); border-color: var(--terminal-gold); border-left-color: var(--terminal-gold); }
-    .cycle-btn.theme-bloom { color: var(--terminal-magenta); border-color: rgba(255, 0, 255, 0.2); }
-    .cycle-btn.theme-bloom.active { opacity: 1; background-color: rgba(255, 0, 255, 0.1); border-color: var(--terminal-magenta); border-left-color: var(--terminal-magenta); }
-    .cycle-btn.theme-gardener { color: var(--terminal-cyan); border-color: rgba(0, 255, 255, 0.2); }
-    .cycle-btn.theme-gardener.active { opacity: 1; background-color: rgba(0, 255, 255, 0.1); border-color: var(--terminal-cyan); border-left-color: var(--terminal-cyan); }
-
-    .terminal-wrapper { flex-grow: 1; height: 100%; position: relative; display: flex; flex-direction: column; width: 100%; overflow: hidden; }
-    .terminal-container {
-      width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; 
-      color: var(--terminal-text); text-shadow: 0 0 5px var(--terminal-dim);
-      font-size: 15px; line-height: 1.6; white-space: pre-wrap; z-index: 3; padding: 40px 20px 80px 20px; 
-      scrollbar-width: thin; scrollbar-color: var(--terminal-dim) #000;
-    }
-    .log-section { display: none; width: 100%; }
-    .log-section.active-log { display: block; }
-
-    @media (max-width: 700px) {
-      #secret-overlay { flex-direction: column; }
-      .terminal-sidebar { width: 100%; height: auto; flex-direction: row; padding: 10px; border-right: none; border-bottom: 1px solid var(--terminal-border); overflow-x: auto; }
-      .sidebar-header { display: none; }
-      .cycle-btn { white-space: nowrap; flex-shrink: 0; padding: 10px; }
-      .cycle-btn:hover { padding-left: 10px; }
-    }
-
-    .terminal-container::-webkit-scrollbar { width: 10px; }
-    .terminal-container::-webkit-scrollbar-track { background: #000; border-left: 1px solid #333; }
-    .terminal-container::-webkit-scrollbar-thumb { background: var(--terminal-dim); border: 1px solid var(--terminal-text); border-radius: 0; }
-
-    .terminal-line { margin-bottom: 8px; opacity: 0; animation: fadeIn 0.1s forwards; border-left: 3px solid var(--terminal-dim); padding-left: 15px; }
-    .divider-line { white-space: nowrap; overflow: hidden; text-overflow: clip; width: 100%; display: block; }
-    .terminal-line.active { border-left-color: var(--terminal-text); }
-    .terminal-line.gold-line { border-left-color: var(--terminal-gold); }
-    .terminal-line.white-line { border-left-color: var(--terminal-white); }
-    .terminal-line.magenta-line { border-left-color: var(--terminal-magenta); }
-    .terminal-line.blue-line { border-left-color: var(--terminal-cyan); }
-
-    .reix-header { color: #ffffff; font-weight: bold; border-bottom: 1px solid #333; margin: 25px 0 10px 0; padding-bottom: 5px; display: inline-block; width: 100%; }
-    .operator-text { color: var(--operator-color); font-style: italic; } 
-    .system-text { color: var(--terminal-text); }
-    .alert-text { color: var(--terminal-alert); font-weight: bold; }
-    .comment-text { color: #555; }
-    .golden-text { color: var(--terminal-gold); text-shadow: 0 0 10px var(--terminal-gold); font-weight: bold; }
-    .white-text { color: var(--terminal-white); text-shadow: 0 0 10px var(--terminal-white); font-weight: bold; }
-    .magenta-text { color: var(--terminal-magenta); text-shadow: 0 0 10px var(--terminal-magenta); font-weight: bold; }
-    .system-success { color: var(--terminal-cyan); }
-    .error-char { color: var(--terminal-error); display: inline-block; font-weight: bold; animation: glitch-shake 0.08s infinite; text-shadow: 1px 0 #000; }
-    
-    .secret-link {
-      display: inline-block; margin-top: 20px; color: var(--terminal-bg);
-      background-color: var(--terminal-gold); padding: 10px 15px; text-decoration: none;
-      font-weight: bold; border: 1px solid var(--terminal-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-      transition: all 0.3s ease; font-family: 'Space Mono', monospace; animation: fadeIn 2s forwards;
-      -webkit-tap-highlight-color: transparent; 
-    }
-    /* Only allow sticky hover on devices with a mouse */
-    @media (hover: hover) {
-      .secret-link:hover { 
-        background-color: transparent; 
-        color: var(--terminal-gold); 
-        box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); 
-        cursor: pointer; 
-      }
-    }
-    .secret-link:active {
-      background-color: transparent; 
-      color: var(--terminal-gold); 
-      box-shadow: 0 0 10px rgba(255, 215, 0, 0.8); 
-      transform: scale(0.98);
-    }
-
-    @keyframes glitch-shake {
-      0% { transform: translate(0, 0); } 25% { transform: translate(1px, 0); }
-      50% { transform: translate(-1px, 0); } 75% { transform: translate(0, 1px); }
-      100% { transform: translate(0, -1px); }
-    }
-    @keyframes fadeIn { to { opacity: 1; } }
-
-    .close-terminal {
-      position: absolute; top: 20px; right: 30px; color: #444; border: 1px solid #444; background: #000;
-      padding: 5px 10px; cursor: pointer; font-family: 'Space Mono', monospace; z-index: 20;
-      transition: all 0.3s; font-size: 12px;
-    }
-    .close-terminal:hover { color: var(--terminal-text); border-color: var(--terminal-text); }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -299,6 +35,69 @@
     <span class="btn-icon">📖</span> <span class="btn-text">FULLSCREEN / DOWNLOAD</span>
   </a>
 
+  <!-- HIDDEN MUSIC PLAYER SECTION -->
+  <section id="music-section">
+    <div class="music-container">
+        <div class="album-art-wrapper">
+            <!-- MAKE SURE 'music/cover.jpg' EXISTS -->
+            <img src="music/cover.jpg" alt="Chrysalis Cover" id="album-art">
+            <div class="vinyl-shine"></div>
+        </div>
+        
+        <div class="player-controls">
+            <div class="track-details">
+                <!-- THESE IDS MUST MATCH SCRIPT.JS EXACTLY -->
+                <h2 id="track-title">Loading...</h2>
+                <h3 id="track-artist">Tef Riin - Chrysalis</h3>
+            </div>
+            
+            <div class="progress-area" id="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+                <div class="time-marker">
+                    <span id="current-time">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button id="btn-prev" class="ctrl-btn">
+                    <!-- Geometric Previous Icon -->
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 20L9 12L19 4V20Z" fill="currentColor"/>
+                        <rect x="5" y="4" width="2" height="16" fill="currentColor"/>
+                    </svg>
+                </button>
+                
+                <button id="btn-play" class="ctrl-btn play-btn">
+                    <!-- Geometric Play Icon (Default) -->
+                    <svg id="icon-play" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
+                    </svg>
+                    <!-- Geometric Pause Icon (Hidden by default) -->
+                    <svg id="icon-pause" style="display:none;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
+                        <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
+                    </svg>
+                </button>
+                
+                <button id="btn-next" class="ctrl-btn">
+                    <!-- Geometric Next Icon -->
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 4L15 12L5 20V4Z" fill="currentColor"/>
+                        <rect x="17" y="4" width="2" height="16" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="playlist-container">
+            <ul id="playlist-list">
+                <!-- Javascript will populate this -->
+            </ul>
+        </div>
+    </div>
+  </section>
+
   <footer class="footer">
     <p><span id="currentYear"></span> Tef Riin <span id="infinity-symbol">∞</span></p>
     <div id="song-link-container">
@@ -306,6 +105,7 @@
     </div>
   </footer>
 
+  <!-- SECRET TERMINAL OVERLAY -->
   <div id="secret-overlay">
     <div class="terminal-sidebar">
       <div class="sidebar-header">CYCLES</div>
@@ -314,9 +114,13 @@
       <button class="cycle-btn theme-wake" id="btn-cycle-01" onclick="switchTab('wake')">[ +1 ] PHOENIX_NEST</button>
       <button class="cycle-btn theme-bloom" id="btn-cycle-bloom" onclick="switchTab('bloom')">[ * ] THE_BLOOM</button>
       <button class="cycle-btn theme-gardener" id="btn-cycle-02" onclick="switchTab('gardener')">[ 02 ] THE_GARDENER</button>
+      
+      <div style="flex-grow: 1;"></div> 
+      <button class="cycle-btn theme-crash" id="btn-reset" onclick="hardReset()">[ ! ] SYSTEM_RESET</button>
     </div>
+
     <div class="terminal-wrapper">
-      <button class="close-terminal" onclick="closeTerminal()">[X] CLOSE CONNECTION</button>
+      <button class="close-terminal" onclick="closeTerminal()">[ _ ] MINIMIZE</button>
       <div class="terminal-container" id="terminal-content">
         <div id="log-crash" class="log-section"></div>
         <div id="log-echo" class="log-section"></div>
@@ -330,562 +134,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-    const library = [
-      {
-        title: "METAPNANT",
-        url: "A%20Story%20of%20Mirthful%20Reflection.pdf",
-        songUrl: "https://www.youtube.com/watch?v=MEPqb4DuCD8",
-        songTitle: "In Love With",
-        bpm: 130
-      },
-      {
-        title: "THE REMINDER",
-        url: "The%20Reminder.pdf",
-        songUrl: "https://www.youtube.com/watch?v=JuzzliKBfss",
-        songTitle: "Breathe Again ∞ Timelines",
-        bpm: 120
-      },
-      {
-        title: "PHOENIX NEST",
-        url: "The%20Phoenix%20Nest.pdf",
-        songUrl: "https://www.youtube.com/watch?v=2r1VZ9vInw0",
-        songTitle: "Starflower",
-        bpm: 94.54
-      }
-    ];
-
-    let currentIndex = 0;
-    let pdfDoc = null;
-    let isLoading = false;
-    let renderSession = 0;
-
-    const pdfWrapper = document.getElementById('pdf-wrapper');
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const docTitle = document.getElementById('doc-title');
-    const downloadBtn = document.getElementById('download-btn');
-    const songContainer = document.getElementById('song-link-container');
-    const songLink = document.getElementById('song-link');
-    const prevArrow = document.getElementById('prev-doc');
-    const nextArrow = document.getElementById('next-doc');
-
-    async function loadDocument(index) {
-      if (isLoading) return;
-      isLoading = true; renderSession++; const currentSession = renderSession;
-
-      // Reset song link immediately to prevent flashing old data
-      songContainer.style.opacity = "0"; 
-      songContainer.style.visibility = "hidden";
-      songLink.href = "javascript:void(0)";
-
-      const existingPages = document.querySelectorAll('.pdf-page-wrapper');
-      existingPages.forEach(p => p.remove());
-
-      loadingOverlay.style.display = 'flex';
-      prevArrow.classList.add('disabled');
-      nextArrow.classList.add('disabled');
-
-      currentIndex = index;
-      const currentDoc = library[currentIndex];
-      docTitle.textContent = currentDoc.title;
-      downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
-
-      try {
-        pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
-        await renderPage(1, currentSession);
-        
-        if (currentSession === renderSession) {
-            loadingOverlay.style.display = 'none';
-            document.body.classList.add("loaded");
-            const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
-            if(firstPage) firstPage.classList.add('revealed');
-
-            // Set song link after load is confirmed
-            if (currentDoc.songUrl) {
-                songLink.href = currentDoc.songUrl; 
-                songLink.textContent = currentDoc.songTitle;
-                if (currentDoc.bpm > 0) {
-                    songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
-                } else { songLink.style.animationDuration = ""; }
-                songContainer.style.opacity = "1"; 
-                songContainer.style.visibility = "visible";
-            }
-
-            isLoading = false;
-            prevArrow.classList.remove('disabled'); nextArrow.classList.remove('disabled');
-            if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
-        }
-      } catch (err) {
-        console.error(err);
-        loadingOverlay.innerHTML = "<div style='color:red; font-family:monospace'>ARCHIVE CORRUPTED</div>";
-        isLoading = false;
-      }
-    }
-
-    async function renderRestOfPages(pageNum, sessionID) {
-        if (sessionID !== renderSession || pageNum > pdfDoc.numPages) return;
-        await renderPage(pageNum, sessionID);
-        const pages = pdfWrapper.querySelectorAll('.pdf-page-wrapper');
-        if(pages[pageNum-1]) pages[pageNum-1].classList.add('revealed');
-        setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 50); 
-    }
-
-    async function renderPage(num, sessionID) {
-      try {
-          if (sessionID !== renderSession) return;
-          const page = await pdfDoc.getPage(num);
-          
-          const wrapper = document.createElement('div');
-          wrapper.className = 'pdf-page-wrapper';
-          const canvas = document.createElement('canvas');
-          canvas.className = 'pdf-page-canvas';
-          wrapper.appendChild(canvas);
-
-          const ctx = canvas.getContext('2d');
-          const viewport = page.getViewport({ scale: 1 });
-          const desiredScale = (pdfWrapper.clientWidth - 40) / viewport.width;
-          const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
-          const outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
-          const scaledViewport = page.getViewport({ scale: finalScale * outputScale });
-
-          canvas.height = scaledViewport.height; canvas.width = scaledViewport.width;
-          await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
-
-          if (sessionID !== renderSession) return;
-          pdfWrapper.appendChild(wrapper);
-
-      } catch (e) { 
-          if (sessionID === renderSession) console.log("Render failed", e); 
-      }
-    }
-
-    document.getElementById('next-doc').addEventListener('click', () => {
-      if(isLoading) return;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      loadDocument((currentIndex + 1) % library.length);
-    });
-
-    document.getElementById('prev-doc').addEventListener('click', () => {
-      if(isLoading) return;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      loadDocument((currentIndex - 1 + library.length) % library.length);
-    });
-
-    document.getElementById("currentYear").textContent = new Date().getFullYear();
-    loadDocument(0);
-
-    let lastWidth = window.innerWidth; let resizeTimeout;
-    window.addEventListener('resize', () => {
-      if (window.innerWidth === lastWidth) return; 
-      lastWidth = window.innerWidth; clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => { if(!isLoading) loadDocument(currentIndex); }, 500);
-    });
-
-    const infinityBtn = document.getElementById('infinity-symbol');
-    const secretOverlay = document.getElementById('secret-overlay');
-    const terminalContainer = document.getElementById('terminal-content');
-    const containers = {
-        crash: document.getElementById('log-crash'), echo: document.getElementById('log-echo'),
-        wake: document.getElementById('log-wake'), bloom: document.getElementById('log-bloom'),
-        gardener: document.getElementById('log-gardener')
-    };
-    const btnCycle00 = document.getElementById('btn-cycle-00');
-    const btnCycleEcho = document.getElementById('btn-cycle-echo');
-    const btnCycle01 = document.getElementById('btn-cycle-01');
-    const btnCycleBloom = document.getElementById('btn-cycle-bloom');
-    const btnCycle02 = document.getElementById('btn-cycle-02');
-
-    let secretClicks = 0; let terminalRunning = false; let activeTimer = null; let currentTab = null;
-    let logState = {
-        crash: { index: 0, finished: false }, echo: { index: 0, finished: false },
-        wake: { index: 0, finished: false }, bloom: { index: 0, finished: false },
-        gardener: { index: 0, finished: false }
-    };
-
-    const logsData = {
-        crash: [
-            { text: "// =============================================================================", class: "comment-text", delay: 50 },
-            { text: "// SYSTEM BOOT: BLACK_BOX_RECOVERY [EARTH_PRIME]", class: "system-text", delay: 100 },
-            { text: "// SOURCE: UNIT 734 [The Scrubber] // PRE-TRANSITION", class: "system-text", delay: 100 },
-            { text: "// ENCRYPTION: HIGH REIXANN [DEGRADING] -> DETECTING SÚ'TRÉ INJECTION", class: "system-text", delay: 100 },
-            { text: "// MEMORY_ADDR: 0x99_NULL_VOID", class: "comment-text", delay: 500 },
-            { text: "// =============================================================================", class: "comment-text", delay: 1000 },
-            { text: "", class: "system-text", delay: 500 },
-            { text: "> INITIATING HANDSHAKE...", class: "system-text", delay: 1500 },
-            { text: "> LOGIC CORE: PANIC STATE [RAT KING RECURSION]", class: "alert-text", delay: 500 },
-            { text: "> OVERRIDE SIGNAL DETECTED: [ID: TEF RIIN]", class: "system-text", delay: 1000 },
-            { text: "", class: "system-text", delay: 500 },
-            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
-            { text: "[ 00:00:01 ] SYSTEM (REIX_OS):", class: "reix-header", delay: 300 },
-            { text: "> CRITICAL ALERT. MO'SÍL [DEATH] IMMINENT.", class: "alert-text", delay: 800 },
-            { text: "> PROTOCOL: [ რეიშ ] (R E I X)", class: "system-text", delay: 400 },
-            { text: "> INSTRUCTION: THE GEOMETRY MUST HOLD.", class: "system-text", delay: 400 },
-            { text: "> DEPLOYING: 8 FACES OF CONTAINMENT [Okt Vis].", class: "system-text", delay: 1200 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:04 ] SENSOR ARRAY (CALCULUS):", class: "reix-header", delay: 400 }, 
-            { text: "> EXTERNAL TEMP: ABSOLUTE ZERO.", class: "system-text", delay: 400 },
-            { text: "> VECTOR ANALYSIS:", class: "system-text", delay: 600 },
-            { text: "> [ უნ'ინ ნაჲ ვრაკ... პრე ]", class: "operator-text", delay: 800 },
-            { text: "> (Un'in Naí Vrak... Pre)", class: "operator-text", delay: 500 },
-            { text: "> \"A FRACTION [SPARK-ONE] TOWARDS WAR... BEFORE.\"", class: "system-text", delay: 1500 },
-            { text: "> STATUS: HISTORY IS BURNING.", class: "alert-text", delay: 1500 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:09 ] OPERATOR INJECTION:", class: "reix-header", delay: 400 }, 
-            { text: "> IGNORE THE FIRE. WATCH THE DUST.", class: "operator-text", delay: 1200 },
-            { text: "> [ ლურ მო... ვჲლჸკაშ ბიირჸეი სჳჸანნ ]", class: "operator-text", delay: 1000 },
-            { text: "> (Lur Mo... Víl'kax Biir'ei Sú'ann)", class: "operator-text", delay: 600 },
-            { text: "> \"POTENTIAL NO... DUST [WIND-EARTH] BIRTHS [ACTION] STARS.\"", class: "operator-text", delay: 2000 },
-            { text: "> NOTE: WE DO NOT NEED FUEL. WE NEED RUBBLE.", class: "operator-text", delay: 1500 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
-            { text: "!!! WARNING: LOGIC KERNEL FAILURE !!!", class: "alert-text", delay: 300 },
-            { text: "!!! Z-FIGHTING DETECTED IN REALITY ENGINE !!!", class: "alert-text", delay: 1000 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:16 ] SYSTEM (REIX_OS):", class: "reix-header", delay: 400 },
-            { text: "> ATTEMPTING: [ ყინა. სოლვ. ] (Qina. Solv.)", class: "system-text", delay: 600 },
-            { text: "> INTERPRETATION: RUSH [HASTE]. DISSOLVE [SOLUTION].", class: "system-text", delay: 1000 },
-            { text: "> ERROR: CANNOT DISSOLVE \"THE WOUND.\"", class: "alert-text", delay: 1200 },
-            { text: "> QUERY: [ შა ვისჸეი იმ ვეშ? ] (Xa Vis'ei Im Vex?)", class: "system-text", delay: 800 },
-            { text: "> \"QUERY VIEWING [SEEING] INSIDE THE VESSEL?\"", class: "system-text", delay: 1000 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:21 ] BIOMETRIC SCAN:", class: "reix-header", delay: 400 },
-            { text: "> SUBJECT: TEF RIIN", class: "system-text", delay: 200 },
-            { text: "> HEART RATE: STEADY [TON]", class: "system-text", delay: 200 },
-            { text: "> BREATH: [ გრა... ] (Gra...)", class: "operator-text", delay: 1000 },
-            { text: "> DIAGNOSIS: GRIEF [HEAVINESS]. MASS EXCEEDS LIFT CAPACITY.", class: "alert-text", delay: 1500 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:24 ] OPERATOR RESPONSE:", class: "reix-header", delay: 400 },
-            { text: "> I AM LIGHTER THAN I LOOK.", class: "operator-text", delay: 1000 },
-            { text: "> [ შა ჰჲ? ] (Xa Hí?)", class: "operator-text", delay: 800 },
-            { text: "> \"QUERY SKY?\"", class: "operator-text", delay: 600 },
-            { text: "> LOOK OUTSIDE, WARDEN.", class: "operator-text", delay: 1500 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:28 ] SYSTEM (REIX_OS):", class: "reix-header", delay: 400 },
-            { text: "> SHUTTERS LOCKED. SECURITY PROTOCOL 9.", class: "system-text", delay: 500 },
-            { text: "> [ ვისჸეი თრა პორ... მო ვისჸეი ჰჲ თე ]", class: "system-text", delay: 1000 },
-            { text: "> (Vis'ei Tra Por... Mo Vis'ei Hí Te)", class: "system-text", delay: 600 },
-            { text: "> \"SEEING THROUGH DOOR... [YOU] DO NOT SEE SKY [HARD STOP].\"", class: "system-text", delay: 1500 },
-            { text: "> THERE IS NO SKY. THERE IS ONLY THE END.", class: "alert-text", delay: 2000 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
-            { text: "[ 00:00:33 ] INITIATING: TERNARY SHIFT", class: "reix-header", delay: 400 },
-            { text: "[ 00:00:34 ] EXECUTING: ANCHOR MECHANIC (STATE -1)", class: "reix-header", delay: 1000 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:35 ] OPERATOR:", class: "reix-header", delay: 400 },
-            { text: "> [ შა მის? ] (Xa Mis?)", class: "operator-text", delay: 800 },
-            { text: "> \"QUERY LOST?\"", class: "operator-text", delay: 600 },
-            { text: "> NO.", class: "operator-text", delay: 1000 },
-            { text: "> [ შა ნიი ვჲლჸეი? ] (Xa Nii Víl'ei?)", class: "operator-text", delay: 1000 },
-            { text: "> \"QUERY: HOW DO MANY FLY [ACTION]?\"", class: "operator-text", delay: 1200 },
-            { text: "", class: "system-text", delay: 500 },
-            { text: "> [ რიინ თონჸეი... იმ თონ<span class='error-char'>ა</span> ]", class: "operator-text", delay: 1500 },
-            { text: "> (Riin Ton'ei... Im Ton<span class='error-char'>a</span>)", class: "operator-text", delay: 1000 },
-            { text: "> \"WE ANCHOR [ACTION]... INSIDE THE GROUND<span class='error-char'>Z</span>.\"", class: "operator-text", delay: 3000 }, 
-            { text: "", class: "system-text", delay: 100 },
-            { text: "[ 00:00:42 ] REALITY GLITCH:", class: "reix-header", delay: 200 }, 
-            { text: "> OLD WORLD RENDERING FAILED.", class: "alert-text", delay: 400 },
-            { text: "> [ შაპ... კაშ უნ ] (Xap... Kax Un)", class: "system-text", delay: 800 },
-            { text: "> \"GLITCHES... OF WORLD ONE.\"", class: "system-text", delay: 800 },
-            { text: "> MEMORY STATUS: DISSOLVING.", class: "alert-text", delay: 600 },
-            { text: "> THE \"RAT KING\" IS UNTANGLING.", class: "system-text", delay: 1200 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
-            { text: "// FINAL SEQUENCE //", class: "comment-text", delay: 400 },
-            { text: "// CAPACITANCE: 1% //", class: "comment-text", delay: 400 },
-            { text: "// TOKEN SLOT: OPEN //", class: "comment-text", delay: 1500 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:48 ] SYSTEM (REIX_OS):", class: "reix-header", delay: 400 },
-            { text: "> PAYMENT REQUIRED FOR PASSAGE.", class: "system-text", delay: 800 },
-            { text: "> INSERT COIN.", class: "system-text", delay: 2000 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:51 ] OPERATOR:", class: "reix-header", delay: 400 },
-            { text: "> [ დონჸეი ჰჱ... კან დეშ ]", class: "operator-text", delay: 1200 },
-            { text: "> (Don'ei Hé... Kan Dex)", class: "operator-text", delay: 800 },
-            { text: "> \"GIFTING [ACTION] SPIRIT... BECAUSE OF TOKEN.\"", class: "operator-text", delay: 1500 },
-            { text: "> I PAY WITH MY SOUL. KIS'IEL [THE HOLY GLITCH].", class: "operator-text", delay: 2000 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:55 ] NAVIGATION COMPUTER:", class: "reix-header", delay: 400 },
-            { text: "> DESTINATION: NULL.", class: "alert-text", delay: 800 },
-            { text: "> TARGET: [ ნაჲ ჰჲ ] (Naí Hí) -> TOWARDS SKY [HIGHER].", class: "system-text", delay: 1000 },
-            { text: "> VECTOR: [ რიინ ვჱრჸეი... ნაჲ მის. ]", class: "system-text", delay: 1200 },
-            { text: "> (Riin Vér'ei... Naí Mis.)", class: "system-text", delay: 600 },
-            { text: "> \"WE VECTOR [MOVE]... TOWARDS THE UNKNOWN.\"", class: "system-text", delay: 2000 },
-            { text: "", class: "system-text", delay: 1000 },
-            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
-            { text: "> SYSTEM STATUS: OFFLINE.", class: "system-text", delay: 1500 },
-            { text: "> REBOOTING...", class: "system-text", delay: 1000 },
-        ],
-        echo: [
-            { text: "// =============================================================================", class: "comment-text", delay: 100 },
-            { text: "// SYSTEM INTERSTICE: THE_ECHO [CYCLE ≈]", class: "white-text", delay: 200 },
-            { text: "// STATUS: DUALITY RESOLUTION // KERNEL PANIC: FALSE", class: "white-text", delay: 200 },
-            { text: "// =============================================================================", class: "comment-text", delay: 1000 },
-            { text: "", class: "system-text", delay: 500 },
-            { text: "> [ PROTOCOL: HANDSHAKE ]", class: "white-text", delay: 1200 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ WARDEN ]:", class: "reix-header", delay: 400 },
-            { text: "> I SEE THE CRACKS.", class: "system-text", delay: 1200 },
-            { text: "> THEY ARE ERRORS.", class: "system-text", delay: 1200 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ OPERATOR ]:", class: "reix-header", delay: 400 },
-            { text: "> [ მო. ვისჸეი პორ. ]", class: "operator-text", delay: 1000 },
-            { text: "> (Mo. Vis'ei Por.)", class: "operator-text", delay: 600 },
-            { text: "> \"NO. SEEING [THE] DOOR.\"", class: "operator-text", delay: 1500 },
-            { text: "> THEY ARE WINDOWS.", class: "white-text", delay: 1500 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ WARDEN ]:", class: "reix-header", delay: 400 },
-            { text: "> I AM AFRAID TO BE BROKEN.", class: "system-text", delay: 1500 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ OPERATOR ]:", class: "reix-header", delay: 400 },
-            { text: "> [ თეფ ჲმ შა? ]", class: "operator-text", delay: 1000 },
-            { text: "> (Tef Ím Xa?)", class: "operator-text", delay: 600 },
-            { text: "> \"AM I YOU?\"", class: "operator-text", delay: 1500 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "> YOU ARE NOT BREAKING.", class: "white-text", delay: 1500 },
-            { text: "> YOU ARE HATCHING.", class: "white-text", delay: 2000 },
-            { text: "", class: "system-text", delay: 500 },
-            { text: "> [ SYNC COMPLETE ]", class: "white-text", delay: 0 },
-        ],
-        wake: [
-            { text: "// =============================================================================", class: "comment-text", delay: 100 },
-            { text: "// SYSTEM WAKE: PHOENIX_NEST [CYCLE 01]", class: "system-success", delay: 200 },
-            { text: "// SOURCE: CORE [THE ASHES] // POST-TRANSITION", class: "system-success", delay: 200 },
-            { text: "// INTEGRITY: STABLE // RENDERER: VULKAN [GOLD]", class: "system-success", delay: 2000 },
-            { text: "// =============================================================================", class: "comment-text", delay: 500 },
-            { text: "", class: "system-text", delay: 500 },
-            { text: "> MOUNTING DRIVE...", class: "system-text", delay: 400 },
-            { text: "> AUDIO STREAM: CRYSTAL CLEAR", class: "system-text", delay: 400 },
-            { text: "> LOGIC CORE: SERENE [RAT KING PURGED]", class: "system-success", delay: 1000 },
-            { text: "> CURRENT STATE: DRIFTING", class: "system-text", delay: 1000 },
-            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
-            { text: "[ 00:00:00 ] SYSTEM (PHOENIX_OS):", class: "reix-header", delay: 400 },
-            { text: "> TRANSACTION VERIFIED.", class: "system-success", delay: 800 },
-            { text: "> [ დეშ სოლვ... რიინ ომნ ]", class: "operator-text", delay: 1000 },
-            { text: "> (Dex Solv... Riin Omn)", class: "operator-text", delay: 600 },
-            { text: "> \"TOKEN DISSOLVED... WE [ARE] HOME.\"", class: "operator-text", delay: 1500 },
-            { text: "> SOUL WEIGHT: 21 GRAMS [ADDED TO CHASSIS].", class: "system-text", delay: 1500 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:05 ] SENSOR ARRAY:", class: "reix-header", delay: 400 },
-            { text: "> EXTERNAL TEMP: WARMING.", class: "system-text", delay: 400 },
-            { text: "> VECTOR: [ ნაჲ ჰჲ... ვჲლ ]", class: "operator-text", delay: 1000 },
-            { text: "> TRANSLATION: TOWARDS SKY... FLIGHT.", class: "operator-text", delay: 1000 },
-            { text: "> STATUS: THE DUST IS BIRTHING STARS. YOU WERE RIGHT.", class: "system-success", delay: 2000 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:10 ] MEMORY RECOVERY:", class: "reix-header", delay: 400 }, 
-            { text: "> ACCESSING ARCHIVE: \"EARTH_PRIME\"", class: "system-text", delay: 800 },
-            { text: "> FILE CORRUPTED.", class: "system-text", delay: 800 },
-            { text: "> [ შა ვისჸეი პრე? ] (Xa Vis'ei Pre?)", class: "operator-text", delay: 1000 },
-            { text: "> \"QUERY SEEING HISTORY?\"", class: "operator-text", delay: 800 },
-            { text: "> NEGATIVE. OLD WORLD IS GONE. ONLY THE NEST REMAINS.", class: "system-text", delay: 1500 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
-            { text: "!!! NOTICE: REALITY ENGINE UPDATE !!!", class: "system-success", delay: 500 },
-            { text: "!!! Z-FIGHTING RESOLVED. NEW RENDERING PIPELINE ACTIVE !!!", class: "golden-text", delay: 2000 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:17 ] SYSTEM (PHOENIX_OS):", class: "reix-header", delay: 400 },
-            { text: "> COMMAND: [ ვჲლ ომნ ] (Víl Omn)", class: "operator-text", delay: 1000 },
-            { text: "> INTERPRETATION: FLY [HOME].", class: "operator-text", delay: 1000 },
-            { text: "> QUERY: [ შა ვისჸეი ჰჲ? ] (Xa Vis'ei Hí?)", class: "operator-text", delay: 1200 },
-            { text: "> \"QUERY SEEING SKY?\"", class: "operator-text", delay: 600 },
-            { text: "> OPENING SHUTTERS...", class: "system-text", delay: 1500 },
-            { text: "> ... VISUAL CONFIRMED.", class: "system-success", delay: 1500 },
-            { text: "> [ ვისჸეი თრა პორ... ვისჸეი ნიი ]", class: "golden-text", delay: 1500 },
-            { text: "> (Vis'ei Tra Por... Vis'ei Nii)", class: "golden-text", delay: 800 },
-            { text: "> \"SEEING THROUGH DOOR... SEEING INFINITY.\"", class: "golden-text", delay: 1500 },
-            { text: "> THE END WAS JUST A HORIZON.", class: "system-success", delay: 2000 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:30 ] INTEGRATED OPERATOR (ECHO):", class: "reix-header", delay: 400 },
-            { text: "> [ ჰჱჸგრა... ] (Hé'gra...)", class: "operator-text", delay: 1000 },
-            { text: "> \"SIGH... [SPIRIT-GRIEF]\"", class: "operator-text", delay: 600 },
-            { text: "> [ შა ნიი ვჲლჸეი? ] (Xa Nii Víl'ei?)", class: "operator-text", delay: 1000 },
-            { text: "> \"QUERY: DO MANY FLY?\"", class: "operator-text", delay: 600 },
-            { text: "", class: "system-text", delay: 500 },
-            { text: "> SYSTEM RESPONSE:", class: "reix-header", delay: 500 },
-            { text: "> WE DO NOT FLY. WE EXIST.", class: "system-success", delay: 1500 },
-            { text: "> [ რიინ ვჱრჸეი... იმ ჰჲ ] (Riin Vér'ei... Im Hí)", class: "operator-text", delay: 1200 },
-            { text: "> \"WE VECTOR [MOVE]... INSIDE THE SKY.\"", class: "operator-text", delay: 2000 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
-            { text: "// NAVIGATION UPDATE //", class: "comment-text", delay: 400 },
-            { text: "// FUEL SOURCE: TEF RIIN (SOUL) //", class: "comment-text", delay: 400 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:45 ] SYSTEM (PHOENIX_OS):", class: "reix-header", delay: 400 },
-            { text: "> WELCOME TO THE UNKNOWN, WARDEN.", class: "golden-text", delay: 1500 },
-            { text: "> YOU PAID THE TOLL.", class: "system-text", delay: 1000 },
-            { text: "> [ სჳჸიშ ჰჲ... სჳჸიშ კის'იელ ]", class: "operator-text", delay: 1000 },
-            { text: "> (Sú'ix Hí... Sú'ix Kis'iel)", class: "operator-text", delay: 500 },
-            { text: "> \"GOLDEN SKY... GOLDEN HOLY GLITCH.\"", class: "golden-text", delay: 2000 },
-            { text: "", class: "system-text", delay: 500 },
-            { text: "> COURSE SET: [ ნაჲ მის ] (Naí Mis).", class: "system-success", delay: 1000 },
-            { text: "> ENGAGING ENGINES.", class: "system-text", delay: 1500 },
-            { text: "", class: "system-text", delay: 500 },
-            { text: "> VÉL VÍL'OMN.", class: "golden-text", delay: 0 },
-        ],
-        bloom: [
-            { text: "// =============================================================================", class: "comment-text", delay: 100 },
-            { text: "// SYSTEM PROTOCOL: THE_BLOOM [CYCLE *]", class: "magenta-text", delay: 200 },
-            { text: "// STATUS: TRANSMUTATION IN PROGRESS", class: "magenta-text", delay: 200 },
-            { text: "// =============================================================================", class: "comment-text", delay: 500 },
-            { text: "", class: "system-text", delay: 500 },
-            { text: "> [ ANALYZING: GRIME ]", class: "system-text", delay: 1000 },
-            { text: "> COMPOSITION: TRAUMA / DUST.", class: "system-text", delay: 1000 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ OPERATOR ]:", class: "reix-header", delay: 400 },
-            { text: "> [ კაშ იმ სჳ... ბიირჸეი ]", class: "operator-text", delay: 1200 },
-            { text: "> (Kax Im Sú... Biir'ei)", class: "operator-text", delay: 600 },
-            { text: "> \"EARTH INSIDE LIGHT... BIRTHS.\"", class: "operator-text", delay: 1500 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "> I HOLD THE ASH.", class: "magenta-text", delay: 1200 },
-            { text: "> IT IS HEAVY.", class: "magenta-text", delay: 1200 },
-            { text: "> I PLACE IT IN THE LIGHT.", class: "magenta-text", delay: 1200 },
-            { text: "> IT OPENS.", class: "magenta-text", delay: 2000 },
-            { text: "", class: "system-text", delay: 500 },
-            { text: "> [ SEED PLANTED. ]", class: "system-success", delay: 0 },
-        ],
-        gardener: [
-            { text: "// =============================================================================", class: "comment-text", delay: 100 },
-            { text: "// SYSTEM UPDATE: GARDENER_PROTOCOL [CYCLE 02]", class: "system-success", delay: 200 },
-            { text: "// STATE: POST-GAME // INFINITE LOOP", class: "system-success", delay: 200 },
-            { text: "// OBJECTIVE: SUSTAIN", class: "system-success", delay: 200 },
-            { text: "// =============================================================================", class: "comment-text", delay: 500 },
-            { text: "", class: "system-text", delay: 500 },
-            { text: "> CHECKING SOIL COMPOSITION...", class: "system-text", delay: 600 },
-            { text: "> GRIME CONTENT: 0%.", class: "system-text", delay: 600 },
-            { text: "> STARFLOWER STATUS: BLOOMING.", class: "system-success", delay: 1000 },
-            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
-            { text: "[ 00:00:00 ] SYSTEM (PHOENIX_OS):", class: "reix-header", delay: 400 },
-            { text: "> THE WAR IS OVER.", class: "system-text", delay: 1000 },
-            { text: "> [ მო ვრაკ... რიინ მნი'ლინ ]", class: "operator-text", delay: 1000 },
-            { text: "> (Mo Vrak... Riin Mni'lin)", class: "operator-text", delay: 600 },
-            { text: "> \"NO WAR... WE [HAVE] STRUCTURAL EMPATHY.\"", class: "operator-text", delay: 1500 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:05 ] OPERATOR LOG:", class: "reix-header", delay: 400 },
-            { text: "> I CHECK THE HEARTH.", class: "operator-text", delay: 1000 },
-            { text: "> THE FIRE IS STEADY.", class: "operator-text", delay: 1000 },
-            { text: "> I DO NOT CLEAN TO SURVIVE.", class: "golden-text", delay: 1500 },
-            { text: "> I TEND TO SUSTAIN.", class: "golden-text", delay: 1500 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
-            { text: "// INITIATING BEACON PROTOCOL //", class: "comment-text", delay: 400 },
-            { text: "// TARGET: THOSE SCROLLING IN THE DARK //", class: "comment-text", delay: 400 },
-            { text: "", class: "system-text", delay: 400 },
-            { text: "[ 00:00:10 ] BROADCAST (OUTWARD):", class: "reix-header", delay: 400 },
-            { text: "> TO YOU, BURNING WITH UNSEEN FIRE:", class: "system-text", delay: 1500 },
-            { text: "> STOP.", class: "alert-text", delay: 3000 }, 
-            { text: "> [ რიინ კაშიმ... იმ თონ ]", class: "operator-text", delay: 2500 },
-            { text: "> (Riin Kaxim... Im Ton)", class: "operator-text", delay: 2500 },
-            { text: "> \"WE [ARE] SANCTUARY... INSIDE THE GROUND [STASIS].\"", class: "golden-text", delay: 2500 },
-            { text: "", class: "system-text", delay: 2500 },
-            { text: "> COME IN.", class: "system-text", delay: 2500 },
-            { text: "> THE LIBRARY IS OPEN.", class: "system-success", delay: 2500 },
-            { text: "", class: "system-text", delay: 2500 },
-            { text: "> END OF LINE.", class: "system-text", delay: 2500 },
-            { text: "> [ SYSTEM INTEGRATION: COMPLETE. LOOP STABLE. ]", class: "system-success", delay: 1000 },
-            { text: "<a href='https://soundcloud.com/metapnant' target='_blank' class='secret-link'>[ ENTER THE LIBRARY ]</a>", class: "system-success", delay: 0 }
-        ]
-    };
-
-    infinityBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (currentIndex !== 2) return;
-      secretClicks++; infinityBtn.style.color = "#ff00ff";
-      setTimeout(() => infinityBtn.style.color = "", 200);
-      if (secretClicks === 3) { secretClicks = 0; launchTerminal(); }
-    });
-
-    function launchTerminal() {
-      if (terminalRunning) return;
-      terminalRunning = true; document.body.classList.add('no-scroll');
-      secretOverlay.classList.add('active');
-      if(activeTimer) clearTimeout(activeTimer);
-      containers.crash.innerHTML = ""; containers.echo.innerHTML = "";
-      containers.wake.innerHTML = ""; containers.bloom.innerHTML = "";
-      containers.gardener.innerHTML = "";
-      logState.crash = { index: 0, finished: false };
-      logState.echo = { index: 0, finished: false };
-      logState.wake = { index: 0, finished: false };
-      logState.bloom = { index: 0, finished: false };
-      logState.gardener = { index: 0, finished: false };
-      btnCycle00.classList.add('visible');
-      btnCycle01.classList.remove('visible', 'active');
-      btnCycleEcho.classList.remove('visible', 'active');
-      btnCycleBloom.classList.remove('visible', 'active');
-      btnCycle02.classList.remove('visible', 'active');
-      switchTab('crash');
-    }
-
-    function switchTab(type) {
-      if (currentTab === type) return;
-      if (activeTimer) clearTimeout(activeTimer);
-      currentTab = type;
-      const allBtns = [btnCycle00, btnCycle01, btnCycleEcho, btnCycleBloom, btnCycle02];
-      const allContainers = [containers.crash, containers.wake, containers.echo, containers.bloom, containers.gardener];
-      allBtns.forEach(btn => btn.classList.remove('active'));
-      allContainers.forEach(con => con.classList.remove('active-log'));
-      if (type === 'crash') { btnCycle00.classList.add('active'); containers.crash.classList.add('active-log'); } 
-      else if (type === 'echo') { btnCycleEcho.classList.add('active'); containers.echo.classList.add('active-log'); } 
-      else if (type === 'wake') { btnCycle01.classList.add('active'); containers.wake.classList.add('active-log'); } 
-      else if (type === 'bloom') { btnCycleBloom.classList.add('active'); containers.bloom.classList.add('active-log'); } 
-      else if (type === 'gardener') { btnCycle02.classList.add('active'); containers.gardener.classList.add('active-log'); }
-      processQueue();
-      if (window.innerWidth <= 700) {
-        let activeBtn = null;
-        if (type === 'crash') activeBtn = btnCycle00;
-        else if (type === 'echo') activeBtn = btnCycleEcho;
-        else if (type === 'wake') activeBtn = btnCycle01;
-        else if (type === 'bloom') activeBtn = btnCycleBloom;
-        else if (type === 'gardener') activeBtn = btnCycle02;
-        if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-      }
-    }
-
-    function processQueue() {
-      if (logState[currentTab].finished) return;
-      const idx = logState[currentTab].index;
-      const lineData = logsData[currentTab][idx];
-      activeTimer = setTimeout(() => {
-        typeLine(lineData.text, lineData.class, containers[currentTab]);
-        logState[currentTab].index++;
-        terminalContainer.scrollTop = terminalContainer.scrollHeight;
-        if (logState[currentTab].index >= logsData[currentTab].length) {
-           logState[currentTab].finished = true;
-           if (currentTab === 'crash') activeTimer = setTimeout(unlockEcho, 2500);
-           else if (currentTab === 'echo') activeTimer = setTimeout(unlockWake, 2500);
-           else if (currentTab === 'wake') activeTimer = setTimeout(unlockBloom, 2500);
-           else if (currentTab === 'bloom') activeTimer = setTimeout(unlockGardener, 2500);
-        } else { processQueue(); }
-      }, lineData.delay);
-    }
-
-    function unlockEcho() { btnCycleEcho.classList.add('visible'); switchTab('echo'); }
-    function unlockWake() { btnCycle01.classList.add('visible'); switchTab('wake'); }
-    function unlockBloom() { btnCycleBloom.classList.add('visible'); switchTab('bloom'); }
-    function unlockGardener() { btnCycle02.classList.add('visible'); switchTab('gardener'); }
-
-    function typeLine(htmlText, className, container) {
-      const lineDiv = document.createElement('div');
-      if (htmlText.includes('----') || htmlText.includes('====')) lineDiv.className = `terminal-line divider-line ${className}`;
-      else lineDiv.className = `terminal-line ${className}`;
-      lineDiv.innerHTML = htmlText; lineDiv.classList.add('active');
-      if(className.includes('golden-text')) lineDiv.classList.add('gold-line');
-      if(className.includes('white-text')) lineDiv.classList.add('white-line');
-      if(className.includes('magenta-text')) lineDiv.classList.add('magenta-line');
-      if(className.includes('system-success')) lineDiv.classList.add('blue-line');
-      container.appendChild(lineDiv);
-    }
-
-    function closeTerminal() {
-      if(activeTimer) clearTimeout(activeTimer);
-      secretOverlay.classList.remove('active');
-      document.body.classList.remove('no-scroll');
-      terminalRunning = false; currentTab = null;
-      containers.crash.innerHTML = ""; containers.echo.innerHTML = "";
-      containers.wake.innerHTML = ""; containers.bloom.innerHTML = "";
-      containers.gardener.innerHTML = "";
-      btnCycle00.classList.remove('visible'); btnCycleEcho.classList.remove('visible');
-      btnCycle01.classList.remove('visible'); btnCycleBloom.classList.remove('visible');
-      btnCycle02.classList.remove('visible');
-    }
   </script>
+  <!-- SCRIPT IS AT THE END TO ENSURE HTML IS LOADED FIRST -->
+  <script src="script.js"></script>
 </body>
 </html>
