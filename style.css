@@ -181,9 +181,7 @@
     width: 100%;
     margin-bottom: 25px;
     cursor: pointer;
-    padding: 15px 0; 
-    /* Important: pan-y allows vertical scrolling to start naturally. 
-       Our JS will call e.preventDefault() to stop it ONLY if moving horizontally. */
+    padding: 6px 0; 
     touch-action: pan-y; 
   }
   
