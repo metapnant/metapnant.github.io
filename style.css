@@ -113,9 +113,36 @@
   @keyframes strobe { 0%, 100% { color: var(--name-color); text-decoration-color: var(--name-color); } 50% { color: #ffffff; text-decoration-color: #ffffff; } }
   @keyframes faintFlash { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
   
-  .footer { text-align: center; padding: 20px 0 10px 0; font-size: 0.85em; color: var(--secondary-text-color); border-top: 1px solid rgba(255, 255, 255, 0.08); margin-top: 40px; }
-  #infinity-symbol { cursor: pointer; display: inline-block; transition: text-shadow 0.3s, color 0.3s; padding: 0 5px; font-weight: bold; }
-  #infinity-symbol:hover { color: #fff; text-shadow: 0 0 15px var(--name-color); }
+  /* Footer & Infinity Symbol */
+.footer { 
+    text-align: center; 
+    padding: 20px 0 10px 0; 
+    font-size: 0.85em; 
+    color: var(--secondary-text-color); 
+    border-top: 1px solid rgba(255, 255, 255, 0.08); 
+    margin-top: 40px; 
+}
+
+#infinity-symbol { 
+    display: inline-block; 
+    transition: text-shadow 0.3s, color 0.3s; 
+    padding: 0 5px; 
+    font-weight: bold;
+    /* Default: Not interactive */
+    cursor: default; 
+    pointer-events: none; /* Prevents clicking entirely unless active */
+}
+
+/* New class applied by JS when on the correct page or unlocked */
+#infinity-symbol.active {
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+#infinity-symbol.active:hover { 
+    color: #fff; 
+    text-shadow: 0 0 15px var(--name-color); 
+}
   
   /* SECRET TERMINAL */
   #secret-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--terminal-bg); z-index: 9999; display: none; flex-direction: row; font-family: 'Space Mono', monospace; overflow: hidden; box-sizing: border-box; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
