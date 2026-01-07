@@ -317,8 +317,9 @@ function prevTrack() {
     playTrack(prevIdx);
 }
 
-// --- STRICT DRAGGABLE PROGRESS BAR LOGIC (GLOW REQUIRED) ---
+// --- ROBUST DRAGGABLE PROGRESS BAR LOGIC (STATE MACHINE) ---
 
+// Updates the CSS width and Time Text (Visual Only)
 function updateScrubVisual(percent) {
     domProgressBar.style.setProperty('--progress', `${percent}%`);
     if (audioPlayer.duration) {
@@ -327,6 +328,7 @@ function updateScrubVisual(percent) {
     }
 }
 
+// Calculates percentage based on X position
 function getScrubPercent(e) {
     const width = progressArea.clientWidth;
     const clientEvent = e.type.includes('touch') ? (e.touches[0] || e.changedTouches[0]) : e;
@@ -336,18 +338,18 @@ function getScrubPercent(e) {
     return Math.max(0, Math.min(100, percent));
 }
 
-// Variables
+// STATE VARIABLES
 let touchStartX = 0;
 let touchStartY = 0;
 let holdTimer = null;
-let isTouch = false; // Guard to block ghost clicks
+let isTouch = false;      // Guard to block ghost clicks
+let isScrolling = false;  // Guard to prevent drag while scrolling
 
-// 1. MOUSE EVENTS (Desktop - Click & Drag)
+// 1. MOUSE EVENTS (Desktop - Simple & Instant)
 const startDragMouse = (e) => {
-    // IGNORE if triggered by a tap/touch event chain
-    if (isTouch) return; 
+    if (isTouch) return; // Ignore if triggered by touch chain
+    if (e.button !== 0) return; // Left click only
     
-    if (e.button !== 0) return; 
     isDragging = true;
     domProgressBar.classList.add('dragging'); 
     updateScrubVisual(getScrubPercent(e));
@@ -360,61 +362,89 @@ const doDragMouse = (e) => {
 };
 
 const endDragMouse = (e) => { 
-    if(isDragging) { 
+    if (isDragging) {
         const percent = getScrubPercent(e);
-        if (audioPlayer.duration) {
-            audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
-        }
+        if (audioPlayer.duration) audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
+        
         isDragging = false; 
         domProgressBar.classList.remove('dragging'); 
     } 
 };
 
-// 2. TOUCH EVENTS (Mobile - Hold Required)
+// 2. TOUCH EVENTS (Mobile - Priority Logic)
 const startDragTouch = (e) => {
-    isTouch = true; // Flag touch interaction
+    isTouch = true;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
+    
     isDragging = false; 
+    isScrolling = false; // Reset Scroll Guard
 
     // Start Hold Timer (200ms)
+    // If user holds still, we enter Drag Mode.
+    // If user moves before this, we cancel it.
     holdTimer = setTimeout(() => {
-        isDragging = true;
-        domProgressBar.classList.add('dragging'); 
-        updateScrubVisual(getScrubPercent(e));
+        if (!isScrolling) {
+            isDragging = true;
+            domProgressBar.classList.add('dragging'); // Ignite Glow
+            updateScrubVisual(getScrubPercent(e));
+        }
     }, 200); 
 };
 
 const doDragTouch = (e) => {
+    // A. Already Dragging? (Timer fired OR horizontal swipe detected)
     if (isDragging) {
-        if (e.cancelable) e.preventDefault();
+        if (e.cancelable) e.preventDefault(); // Lock Scroll
         updateScrubVisual(getScrubPercent(e));
-    } else {
-        const x = e.touches[0].clientX;
-        const y = e.touches[0].clientY;
-        const dx = Math.abs(x - touchStartX);
-        const dy = Math.abs(y - touchStartY);
+        return;
+    }
 
-        // If moved significantly before timer fired, it's a scroll. Cancel timer.
-        if (dx > 5 || dy > 5) {
-            clearTimeout(holdTimer);
+    // B. Already Scrolling? (Vertical swipe detected previously)
+    if (isScrolling) {
+        return; // Do nothing, let browser scroll
+    }
+
+    // C. Analyzing Movement (Timer hasn't fired yet)
+    const x = e.touches[0].clientX;
+    const y = e.touches[0].clientY;
+    const dx = Math.abs(x - touchStartX);
+    const dy = Math.abs(y - touchStartY);
+
+    // Threshold to decide intent (5px)
+    if (dx > 5 || dy > 5) {
+        // Movement detected: KILL THE TIMER immediately so it doesn't flash later
+        if (holdTimer) clearTimeout(holdTimer);
+
+        if (dx > dy) {
+            // Horizontal > Vertical = USER WANTS TO SCRUB
+            isDragging = true;
+            domProgressBar.classList.add('dragging');
+            if (e.cancelable) e.preventDefault(); // Stop scroll
+            updateScrubVisual(getScrubPercent(e));
+        } else {
+            // Vertical > Horizontal = USER WANTS TO SCROLL
+            isScrolling = true;
+            // We do NOT prevent default. Let browser scroll.
+            // Timer is dead, so bar will never glow.
         }
     }
 };
 
 const endDragTouch = (e) => {
+    // Ensure timer is dead
     if (holdTimer) clearTimeout(holdTimer);
 
     if (isDragging) {
         const percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
-        if (audioPlayer.duration) {
-            audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
-        }
+        if (audioPlayer.duration) audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
+        
         isDragging = false;
         domProgressBar.classList.remove('dragging'); 
     }
     
-    // Reset touch flag after a delay to allow mouse events to return for hybrid devices
+    // Reset guards
+    isScrolling = false;
     setTimeout(() => { isTouch = false; }, 500);
 };
 
