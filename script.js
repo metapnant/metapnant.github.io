@@ -106,107 +106,85 @@ let logState = {
 };
 
 // ==========================================
-// 3. AGGRESSIVE AUDIO ENGINE (iOS FIX)
+// 3. SOUND ENGINE (SYNTHESIZER)
 // ==========================================
-let audioContext = null;
-let audioUnlocked = false;
-
-function initAudio() {
-    if (audioContext) return;
+const SimpleSynth = {
+    ctx: null,
     
-    // Create Context specifically inside the user event stack
-    const AudioCtor = window.AudioContext || window.webkitAudioContext;
-    audioContext = new AudioCtor();
-}
+    init: function() {
+        if (!this.ctx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    },
 
-function wakeAudioSystem() {
-    if (audioUnlocked) return;
-    
-    initAudio();
+    playTone: function(cssClass) {
+        if (isMuted) return;
+        if (!this.ctx || this.ctx.state === 'suspended') return;
+        
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        
+        if (cssClass.includes('operator-text')) {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(500, t);
+            osc.frequency.linearRampToValueAtTime(450, t + 0.08); 
+            gain.gain.setValueAtTime(0.04, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+            osc.start(); osc.stop(t + 0.08);
+        } else if (cssClass.includes('alert-text')) {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t);
+            gain.gain.setValueAtTime(0.06, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+            osc.start(); osc.stop(t + 0.1);
+        } else if (cssClass.includes('comment-text')) {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(3000, t);
+            gain.gain.setValueAtTime(0.015, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01); 
+            osc.start(); osc.stop(t + 0.01);
+        } else if (cssClass.includes('golden-text') || cssClass.includes('white-text') || cssClass.includes('magenta-text')) {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(880, t); 
+            gain.gain.setValueAtTime(0.08, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); 
+            osc.start(); osc.stop(t + 0.2);
+        } else if (cssClass.includes('system-success')) {
+            osc.type = 'square'; osc.frequency.setValueAtTime(1200, t);
+            osc.frequency.linearRampToValueAtTime(2000, t + 0.05);
+            gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+            osc.start(); osc.stop(t + 0.05);
+        } else {
+            osc.type = 'square'; osc.frequency.setValueAtTime(800, t);
+            osc.frequency.exponentialRampToValueAtTime(100, t + 0.04);
+            gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+            osc.start(); osc.stop(t + 0.04);
+        }
+    },
 
-    if (audioContext.state === 'suspended') {
-        audioContext.resume();
+    playUnlock: function() {
+        if (isMuted) return;
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.05, this.ctx.currentTime); gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3);
+        osc.start(); osc.stop(this.ctx.currentTime + 0.3);
     }
+};
 
-    // Play an inaudible burst to force the hardware to engage
-    const osc = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-    
-    osc.type = 'sawtooth';
-    osc.frequency.value = 20000; // Above human hearing
-    gain.gain.value = 0.001; // Tiny volume
-    
-    osc.connect(gain);
-    gain.connect(audioContext.destination);
-    
-    osc.start(0);
-    osc.stop(0.1);
-
-    audioUnlocked = true;
-    
-    // Remove listeners once successfully woke
-    document.removeEventListener('click', wakeAudioSystem);
-    document.removeEventListener('touchstart', wakeAudioSystem);
-    document.removeEventListener('keydown', wakeAudioSystem);
+// Global Unlock Handler
+function unlockAudioEngine() {
+    SimpleSynth.init();
+    document.removeEventListener('click', unlockAudioEngine);
+    document.removeEventListener('keydown', unlockAudioEngine);
+    document.removeEventListener('touchstart', unlockAudioEngine);
 }
-
-// Attach to ALL possible interaction points
-document.addEventListener('click', wakeAudioSystem);
-document.addEventListener('touchstart', wakeAudioSystem);
-document.addEventListener('keydown', wakeAudioSystem);
-
-function playTone(cssClass) {
-    if (isMuted || !audioContext) return;
-    if (audioContext.state === 'suspended') audioContext.resume();
-
-    const t = audioContext.currentTime;
-    const osc = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-
-    osc.connect(gain);
-    gain.connect(audioContext.destination);
-
-    if (cssClass.includes('operator-text')) {
-        osc.type = 'triangle'; osc.frequency.setValueAtTime(500, t);
-        osc.frequency.linearRampToValueAtTime(450, t + 0.08); 
-        gain.gain.setValueAtTime(0.04, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-        osc.start(); osc.stop(t + 0.08);
-    } else if (cssClass.includes('alert-text')) {
-        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t);
-        gain.gain.setValueAtTime(0.06, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-        osc.start(); osc.stop(t + 0.1);
-    } else if (cssClass.includes('comment-text')) {
-        osc.type = 'sine'; osc.frequency.setValueAtTime(3000, t);
-        gain.gain.setValueAtTime(0.015, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01); 
-        osc.start(); osc.stop(t + 0.01);
-    } else if (cssClass.includes('golden-text') || cssClass.includes('white-text') || cssClass.includes('magenta-text')) {
-        osc.type = 'sine'; osc.frequency.setValueAtTime(880, t); 
-        gain.gain.setValueAtTime(0.08, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); 
-        osc.start(); osc.stop(t + 0.2);
-    } else if (cssClass.includes('system-success')) {
-        osc.type = 'square'; osc.frequency.setValueAtTime(1200, t);
-        osc.frequency.linearRampToValueAtTime(2000, t + 0.05);
-        gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-        osc.start(); osc.stop(t + 0.05);
-    } else {
-        osc.type = 'square'; osc.frequency.setValueAtTime(800, t);
-        osc.frequency.exponentialRampToValueAtTime(100, t + 0.04);
-        gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-        osc.start(); osc.stop(t + 0.04);
-    }
-}
-
-function playUnlockSound() {
-    if (isMuted || !audioContext) return;
-    const osc = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-    osc.connect(gain); gain.connect(audioContext.destination);
-    osc.type = 'sine'; osc.frequency.setValueAtTime(200, audioContext.currentTime);
-    osc.frequency.linearRampToValueAtTime(600, audioContext.currentTime + 0.3);
-    gain.gain.setValueAtTime(0.05, audioContext.currentTime); gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
-    osc.start(); osc.stop(audioContext.currentTime + 0.3);
-}
-
+document.addEventListener('click', unlockAudioEngine);
+document.addEventListener('keydown', unlockAudioEngine);
+document.addEventListener('touchstart', unlockAudioEngine);
 
 // ==========================================
 // 4. DOM ELEMENTS
@@ -279,6 +257,7 @@ function updateInfinityState() {
 async function loadDocument(index) {
   if (isLoading) return;
   isLoading = true; renderSession++; const currentSession = renderSession;
+
   songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
   const existingPages = document.querySelectorAll('.pdf-page-wrapper');
   existingPages.forEach(p => p.remove());
@@ -629,7 +608,7 @@ function commitSeek(percent) {
                 shouldAnimateReveal = true;
                 startLoadingScramble(domTrackTitle);
             }
-        }, 300);
+        }, 400);
     } else pendingSeekPercent = percent;
 }
 
@@ -646,6 +625,8 @@ function initTerminalState() {
     if (appState.unlockedTabs.includes('gardener')) btnCycle02.classList.add('visible');
     if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
         btnReset.classList.add('visible');
+        btnTurbo.classList.add('visible');
+        btnMute.classList.add('visible');
     }
 }
 function checkStateIntegrity() {
@@ -657,96 +638,366 @@ function checkStateIntegrity() {
     if (changed) saveState();
 }
 function launchTerminal() {
-    wakeAudioSystem(); // Try to wake immediately 
+    SimpleSynth.init(); // Initialize audio context on user interaction
     terminalRunning = true; 
     checkStateIntegrity();
+  
     savedScrollTop = window.scrollY || document.documentElement.scrollTop;
-    document.body.style.position = 'fixed'; document.body.style.top = `-${savedScrollTop}px`; document.body.classList.add('no-scroll');
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${savedScrollTop}px`;
+    document.body.classList.add('no-scroll');
+    
     secretOverlay.classList.add('active');
-    btnReset.classList.add('visible'); btnCycle00.classList.add('visible'); btnTurbo.classList.add('visible'); btnMute.classList.add('visible');
-    if (!currentTab) switchTab(appState.unlockedTabs[appState.unlockedTabs.length - 1]); else processQueue();
+    btnReset.classList.add('visible');
+    btnCycle00.classList.add('visible');
+    btnTurbo.classList.add('visible');
+    btnMute.classList.add('visible');
+  
+    if (!currentTab) {
+        const lastUnlocked = appState.unlockedTabs[appState.unlockedTabs.length - 1];
+        switchTab(lastUnlocked);
+    } else {
+        processQueue();
+    }
 }
+
 function switchTab(type) {
     if (currentTab === type) {
-        if (logState[type].finished) { replayLog(null, type); return; }
+        // REPLAY LOGIC
+        if (logState[type].finished) { 
+            replayLog(null, type); return; 
+        } 
+        // CANCEL LOGIC
         else if (terminalRunning && appState.finishedLogs.includes(type)) {
             if (activeTimer) clearTimeout(activeTimer);
-            renderFullLog(type); logState[type].finished = true; updateReplayIcon(type); return;
+            renderFullLog(type); 
+            logState[type].finished = true; 
+            updateReplayIcon(type); 
+            return;
         }
         if (terminalRunning) return;
     }
-    if (activeTimer) clearTimeout(activeTimer); currentTab = type;
-    const allBtns = [btnCycle00, btnCycle01, btnCycleEcho, btnCycleBloom, btnCycle02]; const allContainers = [containers.crash, containers.wake, containers.echo, containers.bloom, containers.gardener];
-    allBtns.forEach(btn => { btn.classList.remove('active'); if (btn.querySelector('.replay-icon')) btn.removeChild(btn.querySelector('.replay-icon')); });
+
+    if (activeTimer) clearTimeout(activeTimer);
+    
+    currentTab = type;
+  
+    const allBtns = [btnCycle00, btnCycle01, btnCycleEcho, btnCycleBloom, btnCycle02];
+    const allContainers = [containers.crash, containers.wake, containers.echo, containers.bloom, containers.gardener];
+    
+    // Reset UI
+    allBtns.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.querySelector('.replay-icon')) {
+            btn.removeChild(btn.querySelector('.replay-icon'));
+        }
+    });
     allContainers.forEach(con => con.classList.remove('active-log'));
+    
     let activeBtn = null;
     if (type === 'crash') { activeBtn = btnCycle00; containers.crash.classList.add('active-log'); } 
     else if (type === 'echo') { activeBtn = btnCycleEcho; containers.echo.classList.add('active-log'); } 
     else if (type === 'wake') { activeBtn = btnCycle01; containers.wake.classList.add('active-log'); } 
     else if (type === 'bloom') { activeBtn = btnCycleBloom; containers.bloom.classList.add('active-log'); } 
     else if (type === 'gardener') { activeBtn = btnCycle02; containers.gardener.classList.add('active-log'); }
-    if (activeBtn) { activeBtn.classList.add('active'); setTimeout(() => { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }, 50);
-        if (appState.finishedLogs.includes(type)) updateReplayIcon(type); }
-    if (appState.finishedLogs.includes(type)) { renderFullLog(type); logState[type].finished = true; logState[type].index = logsData[type].length; } else processQueue();
+  
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+        setTimeout(() => {
+            activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }, 50);
+        
+        if (appState.finishedLogs.includes(type)) updateReplayIcon(type);
+    }
+  
+    // If finished in state, show full log instantly (fixes "freeze")
+    if (appState.finishedLogs.includes(type)) {
+        renderFullLog(type);
+        logState[type].finished = true;
+        logState[type].index = logsData[type].length;
+    } else {
+        processQueue();
+    }
 }
+
+// NEW: Helper to append icon
 function updateReplayIcon(type) {
     let activeBtn = null;
-    if (type === 'crash') activeBtn = btnCycle00; else if (type === 'echo') activeBtn = btnCycleEcho; else if (type === 'wake') activeBtn = btnCycle01; else if (type === 'bloom') activeBtn = btnCycleBloom; else if (type === 'gardener') activeBtn = btnCycle02;
+    if (type === 'crash') activeBtn = btnCycle00;
+    else if (type === 'echo') activeBtn = btnCycleEcho;
+    else if (type === 'wake') activeBtn = btnCycle01;
+    else if (type === 'bloom') activeBtn = btnCycleBloom;
+    else if (type === 'gardener') activeBtn = btnCycle02;
+    
     if (activeBtn && !activeBtn.querySelector('.replay-icon')) {
-        const icon = document.createElement('span'); icon.className = 'replay-icon'; icon.innerHTML = '↺'; icon.onclick = (e) => replayLog(e, type);
+        const icon = document.createElement('span');
+        icon.className = 'replay-icon';
+        icon.innerHTML = '↺';
+        icon.onclick = (e) => replayLog(e, type);
         activeBtn.appendChild(icon);
     }
 }
+
+// NEW: Replay Logic
 function replayLog(e, type) {
-    if (e) e.stopPropagation(); if (activeTimer) clearTimeout(activeTimer);
-    containers[type].innerHTML = ""; logState[type].index = 0; logState[type].finished = false;
+    if (e) e.stopPropagation(); 
+    if (activeTimer) clearTimeout(activeTimer);
+    
+    currentTab = type;
+    containers[type].innerHTML = ""; 
+    logState[type].index = 0; 
+    logState[type].finished = false;
+    
     let activeBtn = null;
     if (type === 'crash') activeBtn = btnCycle00; else if (type === 'echo') activeBtn = btnCycleEcho; else if (type === 'wake') activeBtn = btnCycle01; else if (type === 'bloom') activeBtn = btnCycleBloom; else if (type === 'gardener') activeBtn = btnCycle02;
     if (activeBtn && activeBtn.querySelector('.replay-icon')) activeBtn.removeChild(activeBtn.querySelector('.replay-icon'));
+    
     processQueue();
 }
+
 function toggleTurbo() { turboMode = !turboMode; logSpeedMultiplier = turboMode ? 0.1 : 1; btnTurbo.innerText = turboMode ? "[ >> ] TURBO: ON" : "[ >> ] TURBO: OFF"; if (turboMode) btnTurbo.classList.add('active'); else btnTurbo.classList.remove('active'); }
 function toggleMute() { isMuted = !isMuted; btnMute.innerText = isMuted ? "[VOL: OFF]" : "[VOL: ON]"; if (isMuted) btnMute.classList.add('active'); else btnMute.classList.remove('active'); }
 function processQueue() {
-    if (!currentTab || !terminalRunning) return; if (logState[currentTab].finished) return;
-    const idx = logState[currentTab].index; if (idx >= logsData[currentTab].length) { markLogFinished(currentTab); return; }
-    const lineData = logsData[currentTab][idx]; const delay = lineData.delay * logSpeedMultiplier;
-    activeTimer = setTimeout(() => { typeLine(lineData.text, lineData.class, containers[currentTab]); if (lineData.text.trim().length > 0) playTone(lineData.class);
-      logState[currentTab].index++; terminalContainer.scrollTop = terminalContainer.scrollHeight;
-      if (logState[currentTab].index >= logsData[currentTab].length) markLogFinished(currentTab); else processQueue();
+    if (!currentTab || !terminalRunning) return;
+    if (logState[currentTab].finished) return;
+  
+    const idx = logState[currentTab].index;
+    
+    if (idx >= logsData[currentTab].length) {
+        markLogFinished(currentTab);
+        return;
+    }
+  
+    const lineData = logsData[currentTab][idx];
+    
+    // Apply Turbo Multiplier
+    const delay = lineData.delay * logSpeedMultiplier;
+
+    activeTimer = setTimeout(() => {
+      typeLine(lineData.text, lineData.class, containers[currentTab]);
+      
+      // FIX: Play sound for every line (no throttle), unless muted
+      if (lineData.text.trim().length > 0) {
+          SimpleSynth.playTone(lineData.class);
+      }
+      
+      logState[currentTab].index++;
+      terminalContainer.scrollTop = terminalContainer.scrollHeight;
+      
+      if (logState[currentTab].index >= logsData[currentTab].length) {
+         markLogFinished(currentTab);
+      } else { 
+         processQueue(); 
+      }
     }, delay);
 }
-function markLogFinished(type) { logState[type].finished = true; if (!appState.finishedLogs.includes(type)) { appState.finishedLogs.push(type); saveState(); playUnlockSound();
-    if (type === 'crash') activeTimer = setTimeout(unlockEcho, 1500 * logSpeedMultiplier); else if (type === 'echo') activeTimer = setTimeout(unlockWake, 1500 * logSpeedMultiplier); else if (type === 'wake') activeTimer = setTimeout(unlockBloom, 1500 * logSpeedMultiplier); else if (type === 'bloom') activeTimer = setTimeout(unlockGardener, 1500 * logSpeedMultiplier);
-    } else updateReplayIcon(type);
+
+function markLogFinished(type) {
+    logState[type].finished = true;
+    if (!appState.finishedLogs.includes(type)) {
+        appState.finishedLogs.push(type);
+        saveState();
+        SimpleSynth.playUnlock();
+        
+        if (type === 'crash') activeTimer = setTimeout(unlockEcho, 1500 * logSpeedMultiplier); 
+        else if (type === 'echo') activeTimer = setTimeout(unlockWake, 1500 * logSpeedMultiplier); 
+        else if (type === 'wake') activeTimer = setTimeout(unlockBloom, 1500 * logSpeedMultiplier); 
+        else if (type === 'bloom') activeTimer = setTimeout(unlockGardener, 1500 * logSpeedMultiplier);
+    } else {
+        // Re-add icon if this was a replay finishing
+        updateReplayIcon(type);
+    }
 }
+
 function unlockEcho() { if(!appState.unlockedTabs.includes('echo')) { appState.unlockedTabs.push('echo'); saveState(); } btnCycleEcho.classList.add('visible'); switchTab('echo'); }
 function unlockWake() { if(!appState.unlockedTabs.includes('wake')) { appState.unlockedTabs.push('wake'); saveState(); } btnCycle01.classList.add('visible'); switchTab('wake'); }
 function unlockBloom() { if(!appState.unlockedTabs.includes('bloom')) { appState.unlockedTabs.push('bloom'); saveState(); } btnCycleBloom.classList.add('visible'); switchTab('bloom'); }
 function unlockGardener() { if(!appState.unlockedTabs.includes('gardener')) { appState.unlockedTabs.push('gardener'); saveState(); } btnCycle02.classList.add('visible'); switchTab('gardener'); }
-function renderFullLog(type) { containers[type].innerHTML = ""; logsData[type].forEach(line => { typeLine(line.text, line.class, containers[type]); }); setTimeout(() => terminalContainer.scrollTop = terminalContainer.scrollHeight, 100); }
-function typeLine(htmlText, className, container) { const lineDiv = document.createElement('div'); if (htmlText.includes('----') || htmlText.includes('====')) lineDiv.className = `terminal-line divider-line ${className}`; else lineDiv.className = `terminal-line ${className}`; lineDiv.innerHTML = htmlText; lineDiv.classList.add('active'); if(className.includes('golden-text')) lineDiv.classList.add('gold-line'); if(className.includes('white-text')) lineDiv.classList.add('white-line'); if(className.includes('magenta-text')) lineDiv.classList.add('magenta-line'); if(className.includes('system-success')) lineDiv.classList.add('blue-line'); container.appendChild(lineDiv); }
-function closeTerminal() { if(activeTimer) clearTimeout(activeTimer); secretOverlay.classList.remove('active'); document.body.classList.remove('no-scroll'); document.body.style.position = ''; document.body.style.top = ''; window.scrollTo(0, savedScrollTop); terminalRunning = false; }
-function revealPlayer() { closeTerminal(); musicSection.style.display = 'block'; appState.musicUnlocked = true; saveState(); updateInfinityState(); loadTrack(currentTrackIdx); setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100); }
 
-// --- LISTENERS ---
+function renderFullLog(type) {
+    containers[type].innerHTML = "";
+    logsData[type].forEach(line => { typeLine(line.text, line.class, containers[type]); });
+    setTimeout(() => terminalContainer.scrollTop = terminalContainer.scrollHeight, 100);
+}
+
+function typeLine(htmlText, className, container) {
+    const lineDiv = document.createElement('div');
+    if (htmlText.includes('----') || htmlText.includes('====')) lineDiv.className = `terminal-line divider-line ${className}`;
+    else lineDiv.className = `terminal-line ${className}`;
+    lineDiv.innerHTML = htmlText; lineDiv.classList.add('active');
+    if(className.includes('golden-text')) lineDiv.classList.add('gold-line');
+    if(className.includes('white-text')) lineDiv.classList.add('white-line');
+    if(className.includes('magenta-text')) lineDiv.classList.add('magenta-line');
+    if(className.includes('system-success')) lineDiv.classList.add('blue-line');
+    container.appendChild(lineDiv);
+}
+
+function closeTerminal() {
+    if(activeTimer) clearTimeout(activeTimer);
+    secretOverlay.classList.remove('active');
+    
+    document.body.classList.remove('no-scroll');
+    document.body.style.position = '';
+    document.body.style.top = '';
+    window.scrollTo(0, savedScrollTop);
+    
+    terminalRunning = false; 
+}
+
+function revealPlayer() {
+    closeTerminal();
+    musicSection.style.display = 'block';
+    
+    appState.musicUnlocked = true;
+    saveState();
+    
+    loadTrack(currentTrackIdx);
+    
+    setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100);
+}
+
+// ==========================================
+// 6. EVENT LISTENERS & INITIALIZATION
+// ==========================================
+
 document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex + 1) % library.length); }});
 document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex - 1 + library.length) % library.length); }});
+
+// Button Listeners with preventDefault for safety
 if(btnPlay) btnPlay.addEventListener('click', (e) => { e.preventDefault(); togglePlay(); });
 if(btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextTrack(false); });
 if(btnPrev) btnPrev.addEventListener('click', (e) => { e.preventDefault(); prevTrack(); });
 if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggleLoop(); });
-progressArea.addEventListener('mousedown', startDragMouse); document.addEventListener('mousemove', doDragMouse); document.addEventListener('mouseup', endDragMouse);
-progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); progressArea.addEventListener('touchend', endDragTouch);
-audioPlayer.addEventListener('timeupdate', () => { if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; domProgressBar.style.setProperty('--progress', `${p}%`); domCurrentTime.textContent = formatTime(audioPlayer.currentTime); domDuration.textContent = formatTime(audioPlayer.duration); }});
-audioPlayer.addEventListener('loadedmetadata', () => { domDuration.textContent = formatTime(audioPlayer.duration); if (pendingSeekPercent !== null) { audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); pendingSeekPercent = null; }});
+
+progressArea.addEventListener('mousedown', startDragMouse);
+document.addEventListener('mousemove', doDragMouse);
+document.addEventListener('mouseup', endDragMouse);
+
+progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
+progressArea.addEventListener('touchmove', doDragTouch, { passive: false });
+progressArea.addEventListener('touchend', endDragTouch);
+
+audioPlayer.addEventListener('timeupdate', () => {
+    if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) {
+        const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        domProgressBar.style.setProperty('--progress', `${percent}%`);
+        domCurrentTime.textContent = formatTime(audioPlayer.currentTime);
+        domDuration.textContent = formatTime(audioPlayer.duration);
+    }
+});
+
+// NEW: When file is actually playable/loaded
+audioPlayer.addEventListener('canplay', () => {
+    const track = albumTracks[currentTrackIdx];
+    resolveLoadingScramble(domTrackTitle, track.title);
+    
+    domDuration.textContent = formatTime(audioPlayer.duration);
+    
+    if (pendingSeekPercent !== null) {
+        audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration;
+        domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`);
+        pendingSeekPercent = null;
+    }
+});
+
 audioPlayer.addEventListener('ended', () => nextTrack(true));
-audioPlayer.addEventListener('waiting', () => { if(bufferCheckTimer) clearTimeout(bufferCheckTimer); bufferCheckTimer = setTimeout(() => { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); }, 300); });
-audioPlayer.addEventListener('playing', () => { if (bufferCheckTimer) clearTimeout(bufferCheckTimer); if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; } });
-audioPlayer.addEventListener('canplay', () => { if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; } });
-if (btnShowVoice) { btnShowVoice.addEventListener('click', (e) => { e.preventDefault(); if (currentIndex !== 0) loadDocument(0); pendingScrollPage = 8; const p8 = document.getElementById('page-wrapper-8'); if (p8) { smartScrollTo(p8); pendingScrollPage = null; } }); }
-infinityBtn.addEventListener('click', (e) => { e.preventDefault(); wakeAudioSystem(); if (appState.terminalFound) { launchTerminal(); return; } if (currentIndex !== 2) return; secretClicks++; infinityBtn.style.color = "#ff00ff"; setTimeout(() => infinityBtn.style.color = "", 200); if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; saveState(); updateInfinityState(); launchTerminal(); } });
-document.addEventListener('keydown', (e) => { const isPlayerVisible = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500; if (e.code === 'Space') { if (isPlayerVisible || terminalRunning) { e.preventDefault(); togglePlay(); } } if (e.code === 'ArrowRight') { if (e.shiftKey) { e.preventDefault(); nextTrack(false); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime += 5; } } if (e.code === 'ArrowLeft') { if (e.shiftKey) { e.preventDefault(); prevTrack(); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; } } });
-function formatTime(s) { if(isNaN(s) || s === Infinity) return "0:00"; const m = Math.floor(s/60); const ss = Math.floor(s%60); return `${m}:${ss<10?'0':''}${ss}`; }
+
+// NEW: Smart Buffering Resolve
+audioPlayer.addEventListener('playing', () => {
+    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
+    
+    // FIX: Only resolve text if we were actually waiting for a scramble
+    // Use shouldAnimateReveal flag to decide
+    if (shouldAnimateReveal) {
+        const track = albumTracks[currentTrackIdx];
+        resolveLoadingScramble(domTrackTitle, track.title);
+        shouldAnimateReveal = false; 
+    }
+});
+
+// Also handle waiting event properly
+audioPlayer.addEventListener('waiting', () => {
+    if(bufferCheckTimer) clearTimeout(bufferCheckTimer);
+    // Don't set flag yet, wait for timer
+    bufferCheckTimer = setTimeout(() => {
+        shouldAnimateReveal = true; // Mark that we are now scrambling
+        startLoadingScramble(domTrackTitle);
+    }, 300);
+});
+
+if (btnShowVoice) {
+    btnShowVoice.addEventListener('click', (e) => {
+        e.preventDefault();
+        // 1. Switch to METAPNANT
+        if (currentIndex !== 0) {
+            loadDocument(0);
+        }
+        // 2. Queue scroll
+        pendingScrollPage = 8;
+        // 3. Try immediate scroll
+        const page8 = document.getElementById('page-wrapper-8');
+        if (page8) {
+            smartScrollTo(page8);
+            pendingScrollPage = null; 
+        }
+    });
+}
+
+infinityBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    
+    SimpleSynth.init();
+
+    if (appState.terminalFound) {
+        launchTerminal();
+        return;
+    }
+    if (currentIndex !== 2) return;
+    secretClicks++; 
+    infinityBtn.style.color = "#ff00ff";
+    setTimeout(() => infinityBtn.style.color = "", 200);
+    if (secretClicks === 3) { 
+        secretClicks = 0; 
+        appState.terminalFound = true; 
+        saveState();
+        updateInfinityState(); 
+        launchTerminal(); 
+    }
+});
+
+// KEYBOARD CONTROLS
+document.addEventListener('keydown', (e) => {
+    // Only capture if user isn't interacting with browser UI
+    // Simple heuristic: if audio is playing or terminal is open, or music section is visible
+    const isPlayerVisible = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500;
+    
+    if (e.code === 'Space') {
+        if (isPlayerVisible || terminalRunning) {
+            e.preventDefault();
+            togglePlay();
+        }
+    }
+    
+    if (e.code === 'ArrowRight') {
+        if (e.shiftKey) { e.preventDefault(); nextTrack(false); }
+        else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime += 5; }
+    }
+    if (e.code === 'ArrowLeft') {
+        if (e.shiftKey) { e.preventDefault(); prevTrack(); }
+        else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; }
+    }
+});
+
+function formatTime(seconds) {
+    if(isNaN(seconds) || seconds === Infinity) return "0:00";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+// STARTUP
 document.getElementById("currentYear").textContent = new Date().getFullYear();
-initTerminalState(); loadDocument(0); initPlaylist(); loadTrack(0);
+initTerminalState();
+loadDocument(0);
+initPlaylist();
+loadTrack(0);
