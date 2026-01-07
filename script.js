@@ -26,11 +26,10 @@ const library = [
 ];
 
 // UPDATED WITH WAV EXTENSIONS
-// NOTE: Ensure your actual files match these names EXACTLY (including .wav vs .WAV)
 const albumTracks = [
     { title: "Blood-Sap", src: "music/00 - Blood-Sap.wav" },
     { title: "First Step", src: "music/01 - First Step.wav" },
-    { title: "hidden", src: "music/02  - hidden.wav" }, 
+    { title: "hidden", src: "music/02 - hidden.wav" }, 
     { title: "Tether", src: "music/03 - Tether.wav" },
     { title: "Lens -of-", src: "music/04 - Lens -of-.wav" },
     { title: "Innerworld", src: "music/05 - Innerworld.wav" },
@@ -145,9 +144,6 @@ document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoad
 document.getElementById("currentYear").textContent = new Date().getFullYear();
 loadDocument(0);
 
-// FIX: Removed the resize listener that was causing random refreshes/fading/jumping
-// window.addEventListener('resize', ...) <-- DELETED
-
 // ==========================================
 // 3. MUSIC PLAYER LOGIC (THE CHRYSALIS)
 // ==========================================
@@ -175,7 +171,7 @@ function initPlaylist() {
     albumTracks.forEach((track, index) => {
         const li = document.createElement('li');
         li.className = 'playlist-item';
-        li.id = `track-${index}`; // Add ID for scrolling
+        li.id = `track-${index}`; 
         li.innerHTML = `<span>${index < 10 ? '0'+index : index} - ${track.title}</span>`;
         li.onclick = () => playTrack(index);
         playlistList.appendChild(li);
@@ -193,7 +189,6 @@ function loadTrack(index) {
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
-            // FIX: Auto-scroll playlist to current song
             item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else {
             item.classList.remove('active-track');
@@ -691,11 +686,37 @@ function switchTab(type) {
   allBtns.forEach(btn => btn.classList.remove('active'));
   allContainers.forEach(con => con.classList.remove('active-log'));
   
-  if (type === 'crash') { btnCycle00.classList.add('active'); containers.crash.classList.add('active-log'); } 
-  else if (type === 'echo') { btnCycleEcho.classList.add('active'); containers.echo.classList.add('active-log'); } 
-  else if (type === 'wake') { btnCycle01.classList.add('active'); containers.wake.classList.add('active-log'); } 
-  else if (type === 'bloom') { btnCycleBloom.classList.add('active'); containers.bloom.classList.add('active-log'); } 
-  else if (type === 'gardener') { btnCycle02.classList.add('active'); containers.gardener.classList.add('active-log'); }
+  // NEW LOGIC TO TRACK ACTIVE BUTTON
+  let activeBtn = null;
+
+  if (type === 'crash') { 
+      activeBtn = btnCycle00; 
+      containers.crash.classList.add('active-log'); 
+  } 
+  else if (type === 'echo') { 
+      activeBtn = btnCycleEcho; 
+      containers.echo.classList.add('active-log'); 
+  } 
+  else if (type === 'wake') { 
+      activeBtn = btnCycle01; 
+      containers.wake.classList.add('active-log'); 
+  } 
+  else if (type === 'bloom') { 
+      activeBtn = btnCycleBloom; 
+      containers.bloom.classList.add('active-log'); 
+  } 
+  else if (type === 'gardener') { 
+      activeBtn = btnCycle02; 
+      containers.gardener.classList.add('active-log'); 
+  }
+
+  // SCROLL ACTIVE BUTTON INTO VIEW (CENTERED)
+  if (activeBtn) {
+      activeBtn.classList.add('active');
+      setTimeout(() => {
+          activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }, 50);
+  }
 
   if (appState.finishedLogs.includes(type)) {
       if (containers[type].innerHTML === "") renderFullLog(type);
