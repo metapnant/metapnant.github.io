@@ -322,7 +322,9 @@ function prevTrack() {
 // Updates the CSS width and Time Text (Visual Only)
 function updateScrubVisual(percent) {
     domProgressBar.style.setProperty('--progress', `${percent}%`);
-    if (audioPlayer.duration) {
+    
+    // Only update time text if we actually know the duration
+    if (audioPlayer.duration && !isNaN(audioPlayer.duration)) {
         const seekTime = (percent / 100) * audioPlayer.duration;
         domCurrentTime.textContent = formatTime(seekTime);
     }
@@ -344,11 +346,12 @@ let touchStartY = 0;
 let holdTimer = null;
 let isTouch = false;      // Guard to block ghost clicks
 let isScrolling = false;  // Guard to prevent drag while scrolling
+let pendingSeekPercent = null; // NEW: Stores the jump position if song hasn't loaded yet
 
-// 1. MOUSE EVENTS (Desktop - Simple & Instant)
+// 1. MOUSE EVENTS (Desktop)
 const startDragMouse = (e) => {
-    if (isTouch) return; // Ignore if triggered by touch chain
-    if (e.button !== 0) return; // Left click only
+    if (isTouch) return; 
+    if (e.button !== 0) return; 
     
     isDragging = true;
     domProgressBar.classList.add('dragging'); 
@@ -363,92 +366,88 @@ const doDragMouse = (e) => {
 
 const endDragMouse = (e) => { 
     if (isDragging) {
-        const percent = getScrubPercent(e);
-        if (audioPlayer.duration) audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
-        
+        commitSeek(getScrubPercent(e));
         isDragging = false; 
         domProgressBar.classList.remove('dragging'); 
     } 
 };
 
-// 2. TOUCH EVENTS (Mobile - Priority Logic)
+// 2. TOUCH EVENTS (Mobile)
 const startDragTouch = (e) => {
     isTouch = true;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     
     isDragging = false; 
-    isScrolling = false; // Reset Scroll Guard
+    isScrolling = false; 
 
-    // Start Hold Timer (200ms)
-    // If user holds still, we enter Drag Mode.
-    // If user moves before this, we cancel it.
     holdTimer = setTimeout(() => {
         if (!isScrolling) {
             isDragging = true;
-            domProgressBar.classList.add('dragging'); // Ignite Glow
+            domProgressBar.classList.add('dragging'); 
             updateScrubVisual(getScrubPercent(e));
         }
     }, 200); 
 };
 
 const doDragTouch = (e) => {
-    // A. Already Dragging? (Timer fired OR horizontal swipe detected)
     if (isDragging) {
-        if (e.cancelable) e.preventDefault(); // Lock Scroll
+        if (e.cancelable) e.preventDefault(); 
         updateScrubVisual(getScrubPercent(e));
         return;
     }
 
-    // B. Already Scrolling? (Vertical swipe detected previously)
-    if (isScrolling) {
-        return; // Do nothing, let browser scroll
-    }
+    if (isScrolling) return; 
 
-    // C. Analyzing Movement (Timer hasn't fired yet)
     const x = e.touches[0].clientX;
     const y = e.touches[0].clientY;
     const dx = Math.abs(x - touchStartX);
     const dy = Math.abs(y - touchStartY);
 
-    // Threshold to decide intent (5px)
     if (dx > 5 || dy > 5) {
-        // Movement detected: KILL THE TIMER immediately so it doesn't flash later
         if (holdTimer) clearTimeout(holdTimer);
 
         if (dx > dy) {
-            // Horizontal > Vertical = USER WANTS TO SCRUB
             isDragging = true;
             domProgressBar.classList.add('dragging');
-            if (e.cancelable) e.preventDefault(); // Stop scroll
+            if (e.cancelable) e.preventDefault(); 
             updateScrubVisual(getScrubPercent(e));
         } else {
-            // Vertical > Horizontal = USER WANTS TO SCROLL
             isScrolling = true;
-            // We do NOT prevent default. Let browser scroll.
-            // Timer is dead, so bar will never glow.
         }
     }
 };
 
 const endDragTouch = (e) => {
-    // Ensure timer is dead
     if (holdTimer) clearTimeout(holdTimer);
 
     if (isDragging) {
+        // Use current visual state for the seek commit
         const percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
-        if (audioPlayer.duration) audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
+        commitSeek(percent);
         
         isDragging = false;
         domProgressBar.classList.remove('dragging'); 
     }
     
-    // Reset guards
     isScrolling = false;
     setTimeout(() => { isTouch = false; }, 500);
 };
 
-// Listeners
+// --- SEEK COMMIT LOGIC (HANDLES LOADING STATES) ---
+function commitSeek(percent) {
+    // If audio is ready (has duration), jump immediately
+    if (audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration !== Infinity) {
+        audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
+        pendingSeekPercent = null;
+    } else {
+        // Audio not ready? Save the spot.
+        // The 'loadedmetadata' event will pick this up.
+        pendingSeekPercent = percent;
+    }
+}
+
+// Add Listeners
 progressArea.addEventListener('mousedown', startDragMouse);
 document.addEventListener('mousemove', doDragMouse);
 document.addEventListener('mouseup', endDragMouse);
@@ -459,7 +458,10 @@ progressArea.addEventListener('touchend', endDragTouch);
 
 // Playback Progress Update
 audioPlayer.addEventListener('timeupdate', () => {
-    if (!isDragging && audioPlayer.duration) {
+    // Stop the bar from snapping back to 0:00 if we are:
+    // 1. Currently dragging
+    // 2. Waiting for a pending seek (song loading)
+    if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) {
         const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(audioPlayer.currentTime);
@@ -467,14 +469,23 @@ audioPlayer.addEventListener('timeupdate', () => {
     }
 });
 
+// Load Event: Where the magic happens for the pending seek
 audioPlayer.addEventListener('loadedmetadata', () => {
     domDuration.textContent = formatTime(audioPlayer.duration);
+    
+    // If user dragged while loading, jump there now
+    if (pendingSeekPercent !== null) {
+        audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration;
+        // Update visual one last time to ensure sync
+        domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`);
+        pendingSeekPercent = null;
+    }
 });
 
 audioPlayer.addEventListener('ended', () => nextTrack(true));
 
 function formatTime(seconds) {
-    if(isNaN(seconds)) return "0:00";
+    if(isNaN(seconds) || seconds === Infinity) return "0:00";
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     return `${m}:${s < 10 ? '0' : ''}${s}`;

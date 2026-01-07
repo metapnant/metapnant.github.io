@@ -238,7 +238,7 @@
     pointer-events: none; 
 }
 
-/* Buttons Layout */
+/* --- BUTTONS LAYOUT --- */
 .buttons {
     display: flex;
     align-items: center;
@@ -256,7 +256,7 @@
     border-radius: 50%;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: transform 0.1s ease, background-color 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, opacity 0.3s ease;
     padding: 0;
     box-shadow: 0 0 5px rgba(152, 0, 235, 0.1);
     -webkit-tap-highlight-color: transparent;
@@ -264,18 +264,25 @@
 
 .ctrl-btn svg { width: 20px; height: 20px; fill: currentColor; filter: drop-shadow(0 0 2px rgba(152,0,235,0.5)); }
 
+/* HOVER LOGIC: Separated to treat Loop button differently */
 @media (hover: hover) {
+    /* All buttons scale on hover */
     .ctrl-btn:hover {
+        transform: scale(1.1);
+    }
+
+    /* Standard Buttons (Play/Prev/Next) turn white and glow */
+    .ctrl-btn:not(.loop-btn):hover {
         background: rgba(152, 0, 235, 0.1);
         box-shadow: 0 0 20px var(--name-color);
-        transform: scale(1.1);
         color: #fff;
     }
-    .loop-btn:hover { 
-        opacity: 1; 
-        background: transparent; 
-        box-shadow: none; 
-        transform: scale(1.1); 
+
+    /* Loop Button Hover: Only scales, stays dim if disengaged */
+    .loop-btn:hover {
+        background: transparent;
+        box-shadow: none;
+        /* Opacity remains at 0.3 unless .active classes are present */
     }
 }
 
@@ -284,19 +291,28 @@
 .play-btn { width: 65px; height: 65px; border-width: 2px; }
 .play-btn svg { width: 28px; height: 28px; }
 
-/* Loop Button */
+/* Loop Button Specifics */
 .loop-btn {
     width: 35px; height: 35px;
     border: none; box-shadow: none; 
     margin-left: auto; 
-    opacity: 0.3; 
+    opacity: 0.3; /* Disengaged State: Dimmed */
 }
 
+/* Engaged States: Bright + Glow (Applied only when active) */
 .loop-btn.active, 
 .loop-btn.active-one { 
     opacity: 1; 
     color: var(--name-color); 
     text-shadow: 0 0 10px var(--name-color); 
+}
+
+/* Force opacity 1 on hover ONLY if engaged */
+@media (hover: hover) {
+    .loop-btn.active:hover, 
+    .loop-btn.active-one:hover {
+        opacity: 1;
+    }
 }
 
 .loop-btn.active svg, 
