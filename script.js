@@ -106,114 +106,107 @@ let logState = {
 };
 
 // ==========================================
-// 3. SOUND ENGINE (UNIVERSAL IOS FIX)
+// 3. AGGRESSIVE AUDIO ENGINE (iOS FIX)
 // ==========================================
-const SimpleSynth = {
-    ctx: null,
-    unlocked: false,
+let audioContext = null;
+let audioUnlocked = false;
+
+function initAudio() {
+    if (audioContext) return;
     
-    init: function() {
-        if (!this.ctx) {
-            // Standard + Webkit prefix for old iOS
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.ctx = new AudioContext();
-        }
-    },
+    // Create Context specifically inside the user event stack
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    audioContext = new AudioCtor();
+}
 
-    // The "Silent Buffer" Trick: Forces iOS Audio Hardware to Wake Up
-    unlock: function() {
-        this.init();
-        if (this.unlocked || !this.ctx) return;
+function wakeAudioSystem() {
+    if (audioUnlocked) return;
+    
+    initAudio();
 
-        // 1. Resume Context
-        if (this.ctx.state === 'suspended') {
-            this.ctx.resume();
-        }
-
-        // 2. Play a silent buffer (Critical for old iOS)
-        const buffer = this.ctx.createBuffer(1, 1, 22050);
-        const source = this.ctx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(this.ctx.destination);
-        source.start(0);
-
-        this.unlocked = true;
-    },
-
-    playTone: function(cssClass) {
-        if (isMuted) return;
-        // Ensure context exists and is running
-        if (!this.ctx) this.init();
-        if (this.ctx.state === 'suspended') this.ctx.resume();
-        
-        const t = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        
-        if (cssClass.includes('operator-text')) {
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(500, t);
-            osc.frequency.linearRampToValueAtTime(450, t + 0.08); 
-            gain.gain.setValueAtTime(0.04, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-            osc.start(); osc.stop(t + 0.08);
-        } else if (cssClass.includes('alert-text')) {
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t);
-            gain.gain.setValueAtTime(0.06, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-            osc.start(); osc.stop(t + 0.1);
-        } else if (cssClass.includes('comment-text')) {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(3000, t);
-            gain.gain.setValueAtTime(0.015, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01); 
-            osc.start(); osc.stop(t + 0.01);
-        } else if (cssClass.includes('golden-text') || cssClass.includes('white-text') || cssClass.includes('magenta-text')) {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(880, t); 
-            gain.gain.setValueAtTime(0.08, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); 
-            osc.start(); osc.stop(t + 0.2);
-        } else if (cssClass.includes('system-success')) {
-            osc.type = 'square'; osc.frequency.setValueAtTime(1200, t);
-            osc.frequency.linearRampToValueAtTime(2000, t + 0.05);
-            gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-            osc.start(); osc.stop(t + 0.05);
-        } else {
-            osc.type = 'square'; osc.frequency.setValueAtTime(800, t);
-            osc.frequency.exponentialRampToValueAtTime(100, t + 0.04);
-            gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-            osc.start(); osc.stop(t + 0.04);
-        }
-    },
-
-    playUnlock: function() {
-        if (isMuted) return;
-        if (!this.ctx) this.init();
-        if (this.ctx.state === 'suspended') this.ctx.resume();
-
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.connect(gain); gain.connect(this.ctx.destination);
-        osc.type = 'sine'; osc.frequency.setValueAtTime(200, this.ctx.currentTime);
-        osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.3);
-        gain.gain.setValueAtTime(0.05, this.ctx.currentTime); gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3);
-        osc.start(); osc.stop(this.ctx.currentTime + 0.3);
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
     }
-};
 
-// AGGRESSIVE GLOBAL UNLOCKER
-function unlockAudioEngine() {
-    SimpleSynth.unlock();
-    // Only remove if successfully unlocked
-    if (SimpleSynth.unlocked) {
-        document.removeEventListener('click', unlockAudioEngine);
-        document.removeEventListener('keydown', unlockAudioEngine);
-        document.removeEventListener('touchstart', unlockAudioEngine);
-        document.removeEventListener('touchend', unlockAudioEngine);
+    // Play an inaudible burst to force the hardware to engage
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    
+    osc.type = 'sawtooth';
+    osc.frequency.value = 20000; // Above human hearing
+    gain.gain.value = 0.001; // Tiny volume
+    
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    
+    osc.start(0);
+    osc.stop(0.1);
+
+    audioUnlocked = true;
+    
+    // Remove listeners once successfully woke
+    document.removeEventListener('click', wakeAudioSystem);
+    document.removeEventListener('touchstart', wakeAudioSystem);
+    document.removeEventListener('keydown', wakeAudioSystem);
+}
+
+// Attach to ALL possible interaction points
+document.addEventListener('click', wakeAudioSystem);
+document.addEventListener('touchstart', wakeAudioSystem);
+document.addEventListener('keydown', wakeAudioSystem);
+
+function playTone(cssClass) {
+    if (isMuted || !audioContext) return;
+    if (audioContext.state === 'suspended') audioContext.resume();
+
+    const t = audioContext.currentTime;
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+
+    if (cssClass.includes('operator-text')) {
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(500, t);
+        osc.frequency.linearRampToValueAtTime(450, t + 0.08); 
+        gain.gain.setValueAtTime(0.04, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+        osc.start(); osc.stop(t + 0.08);
+    } else if (cssClass.includes('alert-text')) {
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t);
+        gain.gain.setValueAtTime(0.06, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        osc.start(); osc.stop(t + 0.1);
+    } else if (cssClass.includes('comment-text')) {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(3000, t);
+        gain.gain.setValueAtTime(0.015, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01); 
+        osc.start(); osc.stop(t + 0.01);
+    } else if (cssClass.includes('golden-text') || cssClass.includes('white-text') || cssClass.includes('magenta-text')) {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(880, t); 
+        gain.gain.setValueAtTime(0.08, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); 
+        osc.start(); osc.stop(t + 0.2);
+    } else if (cssClass.includes('system-success')) {
+        osc.type = 'square'; osc.frequency.setValueAtTime(1200, t);
+        osc.frequency.linearRampToValueAtTime(2000, t + 0.05);
+        gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+        osc.start(); osc.stop(t + 0.05);
+    } else {
+        osc.type = 'square'; osc.frequency.setValueAtTime(800, t);
+        osc.frequency.exponentialRampToValueAtTime(100, t + 0.04);
+        gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+        osc.start(); osc.stop(t + 0.04);
     }
 }
-// Listen to everything to catch the first user gesture
-document.addEventListener('click', unlockAudioEngine);
-document.addEventListener('keydown', unlockAudioEngine);
-document.addEventListener('touchstart', unlockAudioEngine);
-document.addEventListener('touchend', unlockAudioEngine);
+
+function playUnlockSound() {
+    if (isMuted || !audioContext) return;
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.connect(gain); gain.connect(audioContext.destination);
+    osc.type = 'sine'; osc.frequency.setValueAtTime(200, audioContext.currentTime);
+    osc.frequency.linearRampToValueAtTime(600, audioContext.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.05, audioContext.currentTime); gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
+    osc.start(); osc.stop(audioContext.currentTime + 0.3);
+}
+
 
 // ==========================================
 // 4. DOM ELEMENTS
@@ -664,7 +657,7 @@ function checkStateIntegrity() {
     if (changed) saveState();
 }
 function launchTerminal() {
-    SimpleSynth.unlock(); 
+    wakeAudioSystem(); // Try to wake immediately 
     terminalRunning = true; 
     checkStateIntegrity();
     savedScrollTop = window.scrollY || document.documentElement.scrollTop;
@@ -718,12 +711,12 @@ function processQueue() {
     if (!currentTab || !terminalRunning) return; if (logState[currentTab].finished) return;
     const idx = logState[currentTab].index; if (idx >= logsData[currentTab].length) { markLogFinished(currentTab); return; }
     const lineData = logsData[currentTab][idx]; const delay = lineData.delay * logSpeedMultiplier;
-    activeTimer = setTimeout(() => { typeLine(lineData.text, lineData.class, containers[currentTab]); if (lineData.text.trim().length > 0) SimpleSynth.playTone(lineData.class);
+    activeTimer = setTimeout(() => { typeLine(lineData.text, lineData.class, containers[currentTab]); if (lineData.text.trim().length > 0) playTone(lineData.class);
       logState[currentTab].index++; terminalContainer.scrollTop = terminalContainer.scrollHeight;
       if (logState[currentTab].index >= logsData[currentTab].length) markLogFinished(currentTab); else processQueue();
     }, delay);
 }
-function markLogFinished(type) { logState[type].finished = true; if (!appState.finishedLogs.includes(type)) { appState.finishedLogs.push(type); saveState(); SimpleSynth.playUnlock();
+function markLogFinished(type) { logState[type].finished = true; if (!appState.finishedLogs.includes(type)) { appState.finishedLogs.push(type); saveState(); playUnlockSound();
     if (type === 'crash') activeTimer = setTimeout(unlockEcho, 1500 * logSpeedMultiplier); else if (type === 'echo') activeTimer = setTimeout(unlockWake, 1500 * logSpeedMultiplier); else if (type === 'wake') activeTimer = setTimeout(unlockBloom, 1500 * logSpeedMultiplier); else if (type === 'bloom') activeTimer = setTimeout(unlockGardener, 1500 * logSpeedMultiplier);
     } else updateReplayIcon(type);
 }
@@ -752,7 +745,7 @@ audioPlayer.addEventListener('waiting', () => { if(bufferCheckTimer) clearTimeou
 audioPlayer.addEventListener('playing', () => { if (bufferCheckTimer) clearTimeout(bufferCheckTimer); if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; } });
 audioPlayer.addEventListener('canplay', () => { if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; } });
 if (btnShowVoice) { btnShowVoice.addEventListener('click', (e) => { e.preventDefault(); if (currentIndex !== 0) loadDocument(0); pendingScrollPage = 8; const p8 = document.getElementById('page-wrapper-8'); if (p8) { smartScrollTo(p8); pendingScrollPage = null; } }); }
-infinityBtn.addEventListener('click', (e) => { e.preventDefault(); SimpleSynth.unlock(); if (appState.terminalFound) { launchTerminal(); return; } if (currentIndex !== 2) return; secretClicks++; infinityBtn.style.color = "#ff00ff"; setTimeout(() => infinityBtn.style.color = "", 200); if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; saveState(); updateInfinityState(); launchTerminal(); } });
+infinityBtn.addEventListener('click', (e) => { e.preventDefault(); wakeAudioSystem(); if (appState.terminalFound) { launchTerminal(); return; } if (currentIndex !== 2) return; secretClicks++; infinityBtn.style.color = "#ff00ff"; setTimeout(() => infinityBtn.style.color = "", 200); if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; saveState(); updateInfinityState(); launchTerminal(); } });
 document.addEventListener('keydown', (e) => { const isPlayerVisible = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500; if (e.code === 'Space') { if (isPlayerVisible || terminalRunning) { e.preventDefault(); togglePlay(); } } if (e.code === 'ArrowRight') { if (e.shiftKey) { e.preventDefault(); nextTrack(false); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime += 5; } } if (e.code === 'ArrowLeft') { if (e.shiftKey) { e.preventDefault(); prevTrack(); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; } } });
 function formatTime(s) { if(isNaN(s) || s === Infinity) return "0:00"; const m = Math.floor(s/60); const ss = Math.floor(s%60); return `${m}:${ss<10?'0':''}${ss}`; }
 document.getElementById("currentYear").textContent = new Date().getFullYear();
