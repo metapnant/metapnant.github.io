@@ -110,119 +110,76 @@ let logState = {
 // ==========================================
 const SimpleSynth = {
     ctx: null,
-    
-    // IMPROVED INIT FOR IOS
+    unlocked: false,
     init: function() {
         if (!this.ctx) {
-            // Support vendor prefixes
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioContext();
         }
-        
-        // Always try to resume if suspended
-        if (this.ctx.state === 'suspended') {
-            this.ctx.resume().then(() => {
-                // THE IOS HACK: Play a silent buffer immediately upon resume.
-                // This forces the OS to recognize the app as a media source 
-                // and ignore the physical silent switch.
-                this.playSilentBuffer();
-            }).catch(console.error);
-        }
     },
-
-    playSilentBuffer: function() {
-        if (!this.ctx) return;
-        // Create a 1-sample empty buffer
+    unlock: function() {
+        this.init();
+        if (this.unlocked || !this.ctx) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
         const buffer = this.ctx.createBuffer(1, 1, 22050);
         const source = this.ctx.createBufferSource();
         source.buffer = buffer;
         source.connect(this.ctx.destination);
         source.start(0);
+        this.unlocked = true;
     },
-
     playTone: function(cssClass) {
         if (isMuted) return;
-        // Re-check context state on every play attempt for reliability
         if (!this.ctx) this.init();
         if (this.ctx.state === 'suspended') this.ctx.resume();
-
+        
         const t = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-        
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        osc.connect(gain); gain.connect(this.ctx.destination);
         
         if (cssClass.includes('operator-text')) {
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(500, t);
-            osc.frequency.linearRampToValueAtTime(450, t + 0.08); 
-            gain.gain.setValueAtTime(0.04, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-            osc.start(); osc.stop(t + 0.08);
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(500, t); osc.frequency.linearRampToValueAtTime(450, t + 0.08); gain.gain.setValueAtTime(0.04, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08); osc.start(); osc.stop(t + 0.08);
         } else if (cssClass.includes('alert-text')) {
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t);
-            gain.gain.setValueAtTime(0.06, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-            osc.start(); osc.stop(t + 0.1);
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); gain.gain.setValueAtTime(0.06, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1); osc.start(); osc.stop(t + 0.1);
         } else if (cssClass.includes('comment-text')) {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(3000, t);
-            gain.gain.setValueAtTime(0.015, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01); 
-            osc.start(); osc.stop(t + 0.01);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(3000, t); gain.gain.setValueAtTime(0.015, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01); osc.start(); osc.stop(t + 0.01);
         } else if (cssClass.includes('golden-text') || cssClass.includes('white-text') || cssClass.includes('magenta-text')) {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(880, t); 
-            gain.gain.setValueAtTime(0.08, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); 
-            osc.start(); osc.stop(t + 0.2);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(880, t); gain.gain.setValueAtTime(0.08, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); osc.start(); osc.stop(t + 0.2);
         } else if (cssClass.includes('system-success')) {
-            osc.type = 'square'; osc.frequency.setValueAtTime(1200, t);
-            osc.frequency.linearRampToValueAtTime(2000, t + 0.05);
-            gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-            osc.start(); osc.stop(t + 0.05);
+            osc.type = 'square'; osc.frequency.setValueAtTime(1200, t); osc.frequency.linearRampToValueAtTime(2000, t + 0.05); gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05); osc.start(); osc.stop(t + 0.05);
         } else {
-            osc.type = 'square'; osc.frequency.setValueAtTime(800, t);
-            osc.frequency.exponentialRampToValueAtTime(100, t + 0.04);
-            gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-            osc.start(); osc.stop(t + 0.04);
+            osc.type = 'square'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(100, t + 0.04); gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04); osc.start(); osc.stop(t + 0.04);
         }
     },
-
     playUnlock: function() {
         if (isMuted) return;
         if (!this.ctx) this.init();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.connect(gain); gain.connect(this.ctx.destination);
-        osc.type = 'sine'; osc.frequency.setValueAtTime(200, this.ctx.currentTime);
-        osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.3);
-        gain.gain.setValueAtTime(0.05, this.ctx.currentTime); gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3);
-        osc.start(); osc.stop(this.ctx.currentTime + 0.3);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(200, this.ctx.currentTime); osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.3); gain.gain.setValueAtTime(0.05, this.ctx.currentTime); gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3); osc.start(); osc.stop(this.ctx.currentTime + 0.3);
     }
 };
 
-// Global Unlock Handler (iOS Optimized)
 function unlockAudioEngine() {
-    // 1. Initialize Context
-    SimpleSynth.init();
-    
-    // 2. Force the silent buffer immediately (redundancy for safety)
-    SimpleSynth.playSilentBuffer();
-
-    // 3. Remove listeners once successful
-    if (SimpleSynth.ctx && SimpleSynth.ctx.state === 'running') {
+    SimpleSynth.unlock();
+    if (SimpleSynth.unlocked) {
         document.removeEventListener('click', unlockAudioEngine);
         document.removeEventListener('keydown', unlockAudioEngine);
         document.removeEventListener('touchstart', unlockAudioEngine);
         document.removeEventListener('touchend', unlockAudioEngine);
     }
 }
-
-// Add strict listeners for iOS - 'touchend' is often more reliable than click for audio
 document.addEventListener('click', unlockAudioEngine);
 document.addEventListener('keydown', unlockAudioEngine);
-document.addEventListener('touchstart', unlockAudioEngine, {passive: true});
+document.addEventListener('touchstart', unlockAudioEngine);
 document.addEventListener('touchend', unlockAudioEngine);
 
 // ==========================================
 // 4. DOM ELEMENTS
 // ==========================================
-
 const pdfWrapper = document.getElementById('pdf-wrapper');
 const loadingOverlay = document.getElementById('loading-overlay');
 const docTitle = document.getElementById('doc-title');
@@ -451,13 +408,9 @@ function loadTrack(index) {
     domCurrentTime.textContent = "0:00"; domDuration.textContent = "0:00"; 
     currentTrackIdx = index;
     const track = albumTracks[index];
-    
-    // START SCRAMBLE ON SONG CHANGE
     shouldAnimateReveal = true; // Allow animation
     startLoadingScramble(domTrackTitle);
-    
     audioPlayer.src = track.src;
-    
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -523,25 +476,13 @@ const doDragTouch = (e) => {
     if (dx > 5 || dy > 5) { if (holdTimer) clearTimeout(holdTimer); if (dx > dy) { isDragging = true; domProgressBar.classList.add('dragging'); if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); } else isScrolling = true; }
 };
 const endDragTouch = (e) => { if (holdTimer) clearTimeout(holdTimer); if (isDragging) { commitSeek(parseFloat(domProgressBar.style.getPropertyValue('--progress'))); isDragging = false; domProgressBar.classList.remove('dragging'); } setTimeout(() => { isTouch = false; }, 500); };
-
-// FIX: COMMIT SEEK WITH FLAG RESET
 function commitSeek(percent) {
-    // Disable animation flag on manual seek
     shouldAnimateReveal = false; 
-
     if (audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration !== Infinity) {
         audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
         pendingSeekPercent = null;
-        
-        // Smart Buffer Check
         if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
-        bufferCheckTimer = setTimeout(() => {
-            if (audioPlayer.seeking || audioPlayer.readyState < 3) {
-                // Only enable if buffering hangs
-                shouldAnimateReveal = true;
-                startLoadingScramble(domTrackTitle);
-            }
-        }, 300);
+        bufferCheckTimer = setTimeout(() => { if (audioPlayer.seeking || audioPlayer.readyState < 3) { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); } }, 200);
     } else pendingSeekPercent = percent;
 }
 
@@ -556,7 +497,9 @@ function initTerminalState() {
     if (appState.unlockedTabs.includes('wake')) btnCycle01.classList.add('visible');
     if (appState.unlockedTabs.includes('bloom')) btnCycleBloom.classList.add('visible');
     if (appState.unlockedTabs.includes('gardener')) btnCycle02.classList.add('visible');
-    if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) btnReset.classList.add('visible');
+    if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
+        btnReset.classList.add('visible'); btnTurbo.classList.add('visible'); btnMute.classList.add('visible');
+    }
 }
 function checkStateIntegrity() {
     let changed = false;
@@ -566,17 +509,14 @@ function checkStateIntegrity() {
     if (appState.finishedLogs.includes('bloom') && !appState.unlockedTabs.includes('gardener')) { appState.unlockedTabs.push('gardener'); changed = true; }
     if (changed) saveState();
 }
-function launchTerminal() { 
-    // Init Audio with fix when opening terminal
-    SimpleSynth.init(); 
-    
-    terminalRunning = true; checkStateIntegrity();
+function launchTerminal() { SimpleSynth.unlock(); terminalRunning = true; checkStateIntegrity();
     savedScrollTop = window.scrollY || document.documentElement.scrollTop; document.body.style.position = 'fixed'; document.body.style.top = `-${savedScrollTop}px`; document.body.classList.add('no-scroll');
     secretOverlay.classList.add('active');
     btnReset.classList.add('visible'); btnCycle00.classList.add('visible'); btnTurbo.classList.add('visible'); btnMute.classList.add('visible');
     if (!currentTab) switchTab(appState.unlockedTabs[appState.unlockedTabs.length - 1]); else processQueue();
 }
 function switchTab(type) {
+    // FIX: REPLAY LOGIC
     if (currentTab === type) {
         if (logState[type].finished) { replayLog(null, type); return; }
         else if (terminalRunning && appState.finishedLogs.includes(type)) {
@@ -595,8 +535,19 @@ function switchTab(type) {
     else if (type === 'wake') { activeBtn = btnCycle01; containers.wake.classList.add('active-log'); } 
     else if (type === 'bloom') { activeBtn = btnCycleBloom; containers.bloom.classList.add('active-log'); } 
     else if (type === 'gardener') { activeBtn = btnCycle02; containers.gardener.classList.add('active-log'); }
-    if (activeBtn) { activeBtn.classList.add('active'); setTimeout(() => { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }, 50);
-        if (appState.finishedLogs.includes(type)) updateReplayIcon(type); }
+    if (activeBtn) { activeBtn.classList.add('active'); 
+        // FIX: Precise Scroll Logic for Mobile Horizontal Bar
+        if (window.innerWidth <= 700) {
+            const wrapper = document.querySelector('.cycles-wrapper');
+            if (wrapper) {
+                const center = (wrapper.clientWidth / 2) - (activeBtn.clientWidth / 2);
+                wrapper.scrollTo({ left: activeBtn.offsetLeft - center, behavior: 'smooth' });
+            }
+        } else {
+            activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        if (appState.finishedLogs.includes(type)) updateReplayIcon(type); 
+    }
     if (appState.finishedLogs.includes(type)) { renderFullLog(type); logState[type].finished = true; logState[type].index = logsData[type].length; } else processQueue();
 }
 function updateReplayIcon(type) {
@@ -616,7 +567,7 @@ function replayLog(e, type) {
     processQueue();
 }
 function toggleTurbo() { turboMode = !turboMode; logSpeedMultiplier = turboMode ? 0.1 : 1; btnTurbo.innerText = turboMode ? "[ >> ] TURBO: ON" : "[ >> ] TURBO: OFF"; if (turboMode) btnTurbo.classList.add('active'); else btnTurbo.classList.remove('active'); }
-function toggleMute() { isMuted = !isMuted; btnMute.innerText = isMuted ? "[VOL: OFF]" : "[VOL: ON]"; if (isMuted) btnMute.classList.add('active'); else btnMute.classList.remove('active'); }
+function toggleMute() { isMuted = !isMuted; btnMute.innerText = isMuted ? "[VOL: OFF]" : "[VOL: ON]"; if (!isMuted) btnMute.classList.add('active'); else btnMute.classList.remove('active'); }
 function processQueue() {
     if (!currentTab || !terminalRunning) return; if (logState[currentTab].finished) return;
     const idx = logState[currentTab].index; if (idx >= logsData[currentTab].length) { markLogFinished(currentTab); return; }
@@ -651,54 +602,12 @@ progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
 audioPlayer.addEventListener('timeupdate', () => { if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; domProgressBar.style.setProperty('--progress', `${p}%`); domCurrentTime.textContent = formatTime(audioPlayer.currentTime); domDuration.textContent = formatTime(audioPlayer.duration); }});
 audioPlayer.addEventListener('loadedmetadata', () => { domDuration.textContent = formatTime(audioPlayer.duration); if (pendingSeekPercent !== null) { audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); pendingSeekPercent = null; }});
 audioPlayer.addEventListener('ended', () => nextTrack(true));
-
-// FIX: New listener logic for smart scramble
-audioPlayer.addEventListener('waiting', () => {
-    if(bufferCheckTimer) clearTimeout(bufferCheckTimer);
-    bufferCheckTimer = setTimeout(() => {
-        shouldAnimateReveal = true; // Mark that we are now scrambling
-        startLoadingScramble(domTrackTitle);
-    }, 300);
-});
-audioPlayer.addEventListener('playing', () => { 
-    if (bufferCheckTimer) clearTimeout(bufferCheckTimer); 
-    // FIX: Only resolve text if we were actually waiting for a scramble
-    if (shouldAnimateReveal) {
-        const track = albumTracks[currentTrackIdx];
-        resolveLoadingScramble(domTrackTitle, track.title);
-        shouldAnimateReveal = false; 
-    }
-});
-audioPlayer.addEventListener('canplay', () => { 
-    // Initial load: Force reveal if flag is set (e.g., track change)
-    if (shouldAnimateReveal) {
-        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
-        shouldAnimateReveal = false;
-    }
-});
-
+audioPlayer.addEventListener('waiting', () => { if(bufferCheckTimer) clearTimeout(bufferCheckTimer); bufferCheckTimer = setTimeout(() => { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); }, 300); });
+audioPlayer.addEventListener('playing', () => { if (bufferCheckTimer) clearTimeout(bufferCheckTimer); if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; } });
+audioPlayer.addEventListener('canplay', () => { if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; } });
 if (btnShowVoice) { btnShowVoice.addEventListener('click', (e) => { e.preventDefault(); if (currentIndex !== 0) loadDocument(0); pendingScrollPage = 8; const p8 = document.getElementById('page-wrapper-8'); if (p8) { smartScrollTo(p8); pendingScrollPage = null; } }); }
-
-infinityBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    // Init audio immediately on interaction
-    SimpleSynth.init();
-    
-    if (appState.terminalFound) { launchTerminal(); return; }
-    if (currentIndex !== 2) return;
-    secretClicks++; infinityBtn.style.color = "#ff00ff"; setTimeout(() => infinityBtn.style.color = "", 200);
-    if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; saveState(); updateInfinityState(); launchTerminal(); }
-});
-
-document.addEventListener('keydown', (e) => {
-    const isPlayerVisible = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500;
-    if (e.code === 'Space') { if (isPlayerVisible || terminalRunning) { e.preventDefault(); togglePlay(); } }
-    if (e.code === 'ArrowRight') { if (e.shiftKey) { e.preventDefault(); nextTrack(false); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime += 5; } }
-    if (e.code === 'ArrowLeft') { if (e.shiftKey) { e.preventDefault(); prevTrack(); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; } }
-});
-
+infinityBtn.addEventListener('click', (e) => { e.preventDefault(); SimpleSynth.unlock(); if (appState.terminalFound) { launchTerminal(); return; } if (currentIndex !== 2) return; secretClicks++; infinityBtn.style.color = "#ff00ff"; setTimeout(() => infinityBtn.style.color = "", 200); if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; saveState(); updateInfinityState(); launchTerminal(); } });
+document.addEventListener('keydown', (e) => { const isPlayerVisible = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500; if (e.code === 'Space') { if (isPlayerVisible || terminalRunning) { e.preventDefault(); togglePlay(); } } if (e.code === 'ArrowRight') { if (e.shiftKey) { e.preventDefault(); nextTrack(false); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime += 5; } } if (e.code === 'ArrowLeft') { if (e.shiftKey) { e.preventDefault(); prevTrack(); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; } } });
 function formatTime(s) { if(isNaN(s) || s === Infinity) return "0:00"; const m = Math.floor(s/60); const ss = Math.floor(s%60); return `${m}:${ss<10?'0':''}${ss}`; }
-
-// STARTUP
 document.getElementById("currentYear").textContent = new Date().getFullYear();
 initTerminalState(); loadDocument(0); initPlaylist(); loadTrack(0);
