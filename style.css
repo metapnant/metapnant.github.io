@@ -264,21 +264,53 @@
       .tool-btn:hover { background-color: rgba(152, 0, 235, 0.15); color: #fff; text-shadow: 0 0 10px var(--name-color); }
   }
   
-  /* TACTILE STATES */
-  .tools-toggle:active, .tools-toggle.active-state {
-      background-color: rgba(152, 0, 235, 0.3) !important; color: var(--name-color) !important;
-  }
-  .tool-btn:active, .tool-btn.active-state {
-      background-color: rgba(152, 0, 235, 0.3) !important; color: var(--name-color) !important;
-  }
-  
-  @media (max-width: 700px) {
-      .pdf-tools { bottom: 20px; height: 56px; max-width: 56px; }
-      .pdf-tools.active { max-width: 220px; }
-      .tools-toggle { width: 56px; min-width: 56px; }
-      .tools-toggle svg { width: 24px; height: 24px; }
-      .tool-btn { font-size: 0.95em; }
-  }
+  /* --- TACTILE STATES (GOLD FLASH) --- */
+
+/* Toggle (The Flap) - Keeps Theme Color */
+.tools-toggle:active, 
+.tools-toggle.active-state {
+    background: rgba(152, 0, 235, 0.3) !important;
+    color: #fff !important;
+    border-color: var(--name-color) !important;
+    transition: none !important;
+}
+
+/* --- 1. THE BUTTON FLARE (Solid Buttons) --- */
+body .tool-btn.active-state, 
+body .secret-link.active-state,
+body .tool-btn:active,
+body .secret-link:active {
+    background-color: #ffd700 !important;
+    color: #0d0022 !important;
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5) !important;
+    animation: none !important;
+    transition: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+}
+
+/* --- 2. THE TEXT RADIANCE (Text-only Links) --- */
+body #song-link.active-state,
+body #song-link:active {
+    /* Remove all box elements */
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    
+    /* Text Glow Mechanics */
+    color: #ffd700 !important;
+    /* Deep glowing outline originating from letters */
+    text-shadow: 0 0 8px #ffd700, 
+                 0 0 15px rgba(255, 215, 0, 0.7),
+                 0 0 25px rgba(255, 215, 0, 0.4) !important;
+    
+    /* Clean finish */
+    text-decoration: none !important;
+    animation: none !important;
+    transition: none !important;
+}
   
   /* --- MUSIC LINK --- */
   #song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 10px; }

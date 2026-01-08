@@ -830,24 +830,57 @@ document.getElementById("currentYear").textContent = new Date().getFullYear();
 const prevArrowEl = document.getElementById('prev-doc');
 if(prevArrowEl) prevArrowEl.classList.add('disabled');
 
+// --- DUAL-PLATFORM TACTILE HELPER ---
 function addTactileListener(selector) {
     const els = document.querySelectorAll(selector);
     els.forEach(el => {
-        el.addEventListener('touchstart', function(e) { e.stopPropagation(); this.classList.add('active-state'); }, {passive: true});
-        el.addEventListener('touchend', function() { setTimeout(() => { this.classList.remove('active-state'); }, 50); }, {passive: true});
-        el.addEventListener('touchcancel', function() { this.classList.remove('active-state'); }, {passive: true});
+        // MOBILE
+        el.addEventListener('touchstart', function(e) { 
+            e.stopPropagation(); 
+            this.classList.add('active-state'); 
+        }, {passive: true});
+        
+        el.addEventListener('touchend', function() { 
+            const self = this;
+            setTimeout(() => { self.classList.remove('active-state'); }, 100); 
+        }, {passive: true});
+
+        el.addEventListener('touchcancel', function() { 
+            this.classList.remove('active-state'); 
+        }, {passive: true});
+
+        // DESKTOP
+        el.addEventListener('mousedown', function() { 
+            this.classList.add('active-state'); 
+        });
+        
+        el.addEventListener('mouseup', function() { 
+            const self = this;
+            setTimeout(() => { self.classList.remove('active-state'); }, 100); 
+        });
+
+        el.addEventListener('mouseleave', function() { 
+            this.classList.remove('active-state'); 
+        });
     });
 }
 
+// --- INITIALIZATION (Bottom of file) ---
 initTerminalState(); 
 loadDocument(0); 
 initPlaylist(); 
 loadTrack(0, false); 
 setTimeout(() => { scrambleText(domTrackTitle, albumTracks[0].title); }, 500);
+
+// Attach the Gold-Glow logic to Links
+addTactileListener('.tool-btn');
+addTactileListener('#song-link');
+addTactileListener('.secret-link');
+
+// Attach Standard logic to other UI
 addTactileListener('.close-terminal');
 addTactileListener('.cycle-btn');
 addTactileListener('.tools-toggle');
-addTactileListener('.tool-btn');
 addTactileListener('.ctrl-btn'); 
 addTactileListener('.voice-btn');
 addTactileListener('.playlist-item');
