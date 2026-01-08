@@ -618,6 +618,16 @@ function launchTerminal() {
 
 function switchTab(type) {
     checkStateIntegrity();
+
+    // FEATURE: If clicking the MAIN BUTTON while it is replaying, skip to the end.
+    if (currentTab === type && terminalRunning && appState.finishedLogs.includes(type) && !logState[type].finished) {
+        if (activeTimer) clearTimeout(activeTimer);
+        renderFullLog(type);
+        logState[type].finished = true;
+        updateSidebarUI();
+        return;
+    }
+
     if (activeTimer) clearTimeout(activeTimer);
 
     currentTab = type;
@@ -765,13 +775,19 @@ function revealPlayer() {
     saveState(); 
     updateInfinityState(); 
     
-    // NEW LOGIC: Pause player to force "Infinite Scramble" and clean UI
+    // FULL PLAYER RESET
     audioPlayer.pause();
+    audioPlayer.currentTime = 0;
     isPlaying = false;
     updatePlayBtn();
 
-    // Trigger scrambling (it will loop forever because we are paused)
-    loadTrack(currentTrackIdx); 
+    // Reset to Track 0
+    currentTrackIdx = 0;
+    loadTrack(0);
+
+    // Immediate Text Fix (Prevent Infinite Scramble)
+    resolveLoadingScramble(domTrackTitle, albumTracks[0].title);
+    shouldAnimateReveal = false;
     
     setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100); 
 }
