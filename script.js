@@ -680,17 +680,24 @@ function switchTab(type, isReplay = false) {
     allContainers.forEach(con => con.classList.remove('active-log'));
     containers[type].classList.add('active-log');
 
-    if (window.innerWidth <= 700) {
-        const wrapper = document.querySelector('.cycles-wrapper');
-        const activeBtn = document.querySelector('.cycle-btn.active');
-        if (wrapper && activeBtn) {
+    // --- PASTE THE NEW CODE HERE ---
+    const wrapper = document.querySelector('.cycles-wrapper');
+    const activeBtn = document.querySelector('.cycle-btn.active');
+
+    if (wrapper && activeBtn) {
+        const isHorizontal = window.getComputedStyle(wrapper).flexDirection === 'row';
+
+        if (isHorizontal) {
             const center = (wrapper.clientWidth / 2) - (activeBtn.clientWidth / 2);
             wrapper.scrollTo({ left: activeBtn.offsetLeft - center, behavior: 'smooth' });
+        } else {
+            const center = (wrapper.clientHeight / 2) - (activeBtn.clientHeight / 2);
+            wrapper.scrollTo({ top: activeBtn.offsetTop - center, behavior: 'smooth' });
         }
     }
+    // ------------------------------
 
     // Logic: If in DB and NOT currently running a replay (isReplay flag), show full.
-    // If running a replay (flag is true), processQueue.
     if (appState.finishedLogs.includes(type) && !isReplay) {
         logState[type].finished = true;
         renderFullLog(type); 
