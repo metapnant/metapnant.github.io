@@ -224,6 +224,7 @@ async function loadDocument(index) {
   if (prevArrow) prevArrow.classList.remove('active-state');
   if (nextArrow) nextArrow.classList.remove('active-state');
   songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
+  
   if (waitingForLyrics) {
       const currentHeight = pdfWrapper.getBoundingClientRect().height;
       if (currentHeight > 0) { pdfWrapper.style.minHeight = `${currentHeight}px`; }
@@ -341,6 +342,12 @@ async function refreshDynamicPage() {
 }
 
 // --- MUSIC FUNCTIONS ---
+function stopScramble() {
+    if (loadingScrambleInterval) { clearInterval(loadingScrambleInterval); loadingScrambleInterval = null; }
+    if (bufferCheckTimer) { clearTimeout(bufferCheckTimer); bufferCheckTimer = null; }
+    shouldAnimateReveal = false;
+    if (domTrackTitle && albumTracks[currentTrackIdx]) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); }
+}
 function startLoadingScramble(element) {
     if (element === btnShowVoice) { if (voiceScrambleInterval) clearInterval(voiceScrambleInterval); } 
     else { if (loadingScrambleInterval) clearInterval(loadingScrambleInterval); }
@@ -393,9 +400,8 @@ function loadTrack(index, animate = true) {
     domDuration.textContent = "0:00"; 
     currentTrackIdx = index;
     const track = albumTracks[index];
+    stopScramble(); 
     shouldAnimateReveal = animate; 
-    if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
-    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
     if (animate) { startLoadingScramble(domTrackTitle); } 
     else { domTrackTitle.innerText = track.title; domTrackTitle.style.color = ""; }
     audioPlayer.src = track.src;
@@ -415,7 +421,10 @@ function playTrack(index) {
     const playPromise = audioPlayer.play();
     if (playPromise !== undefined) {
         playPromise.catch(error => { 
-            if (error.name !== 'AbortError') { isPlaying = false; updatePlayBtn(); }
+            if (error.name !== 'AbortError') {
+                console.log("Playback interrupted:", error);
+                isPlaying = false; updatePlayBtn(); stopScramble();
+            }
         });
     }
 }
@@ -433,7 +442,10 @@ function togglePlay() {
         const playPromise = audioPlayer.play();
         if (playPromise !== undefined) {
             playPromise.catch(error => {
-                if (error.name !== 'AbortError') { isPlaying = false; updatePlayBtn(); }
+                if (error.name !== 'AbortError') {
+                    console.error("Playback failed", error);
+                    isPlaying = false; updatePlayBtn(); stopScramble();
+                }
             });
         }
     }
@@ -493,7 +505,7 @@ function commitSeek(percent) {
             bufferCheckTimer = setTimeout(() => { if (audioPlayer.seeking || audioPlayer.readyState < 3) { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); } }, 200);
         } else {
             pendingSeekPercent = percent;
-            if (loadingScrambleInterval) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); }
+            stopScramble();
         }
     } else { pendingSeekPercent = percent; }
 }
@@ -701,10 +713,9 @@ function revealPlayer() {
 }
 
 // ==========================================
-// 7. LISTENERS & EVENTS
+// 7. LISTENERS
 // ==========================================
 window.addEventListener('resize', () => {
-    // Only reload on massive changes (Orientation)
     if (isMobileDevice) {
         const currentOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
         if (currentOrientation === lastOrientation) return;
@@ -715,7 +726,8 @@ window.addEventListener('resize', () => {
     }
     if (!isLoading && pdfDoc) {
         if (resizeTimer) clearTimeout(resizeTimer);
-        // Force full reload for new orientation fidelity
+        const visiblePage = getVisiblePageNumber();
+        pendingScrollPage = visiblePage; 
         resizeTimer = setTimeout(() => { loadDocument(currentIndex); }, 300);
     }
 });
@@ -737,9 +749,8 @@ progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
 progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); 
 progressArea.addEventListener('touchend', endDragTouch);
 
-// AUDIO SYNC LISTENERS
 audioPlayer.addEventListener('timeupdate', () => { 
-    if (!audioPlayer.paused && pendingSeekPercent !== null && audioPlayer.duration) { pendingSeekPercent = null; }
+    if (!audioPlayer.paused && pendingSeekPercent !== null) { pendingSeekPercent = null; }
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
         domProgressBar.style.setProperty('--progress', `${p}%`); 
@@ -748,9 +759,7 @@ audioPlayer.addEventListener('timeupdate', () => {
     }
     if (loadingScrambleInterval !== null && !audioPlayer.paused && audioPlayer.currentTime > 0) {
         if (audioPlayer.readyState > 2) {
-            resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
-            shouldAnimateReveal = false;
-            if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
+            stopScramble();
         }
     }
 });
@@ -762,23 +771,33 @@ audioPlayer.addEventListener('loadedmetadata', () => {
         pendingSeekPercent = null; 
     }
 });
-audioPlayer.addEventListener('ended', () => nextTrack(true));
-audioPlayer.addEventListener('pause', () => { isPlaying = false; updatePlayBtn(); });
+audioPlayer.addEventListener('ended', () => { stopScramble(); nextTrack(true); });
+audioPlayer.addEventListener('pause', () => { isPlaying = false; updatePlayBtn(); stopScramble(); });
 audioPlayer.addEventListener('playing', () => { 
     isPlaying = true; updatePlayBtn(); 
-    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
-    if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; }
+    if (shouldAnimateReveal) { stopScramble(); }
 });
 audioPlayer.addEventListener('waiting', () => { 
     if(bufferCheckTimer) clearTimeout(bufferCheckTimer); 
     if (isPlaying) { bufferCheckTimer = setTimeout(() => { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); }, 300); }
 });
+audioPlayer.addEventListener('stalled', () => { if (isPlaying) startLoadingScramble(domTrackTitle); });
 audioPlayer.addEventListener('seeked', () => {
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer); 
     if (audioPlayer.paused && loadingScrambleInterval !== null) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); }
 });
 
-// BUTTON & FLAP
+// FLAP
+const toolsContainer = document.getElementById('pdf-tools');
+const toolsToggle = document.getElementById('tools-toggle');
+if (toolsToggle && toolsContainer) {
+    toolsToggle.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); toolsContainer.classList.toggle('active'); });
+    document.addEventListener('click', (e) => {
+        if (toolsContainer.classList.contains('active') && !toolsContainer.contains(e.target)) { toolsContainer.classList.remove('active'); }
+    });
+}
+
+// SHOW VOICE
 if (btnShowVoice) { 
     btnShowVoice.addEventListener('click', (e) => { 
         e.preventDefault(); if (isLoading) return; 
@@ -791,20 +810,6 @@ if (btnShowVoice) {
             else { waitingForLyrics = true; startLoadingScramble(btnShowVoice); }
         }
     }); 
-}
-const toolsContainer = document.getElementById('pdf-tools');
-const toolsToggle = document.getElementById('tools-toggle');
-if (toolsToggle && toolsContainer) {
-    toolsToggle.addEventListener('click', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        toolsContainer.classList.toggle('active');
-        // Icon rotation handled by CSS
-    });
-    document.addEventListener('click', (e) => {
-        if (toolsContainer.classList.contains('active') && !toolsContainer.contains(e.target)) {
-            toolsContainer.classList.remove('active');
-        }
-    });
 }
 
 infinityBtn.addEventListener('click', (e) => { 
@@ -830,10 +835,10 @@ function addTactileListener(selector) {
     els.forEach(el => {
         el.addEventListener('touchstart', function(e) { e.stopPropagation(); this.classList.add('active-state'); }, {passive: true});
         el.addEventListener('touchend', function() { setTimeout(() => { this.classList.remove('active-state'); }, 50); }, {passive: true});
+        el.addEventListener('touchcancel', function() { this.classList.remove('active-state'); }, {passive: true});
     });
 }
 
-// INIT
 initTerminalState(); 
 loadDocument(0); 
 initPlaylist(); 
@@ -843,5 +848,6 @@ addTactileListener('.close-terminal');
 addTactileListener('.cycle-btn');
 addTactileListener('.tools-toggle');
 addTactileListener('.tool-btn');
-addTactileListener('.ctrl-btn');
+addTactileListener('.ctrl-btn'); 
 addTactileListener('.voice-btn');
+addTactileListener('.playlist-item');

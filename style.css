@@ -109,8 +109,10 @@
     position: fixed;
     z-index: 2000;
     pointer-events: none; 
+    /* Full Screen Lock for Flex Centering */
     top: 0; left: 0; right: 0; bottom: 0;
     width: 100%; height: 100%;
+    
     display: flex; justify-content: space-between; align-items: center; 
     max-width: 1050px; 
     margin: 0 auto; 
@@ -125,7 +127,10 @@
     width: auto; min-width: 80px; height: 80px;     
     padding: 0; margin: 0;
     cursor: pointer; 
+    
+    /* NO TRANSITION: Prevents Drift */
     transition: none !important;
+    
     animation: faintFlash 5s infinite ease-in-out;
     opacity: 0.6;
     display: flex; justify-content: center; align-items: center;
@@ -155,44 +160,60 @@
   }
   
   @media (max-width: 700px) {
+      /* Mobile Sizing Only - Position stays centered */
       .nav-arrow { font-size: 4.5rem; min-width: 50px; height: 60px; }
   }
   
-  /* --- THE VOID-MECHANIC (Retractable Tools) --- */
+  /* --- THE MASTER VOID MECHANIC (PDF Tools) --- */
   .pdf-tools {
       position: fixed;
-      right: 20px; bottom: 20px;
+      right: 20px; 
+      bottom: 20px;
       z-index: 2500;
       height: 50px; 
       display: flex; align-items: center;
+      
+      /* Container is transparent, children carry style */
       background-color: transparent; 
       border: 1px solid var(--arrow-color);
       border-radius: 0; 
       color: var(--arrow-color);
+      
       animation: faintFlash 5s infinite ease-in-out;
       opacity: 0.8; 
-      max-width: 50px; /* Default: Perfect Square */
+      
+      max-width: 50px; /* Default: Closed */
       overflow: hidden; 
       transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
                   background-color 0.2s, 
                   border-color 0.2s, 
                   opacity 0.2s;
+      
       backdrop-filter: blur(2px);
+  
+      /* THE MASTER VOID MASK */
+      /* Applied to the container so it affects EVERYTHING inside constantly */
+      -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+      mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
   }
   
   .pdf-tools.active {
       max-width: 200px; 
       opacity: 1;
       animation: none; 
-      border-color: rgba(152, 0, 235, 0.3);
+      border-color: rgba(152, 0, 235, 0.3); /* Music Player Border Color */
       background-color: rgba(13, 0, 34, 0.9);
   }
   
-  /* THE TOGGLE (Flap) */
+  /* THE FLAP (Toggle) */
   .tools-toggle {
+      pointer-events: auto;
       width: 50px; min-width: 50px; height: 100%;
       display: flex; justify-content: center; align-items: center;
       cursor: pointer;
+      
+      /* Styling */
+      background: rgba(13, 0, 34, 0.9);
       border-right: 1px solid transparent; 
       transition: background-color 0.2s, color 0.2s, border-right-color 0.2s;
   }
@@ -210,29 +231,29 @@
   
   .pdf-tools.active .tools-toggle svg { transform: rotate(0deg); }
   
-  /* THE CONTENT (With Void Gradient) */
+  /* THE CONTENT */
   .tool-content {
       min-width: 120px; height: 100%;
       display: flex;
       opacity: 0; 
       transition: opacity 0.3s ease 0.1s;
-      /* THE VOID FADE */
-      mask-image: linear-gradient(to right, black 70%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
   }
   
   .pdf-tools.active .tool-content { opacity: 1; }
   
-  /* THE LINK BUTTON */
+  /* THE ACTION BUTTON */
   .tool-btn {
       flex-grow: 1; height: 100%;
       display: flex; align-items: center; justify-content: center; 
       padding-right: 20px;
+      
       text-decoration: none;
       color: inherit; 
       font-family: "Space Mono", monospace;
       font-weight: 600; font-size: 0.85em; letter-spacing: 1px;
       white-space: nowrap;
+      
+      background: rgba(13, 0, 34, 0.9); /* Opaque background */
       transition: background-color 0.2s, color 0.2s;
   }
   
@@ -256,8 +277,10 @@
       .pdf-tools.active { max-width: 220px; }
       .tools-toggle { width: 56px; min-width: 56px; }
       .tools-toggle svg { width: 24px; height: 24px; }
+      .tool-btn { font-size: 0.95em; }
   }
   
+  /* --- MUSIC LINK --- */
   #song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 10px; }
   #song-link { color: var(--name-color); text-decoration: underline; text-decoration-color: var(--name-color); text-underline-offset: 2px; font-weight: 600; transition: color 0.1s; }
   @media (hover: hover) { #song-link:hover { animation: strobe 1s infinite; } }
@@ -276,16 +299,13 @@
   
   .terminal-sidebar { width: 280px; height: 100%; background-color: var(--terminal-sidebar); border-right: 1px solid var(--terminal-border); padding: 40px 20px; display: flex; flex-direction: column; z-index: 11; flex-shrink: 0; }
   .cycles-wrapper { display: flex; flex-direction: column; gap: 15px; flex-grow: 1; }
-  /* HIDE SCROLLBARS */
   .cycles-wrapper::-webkit-scrollbar { display: none; }
   .cycles-wrapper { -ms-overflow-style: none; scrollbar-width: none; }
   
   .controls-wrapper { display: flex; flex-direction: column; margin-top: 20px; }
   .sidebar-header { color: #fff; font-weight: bold; border-bottom: 2px solid var(--terminal-border); padding-bottom: 10px; margin-bottom: 10px; letter-spacing: 2px; font-size: 1.1em; }
   
-  .cycle-btn { 
-      background: none; padding: 12px 15px; cursor: pointer; font-family: 'Space Mono', monospace; font-size: 0.85em; transition: background-color 0.2s ease, opacity 0.2s ease; opacity: 0.3; border: 1px solid transparent; border-left: 3px solid transparent; width: 100%; box-sizing: border-box; display: none; align-items: center; justify-content: space-between; min-height: 46px; 
-  }
+  .cycle-btn { background: none; padding: 12px 15px; cursor: pointer; font-family: 'Space Mono', monospace; font-size: 0.85em; transition: background-color 0.2s ease, opacity 0.2s ease; opacity: 0.3; border: 1px solid transparent; border-left: 3px solid transparent; width: 100%; box-sizing: border-box; display: none; align-items: center; justify-content: space-between; min-height: 46px; }
   .cycle-btn.visible { display: flex; pointer-events: auto; }
   .cycle-btn:hover { opacity: 0.8; background-color: rgba(255,255,255,0.02); }
   .cycle-btn.theme-crash { color: var(--terminal-error); border-color: rgba(255, 51, 51, 0.2); }
@@ -359,6 +379,7 @@
   @media (hover: hover) { .close-terminal:hover { color: var(--terminal-text); border-color: var(--terminal-text); } }
   .close-terminal:active, .close-terminal.active-state { color: var(--terminal-bg) !important; background-color: var(--terminal-text) !important; border-color: var(--terminal-text) !important; transition: none !important; }
   
+  /* --- MUSIC PLAYER --- */
   #music-section { display: none; width: 100%; max-width: 900px; margin: 40px auto 20px auto; animation: fadeIn 2s ease forwards; }
   .music-container { background: linear-gradient(180deg, rgba(13,0,34,0.9) 0%, rgba(5,0,10,0.95) 100%); border: 1px solid rgba(152, 0, 235, 0.3); border-radius: 8px; padding: 30px; display: flex; flex-wrap: wrap; gap: 30px; box-shadow: 0 0 40px rgba(0, 0, 0, 0.9); align-items: flex-start; align-content: flex-start; }
   .art-column { flex: 1 1 300px; min-width: 250px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
@@ -367,7 +388,7 @@
   .vinyl-shine { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%, rgba(255,255,255,0.02) 100%); pointer-events: none; }
   .voice-btn { background-color: transparent; color: var(--arrow-color); border: 1px solid var(--arrow-color); border-radius: 0; text-decoration: none; font-weight: 600; padding: 12px 22px; font-size: 0.8em; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; font-family: "Zilla Slab", serif; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 100%; }
   @media (hover: hover) { .voice-btn:hover { color: var(--name-color); border-color: var(--name-color); background-color: rgba(152, 0, 235, 0.05); } }
-  .voice-btn:active { background-color: rgba(152, 0, 235, 0.15); border-color: var(--name-color); color: var(--name-color); transform: scale(0.98); }
+  .voice-btn:active, .voice-btn.active-state { background-color: rgba(152, 0, 235, 0.15); border-color: var(--name-color); color: var(--name-color); transform: scale(0.98); }
   .player-controls { flex: 1 1 400px; display: flex; flex-direction: column; justify-content: center; }
   .track-details h2 { font-family: 'Space Mono', monospace; color: var(--name-color); margin: 0 0 5px 0; font-size: 1.4em; text-shadow: 0 0 10px rgba(152, 0, 235, 0.4); height: 1.5em; line-height: 1.5em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; box-sizing: border-box; }
   .track-details h3 { font-family: 'Zilla Slab', serif; color: var(--secondary-text-color); margin: 0 0 20px 0; font-weight: 400; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -380,7 +401,7 @@
   .ctrl-btn { background: transparent; border: 1px solid var(--name-color); color: var(--name-color); width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease, background-color 0.2s ease, opacity 0.3s ease; padding: 0; box-shadow: 0 0 5px rgba(152, 0, 235, 0.1); -webkit-tap-highlight-color: transparent; }
   .ctrl-btn svg { width: 20px; height: 20px; fill: currentColor; filter: drop-shadow(0 0 2px rgba(152,0,235,0.5)); }
   @media (hover: hover) { .ctrl-btn:hover { transform: scale(1.1); } .ctrl-btn:not(.loop-btn):hover { background: rgba(152, 0, 235, 0.1); box-shadow: 0 0 20px var(--name-color); color: #fff; } .loop-btn:hover { background: transparent; box-shadow: none; } .loop-btn.active:hover, .loop-btn.active-one:hover { opacity: 1; } }
-  .ctrl-btn:active, .ctrl-btn.active-state { transform: scale(0.95); background: rgba(152, 0, 235, 0.2); }
+  .ctrl-btn:active, .ctrl-btn.active-state { transform: scale(0.95); background: rgba(152, 0, 235, 0.2); color: #ffffff !important; box-shadow: 0 0 15px rgba(152, 0, 235, 0.4); }
   .play-btn { width: 65px; height: 65px; border-width: 2px; }
   .play-btn svg { width: 28px; height: 28px; }
   .loop-btn { width: 35px; height: 35px; border: none; box-shadow: none; margin-left: auto; opacity: 0.3; }
@@ -392,7 +413,7 @@
   #playlist-list { list-style: none; padding: 0; margin: 0; }
   .playlist-item { font-family: 'Space Mono', monospace; font-size: 0.85em; padding: 8px 10px; cursor: pointer; transition: background 0.1s; color: #888; display: flex; justify-content: space-between; border-left: 2px solid transparent; margin-bottom: 2px; }
   @media (hover: hover) { .playlist-item:hover { background: rgba(255,255,255,0.03); color: #fff; padding-left: 18px; transition: all 0.2s; } }
-  .playlist-item:active { background: rgba(152, 0, 235, 0.1); color: #fff; }
+  .playlist-item:active, .playlist-item.active-state { background: rgba(152, 0, 235, 0.1); color: #fff; }
   .playlist-item.active-track { color: var(--name-color); background: linear-gradient(90deg, rgba(152, 0, 235, 0.1) 0%, transparent 100%); border-left: 2px solid var(--name-color); text-shadow: 0 0 8px rgba(152, 0, 235, 0.3); font-weight: bold; }
   
   @media (max-width: 900px) {
