@@ -236,7 +236,6 @@ const btnMute = document.getElementById('btn-mute');
 // ==========================================
 
 // --- JITTER PHYSICS ENGINE ---
-// Tight, fast vibration that settles.
 function jitterScrollTo(element) {
     if (!element) return;
     
@@ -254,9 +253,7 @@ function jitterScrollTo(element) {
 
         if (progress > 1) progress = 1;
 
-        // Carrier: Smooth ease out
         const carrier = 1 - Math.pow(1 - progress, 4);
-        // Jitter: Accelerating frequency, decaying amplitude
         const frequency = 20 + (progress * 30); 
         const amplitude = 15 * Math.pow(1 - progress, 2); 
         const vibration = Math.sin(progress * frequency) * amplitude;
@@ -299,118 +296,112 @@ function getLODScale() {
 }
 
 async function loadDocument(index) {
-    if (isLoading) return;
-    isLoading = true; renderSession++; const currentSession = renderSession;
-    
-    if (prevArrow) prevArrow.classList.remove('active-state');
-    if (nextArrow) nextArrow.classList.remove('active-state');
+  if (isLoading) return;
+  isLoading = true; renderSession++; const currentSession = renderSession;
   
-    songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
-    
-    // --- CONDITIONAL LAYOUT LOCK ---
-    // If we are waiting for lyrics (Show Voice), we LOCK height to keep the player stable.
-    // If we are just navigating (Next/Prev), we UNLOCK immediately so the box starts small.
-    if (waitingForLyrics) {
-        const currentHeight = pdfWrapper.getBoundingClientRect().height;
-        if (currentHeight > 0) {
-            pdfWrapper.style.minHeight = `${currentHeight}px`;
-        }
-    } else {
-        // Standard Navigation: Reset height so we see a normal loading box, not a huge ghost container.
-        pdfWrapper.style.minHeight = '';
-    }
+  if (prevArrow) prevArrow.classList.remove('active-state');
+  if (nextArrow) nextArrow.classList.remove('active-state');
+
+  songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
   
-    // Memory Cleanup
-    const existingPages = document.querySelectorAll('.pdf-page-wrapper');
-    existingPages.forEach(p => {
-        const canvas = p.querySelector('canvas');
-        if (canvas) { canvas.width = 1; canvas.height = 1; } 
-        p.remove();
-    });
-  
-    // Only show overlay if we aren't doing the seamless "Show Voice" transition
-    if (!waitingForLyrics) {
-        loadingOverlay.style.display = 'flex';
-    }
-    
-    prevArrow.classList.add('disabled'); 
-    nextArrow.classList.add('disabled');
-  
-    currentIndex = index;
-    const currentDoc = library[currentIndex];
-    docTitle.textContent = currentDoc.title;
-    downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
-    
-    updateInfinityState();
-  
-    try {
-      pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
-      await renderPage(1, currentSession);
-      
-      if (currentSession === renderSession) {
-          if (!waitingForLyrics) loadingOverlay.style.display = 'none';
-          document.body.classList.add("loaded");
-          const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
-          if(firstPage) firstPage.classList.add('revealed');
-  
-          // Note: If waitingForLyrics, height stays locked until renderRestOfPages finishes.
-          // If standard nav, height is already free to grow.
-  
-          if (currentDoc.songUrl) {
-              songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
-              if (currentDoc.bpm > 0) songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
-              else songLink.style.animationDuration = "";
-              songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
-          }
-          isLoading = false;
-          
-          prevArrow.classList.remove('disabled'); 
-          nextArrow.classList.remove('disabled');
-          
-          if (currentIndex === 0) prevArrow.classList.add('disabled');
-          if (currentIndex === library.length - 1) nextArrow.classList.add('disabled');
-  
-          if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
+  // --- CONDITIONAL LAYOUT LOCK ---
+  if (waitingForLyrics) {
+      // Lock height to keep player stable
+      const currentHeight = pdfWrapper.getBoundingClientRect().height;
+      if (currentHeight > 0) {
+          pdfWrapper.style.minHeight = `${currentHeight}px`;
       }
-    } catch (err) {
-      console.error(err);
+  } else {
+      // STANDARD NAV FIX: Unlock height AND Force Scroll to Top
+      // This prevents the "snap to bottom" glitch.
       pdfWrapper.style.minHeight = '';
-      loadingOverlay.innerHTML = "<div style='color:red; font-family:monospace'>ARCHIVE CORRUPTED</div>";
-      isLoading = false;
-      waitingForLyrics = false;
-      if (voiceScrambleInterval) resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
+      window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+
+  // Memory Cleanup
+  const existingPages = document.querySelectorAll('.pdf-page-wrapper');
+  existingPages.forEach(p => {
+      const canvas = p.querySelector('canvas');
+      if (canvas) { canvas.width = 1; canvas.height = 1; } 
+      p.remove();
+  });
+
+  if (!waitingForLyrics) {
+      loadingOverlay.style.display = 'flex';
+  }
+  
+  prevArrow.classList.add('disabled'); 
+  nextArrow.classList.add('disabled');
+
+  currentIndex = index;
+  const currentDoc = library[currentIndex];
+  docTitle.textContent = currentDoc.title;
+  downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
+  
+  updateInfinityState();
+
+  try {
+    pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
+    await renderPage(1, currentSession);
+    
+    if (currentSession === renderSession) {
+        if (!waitingForLyrics) loadingOverlay.style.display = 'none';
+        document.body.classList.add("loaded");
+        const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
+        if(firstPage) firstPage.classList.add('revealed');
+
+        if (currentDoc.songUrl) {
+            songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
+            if (currentDoc.bpm > 0) songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
+            else songLink.style.animationDuration = "";
+            songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
+        }
+        isLoading = false;
+        
+        prevArrow.classList.remove('disabled'); 
+        nextArrow.classList.remove('disabled');
+        
+        if (currentIndex === 0) prevArrow.classList.add('disabled');
+        if (currentIndex === library.length - 1) nextArrow.classList.add('disabled');
+
+        if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
     }
+  } catch (err) {
+    console.error(err);
+    pdfWrapper.style.minHeight = '';
+    loadingOverlay.innerHTML = "<div style='color:red; font-family:monospace'>ARCHIVE CORRUPTED</div>";
+    isLoading = false;
+    waitingForLyrics = false;
+    if (voiceScrambleInterval) resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
   }
-  
-  async function renderRestOfPages(pageNum, sessionID) {
-      if (sessionID !== renderSession || pageNum > pdfDoc.numPages) {
-          // --- COMPLETION TRIGGER ---
-          // 1. Release Height Lock (Layout is now full size)
-          pdfWrapper.style.minHeight = '';
-  
-          // 2. Perform the Show Voice Transition if active
-          if (waitingForLyrics && pageNum > pdfDoc.numPages) {
-              resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
-              const p8 = document.getElementById('page-wrapper-8'); 
-              if (p8) { 
-                  jitterScrollTo(p8); 
-              }
-              waitingForLyrics = false;
-          }
-          return;
-      }
-  
-      await renderPage(pageNum, sessionID);
-      const pages = pdfWrapper.querySelectorAll('.pdf-page-wrapper');
-      if(pages[pageNum-1]) pages[pageNum-1].classList.add('revealed');
-      
-      // ADAPTIVE THROTTLE:
-      // Mobile: 150ms (Prevent crash)
-      // Desktop: 50ms (Fast load)
-      const delay = isMobileDevice ? 150 : 50;
-      
-      setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, delay); 
-  }
+}
+
+async function renderRestOfPages(pageNum, sessionID) {
+    if (sessionID !== renderSession || pageNum > pdfDoc.numPages) {
+        // --- COMPLETION TRIGGER ---
+        // 1. Release Height Lock
+        pdfWrapper.style.minHeight = '';
+
+        // 2. Perform the Show Voice Transition
+        if (waitingForLyrics && pageNum > pdfDoc.numPages) {
+            resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
+            const p8 = document.getElementById('page-wrapper-8'); 
+            if (p8) { 
+                jitterScrollTo(p8); 
+            }
+            waitingForLyrics = false;
+        }
+        return;
+    }
+
+    await renderPage(pageNum, sessionID);
+    const pages = pdfWrapper.querySelectorAll('.pdf-page-wrapper');
+    if(pages[pageNum-1]) pages[pageNum-1].classList.add('revealed');
+    
+    // Adaptive Throttle
+    const delay = isMobileDevice ? 150 : 50;
+    setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, delay); 
+}
 
 async function renderPage(num, sessionID) {
   try {
@@ -442,15 +433,6 @@ async function renderPage(num, sessionID) {
       if (sessionID !== renderSession) return;
       pdfWrapper.appendChild(wrapper);
       
-      // --- THE GRAVITY ANCHOR ---
-      // If we are waiting for lyrics, the document is growing above us.
-      // We must forcefully scroll the button back into center view
-      // to counteract the browser pushing it down.
-      if (waitingForLyrics) {
-          btnShowVoice.scrollIntoView({ block: 'center', behavior: 'auto' });
-      }
-      
-      // Standard Internal Link Scroll (NOT for Show Voice)
       if (num === pendingScrollPage && !waitingForLyrics) { 
           setTimeout(() => { smartScrollTo(wrapper); pendingScrollPage = null; }, 50);
       }
@@ -542,22 +524,16 @@ function initPlaylist() {
     });
 }
 
-// --- MUSIC FUNCTIONS ---
-
 function loadTrack(index, animate = true) {
     if (!domTrackTitle) return;
-    
-    // Visual Reset
     domProgressBar.style.setProperty('--progress', '0%');
     domCurrentTime.textContent = "0:00"; 
     domDuration.textContent = "0:00"; 
     
     currentTrackIdx = index;
     const track = albumTracks[index];
-    
     shouldAnimateReveal = animate; 
     
-    // Clear timers
     if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
 
@@ -568,11 +544,8 @@ function loadTrack(index, animate = true) {
         domTrackTitle.style.color = ""; 
     }
     
-    // Assign source but DO NOT auto-play here.
-    // Playback is handled explicitly by playTrack or togglePlay
     audioPlayer.src = track.src;
     
-    // Update Playlist Highlight
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -587,24 +560,16 @@ function loadTrack(index, animate = true) {
 }
 
 function playTrack(index) { 
-    // 1. Load the data
     loadTrack(index); 
-    
-    // 2. OPTIMISTIC UI UPDATE
-    // Immediately show "Pause" button so user knows input was received
+    // Optimistic UI
     isPlaying = true;
     updatePlayBtn();
 
-    // 3. Attempt Playback with Error Handling
     const playPromise = audioPlayer.play();
-    
     if (playPromise !== undefined) {
         playPromise.catch(error => { 
-            // AbortError is normal when skipping fast. Ignore it.
-            // NotAllowedError means auto-play block. 
             if (error.name !== 'AbortError') {
                 console.log("Playback interrupted:", error);
-                // Only revert UI if it wasn't a simple skip
                 isPlaying = false; 
                 updatePlayBtn();
             }
@@ -613,21 +578,20 @@ function playTrack(index) {
 }
 
 function togglePlay() {
-    // Safety: If source is missing, load first track
     if (!audioPlayer.src) {
         loadTrack(currentTrackIdx, false);
     }
 
     if (isPlaying) { 
         audioPlayer.pause(); 
-        // Logic handles the UI update via event listeners below
+        // Note: Event listener handles UI update
     }
     else { 
-        // Optimistic UI Update
+        // Optimistic UI
         isPlaying = true;
         updatePlayBtn();
 
-        // Check for pending seek (Cold Start fix)
+        // Pending seek check
         if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) {
             const newTime = (pendingSeekPercent / 100) * audioPlayer.duration;
             audioPlayer.currentTime = newTime;
@@ -649,7 +613,6 @@ function togglePlay() {
 
 function updatePlayBtn() {
     if (!iconPlay || !iconPause) return;
-    // Direct DOM manipulation based on state
     iconPlay.style.display = isPlaying ? 'none' : 'block';
     iconPause.style.display = isPlaying ? 'block' : 'none';
 }
@@ -671,6 +634,7 @@ function nextTrack(auto = false) {
 }
 function prevTrack() { let prevIdx = currentTrackIdx - 1; if (prevIdx < 0) prevIdx = albumTracks.length - 1; playTrack(prevIdx); }
 
+// --- DRAG LOGIC ---
 function updateScrubVisual(percent) {
     domProgressBar.style.setProperty('--progress', `${percent}%`);
     if (audioPlayer.duration && !isNaN(audioPlayer.duration)) domCurrentTime.textContent = formatTime((percent / 100) * audioPlayer.duration);
@@ -698,10 +662,12 @@ const endDragTouch = (e) => { if (holdTimer) clearTimeout(holdTimer); if (isDrag
 function commitSeek(percent) {
     shouldAnimateReveal = false; 
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
+
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
+
         if (!audioPlayer.paused) {
             audioPlayer.currentTime = newTime;
             pendingSeekPercent = null;
@@ -929,20 +895,17 @@ function revealPlayer() {
 }
 
 // ==========================================
-// 7. NO RESIZE LISTENER
+// 7. LISTENERS
 // ==========================================
-// We rely on CSS scaling.
 
 // --- LISTENERS ---
 document.getElementById('next-doc').addEventListener('click', () => { 
     if(!isLoading && currentIndex < library.length - 1) { 
-        window.scrollTo({ top: 0, behavior: 'smooth' }); 
         loadDocument(currentIndex + 1); 
     }
 });
 document.getElementById('prev-doc').addEventListener('click', () => { 
     if(!isLoading && currentIndex > 0) { 
-        window.scrollTo({ top: 0, behavior: 'smooth' }); 
         loadDocument(currentIndex - 1); 
     }
 });
@@ -960,102 +923,55 @@ document.addEventListener('mouseup', endDragMouse);
 progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); 
 progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); 
 progressArea.addEventListener('touchend', endDragTouch);
-// --- AUDIO EVENT LISTENERS (HARD SYNC) ---
 
-// 1. UPDATE PROGRESS BAR
+// --- HARD SYNC EVENT LISTENERS ---
 audioPlayer.addEventListener('timeupdate', () => { 
-    // Sync Failsafe
-    if (!audioPlayer.paused && pendingSeekPercent !== null && audioPlayer.duration) {
-        pendingSeekPercent = null;
-    }
-
+    if (!audioPlayer.paused && pendingSeekPercent !== null && audioPlayer.duration) { pendingSeekPercent = null; }
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
         domProgressBar.style.setProperty('--progress', `${p}%`); 
         domCurrentTime.textContent = formatTime(audioPlayer.currentTime); 
         domDuration.textContent = formatTime(audioPlayer.duration); 
     }
-    
-    // RESOLVE TITLE: Only if data is flowing (readyState > 2)
-    // This prevents the title from revealing while still buffering
     if (loadingScrambleInterval !== null && !audioPlayer.paused && audioPlayer.currentTime > 0) {
-        if (audioPlayer.readyState > 2) { 
+        if (audioPlayer.readyState > 2) {
             resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
             shouldAnimateReveal = false;
             if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
         }
     }
 });
-
-// 2. LOAD METADATA
 audioPlayer.addEventListener('loadedmetadata', () => { 
     domDuration.textContent = formatTime(audioPlayer.duration); 
-    // If a seek was queued during load, apply it now
     if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) { 
         audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; 
         domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); 
         pendingSeekPercent = null; 
     }
 });
-
-// 3. HARDWARE STATE SYNC
-// If the engine pauses (buffer underrun or user action), update state
-audioPlayer.addEventListener('pause', () => {
-    isPlaying = false;
-    updatePlayBtn();
-});
-
-// If the engine actually starts emitting sound, update state
-audioPlayer.addEventListener('playing', () => {
-    isPlaying = true;
-    updatePlayBtn();
-    
-    // Clear buffer timer
+audioPlayer.addEventListener('ended', () => nextTrack(true));
+audioPlayer.addEventListener('pause', () => { isPlaying = false; updatePlayBtn(); });
+audioPlayer.addEventListener('playing', () => { 
+    isPlaying = true; 
+    updatePlayBtn(); 
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
-    
-    // Resolve title if we were waiting
-    if (shouldAnimateReveal) { 
-        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); 
-        shouldAnimateReveal = false; 
-    } 
+    if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; }
 });
-
-// 4. BUFFERING / SLOW INTERNET HANDLING
 audioPlayer.addEventListener('waiting', () => { 
     if(bufferCheckTimer) clearTimeout(bufferCheckTimer); 
-    
-    // If we are supposed to be playing but hit a buffer wall:
-    // 1. Keep the button as "Pause" (we haven't stopped, just stalled)
-    // 2. Re-engage the scramble text to show activity
-    if (isPlaying) {
-        bufferCheckTimer = setTimeout(() => { 
-            shouldAnimateReveal = true; 
-            startLoadingScramble(domTrackTitle); 
-        }, 300); 
-    }
+    if (isPlaying) { bufferCheckTimer = setTimeout(() => { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); }, 300); }
 });
-
-// 5. SEEK HANDLERS
 audioPlayer.addEventListener('seeked', () => {
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer); 
-    // If playing, the 'playing' event will handle text resolution.
-    // If paused, we resolve immediately so it doesn't look stuck.
-    if (audioPlayer.paused && loadingScrambleInterval !== null) {
-        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
-    }
+    if (audioPlayer.paused && loadingScrambleInterval !== null) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); }
 });
-
-audioPlayer.addEventListener('ended', () => nextTrack(true));
 
 // --- SHOW VOICE HANDLER ---
 if (btnShowVoice) { 
     btnShowVoice.addEventListener('click', (e) => { 
         e.preventDefault(); 
         if (isLoading) return; 
-        
-        // VIEW LOCK: FORCE THE PLAYER INTO CENTER VIEW
         btnShowVoice.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
         if (currentIndex !== 0) {
             waitingForLyrics = true;
             startLoadingScramble(btnShowVoice);
@@ -1069,6 +985,34 @@ if (btnShowVoice) {
             }
         }
     }); 
+}
+
+// --- FLAP HANDLERS ---
+const toolsContainer = document.getElementById('pdf-tools');
+const toolsToggle = document.getElementById('tools-toggle');
+
+if (toolsToggle && toolsContainer) {
+    toolsToggle.addEventListener('click', (e) => {
+        e.preventDefault(); 
+        e.stopPropagation();
+        
+        toolsContainer.classList.toggle('active');
+        
+        // Flip arrow visually
+        if (toolsContainer.classList.contains('active')) { 
+            toolsToggle.innerText = "▶"; 
+        } else { 
+            toolsToggle.innerText = "◀"; 
+        }
+    });
+
+    // Auto-close if clicking outside
+    document.addEventListener('click', (e) => {
+        if (toolsContainer.classList.contains('active') && !toolsContainer.contains(e.target)) {
+            toolsContainer.classList.remove('active');
+            toolsToggle.innerText = "◀";
+        }
+    });
 }
 
 infinityBtn.addEventListener('click', (e) => { 
@@ -1112,3 +1056,4 @@ loadTrack(0, false);
 setTimeout(() => { scrambleText(domTrackTitle, albumTracks[0].title); }, 500);
 addTactileListener('.close-terminal');
 addTactileListener('.cycle-btn');
+addTactileListener('.tools-toggle');

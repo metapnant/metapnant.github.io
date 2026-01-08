@@ -190,12 +190,135 @@
       }
   }
   
-  /* --- UTILITY BUTTONS --- */
-  .pdf-button { position: fixed; right: 20px; bottom: 20px; z-index: 1000; background-color: transparent; color: var(--arrow-color); border: 1px solid var(--arrow-color); border-radius: 0; text-decoration: none; font-weight: 600; padding: 12px 22px; font-size: 0.8em; letter-spacing: 1px; opacity: 0; transition: all 0.3s; animation: faintFlash 5s infinite ease-in-out; display: flex; align-items: center; justify-content: center; gap: 10px; }
-  body.loaded .pdf-button { opacity: 1; }
-  @media (hover: hover) { .pdf-button:hover { color: var(--name-color); border-color: var(--name-color); background-color: rgba(152, 0, 235, 0.05); animation: none; opacity: 1; } }
-  .pdf-button:active { background-color: rgba(152, 0, 235, 0.15); border-color: var(--name-color); color: var(--name-color); transform: scale(0.98); }
-  @media (max-width: 599px) { .pdf-button { width: 50px; height: 50px; padding: 0; border-radius: 0; font-size: 1.4em; border-color: var(--arrow-color); background-color: rgba(13, 0, 34, 0.8); } .pdf-button .btn-text { display: none; } .pdf-button .btn-icon { margin: 0; } }
+/* --- TERMINAL SCROLLBAR HIDING --- */
+/* Hide scrollbar for Chrome, Safari and Opera */
+.cycles-wrapper::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .cycles-wrapper {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  /* --- THE VOID-MECHANISM (Retractable Tools) --- */
+  .pdf-tools {
+      position: fixed;
+      right: 20px; /* Safe from scrollbar */
+      bottom: 20px;
+      z-index: 2500;
+      
+      /* The Mechanical Look */
+      height: 54px; /* Scaled up vertically */
+      display: flex;
+      align-items: center;
+      
+      /* The Container Style (Matches Original Button) */
+      background: rgba(13, 0, 34, 0.9); /* Slight opacity for readability */
+      border: 1px solid var(--arrow-color);
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      backdrop-filter: blur(5px);
+      
+      /* The Void Animation Logic */
+      /* We animate max-width to reveal content from the "void" */
+      max-width: 54px; /* Default: Only show the flap (square) */
+      overflow: hidden; /* Hides the button when retracted */
+      transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s;
+  }
+  
+  /* Active State: Expand to reveal content */
+  .pdf-tools.active {
+      max-width: 300px; /* Arbitrary large number to fit content */
+      border-color: var(--name-color);
+  }
+  
+  /* --- THE FLAP (Toggle) --- */
+  .tools-toggle {
+      /* Fixed Dimensions for the square flap */
+      width: 54px; 
+      min-width: 54px;
+      height: 100%;
+      
+      /* Styling */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--arrow-color);
+      font-size: 1.2em;
+      cursor: pointer;
+      border-right: 6px solid var(--arrow-color); /* Separator */
+      transition: color 0.3s, background-color 0.3s;
+  }
+  
+  /* --- THE CONTENT (Hidden Button) --- */
+  .tool-content {
+      /* Ensure it has width even when hidden so it slides, not squishes */
+      min-width: 160px; 
+      height: 100%;
+      display: flex;
+  }
+  
+  /* --- THE ACTION BUTTON --- */
+  .tool-btn {
+      flex-grow: 1;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 0 20px;
+      
+      /* Typography */
+      text-decoration: none;
+      color: var(--arrow-color);
+      font-family: "Space Mono", monospace; /* Tech feel */
+      font-weight: 600;
+      font-size: 0.85em;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      
+      transition: color 0.3s, background-color 0.3s;
+  }
+  
+  /* --- INTERACTION STATES --- */
+  
+  /* Hover (Desktop) */
+  @media (hover: hover) {
+      .pdf-tools:hover {
+          border-color: var(--name-color);
+      }
+      
+      .tools-toggle:hover {
+          color: #fff;
+          background: rgba(152, 0, 235, 0.1);
+      }
+      
+      .tool-btn:hover {
+          color: #fff;
+          background: rgba(152, 0, 235, 0.1);
+          text-shadow: 0 0 10px var(--name-color);
+      }
+  }
+  
+  /* Active / Touch (Mobile) */
+  .tools-toggle:active, .tool-btn:active {
+      background: var(--name-color);
+      color: #fff;
+  }
+  
+  /* --- MOBILE OPTIMIZATION --- */
+  @media (max-width: 700px) {
+      .pdf-tools {
+          /* On mobile, we keep it in the corner, 
+             but slightly higher if needed to avoid bottom gestures */
+          bottom: 20px; 
+      }
+      
+      /* Make the text clearer on mobile */
+      .tool-btn {
+          font-size: 0.95em; 
+      }
+  }
   
   #song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 10px; }
   #song-link { color: var(--name-color); text-decoration: underline; text-decoration-color: var(--name-color); text-underline-offset: 2px; font-weight: 600; transition: color 0.1s; }
