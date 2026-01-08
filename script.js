@@ -413,14 +413,22 @@ function initPlaylist() {
     });
 }
 
-function loadTrack(index) {
+// Update loadTrack to accept animate flag
+function loadTrack(index, animate = true) {
     if (!domTrackTitle) return;
     domProgressBar.style.setProperty('--progress', '0%');
     domCurrentTime.textContent = "0:00"; domDuration.textContent = "0:00"; 
     currentTrackIdx = index;
     const track = albumTracks[index];
-    shouldAnimateReveal = true; 
-    startLoadingScramble(domTrackTitle);
+    
+    // Only scramble if requested (default true)
+    shouldAnimateReveal = animate; 
+    if (animate) {
+        startLoadingScramble(domTrackTitle);
+    } else {
+        domTrackTitle.innerText = track.title;
+    }
+    
     audioPlayer.src = track.src;
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
@@ -579,7 +587,7 @@ function updateSidebarUI() {
                 const icon = document.createElement('span'); 
                 icon.className = 'replay-icon'; 
                 icon.innerHTML = '↺'; 
-                // Fix: Properly handle click propagation in the listener
+                // STANDARD CLICK HANDLER WITH STOP PROPAGATION
                 icon.onclick = (e) => replayLog(e, type);
                 targetBtn.appendChild(icon);
             }
@@ -616,11 +624,12 @@ function launchTerminal() {
     else switchTab(currentTab); 
 }
 
-function switchTab(type) {
+function switchTab(type, isReplay = false) {
     checkStateIntegrity();
 
-    // FEATURE: If clicking the MAIN BUTTON while it is replaying, skip to the end.
-    if (currentTab === type && terminalRunning && appState.finishedLogs.includes(type) && !logState[type].finished) {
+    // FEATURE: Main button "Skip to End"
+    // Only triggers if this is NOT a forced replay action.
+    if (!isReplay && currentTab === type && terminalRunning && appState.finishedLogs.includes(type) && !logState[type].finished) {
         if (activeTimer) clearTimeout(activeTimer);
         renderFullLog(type);
         logState[type].finished = true;
@@ -656,15 +665,19 @@ function switchTab(type) {
 }
 
 function replayLog(e, type) {
-    if (e) e.stopPropagation(); // CRITICAL: Prevents main button click triggering
+    if (e) {
+        e.stopPropagation(); 
+        e.preventDefault(); // Extra safety for mobile
+    }
     if (activeTimer) clearTimeout(activeTimer);
     
-    // Reset internal RAM state so processQueue runs from start
+    // Reset state
     containers[type].innerHTML = ""; 
     logState[type].index = 0; 
     logState[type].finished = false;
     
-    switchTab(type);
+    // Explicitly pass true to signal a forced replay
+    switchTab(type, true);
 }
 
 function toggleTurbo() { 
@@ -785,7 +798,7 @@ function revealPlayer() {
     currentTrackIdx = 0;
     loadTrack(0);
 
-    // Immediate Text Fix (Prevent Infinite Scramble)
+    // Immediate Text Fix
     resolveLoadingScramble(domTrackTitle, albumTracks[0].title);
     shouldAnimateReveal = false;
     
@@ -846,7 +859,27 @@ audioPlayer.addEventListener('playing', () => {
     if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; } 
 });
 
-if (btnShowVoice) { btnShowVoice.addEventListener('click', (e) => { e.preventDefault(); if (currentIndex !== 0) loadDocument(0); pendingScrollPage = 8; const p8 = document.getElementById('page-wrapper-8'); if (p8) { smartScrollTo(p8); pendingScrollPage = null; } }); }
+// FIX: Prevent double-clicking "Show Voice" if currently loading
+if (btnShowVoice) { 
+    btnShowVoice.addEventListener('click', (e) => { 
+        e.preventDefault(); 
+        if (isLoading) return; // Guard clause for slow phones
+
+        if (currentIndex !== 0) {
+            loadDocument(0); 
+            pendingScrollPage = 8;
+        } else {
+            // Already loaded, just scroll
+            const p8 = document.getElementById('page-wrapper-8'); 
+            if (p8) { 
+                smartScrollTo(p8); 
+                pendingScrollPage = null; 
+            } else {
+                pendingScrollPage = 8; 
+            }
+        }
+    }); 
+}
 
 infinityBtn.addEventListener('click', (e) => { 
     e.preventDefault(); 
@@ -880,4 +913,4 @@ document.getElementById("currentYear").textContent = new Date().getFullYear();
 initTerminalState(); 
 loadDocument(0); 
 initPlaylist(); 
-loadTrack(0);
+loadTrack(0, false); // Load track 0 initially WITHOUT animation
