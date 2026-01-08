@@ -58,9 +58,12 @@ let lyricsDoc = null;
 let isLoading = false;
 let renderSession = 0;
 let pendingScrollPage = null; 
+let resizeTimer = null; 
 
-// -- Mobile Detection --
+// -- Mobile Detection & Orientation State --
 const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+let lastOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+let lastWidth = window.innerWidth;
 
 // -- Music State --
 const audioPlayer = new Audio();
@@ -249,16 +252,12 @@ function updateInfinityState() {
 }
 
 // --- PDF FUNCTIONS ---
-// THE LOD SYSTEM: Force High Quality but prevent Memory Crashes
 function getLODScale() {
     // Desktop: 3.0x scale (High Fidelity)
     if (!isMobileDevice) return 3.0;
 
     // Mobile Safety Logic
     // iOS Safari has a strict memory limit for Canvases.
-    // In Portrait (~375px), 2.0x scale = 750px width. (Safe for 20 pages)
-    // In Landscape (~800px), 2.0x scale = 1600px width. (CRASH for 20 pages)
-    
     const width = window.innerWidth;
     
     // If width implies Landscape on mobile (> 600px), throttle the scale.
@@ -271,79 +270,76 @@ function getLODScale() {
 }
 
 async function loadDocument(index) {
-    if (isLoading) return;
-    isLoading = true; renderSession++; const currentSession = renderSession;
+  if (isLoading) return;
+  isLoading = true; renderSession++; const currentSession = renderSession;
+  
+  if (prevArrow) prevArrow.classList.remove('active-state');
+  if (nextArrow) nextArrow.classList.remove('active-state');
+
+  songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
+  
+  // FORCE MEMORY CLEANUP
+  const existingPages = document.querySelectorAll('.pdf-page-wrapper');
+  existingPages.forEach(p => {
+      const canvas = p.querySelector('canvas');
+      if (canvas) { canvas.width = 1; canvas.height = 1; } // Nullify buffer
+      p.remove();
+  });
+
+  loadingOverlay.style.display = 'flex';
+  
+  prevArrow.classList.add('disabled'); 
+  nextArrow.classList.add('disabled');
+
+  currentIndex = index;
+  const currentDoc = library[currentIndex];
+  docTitle.textContent = currentDoc.title;
+  downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
+  
+  updateInfinityState();
+
+  try {
+    pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
+    await renderPage(1, currentSession);
     
-    if (prevArrow) prevArrow.classList.remove('active-state');
-    if (nextArrow) nextArrow.classList.remove('active-state');
-  
-    songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
-    
-    // FORCE MEMORY CLEANUP
-    const existingPages = document.querySelectorAll('.pdf-page-wrapper');
-    existingPages.forEach(p => {
-        // Help GC by nulling references
-        const canvas = p.querySelector('canvas');
-        if (canvas) { canvas.width = 1; canvas.height = 1; } 
-        p.remove();
-    });
-  
-    loadingOverlay.style.display = 'flex';
-    
-    prevArrow.classList.add('disabled'); 
-    nextArrow.classList.add('disabled');
-  
-    currentIndex = index;
-    const currentDoc = library[currentIndex];
-    docTitle.textContent = currentDoc.title;
-    downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
-    
-    updateInfinityState();
-  
-    try {
-      pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
-      await renderPage(1, currentSession);
-      
-      if (currentSession === renderSession) {
-          loadingOverlay.style.display = 'none';
-          document.body.classList.add("loaded");
-          const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
-          if(firstPage) firstPage.classList.add('revealed');
-  
-          if (currentDoc.songUrl) {
-              songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
-              if (currentDoc.bpm > 0) songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
-              else songLink.style.animationDuration = "";
-              songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
-          }
-          isLoading = false;
-          
-          prevArrow.classList.remove('disabled'); 
-          nextArrow.classList.remove('disabled');
-          
-          if (currentIndex === 0) prevArrow.classList.add('disabled');
-          if (currentIndex === library.length - 1) nextArrow.classList.add('disabled');
-  
-          if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
-      }
-    } catch (err) {
-      console.error(err);
-      loadingOverlay.innerHTML = "<div style='color:red; font-family:monospace'>ARCHIVE CORRUPTED</div>";
-      isLoading = false;
+    if (currentSession === renderSession) {
+        loadingOverlay.style.display = 'none';
+        document.body.classList.add("loaded");
+        const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
+        if(firstPage) firstPage.classList.add('revealed');
+
+        if (currentDoc.songUrl) {
+            songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
+            if (currentDoc.bpm > 0) songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
+            else songLink.style.animationDuration = "";
+            songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
+        }
+        isLoading = false;
+        
+        prevArrow.classList.remove('disabled'); 
+        nextArrow.classList.remove('disabled');
+        
+        if (currentIndex === 0) prevArrow.classList.add('disabled');
+        if (currentIndex === library.length - 1) nextArrow.classList.add('disabled');
+
+        if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
     }
+  } catch (err) {
+    console.error(err);
+    loadingOverlay.innerHTML = "<div style='color:red; font-family:monospace'>ARCHIVE CORRUPTED</div>";
+    isLoading = false;
   }
+}
 
 async function renderRestOfPages(pageNum, sessionID) {
     if (sessionID !== renderSession || pageNum > pdfDoc.numPages) return;
     await renderPage(pageNum, sessionID);
     const pages = pdfWrapper.querySelectorAll('.pdf-page-wrapper');
     if(pages[pageNum-1]) pages[pageNum-1].classList.add('revealed');
-    
-    // Increased delay from 50ms to 150ms to prevent iOS Memory Spike
+    // Increased throttle to 150ms for iOS memory safety
     setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 150); 
 }
 
-// --- RENDER PAGE WITH FIXED LOD ---
 async function renderPage(num, sessionID) {
   try {
       if (sessionID !== renderSession) return;
@@ -368,7 +364,7 @@ async function renderPage(num, sessionID) {
       
       const ctx = canvas.getContext('2d');
       
-      // LOD SYSTEM: Uses fixed high scale
+      // LOD SYSTEM
       const lodScale = getLODScale();
 
       const viewport = page.getViewport({ scale: lodScale });
@@ -478,8 +474,6 @@ function initPlaylist() {
 
 function loadTrack(index, animate = true) {
     if (!domTrackTitle) return;
-    
-    // Reset visuals immediately
     domProgressBar.style.setProperty('--progress', '0%');
     domCurrentTime.textContent = "0:00"; 
     domDuration.textContent = "0:00"; 
@@ -489,7 +483,6 @@ function loadTrack(index, animate = true) {
     
     shouldAnimateReveal = animate; 
     
-    // Clear any existing scramble timers to prevent overlaps
     if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
 
@@ -497,13 +490,11 @@ function loadTrack(index, animate = true) {
         startLoadingScramble(domTrackTitle);
     } else {
         domTrackTitle.innerText = track.title;
-        // Fix color incase it was stuck in scramble mode
         domTrackTitle.style.color = ""; 
     }
     
     audioPlayer.src = track.src;
     
-    // Update Playlist UI
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -527,21 +518,30 @@ function playTrack(index) {
 }
 
 function togglePlay() {
+    if (!audioPlayer.src) {
+        loadTrack(currentTrackIdx, false);
+    }
+
     if (isPlaying) { 
         audioPlayer.pause(); 
         isPlaying = false;
-        // Ensure title is readable when paused
         if (loadingScrambleInterval) {
              resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
     else { 
-        if (!audioPlayer.src) loadTrack(0); 
+        // Sync Fix: Apply pending seek before playing
+        if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) {
+            const newTime = (pendingSeekPercent / 100) * audioPlayer.duration;
+            audioPlayer.currentTime = newTime;
+            pendingSeekPercent = null;
+        }
         audioPlayer.play(); 
         isPlaying = true; 
     }
     updatePlayBtn();
 }
+
 function updatePlayBtn() {
     if (!iconPlay || !iconPause) return;
     iconPlay.style.display = isPlaying ? 'none' : 'block';
@@ -589,23 +589,21 @@ const doDragTouch = (e) => {
     if (dx > 5 || dy > 5) { if (holdTimer) clearTimeout(holdTimer); if (dx > dy) { isDragging = true; domProgressBar.classList.add('dragging'); if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); } else isScrolling = true; }
 };
 const endDragTouch = (e) => { if (holdTimer) clearTimeout(holdTimer); if (isDragging) { commitSeek(parseFloat(domProgressBar.style.getPropertyValue('--progress'))); isDragging = false; domProgressBar.classList.remove('dragging'); } setTimeout(() => { isTouch = false; }, 500); };
+
 function commitSeek(percent) {
     shouldAnimateReveal = false; 
-    
-    // SAFETY: Clear any pending buffer timers immediately so they don't fire late
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
 
-    if (audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration !== Infinity) {
+    const hasDuration = audioPlayer.duration && isFinite(audioPlayer.duration);
+
+    if (hasDuration) {
         const newTime = (percent / 100) * audioPlayer.duration;
         audioPlayer.currentTime = newTime;
         pendingSeekPercent = null;
 
-        // FORCE VISUAL UPDATE IMMEDIATELY (Don't wait for timeupdate)
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
 
-        // LOGIC FIX: Only trigger "Loading..." animation if we are actually playing.
-        // If we are paused, we simply jump to the frame silently.
         if (!audioPlayer.paused) {
             bufferCheckTimer = setTimeout(() => { 
                 if (audioPlayer.seeking || audioPlayer.readyState < 3) { 
@@ -614,7 +612,6 @@ function commitSeek(percent) {
                 } 
             }, 200);
         } else {
-            // If paused, ensure title is legible
             if (loadingScrambleInterval) {
                 resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
             }
@@ -655,14 +652,12 @@ function checkStateIntegrity() {
 }
 
 function updateSidebarUI() {
-    // 1. Manage Visibility based on Unlocked Tabs
     if (appState.unlockedTabs.includes('crash')) btnCycle00.classList.add('visible');
     if (appState.unlockedTabs.includes('echo')) btnCycleEcho.classList.add('visible');
     if (appState.unlockedTabs.includes('wake')) btnCycle01.classList.add('visible');
     if (appState.unlockedTabs.includes('bloom')) btnCycleBloom.classList.add('visible');
     if (appState.unlockedTabs.includes('gardener')) btnCycle02.classList.add('visible');
 
-    // 2. Manage Active State Highlights
     const allBtns = [btnCycle00, btnCycleEcho, btnCycle01, btnCycleBloom, btnCycle02];
     allBtns.forEach(btn => btn.classList.remove('active'));
 
@@ -675,7 +670,6 @@ function updateSidebarUI() {
 
     if (activeBtn) activeBtn.classList.add('active');
 
-    // 3. Manage Replay Icons (The iOS Fix)
     allBtns.forEach(btn => { 
         const isCurrent = btn === activeBtn;
         const type = btn === btnCycle00 ? 'crash' :
@@ -687,37 +681,23 @@ function updateSidebarUI() {
         let icon = btn.querySelector('.replay-icon');
 
         if (isCurrent && isFinished) {
-            // Create icon if it doesn't exist
             if (!icon) {
                 icon = document.createElement('span'); 
                 icon.className = 'replay-icon'; 
                 icon.innerHTML = '↺'; 
-                
-                // --- CLICK HANDLER WITH IOS FIX ---
                 icon.onclick = (e) => {
-                    e.stopPropagation(); 
-                    e.preventDefault();
-                    
-                    // Remove class immediately
-                    icon.classList.remove('spin-once');
-                    
-                    // Wait 10ms to force iOS to register the removal
-                    setTimeout(() => {
-                        icon.classList.add('spin-once');
-                    }, 10);
-                    
+                    e.stopPropagation(); e.preventDefault();
+                    icon.classList.remove('spin-once'); 
+                    setTimeout(() => { icon.classList.add('spin-once'); }, 10);
                     replayLog(e, type);
                 };
-                
                 btn.appendChild(icon);
             }
         } else {
-            // Remove icon if it shouldn't be there
             if (icon) icon.remove();
         }
     });
 
-    // 4. Manage Global Controls Visibility
     if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
         btnReset.classList.add('visible'); 
         btnTurbo.classList.add('visible'); 
@@ -909,11 +889,33 @@ function revealPlayer() {
 }
 
 // ==========================================
-// 7. NO RESIZE LISTENER HERE
+// 7. THE RESIZE HANDLER (STASIS PROTOCOL)
 // ==========================================
-// We have removed the resize listener entirely. 
-// The document loads once at full LOD. 
-// Scaling is handled via CSS.
+window.addEventListener('resize', () => {
+    // 1. MOBILE LOGIC: LOCK RELOAD TO ORIENTATION
+    if (isMobileDevice) {
+        const currentOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+        if (currentOrientation === lastOrientation) {
+            return;
+        }
+        lastOrientation = currentOrientation;
+    } 
+    // 2. DESKTOP LOGIC: ONLY RELOAD ON MAJOR RESIZE
+    else {
+        const currentWidth = window.innerWidth;
+        if (Math.abs(currentWidth - lastWidth) < 100) {
+            return;
+        }
+        lastWidth = currentWidth;
+    }
+
+    if (!isLoading && pdfDoc) {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+             loadDocument(currentIndex);
+        }, 300);
+    }
+});
 
 // --- LISTENERS ---
 document.getElementById('next-doc').addEventListener('click', () => { 
@@ -948,7 +950,11 @@ progressArea.addEventListener('touchmove', doDragTouch, { passive: false });
 progressArea.addEventListener('touchend', endDragTouch);
 
 audioPlayer.addEventListener('timeupdate', () => { 
-    // Only update if we aren't dragging and aren't waiting for a seek to land
+    // FAILSAFE: Sync check
+    if (!audioPlayer.paused && pendingSeekPercent !== null && audioPlayer.duration) {
+        pendingSeekPercent = null;
+    }
+
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
         domProgressBar.style.setProperty('--progress', `${p}%`); 
@@ -956,9 +962,7 @@ audioPlayer.addEventListener('timeupdate', () => {
         domDuration.textContent = formatTime(audioPlayer.duration); 
     }
     
-    // SAFETY: If playing and scramble is stuck, kill it
     if (loadingScrambleInterval !== null && !audioPlayer.paused && audioPlayer.currentTime > 0) {
-        // Only resolve if enough time has passed to be sure we aren't stuttering
         if (audioPlayer.readyState > 2) {
             resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
             shouldAnimateReveal = false;
@@ -969,35 +973,26 @@ audioPlayer.addEventListener('timeupdate', () => {
 
 audioPlayer.addEventListener('loadedmetadata', () => { 
     domDuration.textContent = formatTime(audioPlayer.duration); 
-    if (pendingSeekPercent !== null) { 
+    if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) { 
         audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; 
         domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); 
         pendingSeekPercent = null; 
     }
 });
-
 audioPlayer.addEventListener('ended', () => nextTrack(true));
-
 audioPlayer.addEventListener('waiting', () => { 
     if(bufferCheckTimer) clearTimeout(bufferCheckTimer); 
-    // Only scramble if playing
     if (!audioPlayer.paused) {
         bufferCheckTimer = setTimeout(() => { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); }, 300); 
     }
 });
-
-// CRITICAL FIX: The 'seeked' event must clear the timer
 audioPlayer.addEventListener('seeked', () => {
-    // 1. Kill the ghost timer immediately
-    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
-    
-    // 2. Stop the scramble if it was running
+    if (bufferCheckTimer) clearTimeout(bufferCheckTimer); 
     if (loadingScrambleInterval !== null) {
         resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
     shouldAnimateReveal = false;
 });
-
 audioPlayer.addEventListener('playing', () => { 
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer); 
     if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; } 
