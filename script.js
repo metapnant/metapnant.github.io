@@ -840,6 +840,7 @@ function revealPlayer() {
 }
 
 // --- LISTENERS ---
+// REMOVED: Modulo looping logic. Now strictly +1 or -1.
 document.getElementById('next-doc').addEventListener('click', () => { 
     if(!isLoading && currentIndex < library.length - 1) { 
         window.scrollTo({ top: 0, behavior: 'smooth' }); 
