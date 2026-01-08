@@ -58,12 +58,9 @@ let lyricsDoc = null;
 let isLoading = false;
 let renderSession = 0;
 let pendingScrollPage = null; 
-let resizeTimer = null; 
 
-// -- Mobile Detection & Orientation State --
+// -- Mobile Detection --
 const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-let lastOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
-let lastWidth = window.innerWidth;
 
 // -- Music State --
 const audioPlayer = new Audio();
@@ -237,10 +234,11 @@ const btnMute = document.getElementById('btn-mute');
 // ==========================================
 
 function smartScrollTo(element) {
+    if (!element) return;
     const headerOffset = 80; 
     const elementPosition = element.getBoundingClientRect().top;
     const offsetPosition = elementPosition + window.scrollY - headerOffset;
-    window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+    window.scrollTo({ top: offsetPosition, behavior: "auto" }); 
 }
 
 function updateInfinityState() {
@@ -253,16 +251,17 @@ function updateInfinityState() {
 
 // --- PDF FUNCTIONS ---
 function getLODScale() {
-    // Desktop: 3.0x scale (High Fidelity)
+    // Desktop: 3.0x scale (High Fidelity) - Enough for 300% zoom
     if (!isMobileDevice) return 3.0;
 
     // Mobile Safety Logic
-    // iOS Safari has a strict memory limit for Canvases.
     const width = window.innerWidth;
     
-    // If width implies Landscape on mobile (> 600px), throttle the scale.
+    // LANDSCAPE OPTIMIZATION FOR iPHONE 8
+    // If width > 600 (Landscape), drop scale drastically to prevent memory crash
+    // 1.1x is enough for reading, but keeps texture size small.
     if (width > 600) {
-        return 1.4; // Enough for clarity, small enough to fit in RAM
+        return 1.1; 
     }
     
     // Portrait Mode
@@ -336,7 +335,7 @@ async function renderRestOfPages(pageNum, sessionID) {
     await renderPage(pageNum, sessionID);
     const pages = pdfWrapper.querySelectorAll('.pdf-page-wrapper');
     if(pages[pageNum-1]) pages[pageNum-1].classList.add('revealed');
-    // Increased throttle to 150ms for iOS memory safety
+    // Throttle for iOS memory safety
     setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 150); 
 }
 
@@ -364,7 +363,7 @@ async function renderPage(num, sessionID) {
       
       const ctx = canvas.getContext('2d');
       
-      // LOD SYSTEM
+      // LOD SYSTEM: Renders once at this scale
       const lodScale = getLODScale();
 
       const viewport = page.getViewport({ scale: lodScale });
@@ -382,9 +381,12 @@ async function renderPage(num, sessionID) {
       if (sessionID !== renderSession) return;
       pdfWrapper.appendChild(wrapper);
       
+      // Initial Scroll Jump logic (only used for internal linking like Show Voice)
       if (num === pendingScrollPage) { 
-          smartScrollTo(wrapper); 
-          pendingScrollPage = null; 
+          setTimeout(() => {
+              smartScrollTo(wrapper); 
+              pendingScrollPage = null;
+          }, 50);
       }
   } catch (e) { 
       if (sessionID === renderSession) console.log("Render failed", e); 
@@ -409,7 +411,6 @@ async function refreshDynamicPage() {
         
         const ctx = canvas.getContext('2d');
         
-        // Use consistent LOD scale
         const lodScale = getLODScale();
         
         const scaledViewport = page.getViewport({ scale: lodScale });
@@ -531,21 +532,15 @@ function togglePlay() {
         updatePlayBtn();
     }
     else { 
-        // WAKE UP THE ENGINE
         const playPromise = audioPlayer.play();
-        
         if (playPromise !== undefined) {
             playPromise.then(() => {
-                // SUCCESS: Engine is hot.
                 isPlaying = true;
                 updatePlayBtn();
-
-                // CHECK FOR PENDING SEEK (The "Cold Start" Fix)
                 if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) {
-                    // Apply the seek now that iOS is listening
                     const newTime = (pendingSeekPercent / 100) * audioPlayer.duration;
                     audioPlayer.currentTime = newTime;
-                    pendingSeekPercent = null; // Release the UI lock
+                    pendingSeekPercent = null;
                 }
             })
             .catch(error => { 
@@ -609,39 +604,28 @@ function commitSeek(percent) {
     shouldAnimateReveal = false; 
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
 
-    // 1. Always update visuals immediately (The UI must feel responsive)
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
-    }
 
-    // 2. Branch Logic based on Playback State
-    if (!audioPlayer.paused) {
-        // A. HOT SEEK (Playing)
-        // We can safely seek immediately
-        if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
-            audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
-            pendingSeekPercent = null; // Clear lock
-            
-            // Trigger Loading Animation
+        if (!audioPlayer.paused) {
+            audioPlayer.currentTime = newTime;
+            pendingSeekPercent = null;
             bufferCheckTimer = setTimeout(() => { 
                 if (audioPlayer.seeking || audioPlayer.readyState < 3) { 
                     shouldAnimateReveal = true; 
                     startLoadingScramble(domTrackTitle); 
                 } 
             }, 200);
+        } else {
+            pendingSeekPercent = percent;
+            if (loadingScrambleInterval) {
+                resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
+            }
         }
     } else {
-        // B. COLD SEEK (Paused)
-        // iOS ignores currentTime when paused/unbuffered. 
-        // We just store the intent. 'togglePlay' will execute it on wake-up.
         pendingSeekPercent = percent;
-        
-        // Clean up any text artifacts if we were scrambling
-        if (loadingScrambleInterval) {
-            resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
-        }
     }
 }
 
@@ -913,33 +897,10 @@ function revealPlayer() {
 }
 
 // ==========================================
-// 7. THE RESIZE HANDLER (STASIS PROTOCOL)
+// 7. NO RESIZE LISTENER
 // ==========================================
-window.addEventListener('resize', () => {
-    // 1. MOBILE LOGIC: LOCK RELOAD TO ORIENTATION
-    if (isMobileDevice) {
-        const currentOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
-        if (currentOrientation === lastOrientation) {
-            return;
-        }
-        lastOrientation = currentOrientation;
-    } 
-    // 2. DESKTOP LOGIC: ONLY RELOAD ON MAJOR RESIZE
-    else {
-        const currentWidth = window.innerWidth;
-        if (Math.abs(currentWidth - lastWidth) < 100) {
-            return;
-        }
-        lastWidth = currentWidth;
-    }
-
-    if (!isLoading && pdfDoc) {
-        if (resizeTimer) clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-             loadDocument(currentIndex);
-        }, 300);
-    }
-});
+// The system now relies entirely on CSS for scaling and 
+// initial LOD calculation for resolution. No reloads on resize.
 
 // --- LISTENERS ---
 document.getElementById('next-doc').addEventListener('click', () => { 
@@ -974,8 +935,10 @@ progressArea.addEventListener('touchmove', doDragTouch, { passive: false });
 progressArea.addEventListener('touchend', endDragTouch);
 
 audioPlayer.addEventListener('timeupdate', () => { 
-    // Standard Progress Bar Update
-    // We only update if the user isn't dragging AND we aren't waiting for a seek to commit
+    if (!audioPlayer.paused && pendingSeekPercent !== null && audioPlayer.duration) {
+        pendingSeekPercent = null;
+    }
+
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
         domProgressBar.style.setProperty('--progress', `${p}%`); 
@@ -983,7 +946,6 @@ audioPlayer.addEventListener('timeupdate', () => {
         domDuration.textContent = formatTime(audioPlayer.duration); 
     }
     
-    // Scramble Cleanup
     if (loadingScrambleInterval !== null && !audioPlayer.paused && audioPlayer.currentTime > 0) {
         if (audioPlayer.readyState > 2) {
             resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
