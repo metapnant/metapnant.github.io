@@ -320,45 +320,67 @@ async function renderRestOfPages(pageNum, sessionID) {
     setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 50); 
 }
 
+// Replace your existing renderPage function with this optimized version
 async function renderPage(num, sessionID) {
-  try {
-      if (sessionID !== renderSession) return;
-      let docToRender = pdfDoc;
-      let pageIndexToRender = num;
-      if (currentIndex === 0 && num === 8 && appState.musicUnlocked) {
-          if (!lyricsDoc) lyricsDoc = await pdfjsLib.getDocument('lyrics.pdf').promise;
-          docToRender = lyricsDoc; pageIndexToRender = currentTrackIdx + 1;
-      }
-      const page = await docToRender.getPage(pageIndexToRender);
-      const wrapper = document.createElement('div');
-      wrapper.className = 'pdf-page-wrapper';
-      wrapper.id = `page-wrapper-${num}`; 
-      const canvas = document.createElement('canvas');
-      canvas.className = 'pdf-page-canvas';
-      wrapper.appendChild(canvas);
-      const ctx = canvas.getContext('2d');
-      const viewport = page.getViewport({ scale: 1 });
-      const containerWidth = pdfWrapper.getBoundingClientRect().width || window.innerWidth;
-      const desiredScale = (containerWidth - 40) / viewport.width;
-      const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
-      
-      // --- MEMORY FIX FOR IOS ---
-      let outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
-      if (window.innerWidth < 800) {
-          outputScale = 1.4;
-      }
-
-      const scaledViewport = page.getViewport({ scale: finalScale * outputScale });
-      canvas.height = Math.floor(scaledViewport.height);
-      canvas.width = Math.floor(scaledViewport.width);
-      
-      await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
-      
-      if (sessionID !== renderSession) return;
-      pdfWrapper.appendChild(wrapper);
-      if (num === pendingScrollPage) { smartScrollTo(wrapper); pendingScrollPage = null; }
-  } catch (e) { if (sessionID === renderSession) console.log("Render failed", e); }
-}
+    try {
+        if (sessionID !== renderSession) return;
+        
+        let docToRender = pdfDoc;
+        let pageIndexToRender = num;
+        
+        // Dynamic Lyrics Page Logic
+        if (currentIndex === 0 && num === 8 && appState.musicUnlocked) {
+            if (!lyricsDoc) lyricsDoc = await pdfjsLib.getDocument('lyrics.pdf').promise;
+            docToRender = lyricsDoc; pageIndexToRender = currentTrackIdx + 1;
+        }
+  
+        const page = await docToRender.getPage(pageIndexToRender);
+        
+        const wrapper = document.createElement('div');
+        wrapper.className = 'pdf-page-wrapper';
+        wrapper.id = `page-wrapper-${num}`; 
+        
+        const canvas = document.createElement('canvas');
+        canvas.className = 'pdf-page-canvas';
+        wrapper.appendChild(canvas);
+        
+        const ctx = canvas.getContext('2d');
+        
+        // --- THE FIX: RENDER AT MAX QUALITY, SCALE VISUALLY ---
+        // We get the viewport at scale 1.0 just to know the aspect ratio
+        const unscaledViewport = page.getViewport({ scale: 1 });
+        
+        // We decide on a "Render Scale". 
+        // 2.0 is usually crisp enough for Retina screens without killing memory.
+        // If you want absolute 4k sharpness, use 3.0, but 2.0 is safer for mobile.
+        const renderScale = Math.min(window.devicePixelRatio || 1, 3.0) * 2.0; 
+        
+        const viewport = page.getViewport({ scale: renderScale });
+  
+        // Set internal resolution (High Res)
+        canvas.height = Math.floor(viewport.height);
+        canvas.width = Math.floor(viewport.width);
+        
+        // Note: We DO NOT set style.width/height here. CSS handles that.
+        
+        const renderContext = {
+            canvasContext: ctx,
+            viewport: viewport
+        };
+  
+        await page.render(renderContext).promise;
+        
+        if (sessionID !== renderSession) return;
+        pdfWrapper.appendChild(wrapper);
+        
+        if (num === pendingScrollPage) { 
+            smartScrollTo(wrapper); 
+            pendingScrollPage = null; 
+        }
+    } catch (e) { 
+        if (sessionID === renderSession) console.log("Render failed", e); 
+    }
+  }
 
 async function refreshDynamicPage() {
     if (currentIndex !== 0 || !appState.musicUnlocked) return;
@@ -859,18 +881,35 @@ function revealPlayer() {
     setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100); 
 }
 
-// --- REFRESH ON ORIENTATION CHANGE (FIXED) ---
-window.addEventListener('resize', () => {
-    // FIX: Only trigger if WIDTH actually changes (Orientation change)
-    // Ignores height changes caused by mobile address bar scrolling
-    if (window.innerWidth === lastWidth) return;
-    lastWidth = window.innerWidth;
+// --- OPTIMIZED RESIZE HANDLER ---
+// We no longer reload on every pixel change. CSS handles the visual scaling.
+// We only reload if the layout drastically changes (Orientation Flip).
 
-    if (!isLoading && pdfDoc) {
-        if (resizeTimer) clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
+let resizeTimeout;
+let previousWidth = window.innerWidth;
+
+window.addEventListener('resize', () => {
+    const currentWidth = window.innerWidth;
+    
+    // Ignore vertical resize (address bar appearing/disappearing on mobile)
+    if (currentWidth === previousWidth) return;
+
+    // Check for drastic change (Orientation change or massive desktop resize)
+    // A 100px difference usually implies a layout shift, not just a UI element popping up.
+    const widthDiff = Math.abs(currentWidth - previousWidth);
+    
+    if (widthDiff > 100) {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            console.log("Drastic Layout Shift Detected: Re-rendering for clarity.");
+            previousWidth = currentWidth;
+            // Only now do we pay the cost of re-rendering
             loadDocument(currentIndex);
-        }, 300); 
+        }, 300);
+    } else {
+        // For small changes, we update our reference but DO NOT re-render.
+        // CSS 'width: 100%' handles the squishing/stretching instantly.
+        previousWidth = currentWidth;
     }
 });
 
