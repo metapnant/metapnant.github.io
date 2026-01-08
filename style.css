@@ -55,7 +55,6 @@
   .explore-header { text-align: center; margin-bottom: 30px; }
   .explore-header h1 { 
       color: var(--name-color); 
-      /* FLUID TYPOGRAPHY */
       font-size: clamp(2rem, 8vw, 3.5rem); 
       font-style: italic; 
       font-weight: 700; 
@@ -109,60 +108,36 @@
   .nav-controls {
     position: fixed;
     z-index: 2000;
-    pointer-events: none; /* Allows click-through */
-    
-    /* Full Viewport Lock */
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    
-    /* Flexbox Centering (Stable against Zoom) */
-    display: flex;
-    justify-content: space-between;
-    align-items: center; 
-    
-    /* Pop-Out Logic */
+    pointer-events: none; 
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%; height: 100%;
+    display: flex; justify-content: space-between; align-items: center; 
     max-width: 1050px; 
     margin: 0 auto; 
     padding: 0 10px;
   }
   
   .nav-arrow {
-    pointer-events: auto; /* Re-enable click */
-    background: none; 
-    border: none; 
+    pointer-events: auto; 
+    background: none; border: none; 
     color: var(--arrow-color);
-    font-size: 6rem; 
-    font-weight: 100; 
-    line-height: 0.7; 
-    width: auto;      
-    min-width: 80px;  
-    height: 80px;     
-    padding: 0;
-    margin: 0;
+    font-size: 6rem; font-weight: 100; line-height: 0.7; 
+    width: auto; min-width: 80px; height: 80px;     
+    padding: 0; margin: 0;
     cursor: pointer; 
-    
-    /* No Transition = No Jitter */
     transition: none !important;
-    
     animation: faintFlash 5s infinite ease-in-out;
     opacity: 0.6;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: flex; justify-content: center; align-items: center;
     text-shadow: 0 0 30px rgba(0,0,0,0.8);
-    transform: none; /* Flexbox handles position */
+    transform: none; 
   }
   
   @media (hover: hover) {
     .nav-arrow:hover { 
       color: var(--name-color); 
       transform: scale(1.2); 
-      animation: none; 
-      opacity: 1; 
+      animation: none; opacity: 1; 
       filter: drop-shadow(0 0 20px var(--name-color));
     }
   }
@@ -176,201 +151,112 @@
   }
   
   .nav-arrow.disabled { 
-      opacity: 0 !important; 
-      pointer-events: none !important; 
-      visibility: hidden; 
+      opacity: 0 !important; pointer-events: none !important; visibility: hidden; 
   }
   
   @media (max-width: 700px) {
-      /* Mobile sizing only - Positioning remains centered via main block */
-      .nav-arrow { 
-          font-size: 4.5rem; 
-          min-width: 50px; 
-          height: 60px; 
-      }
+      .nav-arrow { font-size: 4.5rem; min-width: 50px; height: 60px; }
   }
   
-/* --- TERMINAL SCROLLBAR HIDING --- */
-/* Hide scrollbar for Chrome, Safari and Opera */
-.cycles-wrapper::-webkit-scrollbar {
-    display: none;
-  }
-  /* Hide scrollbar for IE, Edge and Firefox */
-  .cycles-wrapper {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+  /* --- THE VOID-MECHANIC (Retractable Tools) --- */
+  .pdf-tools {
+      position: fixed;
+      right: 20px; bottom: 20px;
+      z-index: 2500;
+      height: 50px; 
+      display: flex; align-items: center;
+      background-color: transparent; 
+      border: 1px solid var(--arrow-color);
+      border-radius: 0; 
+      color: var(--arrow-color);
+      animation: faintFlash 5s infinite ease-in-out;
+      opacity: 0.8; 
+      max-width: 50px; /* Default: Perfect Square */
+      overflow: hidden; 
+      transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+                  background-color 0.2s, 
+                  border-color 0.2s, 
+                  opacity 0.2s;
+      backdrop-filter: blur(2px);
   }
   
-/* --- THE PHANTOM MECHANIC (Retractable Tools) --- */
-.pdf-tools {
-    position: fixed;
-    right: 20px; 
-    bottom: 20px;
-    z-index: 2500;
-    
-    /* Dimensions & Layout */
-    height: 50px; 
-    display: flex;
-    align-items: center;
-    
-    /* ORIGINAL AESTHETIC RESTORATION */
-    background-color: transparent; 
-    border: 1px solid var(--arrow-color);
-    border-radius: 0; 
-    color: var(--arrow-color);
-    
-    /* The "Living" Effect */
-    animation: faintFlash 5s infinite ease-in-out;
-    opacity: 0.8; 
-    
-    /* The Expansion Physics */
-    max-width: 50px; /* Default: Perfect Square (Toggle only) */
-    overflow: hidden; 
-    transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
-                background-color 0.2s, 
-                border-color 0.2s, 
-                opacity 0.2s;
-    
-    backdrop-filter: blur(2px);
-}
-
-/* ACTIVE STATE: Expand */
-.pdf-tools.active {
-    max-width: 200px; 
-    opacity: 1;
-    animation: none; 
-    /* CHANGED: Use softer Music Player border color */
-    border-color: rgba(152, 0, 235, 0.3);
-    background-color: rgba(13, 0, 34, 0.9);
-}
-
-/* --- THE TOGGLE (The Flap) --- */
-.tools-toggle {
-    width: 50px;
-    min-width: 50px; 
-    height: 100%;
-    
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    
-    /* SEPARATOR: Matches container border for a split-button look */
-    border-right: 1px solid transparent; 
-    transition: background-color 0.2s, color 0.2s, border-right-color 0.2s;
-}
-
-/* When active, show the separator line */
-.pdf-tools.active .tools-toggle {
-    border-right-color: rgba(152, 0, 235, 0.3);
-}
-
-/* SVG ICON STYLING */
-.tools-toggle svg {
-    width: 20px;
-    height: 20px;
-    fill: currentColor;
-    transform: rotate(180deg); 
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.pdf-tools.active .tools-toggle svg {
-    transform: rotate(0deg); 
-}
-
-/* --- THE CONTENT --- */
-.tool-content {
-    min-width: 120px; 
-    height: 100%;
-    display: flex;
-    opacity: 0; 
-    transition: opacity 0.3s ease 0.1s;
-}
-
-.pdf-tools.active .tool-content {
-    opacity: 1;
-}
-
-/* --- THE LINK BUTTON --- */
-.tool-btn {
-    flex-grow: 1;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center; 
-    padding-right: 20px;
-    
-    text-decoration: none;
-    color: inherit; 
-    font-family: "Space Mono", monospace;
-    font-weight: 600;
-    font-size: 0.85em;
-    letter-spacing: 1px;
-    white-space: nowrap;
-    
-    transition: background-color 0.2s, color 0.2s;
-}
-
-/* --- INTERACTION STATES (DECOUPLED) --- */
-
-/* 1. CONTAINER HOVER (Subtle Border Glow only) */
-@media (hover: hover) {
-    .pdf-tools:hover {
-        opacity: 1;
-        animation: none;
-        border-color: var(--name-color); /* Outer border glow */
-    }
-    
-    /* 2. TOGGLE HOVER (Individual) */
-    .tools-toggle:hover {
-        background-color: rgba(152, 0, 235, 0.15);
-        color: #fff;
-    }
-    
-    /* 3. BUTTON HOVER (Individual) */
-    .tool-btn:hover {
-        background-color: rgba(152, 0, 235, 0.15);
-        color: #fff;
-        text-shadow: 0 0 10px var(--name-color);
-    }
-}
-
-/* --- MOBILE TACTILE STATES --- */
-/* These classes are added via JS on touch */
-
-/* Toggle Tactile */
-.tools-toggle:active,
-.tools-toggle.active-state {
-    background-color: rgba(152, 0, 235, 0.3) !important;
-    color: var(--name-color) !important;
-}
-
-/* Button Tactile */
-.tool-btn:active,
-.tool-btn.active-state {
-    background-color: rgba(152, 0, 235, 0.3) !important;
-    color: var(--name-color) !important;
-}
-
-/* --- MOBILE OPTIMIZATION --- */
-@media (max-width: 700px) {
-    .pdf-tools {
-        bottom: 20px; 
-        height: 56px;
-        max-width: 56px; 
-    }
-    .pdf-tools.active {
-        max-width: 220px;
-    }
-    .tools-toggle {
-        width: 56px;
-        min-width: 56px;
-    }
-    .tools-toggle svg {
-        width: 24px;
-        height: 24px;
-    }
-}
+  .pdf-tools.active {
+      max-width: 200px; 
+      opacity: 1;
+      animation: none; 
+      border-color: rgba(152, 0, 235, 0.3);
+      background-color: rgba(13, 0, 34, 0.9);
+  }
+  
+  /* THE TOGGLE (Flap) */
+  .tools-toggle {
+      width: 50px; min-width: 50px; height: 100%;
+      display: flex; justify-content: center; align-items: center;
+      cursor: pointer;
+      border-right: 1px solid transparent; 
+      transition: background-color 0.2s, color 0.2s, border-right-color 0.2s;
+  }
+  
+  .pdf-tools.active .tools-toggle {
+      border-right-color: rgba(152, 0, 235, 0.3);
+  }
+  
+  .tools-toggle svg {
+      width: 20px; height: 20px;
+      fill: currentColor;
+      transform: rotate(180deg); 
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .pdf-tools.active .tools-toggle svg { transform: rotate(0deg); }
+  
+  /* THE CONTENT (With Void Gradient) */
+  .tool-content {
+      min-width: 120px; height: 100%;
+      display: flex;
+      opacity: 0; 
+      transition: opacity 0.3s ease 0.1s;
+      /* THE VOID FADE */
+      mask-image: linear-gradient(to right, black 70%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
+  }
+  
+  .pdf-tools.active .tool-content { opacity: 1; }
+  
+  /* THE LINK BUTTON */
+  .tool-btn {
+      flex-grow: 1; height: 100%;
+      display: flex; align-items: center; justify-content: center; 
+      padding-right: 20px;
+      text-decoration: none;
+      color: inherit; 
+      font-family: "Space Mono", monospace;
+      font-weight: 600; font-size: 0.85em; letter-spacing: 1px;
+      white-space: nowrap;
+      transition: background-color 0.2s, color 0.2s;
+  }
+  
+  /* INTERACTION STATES */
+  @media (hover: hover) {
+      .pdf-tools:hover { opacity: 1; animation: none; border-color: var(--name-color); }
+      .tools-toggle:hover { background-color: rgba(152, 0, 235, 0.15); color: #fff; }
+      .tool-btn:hover { background-color: rgba(152, 0, 235, 0.15); color: #fff; text-shadow: 0 0 10px var(--name-color); }
+  }
+  
+  /* TACTILE STATES */
+  .tools-toggle:active, .tools-toggle.active-state {
+      background-color: rgba(152, 0, 235, 0.3) !important; color: var(--name-color) !important;
+  }
+  .tool-btn:active, .tool-btn.active-state {
+      background-color: rgba(152, 0, 235, 0.3) !important; color: var(--name-color) !important;
+  }
+  
+  @media (max-width: 700px) {
+      .pdf-tools { bottom: 20px; height: 56px; max-width: 56px; }
+      .pdf-tools.active { max-width: 220px; }
+      .tools-toggle { width: 56px; min-width: 56px; }
+      .tools-toggle svg { width: 24px; height: 24px; }
+  }
   
   #song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 10px; }
   #song-link { color: var(--name-color); text-decoration: underline; text-decoration-color: var(--name-color); text-underline-offset: 2px; font-weight: 600; transition: color 0.1s; }
@@ -390,31 +276,18 @@
   
   .terminal-sidebar { width: 280px; height: 100%; background-color: var(--terminal-sidebar); border-right: 1px solid var(--terminal-border); padding: 40px 20px; display: flex; flex-direction: column; z-index: 11; flex-shrink: 0; }
   .cycles-wrapper { display: flex; flex-direction: column; gap: 15px; flex-grow: 1; }
+  /* HIDE SCROLLBARS */
+  .cycles-wrapper::-webkit-scrollbar { display: none; }
+  .cycles-wrapper { -ms-overflow-style: none; scrollbar-width: none; }
+  
   .controls-wrapper { display: flex; flex-direction: column; margin-top: 20px; }
   .sidebar-header { color: #fff; font-weight: bold; border-bottom: 2px solid var(--terminal-border); padding-bottom: 10px; margin-bottom: 10px; letter-spacing: 2px; font-size: 1.1em; }
   
   .cycle-btn { 
-      background: none; 
-      padding: 12px 15px; 
-      cursor: pointer; 
-      font-family: 'Space Mono', monospace; 
-      font-size: 0.85em; 
-      transition: background-color 0.2s ease, opacity 0.2s ease; 
-      opacity: 0.3; 
-      border: 1px solid transparent; 
-      border-left: 3px solid transparent; 
-      width: 100%;
-      box-sizing: border-box; 
-      display: none; 
-      align-items: center;
-      justify-content: space-between;
-      min-height: 46px; 
+      background: none; padding: 12px 15px; cursor: pointer; font-family: 'Space Mono', monospace; font-size: 0.85em; transition: background-color 0.2s ease, opacity 0.2s ease; opacity: 0.3; border: 1px solid transparent; border-left: 3px solid transparent; width: 100%; box-sizing: border-box; display: none; align-items: center; justify-content: space-between; min-height: 46px; 
   }
-  
   .cycle-btn.visible { display: flex; pointer-events: auto; }
   .cycle-btn:hover { opacity: 0.8; background-color: rgba(255,255,255,0.02); }
-  
-  /* Cycle Button Themes */
   .cycle-btn.theme-crash { color: var(--terminal-error); border-color: rgba(255, 51, 51, 0.2); }
   .cycle-btn.theme-crash.active { opacity: 1; background-color: rgba(255, 51, 51, 0.1); border-color: var(--terminal-error); border-left-color: var(--terminal-error); }
   .cycle-btn.theme-echo { color: var(--terminal-white); border-color: rgba(255, 255, 255, 0.2); }
@@ -425,26 +298,9 @@
   .cycle-btn.theme-bloom.active { opacity: 1; background-color: rgba(255, 0, 255, 0.1); border-color: var(--terminal-magenta); border-left-color: var(--terminal-magenta); }
   .cycle-btn.theme-gardener { color: var(--terminal-cyan); border-color: rgba(0, 255, 255, 0.2); }
   .cycle-btn.theme-gardener.active { opacity: 1; background-color: rgba(0, 255, 255, 0.1); border-color: var(--terminal-cyan); border-left-color: var(--terminal-cyan); }
+  .cycle-btn.active-state { opacity: 1 !important; background-color: rgba(255,255,255,0.1) !important; transition: none !important; }
   
-  /* Tactile Active States for Mobile */
-  .cycle-btn.active-state {
-      opacity: 1 !important;
-      background-color: rgba(255,255,255,0.1) !important;
-      transition: none !important;
-  }
-  
-  .replay-icon { 
-      color: var(--terminal-gold); 
-      font-weight: bold; 
-      font-size: 1.4em; 
-      cursor: pointer; 
-      opacity: 0.7; 
-      margin-left: 10px; 
-      display: inline-block; 
-      pointer-events: auto; 
-      transition: transform 0.2s ease, opacity 0.2s ease;
-  }
-  
+  .replay-icon { color: var(--terminal-gold); font-weight: bold; font-size: 1.4em; cursor: pointer; opacity: 0.7; margin-left: 10px; display: inline-block; pointer-events: auto; transition: transform 0.2s ease, opacity 0.2s ease; }
   @media (hover: hover) { .replay-icon:hover { opacity: 1; transform: scale(1.2); } }
   .replay-icon:active { opacity: 1; transform: scale(0.9); }
   .spin-once { animation: spinReplay 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -465,7 +321,6 @@
       .controls-wrapper { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--terminal-sidebar); border-top: 1px solid var(--terminal-border); padding: 10px; margin-top: 0; z-index: 50; flex-direction: column; display: flex; }
       .terminal-container { padding-bottom: 140px; }
   }
-  
   @media (max-height: 500px) and (orientation: landscape) {
       #secret-overlay { flex-direction: row; }
       .terminal-sidebar { width: 220px; height: 100%; padding: 10px; border-right: 1px solid var(--terminal-border); border-bottom: none; }
@@ -479,7 +334,6 @@
   }
   
   #btn-turbo, #btn-mute { justify-content: center; align-items: center; text-align: center; white-space: pre-wrap; line-height: 1.3; font-size: 0.75em; padding: 5px; height: 100%; }
-  
   .terminal-container::-webkit-scrollbar { width: 10px; } .terminal-container::-webkit-scrollbar-track { background: #000; border-left: 1px solid #333; } .terminal-container::-webkit-scrollbar-thumb { background: var(--terminal-dim); border: 1px solid var(--terminal-text); border-radius: 0; }
   .terminal-line { margin-bottom: 8px; opacity: 0; animation: fadeIn 0.1s forwards; border-left: 3px solid var(--terminal-dim); padding-left: 15px; }
   .divider-line { white-space: nowrap; overflow: hidden; text-overflow: clip; width: 100%; display: block; }
@@ -501,37 +355,10 @@
   @keyframes glitch-shake { 0% { transform: translate(0, 0); } 25% { transform: translate(1px, 0); } 50% { transform: translate(-1px, 0); } 75% { transform: translate(0, 1px); } 100% { transform: translate(0, -1px); } }
   @keyframes fadeIn { to { opacity: 1; } }
   
-  /* --- CLOSE TERMINAL BUTTON --- */
-  .close-terminal { 
-      position: absolute; 
-      top: 20px; 
-      right: 30px; 
-      color: #444; 
-      border: 1px solid #444; 
-      background: #000; 
-      padding: 5px 10px; 
-      cursor: pointer; 
-      font-family: 'Space Mono', monospace; 
-      z-index: 20; 
-      font-size: 12px; 
-      /* Normal transition */
-      transition: background-color 0.2s, color 0.2s; 
-  }
+  .close-terminal { position: absolute; top: 20px; right: 30px; color: #444; border: 1px solid #444; background: #000; padding: 5px 10px; cursor: pointer; font-family: 'Space Mono', monospace; z-index: 20; font-size: 12px; transition: background-color 0.2s, color 0.2s; }
+  @media (hover: hover) { .close-terminal:hover { color: var(--terminal-text); border-color: var(--terminal-text); } }
+  .close-terminal:active, .close-terminal.active-state { color: var(--terminal-bg) !important; background-color: var(--terminal-text) !important; border-color: var(--terminal-text) !important; transition: none !important; }
   
-  @media (hover: hover) {
-      .close-terminal:hover { color: var(--terminal-text); border-color: var(--terminal-text); }
-  }
-  
-  /* Instant Flash on Tap */
-  .close-terminal:active,
-  .close-terminal.active-state {
-      color: var(--terminal-bg) !important;
-      background-color: var(--terminal-text) !important;
-      border-color: var(--terminal-text) !important;
-      transition: none !important; 
-  }
-  
-  /* --- MUSIC PLAYER --- */
   #music-section { display: none; width: 100%; max-width: 900px; margin: 40px auto 20px auto; animation: fadeIn 2s ease forwards; }
   .music-container { background: linear-gradient(180deg, rgba(13,0,34,0.9) 0%, rgba(5,0,10,0.95) 100%); border: 1px solid rgba(152, 0, 235, 0.3); border-radius: 8px; padding: 30px; display: flex; flex-wrap: wrap; gap: 30px; box-shadow: 0 0 40px rgba(0, 0, 0, 0.9); align-items: flex-start; align-content: flex-start; }
   .art-column { flex: 1 1 300px; min-width: 250px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
@@ -553,7 +380,7 @@
   .ctrl-btn { background: transparent; border: 1px solid var(--name-color); color: var(--name-color); width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease, background-color 0.2s ease, opacity 0.3s ease; padding: 0; box-shadow: 0 0 5px rgba(152, 0, 235, 0.1); -webkit-tap-highlight-color: transparent; }
   .ctrl-btn svg { width: 20px; height: 20px; fill: currentColor; filter: drop-shadow(0 0 2px rgba(152,0,235,0.5)); }
   @media (hover: hover) { .ctrl-btn:hover { transform: scale(1.1); } .ctrl-btn:not(.loop-btn):hover { background: rgba(152, 0, 235, 0.1); box-shadow: 0 0 20px var(--name-color); color: #fff; } .loop-btn:hover { background: transparent; box-shadow: none; } .loop-btn.active:hover, .loop-btn.active-one:hover { opacity: 1; } }
-  .ctrl-btn:active { transform: scale(0.95); background: rgba(152, 0, 235, 0.2); }
+  .ctrl-btn:active, .ctrl-btn.active-state { transform: scale(0.95); background: rgba(152, 0, 235, 0.2); }
   .play-btn { width: 65px; height: 65px; border-width: 2px; }
   .play-btn svg { width: 28px; height: 28px; }
   .loop-btn { width: 35px; height: 35px; border: none; box-shadow: none; margin-left: auto; opacity: 0.3; }
@@ -568,17 +395,8 @@
   .playlist-item:active { background: rgba(152, 0, 235, 0.1); color: #fff; }
   .playlist-item.active-track { color: var(--name-color); background: linear-gradient(90deg, rgba(152, 0, 235, 0.1) 0%, transparent 100%); border-left: 2px solid var(--name-color); text-shadow: 0 0 8px rgba(152, 0, 235, 0.3); font-weight: bold; }
   
-  /* --- MOBILE LAYOUT REORDER (Final Fix) --- */
   @media (max-width: 900px) {
-      .art-column {
-          display: flex;
-          flex-direction: column;
-      }
-      .voice-btn {
-          order: -1 !important; 
-          margin-bottom: 20px;
-      }
-      .album-art-wrapper {
-          order: 2 !important;
-      }
+      .art-column { display: flex; flex-direction: column; }
+      .voice-btn { order: -1 !important; margin-bottom: 20px; }
+      .album-art-wrapper { order: 2 !important; }
   }

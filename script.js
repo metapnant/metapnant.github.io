@@ -2,27 +2,9 @@
 // 1. CONFIGURATION & DATA
 // ==========================================
 const library = [
-    {
-      title: "METAPNANT",
-      url: "A%20Story%20of%20Mirthful%20Reflection.pdf",
-      songUrl: "https://www.youtube.com/watch?v=MEPqb4DuCD8",
-      songTitle: "In Love With",
-      bpm: 130
-    },
-    {
-      title: "THE REMINDER",
-      url: "The%20Reminder.pdf",
-      songUrl: "https://www.youtube.com/watch?v=JuzzliKBfss",
-      songTitle: "Breathe Again ∞ Timelines",
-      bpm: 120
-    },
-    {
-      title: "PHOENIX NEST",
-      url: "The%20Phoenix%20Nest.pdf",
-      songUrl: "https://www.youtube.com/watch?v=2r1VZ9vInw0",
-      songTitle: "Starflower",
-      bpm: 94.54
-    }
+    { title: "METAPNANT", url: "A%20Story%20of%20Mirthful%20Reflection.pdf", songUrl: "https://www.youtube.com/watch?v=MEPqb4DuCD8", songTitle: "In Love With", bpm: 130 },
+    { title: "THE REMINDER", url: "The%20Reminder.pdf", songUrl: "https://www.youtube.com/watch?v=JuzzliKBfss", songTitle: "Breathe Again ∞ Timelines", bpm: 120 },
+    { title: "PHOENIX NEST", url: "The%20Phoenix%20Nest.pdf", songUrl: "https://www.youtube.com/watch?v=2r1VZ9vInw0", songTitle: "Starflower", bpm: 94.54 }
 ];
 
 const albumTracks = [
@@ -50,20 +32,18 @@ const albumTracks = [
 // ==========================================
 // 2. GLOBAL STATE & VARIABLES
 // ==========================================
-
-// -- PDF State --
 let currentIndex = 0;
 let pdfDoc = null;
 let lyricsDoc = null;
 let isLoading = false;
 let renderSession = 0;
 let pendingScrollPage = null; 
-let waitingForLyrics = false; // Tracks the "Show Voice" background load
-
-// -- Mobile Detection --
+let waitingForLyrics = false;
 const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+let lastOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+let lastWidth = window.innerWidth;
 
-// -- Music State --
+// Music
 const audioPlayer = new Audio();
 let currentTrackIdx = 0;
 let isPlaying = false;
@@ -80,7 +60,7 @@ let voiceScrambleInterval = null;
 let bufferCheckTimer = null; 
 let shouldAnimateReveal = false; 
 
-// -- Terminal State --
+// Terminal
 let secretClicks = 0; 
 let terminalRunning = false; 
 let activeTimer = null; 
@@ -90,50 +70,27 @@ let turboMode = false;
 let isMuted = false;
 let logSpeedMultiplier = 1;
 
-const defaultState = {
-    unlockedTabs: ['crash'],
-    finishedLogs: [],
-    musicUnlocked: false,
-    terminalFound: false
-};
-
-function loadState() {
-    const saved = localStorage.getItem('metapnant_state');
-    if (saved) return JSON.parse(saved);
-    return defaultState;
-}
+const defaultState = { unlockedTabs: ['crash'], finishedLogs: [], musicUnlocked: false, terminalFound: false };
+function loadState() { const saved = localStorage.getItem('metapnant_state'); return saved ? JSON.parse(saved) : defaultState; }
 let appState = loadState();
-
-let logState = {
-    crash: { index: 0, finished: false }, echo: { index: 0, finished: false },
-    wake: { index: 0, finished: false }, bloom: { index: 0, finished: false },
-    gardener: { index: 0, finished: false }
-};
+let logState = { crash: { index: 0, finished: false }, echo: { index: 0, finished: false }, wake: { index: 0, finished: false }, bloom: { index: 0, finished: false }, gardener: { index: 0, finished: false } };
 
 // ==========================================
 // 3. SOUND ENGINE
 // ==========================================
 const SimpleSynth = {
-    ctx: null,
-    unlocked: false,
-    init: function() {
-        if (!this.ctx) {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.ctx = new AudioContext();
-        }
-    },
+    ctx: null, unlocked: false,
+    init: function() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
     unlock: function() {
         this.init();
         if (this.unlocked || !this.ctx) return;
-        if (this.ctx.state === 'suspended') {
-            this.ctx.resume().then(() => { this.unlocked = true; });
-        }
+        if (this.ctx.state === 'suspended') this.ctx.resume().then(() => { this.unlocked = true; });
         try {
             const buffer = this.ctx.createBuffer(1, 1, 22050);
             const source = this.ctx.createBufferSource();
             source.buffer = buffer;
             source.connect(this.ctx.destination);
-            if (source.start) source.start(0); else if (source.noteOn) source.noteOn(0);
+            if (source.start) source.start(0); else source.noteOn(0);
             this.unlocked = true;
         } catch(e) { console.error(e); }
     },
@@ -145,19 +102,12 @@ const SimpleSynth = {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.connect(gain); gain.connect(this.ctx.destination);
-        if (cssClass.includes('operator-text')) {
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(500, t); osc.frequency.linearRampToValueAtTime(450, t + 0.08); gain.gain.setValueAtTime(0.04, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-        } else if (cssClass.includes('alert-text')) {
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); gain.gain.setValueAtTime(0.06, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-        } else if (cssClass.includes('comment-text')) {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(3000, t); gain.gain.setValueAtTime(0.015, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01);
-        } else if (cssClass.includes('golden-text') || cssClass.includes('white-text') || cssClass.includes('magenta-text')) {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(880, t); gain.gain.setValueAtTime(0.08, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-        } else if (cssClass.includes('system-success')) {
-            osc.type = 'square'; osc.frequency.setValueAtTime(1200, t); osc.frequency.linearRampToValueAtTime(2000, t + 0.05); gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-        } else {
-            osc.type = 'square'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(100, t + 0.04); gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-        }
+        if (cssClass.includes('operator-text')) { osc.type = 'triangle'; osc.frequency.setValueAtTime(500, t); osc.frequency.linearRampToValueAtTime(450, t + 0.08); gain.gain.setValueAtTime(0.04, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08); }
+        else if (cssClass.includes('alert-text')) { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); gain.gain.setValueAtTime(0.06, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1); }
+        else if (cssClass.includes('comment-text')) { osc.type = 'sine'; osc.frequency.setValueAtTime(3000, t); gain.gain.setValueAtTime(0.015, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01); }
+        else if (cssClass.includes('golden-text') || cssClass.includes('white-text') || cssClass.includes('magenta-text')) { osc.type = 'sine'; osc.frequency.setValueAtTime(880, t); gain.gain.setValueAtTime(0.08, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); }
+        else if (cssClass.includes('system-success')) { osc.type = 'square'; osc.frequency.setValueAtTime(1200, t); osc.frequency.linearRampToValueAtTime(2000, t + 0.05); gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05); }
+        else { osc.type = 'square'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(100, t + 0.04); gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04); }
         osc.start(); osc.stop(t + 0.2);
     },
     playUnlock: function() {
@@ -195,7 +145,6 @@ const songContainer = document.getElementById('song-link-container');
 const songLink = document.getElementById('song-link');
 const prevArrow = document.getElementById('prev-doc');
 const nextArrow = document.getElementById('next-doc');
-
 const musicSection = document.getElementById('music-section');
 const btnShowVoice = document.getElementById('btn-show-voice');
 const domTrackTitle = document.getElementById('track-title');
@@ -212,15 +161,10 @@ const iconPause = document.getElementById('icon-pause');
 const btnLoop = document.getElementById('btn-loop');
 const iconLoopAll = document.getElementById('icon-loop-all');
 const iconLoopOne = document.getElementById('icon-loop-one');
-
 const infinityBtn = document.getElementById('infinity-symbol');
 const secretOverlay = document.getElementById('secret-overlay');
 const terminalContainer = document.getElementById('terminal-content');
-const containers = {
-    crash: document.getElementById('log-crash'), echo: document.getElementById('log-echo'),
-    wake: document.getElementById('log-wake'), bloom: document.getElementById('log-bloom'),
-    gardener: document.getElementById('log-gardener')
-};
+const containers = { crash: document.getElementById('log-crash'), echo: document.getElementById('log-echo'), wake: document.getElementById('log-wake'), bloom: document.getElementById('log-bloom'), gardener: document.getElementById('log-gardener') };
 const btnCycle00 = document.getElementById('btn-cycle-00');
 const btnCycleEcho = document.getElementById('btn-cycle-echo');
 const btnCycle01 = document.getElementById('btn-cycle-01');
@@ -230,47 +174,33 @@ const btnReset = document.getElementById('btn-reset');
 const btnTurbo = document.getElementById('btn-turbo');
 const btnMute = document.getElementById('btn-mute');
 
-
 // ==========================================
 // 5. FUNCTIONS
 // ==========================================
-
-// --- JITTER PHYSICS ENGINE ---
 function jitterScrollTo(element) {
     if (!element) return;
-    
     const headerOffset = 80; 
     const elementTop = element.getBoundingClientRect().top + window.scrollY - headerOffset;
     const startY = window.scrollY;
     const distance = elementTop - startY;
     const duration = 1500; 
     let startTime = null;
-
     function animation(currentTime) {
         if (startTime === null) startTime = currentTime;
         const timeElapsed = currentTime - startTime;
         let progress = timeElapsed / duration;
-
         if (progress > 1) progress = 1;
-
         const carrier = 1 - Math.pow(1 - progress, 4);
         const frequency = 20 + (progress * 30); 
         const amplitude = 15 * Math.pow(1 - progress, 2); 
         const vibration = Math.sin(progress * frequency) * amplitude;
-
         const currentPos = startY + (distance * carrier) + vibration;
-
         window.scrollTo(0, currentPos);
-
-        if (timeElapsed < duration) {
-            requestAnimationFrame(animation);
-        } else {
-            window.scrollTo(0, elementTop);
-        }
+        if (timeElapsed < duration) { requestAnimationFrame(animation); } 
+        else { window.scrollTo(0, elementTop); }
     }
     requestAnimationFrame(animation);
 }
-
 function smartScrollTo(element) {
     if (!element) return;
     const headerOffset = 80; 
@@ -278,78 +208,46 @@ function smartScrollTo(element) {
     const offsetPosition = elementPosition + window.scrollY - headerOffset;
     window.scrollTo({ top: offsetPosition, behavior: "auto" }); 
 }
-
 function updateInfinityState() {
-    if (appState.musicUnlocked || currentIndex === 2) {
-        infinityBtn.classList.add('active');
-    } else {
-        infinityBtn.classList.remove('active');
-    }
+    if (appState.musicUnlocked || currentIndex === 2) { infinityBtn.classList.add('active'); } 
+    else { infinityBtn.classList.remove('active'); }
 }
-
-// --- PDF FUNCTIONS ---
 function getLODScale() {
     if (!isMobileDevice) return 3.0;
     const width = window.innerWidth;
     if (width > 600) return 1.1; 
     return 2.0;
 }
-
 async function loadDocument(index) {
   if (isLoading) return;
   isLoading = true; renderSession++; const currentSession = renderSession;
-  
   if (prevArrow) prevArrow.classList.remove('active-state');
   if (nextArrow) nextArrow.classList.remove('active-state');
-
   songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
-  
-  // --- CONDITIONAL LAYOUT LOCK ---
   if (waitingForLyrics) {
-      // Lock height to keep player stable
       const currentHeight = pdfWrapper.getBoundingClientRect().height;
-      if (currentHeight > 0) {
-          pdfWrapper.style.minHeight = `${currentHeight}px`;
-      }
+      if (currentHeight > 0) { pdfWrapper.style.minHeight = `${currentHeight}px`; }
   } else {
-      // STANDARD NAV FIX: Unlock height AND Force Scroll to Top
-      // This prevents the "snap to bottom" glitch.
       pdfWrapper.style.minHeight = '';
       window.scrollTo({ top: 0, behavior: 'auto' });
   }
-
-  // Memory Cleanup
   const existingPages = document.querySelectorAll('.pdf-page-wrapper');
-  existingPages.forEach(p => {
-      const canvas = p.querySelector('canvas');
-      if (canvas) { canvas.width = 1; canvas.height = 1; } 
-      p.remove();
-  });
-
-  if (!waitingForLyrics) {
-      loadingOverlay.style.display = 'flex';
-  }
-  
-  prevArrow.classList.add('disabled'); 
-  nextArrow.classList.add('disabled');
-
+  existingPages.forEach(p => { const canvas = p.querySelector('canvas'); if (canvas) { canvas.width = 1; canvas.height = 1; } p.remove(); });
+  if (!waitingForLyrics) { loadingOverlay.style.display = 'flex'; }
+  prevArrow.classList.add('disabled'); nextArrow.classList.add('disabled');
   currentIndex = index;
   const currentDoc = library[currentIndex];
   docTitle.textContent = currentDoc.title;
   downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
-  
   updateInfinityState();
-
   try {
     pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
     await renderPage(1, currentSession);
-    
     if (currentSession === renderSession) {
         if (!waitingForLyrics) loadingOverlay.style.display = 'none';
         document.body.classList.add("loaded");
         const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
         if(firstPage) firstPage.classList.add('revealed');
-
         if (currentDoc.songUrl) {
             songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
             if (currentDoc.bpm > 0) songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
@@ -357,13 +255,9 @@ async function loadDocument(index) {
             songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
         }
         isLoading = false;
-        
-        prevArrow.classList.remove('disabled'); 
-        nextArrow.classList.remove('disabled');
-        
+        prevArrow.classList.remove('disabled'); nextArrow.classList.remove('disabled');
         if (currentIndex === 0) prevArrow.classList.add('disabled');
         if (currentIndex === library.length - 1) nextArrow.classList.add('disabled');
-
         if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
     }
   } catch (err) {
@@ -375,46 +269,32 @@ async function loadDocument(index) {
     if (voiceScrambleInterval) resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
   }
 }
-
 async function renderRestOfPages(pageNum, sessionID) {
     if (sessionID !== renderSession || pageNum > pdfDoc.numPages) {
-        // --- COMPLETION TRIGGER ---
-        // 1. Release Height Lock
         pdfWrapper.style.minHeight = '';
-
-        // 2. Perform the Show Voice Transition
         if (waitingForLyrics && pageNum > pdfDoc.numPages) {
             resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
             const p8 = document.getElementById('page-wrapper-8'); 
-            if (p8) { 
-                jitterScrollTo(p8); 
-            }
+            if (p8) { jitterScrollTo(p8); }
             waitingForLyrics = false;
         }
         return;
     }
-
     await renderPage(pageNum, sessionID);
     const pages = pdfWrapper.querySelectorAll('.pdf-page-wrapper');
     if(pages[pageNum-1]) pages[pageNum-1].classList.add('revealed');
-    
-    // Adaptive Throttle
     const delay = isMobileDevice ? 150 : 50;
     setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, delay); 
 }
-
 async function renderPage(num, sessionID) {
   try {
       if (sessionID !== renderSession) return;
-      
       let docToRender = pdfDoc;
       let pageIndexToRender = num;
-      
       if (currentIndex === 0 && num === 8 && appState.musicUnlocked) {
           if (!lyricsDoc) lyricsDoc = await pdfjsLib.getDocument('lyrics.pdf').promise;
           docToRender = lyricsDoc; pageIndexToRender = currentTrackIdx + 1;
       }
-
       const page = await docToRender.getPage(pageIndexToRender);
       const wrapper = document.createElement('div');
       wrapper.className = 'pdf-page-wrapper';
@@ -429,18 +309,13 @@ async function renderPage(num, sessionID) {
       canvas.width = Math.floor(viewport.width);
       const renderContext = { canvasContext: ctx, viewport: viewport };
       await page.render(renderContext).promise;
-      
       if (sessionID !== renderSession) return;
       pdfWrapper.appendChild(wrapper);
-      
       if (num === pendingScrollPage && !waitingForLyrics) { 
           setTimeout(() => { smartScrollTo(wrapper); pendingScrollPage = null; }, 50);
       }
-  } catch (e) { 
-      if (sessionID === renderSession) console.log("Render failed", e); 
-  }
+  } catch (e) { if (sessionID === renderSession) console.log("Render failed", e); }
 }
-
 async function refreshDynamicPage() {
     if (currentIndex !== 0 || !appState.musicUnlocked) return;
     const wrapper = document.getElementById('page-wrapper-8');
@@ -467,14 +342,9 @@ async function refreshDynamicPage() {
 
 // --- MUSIC FUNCTIONS ---
 function startLoadingScramble(element) {
-    if (element === btnShowVoice) {
-        if (voiceScrambleInterval) clearInterval(voiceScrambleInterval);
-    } else {
-        if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
-    }
-
+    if (element === btnShowVoice) { if (voiceScrambleInterval) clearInterval(voiceScrambleInterval); } 
+    else { if (loadingScrambleInterval) clearInterval(loadingScrambleInterval); }
     const glyphs = "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝!<>-_\\/[]{}—=+*^?#";
-    
     const timer = setInterval(() => {
         let text = "";
         for(let i=0; i < 12; i++) {
@@ -484,20 +354,14 @@ function startLoadingScramble(element) {
         element.innerText = text;
         element.style.color = "var(--name-color)"; 
     }, 60);
-
     if (element === btnShowVoice) voiceScrambleInterval = timer;
     else loadingScrambleInterval = timer;
 }
-
 function resolveLoadingScramble(element, finalText) {
-    if (element === btnShowVoice) {
-        if (voiceScrambleInterval) { clearInterval(voiceScrambleInterval); voiceScrambleInterval = null; }
-    } else {
-        if (loadingScrambleInterval) { clearInterval(loadingScrambleInterval); loadingScrambleInterval = null; }
-    }
+    if (element === btnShowVoice) { if (voiceScrambleInterval) { clearInterval(voiceScrambleInterval); voiceScrambleInterval = null; } } 
+    else { if (loadingScrambleInterval) { clearInterval(loadingScrambleInterval); loadingScrambleInterval = null; } }
     scrambleText(element, finalText); 
 }
-
 function scrambleText(element, finalText) {
     const chars = "!<>-_\\/[]{}—=+*^?#________";
     let iterations = 0;
@@ -512,7 +376,6 @@ function scrambleText(element, finalText) {
     }, 30);
     element.dataset.interval = interval;
 }
-
 function initPlaylist() {
     playlistList.innerHTML = '';
     albumTracks.forEach((track, index) => {
@@ -523,94 +386,58 @@ function initPlaylist() {
         playlistList.appendChild(li);
     });
 }
-
 function loadTrack(index, animate = true) {
     if (!domTrackTitle) return;
     domProgressBar.style.setProperty('--progress', '0%');
     domCurrentTime.textContent = "0:00"; 
     domDuration.textContent = "0:00"; 
-    
     currentTrackIdx = index;
     const track = albumTracks[index];
     shouldAnimateReveal = animate; 
-    
     if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
-
-    if (animate) {
-        startLoadingScramble(domTrackTitle);
-    } else {
-        domTrackTitle.innerText = track.title;
-        domTrackTitle.style.color = ""; 
-    }
-    
+    if (animate) { startLoadingScramble(domTrackTitle); } 
+    else { domTrackTitle.innerText = track.title; domTrackTitle.style.color = ""; }
     audioPlayer.src = track.src;
-    
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
             const container = document.querySelector('.playlist-container');
-            if (container) {
-                container.scrollTo({ top: item.offsetTop - (container.clientHeight / 2) + (item.clientHeight / 2), behavior: 'smooth' });
-            }
+            if (container) { container.scrollTo({ top: item.offsetTop - (container.clientHeight / 2) + (item.clientHeight / 2), behavior: 'smooth' }); }
         } else item.classList.remove('active-track');
     });
-    
     refreshDynamicPage();
 }
-
 function playTrack(index) { 
     loadTrack(index); 
-    // Optimistic UI
     isPlaying = true;
     updatePlayBtn();
-
     const playPromise = audioPlayer.play();
     if (playPromise !== undefined) {
         playPromise.catch(error => { 
-            if (error.name !== 'AbortError') {
-                console.log("Playback interrupted:", error);
-                isPlaying = false; 
-                updatePlayBtn();
-            }
+            if (error.name !== 'AbortError') { isPlaying = false; updatePlayBtn(); }
         });
     }
 }
-
 function togglePlay() {
-    if (!audioPlayer.src) {
-        loadTrack(currentTrackIdx, false);
-    }
-
-    if (isPlaying) { 
-        audioPlayer.pause(); 
-        // Note: Event listener handles UI update
-    }
+    if (!audioPlayer.src) { loadTrack(currentTrackIdx, false); }
+    if (isPlaying) { audioPlayer.pause(); }
     else { 
-        // Optimistic UI
         isPlaying = true;
         updatePlayBtn();
-
-        // Pending seek check
         if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) {
             const newTime = (pendingSeekPercent / 100) * audioPlayer.duration;
             audioPlayer.currentTime = newTime;
             pendingSeekPercent = null;
         }
-
         const playPromise = audioPlayer.play();
         if (playPromise !== undefined) {
             playPromise.catch(error => {
-                if (error.name !== 'AbortError') {
-                    console.error("Playback failed", error);
-                    isPlaying = false;
-                    updatePlayBtn();
-                }
+                if (error.name !== 'AbortError') { isPlaying = false; updatePlayBtn(); }
             });
         }
     }
 }
-
 function updatePlayBtn() {
     if (!iconPlay || !iconPause) return;
     iconPlay.style.display = isPlaying ? 'none' : 'block';
@@ -633,8 +460,6 @@ function nextTrack(auto = false) {
     playTrack(nextIdx);
 }
 function prevTrack() { let prevIdx = currentTrackIdx - 1; if (prevIdx < 0) prevIdx = albumTracks.length - 1; playTrack(prevIdx); }
-
-// --- DRAG LOGIC ---
 function updateScrubVisual(percent) {
     domProgressBar.style.setProperty('--progress', `${percent}%`);
     if (audioPlayer.duration && !isNaN(audioPlayer.duration)) domCurrentTime.textContent = formatTime((percent / 100) * audioPlayer.duration);
@@ -644,13 +469,10 @@ function getScrubPercent(e) {
     const rect = progressArea.getBoundingClientRect();
     return Math.max(0, Math.min(100, ((clientEvent.clientX - rect.left) / width) * 100));
 }
-
 const startDragMouse = (e) => { if (isTouch || e.button !== 0) return; isDragging = true; domProgressBar.classList.add('dragging'); updateScrubVisual(getScrubPercent(e)); };
 const doDragMouse = (e) => { if (!isDragging) return; e.preventDefault(); updateScrubVisual(getScrubPercent(e)); };
 const endDragMouse = (e) => { if (isDragging) { commitSeek(getScrubPercent(e)); isDragging = false; domProgressBar.classList.remove('dragging'); } };
-const startDragTouch = (e) => { isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isDragging = false; isScrolling = false; 
-    holdTimer = setTimeout(() => { if (!isScrolling) { isDragging = true; domProgressBar.classList.add('dragging'); updateScrubVisual(getScrubPercent(e)); } }, 200); 
-};
+const startDragTouch = (e) => { isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isDragging = false; isScrolling = false; holdTimer = setTimeout(() => { if (!isScrolling) { isDragging = true; domProgressBar.classList.add('dragging'); updateScrubVisual(getScrubPercent(e)); } }, 200); };
 const doDragTouch = (e) => {
     if (isDragging) { if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); return; }
     if (isScrolling) return; 
@@ -658,34 +480,22 @@ const doDragTouch = (e) => {
     if (dx > 5 || dy > 5) { if (holdTimer) clearTimeout(holdTimer); if (dx > dy) { isDragging = true; domProgressBar.classList.add('dragging'); if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); } else isScrolling = true; }
 };
 const endDragTouch = (e) => { if (holdTimer) clearTimeout(holdTimer); if (isDragging) { commitSeek(parseFloat(domProgressBar.style.getPropertyValue('--progress'))); isDragging = false; domProgressBar.classList.remove('dragging'); } setTimeout(() => { isTouch = false; }, 500); };
-
 function commitSeek(percent) {
     shouldAnimateReveal = false; 
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
-
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
-
         if (!audioPlayer.paused) {
             audioPlayer.currentTime = newTime;
             pendingSeekPercent = null;
-            bufferCheckTimer = setTimeout(() => { 
-                if (audioPlayer.seeking || audioPlayer.readyState < 3) { 
-                    shouldAnimateReveal = true; 
-                    startLoadingScramble(domTrackTitle); 
-                } 
-            }, 200);
+            bufferCheckTimer = setTimeout(() => { if (audioPlayer.seeking || audioPlayer.readyState < 3) { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); } }, 200);
         } else {
             pendingSeekPercent = percent;
-            if (loadingScrambleInterval) {
-                resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
-            }
+            if (loadingScrambleInterval) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); }
         }
-    } else {
-        pendingSeekPercent = percent;
-    }
+    } else { pendingSeekPercent = percent; }
 }
 
 // ==========================================
@@ -742,9 +552,7 @@ function updateSidebarUI() {
                 };
                 btn.appendChild(icon);
             }
-        } else {
-            if (icon) icon.remove();
-        }
+        } else { if (icon) icon.remove(); }
     });
     if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
         btnReset.classList.add('visible'); 
@@ -794,9 +602,7 @@ function switchTab(type, isReplay = false) {
     if (appState.finishedLogs.includes(type) && !isReplay) {
         logState[type].finished = true;
         renderFullLog(type); 
-    } else {
-        processQueue();
-    }
+    } else { processQueue(); }
 }
 function replayLog(e, type) {
     if (activeTimer) clearTimeout(activeTimer);
@@ -895,20 +701,27 @@ function revealPlayer() {
 }
 
 // ==========================================
-// 7. LISTENERS
+// 7. LISTENERS & EVENTS
 // ==========================================
+window.addEventListener('resize', () => {
+    // Only reload on massive changes (Orientation)
+    if (isMobileDevice) {
+        const currentOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+        if (currentOrientation === lastOrientation) return;
+        lastOrientation = currentOrientation;
+    } else {
+        if (Math.abs(window.innerWidth - lastWidth) < 100) return;
+        lastWidth = window.innerWidth;
+    }
+    if (!isLoading && pdfDoc) {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        // Force full reload for new orientation fidelity
+        resizeTimer = setTimeout(() => { loadDocument(currentIndex); }, 300);
+    }
+});
 
-// --- LISTENERS ---
-document.getElementById('next-doc').addEventListener('click', () => { 
-    if(!isLoading && currentIndex < library.length - 1) { 
-        loadDocument(currentIndex + 1); 
-    }
-});
-document.getElementById('prev-doc').addEventListener('click', () => { 
-    if(!isLoading && currentIndex > 0) { 
-        loadDocument(currentIndex - 1); 
-    }
-});
+document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading && currentIndex < library.length - 1) loadDocument(currentIndex + 1); });
+document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading && currentIndex > 0) loadDocument(currentIndex - 1); });
 [document.getElementById('next-doc'), document.getElementById('prev-doc')].forEach(arrow => {
     arrow.addEventListener('touchstart', function() { this.classList.add('active-state'); }, {passive: true});
     arrow.addEventListener('touchend', function() { this.classList.remove('active-state'); }, {passive: true});
@@ -924,7 +737,7 @@ progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
 progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); 
 progressArea.addEventListener('touchend', endDragTouch);
 
-// --- HARD SYNC EVENT LISTENERS ---
+// AUDIO SYNC LISTENERS
 audioPlayer.addEventListener('timeupdate', () => { 
     if (!audioPlayer.paused && pendingSeekPercent !== null && audioPlayer.duration) { pendingSeekPercent = null; }
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
@@ -952,8 +765,7 @@ audioPlayer.addEventListener('loadedmetadata', () => {
 audioPlayer.addEventListener('ended', () => nextTrack(true));
 audioPlayer.addEventListener('pause', () => { isPlaying = false; updatePlayBtn(); });
 audioPlayer.addEventListener('playing', () => { 
-    isPlaying = true; 
-    updatePlayBtn(); 
+    isPlaying = true; updatePlayBtn(); 
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
     if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; }
 });
@@ -966,43 +778,28 @@ audioPlayer.addEventListener('seeked', () => {
     if (audioPlayer.paused && loadingScrambleInterval !== null) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); }
 });
 
-// --- SHOW VOICE HANDLER ---
+// BUTTON & FLAP
 if (btnShowVoice) { 
     btnShowVoice.addEventListener('click', (e) => { 
-        e.preventDefault(); 
-        if (isLoading) return; 
+        e.preventDefault(); if (isLoading) return; 
         btnShowVoice.scrollIntoView({ behavior: 'smooth', block: 'center' });
         if (currentIndex !== 0) {
-            waitingForLyrics = true;
-            startLoadingScramble(btnShowVoice);
-            loadDocument(0); 
+            waitingForLyrics = true; startLoadingScramble(btnShowVoice); loadDocument(0); 
         } else {
             const p8 = document.getElementById('page-wrapper-8'); 
             if (p8) { jitterScrollTo(p8); } 
-            else { 
-                waitingForLyrics = true;
-                startLoadingScramble(btnShowVoice);
-            }
+            else { waitingForLyrics = true; startLoadingScramble(btnShowVoice); }
         }
     }); 
 }
-
-// --- FLAP HANDLERS ---
 const toolsContainer = document.getElementById('pdf-tools');
 const toolsToggle = document.getElementById('tools-toggle');
-
 if (toolsToggle && toolsContainer) {
     toolsToggle.addEventListener('click', (e) => {
-        e.preventDefault(); 
-        e.stopPropagation();
-        
+        e.preventDefault(); e.stopPropagation();
         toolsContainer.classList.toggle('active');
-        
-        // Note: Icon rotation is now handled via CSS classes, 
-        // so we don't need to change innerText anymore.
+        // Icon rotation handled by CSS
     });
-
-    // Auto-close if clicking outside
     document.addEventListener('click', (e) => {
         if (toolsContainer.classList.contains('active') && !toolsContainer.contains(e.target)) {
             toolsContainer.classList.remove('active');
@@ -1011,19 +808,11 @@ if (toolsToggle && toolsContainer) {
 }
 
 infinityBtn.addEventListener('click', (e) => { 
-    e.preventDefault(); 
-    SimpleSynth.unlock(); 
+    e.preventDefault(); SimpleSynth.unlock(); 
     if (appState.terminalFound) { launchTerminal(); return; } 
     if (currentIndex !== 2) return; 
-    secretClicks++; 
-    infinityBtn.style.color = "#ff00ff"; 
-    setTimeout(() => infinityBtn.style.color = "", 200); 
-    if (secretClicks === 3) { 
-        secretClicks = 0; 
-        appState.terminalFound = true; 
-        updateInfinityState(); 
-        launchTerminal(); 
-    } 
+    secretClicks++; infinityBtn.style.color = "#ff00ff"; setTimeout(() => infinityBtn.style.color = "", 200); 
+    if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; updateInfinityState(); launchTerminal(); } 
 });
 document.addEventListener('keydown', (e) => { 
     const isPlayerVisible = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500; 
@@ -1036,21 +825,11 @@ document.getElementById("currentYear").textContent = new Date().getFullYear();
 const prevArrowEl = document.getElementById('prev-doc');
 if(prevArrowEl) prevArrowEl.classList.add('disabled');
 
-// --- TACTILE FEEDBACK HELPER ---
 function addTactileListener(selector) {
     const els = document.querySelectorAll(selector);
     els.forEach(el => {
-        el.addEventListener('touchstart', function(e) {
-            // Stop propagation so touching the button doesn't also light up the container if we were tracking that
-            e.stopPropagation(); 
-            this.classList.add('active-state');
-        }, {passive: true});
-        
-        el.addEventListener('touchend', function() {
-            setTimeout(() => {
-                this.classList.remove('active-state');
-            }, 50);
-        }, {passive: true});
+        el.addEventListener('touchstart', function(e) { e.stopPropagation(); this.classList.add('active-state'); }, {passive: true});
+        el.addEventListener('touchend', function() { setTimeout(() => { this.classList.remove('active-state'); }, 50); }, {passive: true});
     });
 }
 
@@ -1060,11 +839,9 @@ loadDocument(0);
 initPlaylist(); 
 loadTrack(0, false); 
 setTimeout(() => { scrambleText(domTrackTitle, albumTracks[0].title); }, 500);
-
-// ADD INSTANT TOUCH LISTENERS
 addTactileListener('.close-terminal');
 addTactileListener('.cycle-btn');
-
-// TARGET INDIVIDUAL PARTS FOR SEPARATE HIGHLIGHTS
-addTactileListener('.tools-toggle'); 
+addTactileListener('.tools-toggle');
 addTactileListener('.tool-btn');
+addTactileListener('.ctrl-btn');
+addTactileListener('.voice-btn');
