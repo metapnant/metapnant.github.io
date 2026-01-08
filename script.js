@@ -478,19 +478,32 @@ function initPlaylist() {
 
 function loadTrack(index, animate = true) {
     if (!domTrackTitle) return;
+    
+    // Reset visuals immediately
     domProgressBar.style.setProperty('--progress', '0%');
-    domCurrentTime.textContent = "0:00"; domDuration.textContent = "0:00"; 
+    domCurrentTime.textContent = "0:00"; 
+    domDuration.textContent = "0:00"; 
+    
     currentTrackIdx = index;
     const track = albumTracks[index];
     
     shouldAnimateReveal = animate; 
+    
+    // Clear any existing scramble timers to prevent overlaps
+    if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
+    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
+
     if (animate) {
         startLoadingScramble(domTrackTitle);
     } else {
         domTrackTitle.innerText = track.title;
+        // Fix color incase it was stuck in scramble mode
+        domTrackTitle.style.color = ""; 
     }
     
     audioPlayer.src = track.src;
+    
+    // Update Playlist UI
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -500,6 +513,7 @@ function loadTrack(index, animate = true) {
             }
         } else item.classList.remove('active-track');
     });
+    
     refreshDynamicPage();
 }
 
@@ -516,6 +530,7 @@ function togglePlay() {
     if (isPlaying) { 
         audioPlayer.pause(); 
         isPlaying = false;
+        // Ensure title is readable when paused
         if (loadingScrambleInterval) {
              resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
@@ -576,12 +591,37 @@ const doDragTouch = (e) => {
 const endDragTouch = (e) => { if (holdTimer) clearTimeout(holdTimer); if (isDragging) { commitSeek(parseFloat(domProgressBar.style.getPropertyValue('--progress'))); isDragging = false; domProgressBar.classList.remove('dragging'); } setTimeout(() => { isTouch = false; }, 500); };
 function commitSeek(percent) {
     shouldAnimateReveal = false; 
+    
+    // SAFETY: Clear any pending buffer timers immediately so they don't fire late
+    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
+
     if (audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration !== Infinity) {
-        audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
+        const newTime = (percent / 100) * audioPlayer.duration;
+        audioPlayer.currentTime = newTime;
         pendingSeekPercent = null;
-        if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
-        bufferCheckTimer = setTimeout(() => { if (audioPlayer.seeking || audioPlayer.readyState < 3) { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); } }, 200);
-    } else pendingSeekPercent = percent;
+
+        // FORCE VISUAL UPDATE IMMEDIATELY (Don't wait for timeupdate)
+        domProgressBar.style.setProperty('--progress', `${percent}%`);
+        domCurrentTime.textContent = formatTime(newTime);
+
+        // LOGIC FIX: Only trigger "Loading..." animation if we are actually playing.
+        // If we are paused, we simply jump to the frame silently.
+        if (!audioPlayer.paused) {
+            bufferCheckTimer = setTimeout(() => { 
+                if (audioPlayer.seeking || audioPlayer.readyState < 3) { 
+                    shouldAnimateReveal = true; 
+                    startLoadingScramble(domTrackTitle); 
+                } 
+            }, 200);
+        } else {
+            // If paused, ensure title is legible
+            if (loadingScrambleInterval) {
+                resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
+            }
+        }
+    } else {
+        pendingSeekPercent = percent;
+    }
 }
 
 // ==========================================
@@ -908,16 +948,22 @@ progressArea.addEventListener('touchmove', doDragTouch, { passive: false });
 progressArea.addEventListener('touchend', endDragTouch);
 
 audioPlayer.addEventListener('timeupdate', () => { 
+    // Only update if we aren't dragging and aren't waiting for a seek to land
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
         domProgressBar.style.setProperty('--progress', `${p}%`); 
         domCurrentTime.textContent = formatTime(audioPlayer.currentTime); 
         domDuration.textContent = formatTime(audioPlayer.duration); 
     }
+    
+    // SAFETY: If playing and scramble is stuck, kill it
     if (loadingScrambleInterval !== null && !audioPlayer.paused && audioPlayer.currentTime > 0) {
-        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
-        shouldAnimateReveal = false;
-        if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
+        // Only resolve if enough time has passed to be sure we aren't stuttering
+        if (audioPlayer.readyState > 2) {
+            resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
+            shouldAnimateReveal = false;
+            if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
+        }
     }
 });
 
@@ -929,17 +975,29 @@ audioPlayer.addEventListener('loadedmetadata', () => {
         pendingSeekPercent = null; 
     }
 });
+
 audioPlayer.addEventListener('ended', () => nextTrack(true));
+
 audioPlayer.addEventListener('waiting', () => { 
     if(bufferCheckTimer) clearTimeout(bufferCheckTimer); 
-    bufferCheckTimer = setTimeout(() => { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); }, 300); 
-});
-audioPlayer.addEventListener('seeked', () => {
-    if (loadingScrambleInterval !== null) {
-        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
-        shouldAnimateReveal = false;
+    // Only scramble if playing
+    if (!audioPlayer.paused) {
+        bufferCheckTimer = setTimeout(() => { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); }, 300); 
     }
 });
+
+// CRITICAL FIX: The 'seeked' event must clear the timer
+audioPlayer.addEventListener('seeked', () => {
+    // 1. Kill the ghost timer immediately
+    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
+    
+    // 2. Stop the scramble if it was running
+    if (loadingScrambleInterval !== null) {
+        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
+    }
+    shouldAnimateReveal = false;
+});
+
 audioPlayer.addEventListener('playing', () => { 
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer); 
     if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; } 
