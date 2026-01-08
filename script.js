@@ -555,49 +555,55 @@ function checkStateIntegrity() {
 }
 
 function updateSidebarUI() {
-    // Visibility
+    // 1. Visibility (Unlock State)
     if (appState.unlockedTabs.includes('crash')) btnCycle00.classList.add('visible');
     if (appState.unlockedTabs.includes('echo')) btnCycleEcho.classList.add('visible');
     if (appState.unlockedTabs.includes('wake')) btnCycle01.classList.add('visible');
     if (appState.unlockedTabs.includes('bloom')) btnCycleBloom.classList.add('visible');
     if (appState.unlockedTabs.includes('gardener')) btnCycle02.classList.add('visible');
 
-    // Highlights
+    // 2. Active Highlight (Current Tab)
     const allBtns = [btnCycle00, btnCycleEcho, btnCycle01, btnCycleBloom, btnCycle02];
     allBtns.forEach(btn => btn.classList.remove('active'));
 
-    if (currentTab === 'crash') btnCycle00.classList.add('active');
-    else if (currentTab === 'echo') btnCycleEcho.classList.add('active');
-    else if (currentTab === 'wake') btnCycle01.classList.add('active');
-    else if (currentTab === 'bloom') btnCycleBloom.classList.add('active');
-    else if (currentTab === 'gardener') btnCycle02.classList.add('active');
+    const activeBtn = 
+        currentTab === 'crash' ? btnCycle00 :
+        currentTab === 'echo' ? btnCycleEcho :
+        currentTab === 'wake' ? btnCycle01 :
+        currentTab === 'bloom' ? btnCycleBloom :
+        currentTab === 'gardener' ? btnCycle02 : null;
 
-    // Replay Icons
+    if (activeBtn) activeBtn.classList.add('active');
+
+    // 3. Replay Icons (Only show on the currently SELECTED tab)
     allBtns.forEach(btn => { if(btn.querySelector('.replay-icon')) btn.querySelector('.replay-icon').remove(); });
-    ['crash', 'echo', 'wake', 'bloom', 'gardener'].forEach(type => {
-        if (appState.finishedLogs.includes(type)) {
-            let targetBtn = null;
-            if (type === 'crash') targetBtn = btnCycle00;
-            else if (type === 'echo') targetBtn = btnCycleEcho;
-            else if (type === 'wake') targetBtn = btnCycle01;
-            else if (type === 'bloom') targetBtn = btnCycleBloom;
-            else if (type === 'gardener') targetBtn = btnCycle02;
-            
-            if (targetBtn) {
-                const icon = document.createElement('span'); 
-                icon.className = 'replay-icon'; 
-                icon.innerHTML = '↺'; 
-                // STANDARD CLICK HANDLER WITH STOP PROPAGATION
-                icon.onclick = (e) => replayLog(e, type);
-                targetBtn.appendChild(icon);
-            }
+    
+    if (currentTab && appState.finishedLogs.includes(currentTab) && activeBtn) {
+        const icon = document.createElement('span'); 
+        icon.className = 'replay-icon'; 
+        icon.innerHTML = '↺'; 
+        
+        // Mobile-specific sizing and touch feedback
+        if (window.innerWidth <= 700) {
+            icon.style.fontSize = '1.6em';
+            icon.style.padding = '10px 15px';
+            icon.style.marginRight = '-10px';
         }
-    });
 
+        icon.onclick = (e) => {
+            e.stopPropagation();
+            // Trigger a spin animation
+            icon.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            icon.style.transform = 'rotate(-360deg)';
+            replayLog(e, currentTab);
+        };
+        
+        activeBtn.appendChild(icon);
+    }
+
+    // 4. Global Controls Visibility
     if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
-        btnReset.classList.add('visible'); 
-        btnTurbo.classList.add('visible'); 
-        btnMute.classList.add('visible');
+        btnReset.classList.add('visible'); btnTurbo.classList.add('visible'); btnMute.classList.add('visible');
     }
 }
 
@@ -626,17 +632,6 @@ function launchTerminal() {
 
 function switchTab(type, isReplay = false) {
     checkStateIntegrity();
-
-    // FEATURE: Main button "Skip to End"
-    // Only triggers if this is NOT a forced replay action.
-    if (!isReplay && currentTab === type && terminalRunning && appState.finishedLogs.includes(type) && !logState[type].finished) {
-        if (activeTimer) clearTimeout(activeTimer);
-        renderFullLog(type);
-        logState[type].finished = true;
-        updateSidebarUI();
-        return;
-    }
-
     if (activeTimer) clearTimeout(activeTimer);
 
     currentTab = type;
@@ -646,6 +641,7 @@ function switchTab(type, isReplay = false) {
     allContainers.forEach(con => con.classList.remove('active-log'));
     containers[type].classList.add('active-log');
 
+    // Smooth scroll for mobile sidebar
     if (window.innerWidth <= 700) {
         const wrapper = document.querySelector('.cycles-wrapper');
         const activeBtn = document.querySelector('.cycle-btn.active');
@@ -655,11 +651,13 @@ function switchTab(type, isReplay = false) {
         }
     }
 
-    // Logic: If in DB and NOT currently running a replay, show full.
-    // If running a replay (logState.finished is false), processQueue.
-    if (appState.finishedLogs.includes(type) && logState[type].finished) {
+    // Logic: If the log is already in DB, default to showing the full finished log.
+    // Only run the typewriter (processQueue) if we explicitly clicked the Replay Arrow.
+    if (appState.finishedLogs.includes(type) && !isReplay) {
+        logState[type].finished = true;
         renderFullLog(type); 
     } else {
+        // If not finished, or if we are replaying, start the typewriter
         processQueue();
     }
 }
@@ -788,26 +786,51 @@ function revealPlayer() {
     saveState(); 
     updateInfinityState(); 
     
-    // FULL PLAYER RESET
+    // Total Reset
     audioPlayer.pause();
     audioPlayer.currentTime = 0;
     isPlaying = false;
     updatePlayBtn();
 
-    // Reset to Track 0
     currentTrackIdx = 0;
-    loadTrack(0);
-
-    // Immediate Text Fix
+    // Load track 0 and ensure title is revealed instantly
+    loadTrack(0, false);
     resolveLoadingScramble(domTrackTitle, albumTracks[0].title);
-    shouldAnimateReveal = false;
     
     setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100); 
 }
 
 // --- LISTENERS ---
-document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex + 1) % library.length); }});
-document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex - 1 + library.length) % library.length); }});
+// --- UPDATED LISTENERS WITH TAP ANIMATIONS ---
+document.getElementById('next-doc').addEventListener('click', () => { 
+    if(!isLoading) { 
+        window.scrollTo({ top: 0, behavior: 'smooth' }); 
+        loadDocument((currentIndex + 1) % library.length); 
+    }
+});
+
+document.getElementById('prev-doc').addEventListener('click', () => { 
+    if(!isLoading) { 
+        window.scrollTo({ top: 0, behavior: 'smooth' }); 
+        loadDocument((currentIndex - 1 + library.length) % library.length); 
+    }
+});
+
+// Mobile Tap Animations for Navigation Arrows
+[document.getElementById('next-doc'), document.getElementById('prev-doc')].forEach(arrow => {
+    arrow.addEventListener('touchstart', () => {
+        arrow.style.transform = 'translateX(-50%) scale(0.7)'; // Maintain the translateX since they are absolute
+        if (arrow.id === 'next-doc') arrow.style.transform = 'scale(0.7)';
+        arrow.style.transition = 'transform 0.1s ease';
+        arrow.style.opacity = '1';
+        arrow.style.color = 'var(--name-color)';
+    });
+    arrow.addEventListener('touchend', () => {
+        arrow.style.transform = '';
+        arrow.style.color = '';
+        arrow.style.opacity = '';
+    });
+});
 if(btnPlay) btnPlay.addEventListener('click', (e) => { e.preventDefault(); togglePlay(); });
 if(btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextTrack(false); });
 if(btnPrev) btnPrev.addEventListener('click', (e) => { e.preventDefault(); prevTrack(); });
