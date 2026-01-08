@@ -58,6 +58,7 @@ let lyricsDoc = null;
 let isLoading = false;
 let renderSession = 0;
 let pendingScrollPage = null; 
+let waitingForLyrics = false; // Tracks the "Show Voice" background load
 
 // -- Mobile Detection --
 const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -75,6 +76,7 @@ let isTouch = false;
 let isScrolling = false;  
 let pendingSeekPercent = null;
 let loadingScrambleInterval = null; 
+let voiceScrambleInterval = null; 
 let bufferCheckTimer = null; 
 let shouldAnimateReveal = false; 
 
@@ -233,6 +235,45 @@ const btnMute = document.getElementById('btn-mute');
 // 5. FUNCTIONS
 // ==========================================
 
+// --- JITTER PHYSICS ENGINE ---
+// Tight, fast vibration that settles.
+function jitterScrollTo(element) {
+    if (!element) return;
+    
+    const headerOffset = 80; 
+    const elementTop = element.getBoundingClientRect().top + window.scrollY - headerOffset;
+    const startY = window.scrollY;
+    const distance = elementTop - startY;
+    const duration = 1500; 
+    let startTime = null;
+
+    function animation(currentTime) {
+        if (startTime === null) startTime = currentTime;
+        const timeElapsed = currentTime - startTime;
+        let progress = timeElapsed / duration;
+
+        if (progress > 1) progress = 1;
+
+        // Carrier: Smooth ease out
+        const carrier = 1 - Math.pow(1 - progress, 4);
+        // Jitter: Accelerating frequency, decaying amplitude
+        const frequency = 20 + (progress * 30); 
+        const amplitude = 15 * Math.pow(1 - progress, 2); 
+        const vibration = Math.sin(progress * frequency) * amplitude;
+
+        const currentPos = startY + (distance * carrier) + vibration;
+
+        window.scrollTo(0, currentPos);
+
+        if (timeElapsed < duration) {
+            requestAnimationFrame(animation);
+        } else {
+            window.scrollTo(0, elementTop);
+        }
+    }
+    requestAnimationFrame(animation);
+}
+
 function smartScrollTo(element) {
     if (!element) return;
     const headerOffset = 80; 
@@ -251,20 +292,9 @@ function updateInfinityState() {
 
 // --- PDF FUNCTIONS ---
 function getLODScale() {
-    // Desktop: 3.0x scale (High Fidelity) - Enough for 300% zoom
     if (!isMobileDevice) return 3.0;
-
-    // Mobile Safety Logic
     const width = window.innerWidth;
-    
-    // LANDSCAPE OPTIMIZATION FOR iPHONE 8
-    // If width > 600 (Landscape), drop scale drastically to prevent memory crash
-    // 1.1x is enough for reading, but keeps texture size small.
-    if (width > 600) {
-        return 1.1; 
-    }
-    
-    // Portrait Mode
+    if (width > 600) return 1.1; 
     return 2.0;
 }
 
@@ -277,15 +307,25 @@ async function loadDocument(index) {
 
   songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
   
-  // FORCE MEMORY CLEANUP
+  // --- LAYOUT LOCK ---
+  // Lock minHeight to keep the container tall during the swap
+  const currentHeight = pdfWrapper.getBoundingClientRect().height;
+  if (currentHeight > 0) {
+      pdfWrapper.style.minHeight = `${currentHeight}px`;
+  }
+
+  // Memory Cleanup
   const existingPages = document.querySelectorAll('.pdf-page-wrapper');
   existingPages.forEach(p => {
       const canvas = p.querySelector('canvas');
-      if (canvas) { canvas.width = 1; canvas.height = 1; } // Nullify buffer
+      if (canvas) { canvas.width = 1; canvas.height = 1; } 
       p.remove();
   });
 
-  loadingOverlay.style.display = 'flex';
+  // UI State: Hide overlay if we want to stare at the button
+  if (!waitingForLyrics) {
+      loadingOverlay.style.display = 'flex';
+  }
   
   prevArrow.classList.add('disabled'); 
   nextArrow.classList.add('disabled');
@@ -302,10 +342,16 @@ async function loadDocument(index) {
     await renderPage(1, currentSession);
     
     if (currentSession === renderSession) {
-        loadingOverlay.style.display = 'none';
+        if (!waitingForLyrics) loadingOverlay.style.display = 'none';
         document.body.classList.add("loaded");
         const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
         if(firstPage) firstPage.classList.add('revealed');
+
+        // IMPORTANT: We do NOT unlock height here if waiting for lyrics.
+        // We need the scroll bar to stay long so the button stays put.
+        if (!waitingForLyrics) {
+            pdfWrapper.style.minHeight = '';
+        }
 
         if (currentDoc.songUrl) {
             songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
@@ -325,17 +371,36 @@ async function loadDocument(index) {
     }
   } catch (err) {
     console.error(err);
+    pdfWrapper.style.minHeight = '';
     loadingOverlay.innerHTML = "<div style='color:red; font-family:monospace'>ARCHIVE CORRUPTED</div>";
     isLoading = false;
+    waitingForLyrics = false;
+    if (voiceScrambleInterval) resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
   }
 }
 
 async function renderRestOfPages(pageNum, sessionID) {
-    if (sessionID !== renderSession || pageNum > pdfDoc.numPages) return;
+    if (sessionID !== renderSession || pageNum > pdfDoc.numPages) {
+        // --- COMPLETION TRIGGER ---
+        // 1. Release Height Lock
+        pdfWrapper.style.minHeight = '';
+
+        // 2. Perform the Show Voice Transition
+        if (waitingForLyrics && pageNum > pdfDoc.numPages) {
+            resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
+            const p8 = document.getElementById('page-wrapper-8'); 
+            if (p8) { 
+                jitterScrollTo(p8); 
+            }
+            waitingForLyrics = false;
+        }
+        return;
+    }
+
     await renderPage(pageNum, sessionID);
     const pages = pdfWrapper.querySelectorAll('.pdf-page-wrapper');
     if(pages[pageNum-1]) pages[pageNum-1].classList.add('revealed');
-    // Throttle for iOS memory safety
+    // Throttle for memory
     setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 150); 
 }
 
@@ -352,41 +417,34 @@ async function renderPage(num, sessionID) {
       }
 
       const page = await docToRender.getPage(pageIndexToRender);
-      
       const wrapper = document.createElement('div');
       wrapper.className = 'pdf-page-wrapper';
       wrapper.id = `page-wrapper-${num}`; 
-      
       const canvas = document.createElement('canvas');
       canvas.className = 'pdf-page-canvas';
       wrapper.appendChild(canvas);
-      
       const ctx = canvas.getContext('2d');
-      
-      // LOD SYSTEM: Renders once at this scale
       const lodScale = getLODScale();
-
       const viewport = page.getViewport({ scale: lodScale });
-
       canvas.height = Math.floor(viewport.height);
       canvas.width = Math.floor(viewport.width);
-      
-      const renderContext = {
-          canvasContext: ctx,
-          viewport: viewport
-      };
-
+      const renderContext = { canvasContext: ctx, viewport: viewport };
       await page.render(renderContext).promise;
       
       if (sessionID !== renderSession) return;
       pdfWrapper.appendChild(wrapper);
       
-      // Initial Scroll Jump logic (only used for internal linking like Show Voice)
-      if (num === pendingScrollPage) { 
-          setTimeout(() => {
-              smartScrollTo(wrapper); 
-              pendingScrollPage = null;
-          }, 50);
+      // --- THE GRAVITY ANCHOR ---
+      // If we are waiting for lyrics, the document is growing above us.
+      // We must forcefully scroll the button back into center view
+      // to counteract the browser pushing it down.
+      if (waitingForLyrics) {
+          btnShowVoice.scrollIntoView({ block: 'center', behavior: 'auto' });
+      }
+      
+      // Standard Internal Link Scroll (NOT for Show Voice)
+      if (num === pendingScrollPage && !waitingForLyrics) { 
+          setTimeout(() => { smartScrollTo(wrapper); pendingScrollPage = null; }, 50);
       }
   } catch (e) { 
       if (sessionID === renderSession) console.log("Render failed", e); 
@@ -404,19 +462,14 @@ async function refreshDynamicPage() {
         const currentHeight = wrapper.offsetHeight;
         wrapper.style.minHeight = `${currentHeight}px`;
         wrapper.innerHTML = '';
-        
         const canvas = document.createElement('canvas');
         canvas.className = 'pdf-page-canvas';
         wrapper.appendChild(canvas);
-        
         const ctx = canvas.getContext('2d');
-        
         const lodScale = getLODScale();
-        
         const scaledViewport = page.getViewport({ scale: lodScale });
         canvas.height = Math.floor(scaledViewport.height); 
         canvas.width = Math.floor(scaledViewport.width);
-        
         await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
         wrapper.style.minHeight = '';
     } catch (e) { console.error("Failed to refresh lyrics page", e); }
@@ -424,25 +477,33 @@ async function refreshDynamicPage() {
 
 // --- MUSIC FUNCTIONS ---
 function startLoadingScramble(element) {
-    if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
+    if (element === btnShowVoice) {
+        if (voiceScrambleInterval) clearInterval(voiceScrambleInterval);
+    } else {
+        if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
+    }
+
     const glyphs = "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝!<>-_\\/[]{}—=+*^?#";
-    const baseText = "LOADING";
-    loadingScrambleInterval = setInterval(() => {
+    
+    const timer = setInterval(() => {
         let text = "";
         for(let i=0; i < 12; i++) {
-            if (i < baseText.length && Math.random() > 0.8) text += baseText[i];
+            if (i < 8 && Math.random() > 0.8) text += "LOADING"[i] || "";
             else text += glyphs[Math.floor(Math.random() * glyphs.length)];
         }
         element.innerText = text;
         element.style.color = "var(--name-color)"; 
-        element.style.fontSize = ""; 
     }, 60);
+
+    if (element === btnShowVoice) voiceScrambleInterval = timer;
+    else loadingScrambleInterval = timer;
 }
 
 function resolveLoadingScramble(element, finalText) {
-    if (loadingScrambleInterval) {
-        clearInterval(loadingScrambleInterval);
-        loadingScrambleInterval = null; 
+    if (element === btnShowVoice) {
+        if (voiceScrambleInterval) { clearInterval(voiceScrambleInterval); voiceScrambleInterval = null; }
+    } else {
+        if (loadingScrambleInterval) { clearInterval(loadingScrambleInterval); loadingScrambleInterval = null; }
     }
     scrambleText(element, finalText); 
 }
@@ -478,24 +539,18 @@ function loadTrack(index, animate = true) {
     domProgressBar.style.setProperty('--progress', '0%');
     domCurrentTime.textContent = "0:00"; 
     domDuration.textContent = "0:00"; 
-    
     currentTrackIdx = index;
     const track = albumTracks[index];
-    
     shouldAnimateReveal = animate; 
-    
     if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
-
     if (animate) {
         startLoadingScramble(domTrackTitle);
     } else {
         domTrackTitle.innerText = track.title;
         domTrackTitle.style.color = ""; 
     }
-    
     audioPlayer.src = track.src;
-    
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -505,7 +560,6 @@ function loadTrack(index, animate = true) {
             }
         } else item.classList.remove('active-track');
     });
-    
     refreshDynamicPage();
 }
 
@@ -522,7 +576,6 @@ function togglePlay() {
     if (!audioPlayer.src) {
         loadTrack(currentTrackIdx, false);
     }
-
     if (isPlaying) { 
         audioPlayer.pause(); 
         isPlaying = false;
@@ -575,7 +628,6 @@ function nextTrack(auto = false) {
 }
 function prevTrack() { let prevIdx = currentTrackIdx - 1; if (prevIdx < 0) prevIdx = albumTracks.length - 1; playTrack(prevIdx); }
 
-// --- DRAG LOGIC ---
 function updateScrubVisual(percent) {
     domProgressBar.style.setProperty('--progress', `${percent}%`);
     if (audioPlayer.duration && !isNaN(audioPlayer.duration)) domCurrentTime.textContent = formatTime((percent / 100) * audioPlayer.duration);
@@ -603,12 +655,10 @@ const endDragTouch = (e) => { if (holdTimer) clearTimeout(holdTimer); if (isDrag
 function commitSeek(percent) {
     shouldAnimateReveal = false; 
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
-
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
-
         if (!audioPlayer.paused) {
             audioPlayer.currentTime = newTime;
             pendingSeekPercent = null;
@@ -632,62 +682,44 @@ function commitSeek(percent) {
 // ==========================================
 // 6. ROBUST TERMINAL LOGIC
 // ==========================================
-
 function saveState() { localStorage.setItem('metapnant_state', JSON.stringify(appState)); }
-
 function hardReset() { 
     if (confirm("WARNING: This will wipe the terminal memory and re-seal the Chrysalis. Are you sure?")) { 
         localStorage.removeItem('metapnant_state'); 
         location.reload(); 
     } 
 }
-
 function checkStateIntegrity() {
     let changed = false;
-    if (appState.finishedLogs.includes('crash') && !appState.unlockedTabs.includes('echo')) { 
-        appState.unlockedTabs.push('echo'); changed = true; 
-    }
-    if (appState.finishedLogs.includes('echo') && !appState.unlockedTabs.includes('wake')) { 
-        appState.unlockedTabs.push('wake'); changed = true; 
-    }
-    if (appState.finishedLogs.includes('wake') && !appState.unlockedTabs.includes('bloom')) { 
-        appState.unlockedTabs.push('bloom'); changed = true; 
-    }
-    if (appState.finishedLogs.includes('bloom') && !appState.unlockedTabs.includes('gardener')) { 
-        appState.unlockedTabs.push('gardener'); changed = true; 
-    }
+    if (appState.finishedLogs.includes('crash') && !appState.unlockedTabs.includes('echo')) { appState.unlockedTabs.push('echo'); changed = true; }
+    if (appState.finishedLogs.includes('echo') && !appState.unlockedTabs.includes('wake')) { appState.unlockedTabs.push('wake'); changed = true; }
+    if (appState.finishedLogs.includes('wake') && !appState.unlockedTabs.includes('bloom')) { appState.unlockedTabs.push('bloom'); changed = true; }
+    if (appState.finishedLogs.includes('bloom') && !appState.unlockedTabs.includes('gardener')) { appState.unlockedTabs.push('gardener'); changed = true; }
     if (changed) saveState();
 }
-
 function updateSidebarUI() {
     if (appState.unlockedTabs.includes('crash')) btnCycle00.classList.add('visible');
     if (appState.unlockedTabs.includes('echo')) btnCycleEcho.classList.add('visible');
     if (appState.unlockedTabs.includes('wake')) btnCycle01.classList.add('visible');
     if (appState.unlockedTabs.includes('bloom')) btnCycleBloom.classList.add('visible');
     if (appState.unlockedTabs.includes('gardener')) btnCycle02.classList.add('visible');
-
     const allBtns = [btnCycle00, btnCycleEcho, btnCycle01, btnCycleBloom, btnCycle02];
     allBtns.forEach(btn => btn.classList.remove('active'));
-
     const activeBtn = 
         currentTab === 'crash' ? btnCycle00 :
         currentTab === 'echo' ? btnCycleEcho :
         currentTab === 'wake' ? btnCycle01 :
         currentTab === 'bloom' ? btnCycleBloom :
         currentTab === 'gardener' ? btnCycle02 : null;
-
     if (activeBtn) activeBtn.classList.add('active');
-
     allBtns.forEach(btn => { 
         const isCurrent = btn === activeBtn;
         const type = btn === btnCycle00 ? 'crash' :
                      btn === btnCycleEcho ? 'echo' :
                      btn === btnCycle01 ? 'wake' :
                      btn === btnCycleBloom ? 'bloom' : 'gardener';
-        
         const isFinished = appState.finishedLogs.includes(type);
         let icon = btn.querySelector('.replay-icon');
-
         if (isCurrent && isFinished) {
             if (!icon) {
                 icon = document.createElement('span'); 
@@ -705,52 +737,41 @@ function updateSidebarUI() {
             if (icon) icon.remove();
         }
     });
-
     if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
         btnReset.classList.add('visible'); 
         btnTurbo.classList.add('visible'); 
         btnMute.classList.add('visible');
     }
 }
-
 function initTerminalState() {
     checkStateIntegrity(); 
     updateSidebarUI();
     if (btnTurbo) btnTurbo.innerText = "[ >> ]\nTURBO: OFF";
     if (appState.musicUnlocked) musicSection.style.display = 'block';
 }
-
 function launchTerminal() { 
     SimpleSynth.unlock(); 
     terminalRunning = true; 
     checkStateIntegrity();
     updateSidebarUI();
-
     savedScrollTop = window.scrollY || document.documentElement.scrollTop; 
     document.body.style.position = 'fixed'; 
     document.body.style.top = `-${savedScrollTop}px`; 
     document.body.classList.add('no-scroll');
-    
     secretOverlay.classList.add('active');
-    
     if (!currentTab) switchTab(appState.unlockedTabs[appState.unlockedTabs.length - 1]); 
     else switchTab(currentTab); 
 }
-
 function switchTab(type, isReplay = false) {
     checkStateIntegrity();
     if (activeTimer) clearTimeout(activeTimer);
-
     currentTab = type;
     updateSidebarUI();
-
     const allContainers = [containers.crash, containers.wake, containers.echo, containers.bloom, containers.gardener];
     allContainers.forEach(con => con.classList.remove('active-log'));
     containers[type].classList.add('active-log');
-
     const wrapper = document.querySelector('.cycles-wrapper');
     const activeBtn = document.querySelector('.cycle-btn.active');
-
     if (wrapper && activeBtn) {
         const isHorizontal = window.getComputedStyle(wrapper).flexDirection === 'row';
         if (isHorizontal) {
@@ -761,7 +782,6 @@ function switchTab(type, isReplay = false) {
             wrapper.scrollTo({ top: activeBtn.offsetTop - center, behavior: 'smooth' });
         }
     }
-
     if (appState.finishedLogs.includes(type) && !isReplay) {
         logState[type].finished = true;
         renderFullLog(type); 
@@ -769,7 +789,6 @@ function switchTab(type, isReplay = false) {
         processQueue();
     }
 }
-
 function replayLog(e, type) {
     if (activeTimer) clearTimeout(activeTimer);
     containers[type].innerHTML = ""; 
@@ -777,99 +796,70 @@ function replayLog(e, type) {
     logState[type].finished = false;
     switchTab(type, true);
 }
-
 function toggleTurbo() { 
     turboMode = !turboMode; 
     logSpeedMultiplier = turboMode ? 0.1 : 1; 
     btnTurbo.innerText = turboMode ? "[ >> ]\nTURBO: ON" : "[ >> ]\nTURBO: OFF"; 
     if (turboMode) btnTurbo.classList.add('active'); else btnTurbo.classList.remove('active'); 
 }
-
 function toggleMute() { 
     isMuted = !isMuted; 
     btnMute.innerText = isMuted ? "[VOL: OFF]" : "[VOL: ON]"; 
     if (!isMuted) btnMute.classList.add('active'); else btnMute.classList.remove('active'); 
 }
-
 function processQueue() {
     if (!currentTab || !terminalRunning) return; 
     if (logState[currentTab].finished) return;
-
     const idx = logState[currentTab].index; 
-    if (idx >= logsData[currentTab].length) { 
-        markLogFinished(currentTab); 
-        return; 
-    }
-
+    if (idx >= logsData[currentTab].length) { markLogFinished(currentTab); return; }
     const lineData = logsData[currentTab][idx]; 
     const delay = lineData.delay * logSpeedMultiplier;
-
     activeTimer = setTimeout(() => { 
         typeLine(lineData.text, lineData.class, containers[currentTab]); 
         if (lineData.text.trim().length > 0) SimpleSynth.playTone(lineData.class);
-        
         logState[currentTab].index++; 
         terminalContainer.scrollTop = terminalContainer.scrollHeight;
-        
-        if (logState[currentTab].index >= logsData[currentTab].length) {
-            markLogFinished(currentTab);
-        } else {
-            processQueue();
-        }
+        if (logState[currentTab].index >= logsData[currentTab].length) { markLogFinished(currentTab); } 
+        else { processQueue(); }
     }, delay);
 }
-
 function markLogFinished(type) {
     logState[type].finished = true;
-    
     if (!appState.finishedLogs.includes(type)) {
         if (!appState.terminalFound) appState.terminalFound = true;
         appState.finishedLogs.push(type);
-        
         if (type === 'crash' && !appState.unlockedTabs.includes('echo')) appState.unlockedTabs.push('echo');
         if (type === 'echo' && !appState.unlockedTabs.includes('wake')) appState.unlockedTabs.push('wake');
         if (type === 'wake' && !appState.unlockedTabs.includes('bloom')) appState.unlockedTabs.push('bloom');
         if (type === 'bloom' && !appState.unlockedTabs.includes('gardener')) appState.unlockedTabs.push('gardener');
-        
         saveState(); 
         SimpleSynth.playUnlock();
         updateSidebarUI(); 
-
         let nextTab = null;
         if (type === 'crash') nextTab = 'echo';
         else if (type === 'echo') nextTab = 'wake';
         else if (type === 'wake') nextTab = 'bloom';
         else if (type === 'bloom') nextTab = 'gardener';
-
-        if (nextTab) {
-            activeTimer = setTimeout(() => { switchTab(nextTab); }, 1500 * logSpeedMultiplier);
-        }
-    } else {
-        updateSidebarUI();
-    }
+        if (nextTab) { activeTimer = setTimeout(() => { switchTab(nextTab); }, 1500 * logSpeedMultiplier); }
+    } else { updateSidebarUI(); }
 }
-
 function renderFullLog(type) { 
     containers[type].innerHTML = ""; 
     logsData[type].forEach(line => { typeLine(line.text, line.class, containers[type]); }); 
     setTimeout(() => terminalContainer.scrollTop = terminalContainer.scrollHeight, 100); 
 }
-
 function typeLine(htmlText, className, container) { 
     const lineDiv = document.createElement('div'); 
     if (htmlText.includes('----') || htmlText.includes('====')) lineDiv.className = `terminal-line divider-line ${className}`; 
     else lineDiv.className = `terminal-line ${className}`; 
-    
     lineDiv.innerHTML = htmlText; 
     lineDiv.classList.add('active'); 
     if(className.includes('golden-text')) lineDiv.classList.add('gold-line'); 
     if(className.includes('white-text')) lineDiv.classList.add('white-line'); 
     if(className.includes('magenta-text')) lineDiv.classList.add('magenta-line'); 
     if(className.includes('system-success')) lineDiv.classList.add('blue-line'); 
-    
     container.appendChild(lineDiv); 
 }
-
 function closeTerminal() { 
     if(activeTimer) clearTimeout(activeTimer); 
     secretOverlay.classList.remove('active'); 
@@ -879,7 +869,6 @@ function closeTerminal() {
     window.scrollTo(0, savedScrollTop); 
     terminalRunning = false; 
 }
-
 function revealPlayer() { 
     closeTerminal(); 
     musicSection.style.display = 'block'; 
@@ -899,8 +888,7 @@ function revealPlayer() {
 // ==========================================
 // 7. NO RESIZE LISTENER
 // ==========================================
-// The system now relies entirely on CSS for scaling and 
-// initial LOD calculation for resolution. No reloads on resize.
+// We rely on CSS scaling.
 
 // --- LISTENERS ---
 document.getElementById('next-doc').addEventListener('click', () => { 
@@ -909,43 +897,34 @@ document.getElementById('next-doc').addEventListener('click', () => {
         loadDocument(currentIndex + 1); 
     }
 });
-
 document.getElementById('prev-doc').addEventListener('click', () => { 
     if(!isLoading && currentIndex > 0) { 
         window.scrollTo({ top: 0, behavior: 'smooth' }); 
         loadDocument(currentIndex - 1); 
     }
 });
-
 [document.getElementById('next-doc'), document.getElementById('prev-doc')].forEach(arrow => {
     arrow.addEventListener('touchstart', function() { this.classList.add('active-state'); }, {passive: true});
     arrow.addEventListener('touchend', function() { this.classList.remove('active-state'); }, {passive: true});
 });
-
 if(btnPlay) btnPlay.addEventListener('click', (e) => { e.preventDefault(); togglePlay(); });
 if(btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextTrack(false); });
 if(btnPrev) btnPrev.addEventListener('click', (e) => { e.preventDefault(); prevTrack(); });
 if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggleLoop(); });
-
 progressArea.addEventListener('mousedown', startDragMouse); 
 document.addEventListener('mousemove', doDragMouse); 
 document.addEventListener('mouseup', endDragMouse);
 progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); 
 progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); 
 progressArea.addEventListener('touchend', endDragTouch);
-
 audioPlayer.addEventListener('timeupdate', () => { 
-    if (!audioPlayer.paused && pendingSeekPercent !== null && audioPlayer.duration) {
-        pendingSeekPercent = null;
-    }
-
+    if (!audioPlayer.paused && pendingSeekPercent !== null && audioPlayer.duration) { pendingSeekPercent = null; }
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
         domProgressBar.style.setProperty('--progress', `${p}%`); 
         domCurrentTime.textContent = formatTime(audioPlayer.currentTime); 
         domDuration.textContent = formatTime(audioPlayer.duration); 
     }
-    
     if (loadingScrambleInterval !== null && !audioPlayer.paused && audioPlayer.currentTime > 0) {
         if (audioPlayer.readyState > 2) {
             resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
@@ -954,7 +933,6 @@ audioPlayer.addEventListener('timeupdate', () => {
         }
     }
 });
-
 audioPlayer.addEventListener('loadedmetadata', () => { 
     domDuration.textContent = formatTime(audioPlayer.duration); 
     if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) { 
@@ -966,15 +944,11 @@ audioPlayer.addEventListener('loadedmetadata', () => {
 audioPlayer.addEventListener('ended', () => nextTrack(true));
 audioPlayer.addEventListener('waiting', () => { 
     if(bufferCheckTimer) clearTimeout(bufferCheckTimer); 
-    if (!audioPlayer.paused) {
-        bufferCheckTimer = setTimeout(() => { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); }, 300); 
-    }
+    if (!audioPlayer.paused) { bufferCheckTimer = setTimeout(() => { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); }, 300); }
 });
 audioPlayer.addEventListener('seeked', () => {
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer); 
-    if (loadingScrambleInterval !== null) {
-        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
-    }
+    if (loadingScrambleInterval !== null) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); }
     shouldAnimateReveal = false;
 });
 audioPlayer.addEventListener('playing', () => { 
@@ -982,17 +956,26 @@ audioPlayer.addEventListener('playing', () => {
     if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; } 
 });
 
+// --- SHOW VOICE HANDLER ---
 if (btnShowVoice) { 
     btnShowVoice.addEventListener('click', (e) => { 
         e.preventDefault(); 
         if (isLoading) return; 
+        
+        // VIEW LOCK: FORCE THE PLAYER INTO CENTER VIEW
+        btnShowVoice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
         if (currentIndex !== 0) {
+            waitingForLyrics = true;
+            startLoadingScramble(btnShowVoice);
             loadDocument(0); 
-            pendingScrollPage = 8;
         } else {
             const p8 = document.getElementById('page-wrapper-8'); 
-            if (p8) { smartScrollTo(p8); pendingScrollPage = null; } 
-            else { pendingScrollPage = 8; }
+            if (p8) { jitterScrollTo(p8); } 
+            else { 
+                waitingForLyrics = true;
+                startLoadingScramble(btnShowVoice);
+            }
         }
     }); 
 }
@@ -1012,22 +995,29 @@ infinityBtn.addEventListener('click', (e) => {
         launchTerminal(); 
     } 
 });
-
 document.addEventListener('keydown', (e) => { 
     const isPlayerVisible = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500; 
     if (e.code === 'Space') { if (isPlayerVisible || terminalRunning) { e.preventDefault(); togglePlay(); } } 
     if (e.code === 'ArrowRight') { if (e.shiftKey) { e.preventDefault(); nextTrack(false); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime += 5; } } 
     if (e.code === 'ArrowLeft') { if (e.shiftKey) { e.preventDefault(); prevTrack(); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; } } 
 });
-
 function formatTime(s) { if(isNaN(s) || s === Infinity) return "0:00"; const m = Math.floor(s/60); const ss = Math.floor(s%60); return `${m}:${ss<10?'0':''}${ss}`; }
-
 document.getElementById("currentYear").textContent = new Date().getFullYear();
 const prevArrowEl = document.getElementById('prev-doc');
 if(prevArrowEl) prevArrowEl.classList.add('disabled');
+
+function addTactileListener(selector) {
+    const els = document.querySelectorAll(selector);
+    els.forEach(el => {
+        el.addEventListener('touchstart', function() { this.classList.add('active-state'); }, {passive: true});
+        el.addEventListener('touchend', function() { setTimeout(() => { this.classList.remove('active-state'); }, 50); }, {passive: true});
+    });
+}
 
 initTerminalState(); 
 loadDocument(0); 
 initPlaylist(); 
 loadTrack(0, false); 
 setTimeout(() => { scrambleText(domTrackTitle, albumTracks[0].title); }, 500);
+addTactileListener('.close-terminal');
+addTactileListener('.cycle-btn');

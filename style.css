@@ -55,6 +55,7 @@
   .explore-header { text-align: center; margin-bottom: 30px; }
   .explore-header h1 { 
       color: var(--name-color); 
+      /* FLUID TYPOGRAPHY */
       font-size: clamp(2rem, 8vw, 3.5rem); 
       font-style: italic; 
       font-weight: 700; 
@@ -238,6 +239,7 @@
   .cycle-btn.visible { display: flex; pointer-events: auto; }
   .cycle-btn:hover { opacity: 0.8; background-color: rgba(255,255,255,0.02); }
   
+  /* Cycle Button Themes */
   .cycle-btn.theme-crash { color: var(--terminal-error); border-color: rgba(255, 51, 51, 0.2); }
   .cycle-btn.theme-crash.active { opacity: 1; background-color: rgba(255, 51, 51, 0.1); border-color: var(--terminal-error); border-left-color: var(--terminal-error); }
   .cycle-btn.theme-echo { color: var(--terminal-white); border-color: rgba(255, 255, 255, 0.2); }
@@ -248,6 +250,13 @@
   .cycle-btn.theme-bloom.active { opacity: 1; background-color: rgba(255, 0, 255, 0.1); border-color: var(--terminal-magenta); border-left-color: var(--terminal-magenta); }
   .cycle-btn.theme-gardener { color: var(--terminal-cyan); border-color: rgba(0, 255, 255, 0.2); }
   .cycle-btn.theme-gardener.active { opacity: 1; background-color: rgba(0, 255, 255, 0.1); border-color: var(--terminal-cyan); border-left-color: var(--terminal-cyan); }
+  
+  /* Tactile Active States for Mobile */
+  .cycle-btn.active-state {
+      opacity: 1 !important;
+      background-color: rgba(255,255,255,0.1) !important;
+      transition: none !important;
+  }
   
   .replay-icon { 
       color: var(--terminal-gold); 
@@ -316,8 +325,36 @@
   .secret-link:active { background-color: transparent; color: var(--terminal-gold); box-shadow: 0 0 10px rgba(255, 215, 0, 0.8); transform: scale(0.98); }
   @keyframes glitch-shake { 0% { transform: translate(0, 0); } 25% { transform: translate(1px, 0); } 50% { transform: translate(-1px, 0); } 75% { transform: translate(0, 1px); } 100% { transform: translate(0, -1px); } }
   @keyframes fadeIn { to { opacity: 1; } }
-  .close-terminal { position: absolute; top: 20px; right: 30px; color: #444; border: 1px solid #444; background: #000; padding: 5px 10px; cursor: pointer; font-family: 'Space Mono', monospace; z-index: 20; transition: all 0.3s; font-size: 12px; }
-  .close-terminal:hover { color: var(--terminal-text); border-color: var(--terminal-text); }
+  
+  /* --- CLOSE TERMINAL BUTTON --- */
+  .close-terminal { 
+      position: absolute; 
+      top: 20px; 
+      right: 30px; 
+      color: #444; 
+      border: 1px solid #444; 
+      background: #000; 
+      padding: 5px 10px; 
+      cursor: pointer; 
+      font-family: 'Space Mono', monospace; 
+      z-index: 20; 
+      font-size: 12px; 
+      /* Normal transition */
+      transition: background-color 0.2s, color 0.2s; 
+  }
+  
+  @media (hover: hover) {
+      .close-terminal:hover { color: var(--terminal-text); border-color: var(--terminal-text); }
+  }
+  
+  /* Instant Flash on Tap */
+  .close-terminal:active,
+  .close-terminal.active-state {
+      color: var(--terminal-bg) !important;
+      background-color: var(--terminal-text) !important;
+      border-color: var(--terminal-text) !important;
+      transition: none !important; 
+  }
   
   /* --- MUSIC PLAYER --- */
   #music-section { display: none; width: 100%; max-width: 900px; margin: 40px auto 20px auto; animation: fadeIn 2s ease forwards; }
