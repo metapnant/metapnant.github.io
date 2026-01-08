@@ -92,7 +92,6 @@ body.no-scroll { overflow: hidden !important; width: 100%; position: fixed; }
   margin: 0;
   cursor: pointer; 
   
-  /* RESTORED DESKTOP ANIMATION STYLE */
   transition: transform 0.1s ease, color 0.3s ease, opacity 0.3s ease;
   animation: faintFlash 5s infinite ease-in-out;
   
@@ -113,12 +112,14 @@ body.no-scroll { overflow: hidden !important; width: 100%; position: fixed; }
   }
 }
 
-/* Unified Click/Tap State */
-.nav-arrow:active { 
-    transform: scale(0.8); /* Crisp shrink effect */
+/* UNIFIED ACTIVE STATE (iOS + Desktop + Android) */
+/* .active-state is toggled via JS for reliable mobile feedback */
+.nav-arrow:active, .nav-arrow.active-state { 
+    transform: scale(0.8); 
     color: var(--name-color); 
     opacity: 1;
     animation: none;
+    transition: transform 0.05s ease;
 }
 
 @media (max-width: 700px) {
@@ -241,7 +242,10 @@ body.loaded .pdf-button { opacity: 1; }
     #secret-overlay { flex-direction: row; }
     .terminal-sidebar { width: 220px; height: 100%; padding: 10px; border-right: 1px solid var(--terminal-border); border-bottom: none; }
     .cycles-wrapper { display: flex; flex-direction: column; overflow-y: auto; }
-    .cycle-btn { display: flex; width: 100%; }
+    /* Ensure visible buttons are flex, hidden are none */
+    .cycle-btn { width: 100%; }
+    .cycle-btn.visible { display: flex; } 
+    
     .controls-wrapper { margin-top: 10px; }
     .terminal-wrapper { height: 100vh; }
     .terminal-container { padding-bottom: 20px; }

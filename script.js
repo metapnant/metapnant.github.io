@@ -738,6 +738,10 @@ function markLogFinished(type) {
     logState[type].finished = true;
     
     if (!appState.finishedLogs.includes(type)) {
+        // ONLY SAVE STATE ON FIRST FINISH
+        if (!appState.terminalFound) {
+             appState.terminalFound = true;
+        }
         appState.finishedLogs.push(type);
         
         if (type === 'crash' && !appState.unlockedTabs.includes('echo')) appState.unlockedTabs.push('echo');
@@ -745,7 +749,7 @@ function markLogFinished(type) {
         if (type === 'wake' && !appState.unlockedTabs.includes('bloom')) appState.unlockedTabs.push('bloom');
         if (type === 'bloom' && !appState.unlockedTabs.includes('gardener')) appState.unlockedTabs.push('gardener');
         
-        saveState();
+        saveState(); // <--- CRITICAL: Save everything now
         SimpleSynth.playUnlock();
         updateSidebarUI(); 
 
@@ -818,6 +822,20 @@ function revealPlayer() {
 // --- LISTENERS ---
 document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex + 1) % library.length); }});
 document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex - 1 + library.length) % library.length); }});
+
+// --- IOS ACTIVE STATE HELPER (Removed the touch-based logic that was breaking iOS) ---
+// Just simple listeners to support "active-state" class
+[document.getElementById('next-doc'), document.getElementById('prev-doc')].forEach(arrow => {
+    // Add class on touch start
+    arrow.addEventListener('touchstart', function() {
+        this.classList.add('active-state');
+    }, {passive: true});
+    
+    // Remove class on touch end or cancel
+    arrow.addEventListener('touchend', function() {
+        this.classList.remove('active-state');
+    }, {passive: true});
+});
 
 if(btnPlay) btnPlay.addEventListener('click', (e) => { e.preventDefault(); togglePlay(); });
 if(btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextTrack(false); });
@@ -895,8 +913,8 @@ infinityBtn.addEventListener('click', (e) => {
     setTimeout(() => infinityBtn.style.color = "", 200); 
     if (secretClicks === 3) { 
         secretClicks = 0; 
-        appState.terminalFound = true; 
-        saveState(); 
+        appState.terminalFound = true; // Memory only!
+        // No saveState() here - wait for finish!
         updateInfinityState(); 
         launchTerminal(); 
     } 
