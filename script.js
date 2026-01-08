@@ -249,76 +249,98 @@ function updateInfinityState() {
 }
 
 // --- PDF FUNCTIONS ---
-// THE LOD SYSTEM: Force High Quality for "Full Resolution" feel
+// THE LOD SYSTEM: Force High Quality but prevent Memory Crashes
 function getLODScale() {
     // Desktop: 3.0x scale (High Fidelity)
-    // Mobile: 2.0x scale (Safe Fidelity)
-    // We ignore current zoom level and just render BIG.
-    return isMobileDevice ? 2.0 : 3.0;
+    if (!isMobileDevice) return 3.0;
+
+    // Mobile Safety Logic
+    // iOS Safari has a strict memory limit for Canvases.
+    // In Portrait (~375px), 2.0x scale = 750px width. (Safe for 20 pages)
+    // In Landscape (~800px), 2.0x scale = 1600px width. (CRASH for 20 pages)
+    
+    const width = window.innerWidth;
+    
+    // If width implies Landscape on mobile (> 600px), throttle the scale.
+    if (width > 600) {
+        return 1.4; // Enough for clarity, small enough to fit in RAM
+    }
+    
+    // Portrait Mode
+    return 2.0;
 }
 
 async function loadDocument(index) {
-  if (isLoading) return;
-  isLoading = true; renderSession++; const currentSession = renderSession;
-  
-  if (prevArrow) prevArrow.classList.remove('active-state');
-  if (nextArrow) nextArrow.classList.remove('active-state');
-
-  songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
-  const existingPages = document.querySelectorAll('.pdf-page-wrapper');
-  existingPages.forEach(p => p.remove());
-
-  loadingOverlay.style.display = 'flex';
-  
-  prevArrow.classList.add('disabled'); 
-  nextArrow.classList.add('disabled');
-
-  currentIndex = index;
-  const currentDoc = library[currentIndex];
-  docTitle.textContent = currentDoc.title;
-  downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
-  
-  updateInfinityState();
-
-  try {
-    pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
-    await renderPage(1, currentSession);
+    if (isLoading) return;
+    isLoading = true; renderSession++; const currentSession = renderSession;
     
-    if (currentSession === renderSession) {
-        loadingOverlay.style.display = 'none';
-        document.body.classList.add("loaded");
-        const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
-        if(firstPage) firstPage.classList.add('revealed');
-
-        if (currentDoc.songUrl) {
-            songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
-            if (currentDoc.bpm > 0) songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
-            else songLink.style.animationDuration = "";
-            songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
-        }
-        isLoading = false;
-        
-        prevArrow.classList.remove('disabled'); 
-        nextArrow.classList.remove('disabled');
-        
-        if (currentIndex === 0) prevArrow.classList.add('disabled');
-        if (currentIndex === library.length - 1) nextArrow.classList.add('disabled');
-
-        if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
+    if (prevArrow) prevArrow.classList.remove('active-state');
+    if (nextArrow) nextArrow.classList.remove('active-state');
+  
+    songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
+    
+    // FORCE MEMORY CLEANUP
+    const existingPages = document.querySelectorAll('.pdf-page-wrapper');
+    existingPages.forEach(p => {
+        // Help GC by nulling references
+        const canvas = p.querySelector('canvas');
+        if (canvas) { canvas.width = 1; canvas.height = 1; } 
+        p.remove();
+    });
+  
+    loadingOverlay.style.display = 'flex';
+    
+    prevArrow.classList.add('disabled'); 
+    nextArrow.classList.add('disabled');
+  
+    currentIndex = index;
+    const currentDoc = library[currentIndex];
+    docTitle.textContent = currentDoc.title;
+    downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
+    
+    updateInfinityState();
+  
+    try {
+      pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
+      await renderPage(1, currentSession);
+      
+      if (currentSession === renderSession) {
+          loadingOverlay.style.display = 'none';
+          document.body.classList.add("loaded");
+          const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
+          if(firstPage) firstPage.classList.add('revealed');
+  
+          if (currentDoc.songUrl) {
+              songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
+              if (currentDoc.bpm > 0) songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
+              else songLink.style.animationDuration = "";
+              songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
+          }
+          isLoading = false;
+          
+          prevArrow.classList.remove('disabled'); 
+          nextArrow.classList.remove('disabled');
+          
+          if (currentIndex === 0) prevArrow.classList.add('disabled');
+          if (currentIndex === library.length - 1) nextArrow.classList.add('disabled');
+  
+          if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
+      }
+    } catch (err) {
+      console.error(err);
+      loadingOverlay.innerHTML = "<div style='color:red; font-family:monospace'>ARCHIVE CORRUPTED</div>";
+      isLoading = false;
     }
-  } catch (err) {
-    console.error(err);
-    loadingOverlay.innerHTML = "<div style='color:red; font-family:monospace'>ARCHIVE CORRUPTED</div>";
-    isLoading = false;
   }
-}
 
 async function renderRestOfPages(pageNum, sessionID) {
     if (sessionID !== renderSession || pageNum > pdfDoc.numPages) return;
     await renderPage(pageNum, sessionID);
     const pages = pdfWrapper.querySelectorAll('.pdf-page-wrapper');
     if(pages[pageNum-1]) pages[pageNum-1].classList.add('revealed');
-    setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 50); 
+    
+    // Increased delay from 50ms to 150ms to prevent iOS Memory Spike
+    setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 150); 
 }
 
 // --- RENDER PAGE WITH FIXED LOD ---
