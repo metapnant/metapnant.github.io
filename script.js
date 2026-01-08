@@ -255,6 +255,11 @@ function updateInfinityState() {
 async function loadDocument(index) {
   if (isLoading) return;
   isLoading = true; renderSession++; const currentSession = renderSession;
+  
+  // FIX: Clear active states instantly so they don't fight the disable logic
+  if (prevArrow) prevArrow.classList.remove('active-state');
+  if (nextArrow) nextArrow.classList.remove('active-state');
+
   songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
   const existingPages = document.querySelectorAll('.pdf-page-wrapper');
   existingPages.forEach(p => p.remove());
@@ -823,15 +828,13 @@ function revealPlayer() {
 document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex + 1) % library.length); }});
 document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex - 1 + library.length) % library.length); }});
 
-// --- IOS ACTIVE STATE HELPER (Removed the touch-based logic that was breaking iOS) ---
-// Just simple listeners to support "active-state" class
+// --- IOS ACTIVE STATE HELPER ---
+// Standard touch listeners to help CSS handle active states
 [document.getElementById('next-doc'), document.getElementById('prev-doc')].forEach(arrow => {
-    // Add class on touch start
     arrow.addEventListener('touchstart', function() {
         this.classList.add('active-state');
     }, {passive: true});
     
-    // Remove class on touch end or cancel
     arrow.addEventListener('touchend', function() {
         this.classList.remove('active-state');
     }, {passive: true});

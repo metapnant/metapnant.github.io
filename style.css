@@ -94,13 +94,12 @@ body.no-scroll { overflow: hidden !important; width: 100%; position: fixed; }
   
   transition: transform 0.1s ease, color 0.3s ease, opacity 0.3s ease;
   animation: faintFlash 5s infinite ease-in-out;
+  opacity: 0.6;
   
   display: flex;
   justify-content: center;
   align-items: center;
 }
-
-.nav-arrow.disabled { opacity: 0 !important; pointer-events: none; }
 
 @media (hover: hover) {
   .nav-arrow:hover { 
@@ -112,14 +111,21 @@ body.no-scroll { overflow: hidden !important; width: 100%; position: fixed; }
   }
 }
 
-/* UNIFIED ACTIVE STATE (iOS + Desktop + Android) */
-/* .active-state is toggled via JS for reliable mobile feedback */
-.nav-arrow:active, .nav-arrow.active-state { 
+/* UNIFIED ACTIVE STATE */
+.nav-arrow:not(.disabled):active, 
+.nav-arrow:not(.disabled).active-state { 
     transform: scale(0.8); 
     color: var(--name-color); 
     opacity: 1;
     animation: none;
-    transition: transform 0.05s ease;
+}
+
+/* DISABLED STATE (Corrected to preserve transform) */
+.nav-arrow.disabled { 
+    opacity: 0 !important; 
+    pointer-events: none; 
+    /* transform: none !important;  <-- REMOVED THIS LINE */
+    /* animation: none !important; <-- REMOVED THIS LINE */
 }
 
 @media (max-width: 700px) {
@@ -168,7 +174,6 @@ body.loaded .pdf-button { opacity: 1; }
     width: 100%;
     box-sizing: border-box; 
     
-    /* Flexbox for layout stability */
     display: none; 
     align-items: center;
     justify-content: space-between;
@@ -189,7 +194,6 @@ body.loaded .pdf-button { opacity: 1; }
 .cycle-btn.theme-gardener { color: var(--terminal-cyan); border-color: rgba(0, 255, 255, 0.2); }
 .cycle-btn.theme-gardener.active { opacity: 1; background-color: rgba(0, 255, 255, 0.1); border-color: var(--terminal-cyan); border-left-color: var(--terminal-cyan); }
 
-/* Replay Icon Styling */
 .replay-icon { 
     color: var(--terminal-gold); 
     font-weight: bold; 
@@ -207,7 +211,6 @@ body.loaded .pdf-button { opacity: 1; }
 }
 .replay-icon:active { opacity: 1; transform: scale(0.9); }
 
-/* Spin Class triggered by JS */
 .spin-once { animation: spinReplay 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 @keyframes spinReplay { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
 
@@ -216,7 +219,6 @@ body.loaded .pdf-button { opacity: 1; }
 .log-section { display: none !important; width: 100%; }
 .log-section.active-log { display: block !important; }
 
-/* --- MOBILE PORTRAIT LAYOUT --- */
 @media (max-width: 700px) and (orientation: portrait) { 
     #secret-overlay { flex-direction: column; }
     .terminal-sidebar { width: 100%; height: auto; padding: 10px; border-right: none; border-bottom: 1px solid var(--terminal-border); display: block; }
@@ -237,22 +239,18 @@ body.loaded .pdf-button { opacity: 1; }
     .terminal-container { padding-bottom: 140px; }
 }
 
-/* --- MOBILE LANDSCAPE FIX --- */
 @media (max-height: 500px) and (orientation: landscape) {
     #secret-overlay { flex-direction: row; }
     .terminal-sidebar { width: 220px; height: 100%; padding: 10px; border-right: 1px solid var(--terminal-border); border-bottom: none; }
     .cycles-wrapper { display: flex; flex-direction: column; overflow-y: auto; }
-    /* Ensure visible buttons are flex, hidden are none */
     .cycle-btn { width: 100%; }
-    .cycle-btn.visible { display: flex; } 
-    
+    .cycle-btn.visible { display: flex; }
     .controls-wrapper { margin-top: 10px; }
     .terminal-wrapper { height: 100vh; }
     .terminal-container { padding-bottom: 20px; }
     .sidebar-header { display: none; }
 }
 
-/* --- CENTERED CONTROL BUTTONS --- */
 #btn-turbo, #btn-mute {
   justify-content: center;
   align-items: center;
