@@ -58,7 +58,8 @@ let lyricsDoc = null;
 let isLoading = false;
 let renderSession = 0;
 let pendingScrollPage = null; 
-let resizeTimer = null; // Debounce for orientation change
+let resizeTimer = null; 
+let lastWidth = window.innerWidth; // FIX: Store width to detect true orientation change
 
 // -- Music State --
 const audioPlayer = new Audio();
@@ -266,6 +267,7 @@ async function loadDocument(index) {
 
   loadingOverlay.style.display = 'flex';
   
+  // Hide arrows temporarily while loading
   prevArrow.classList.add('disabled'); 
   nextArrow.classList.add('disabled');
 
@@ -318,7 +320,6 @@ async function renderRestOfPages(pageNum, sessionID) {
     setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 50); 
 }
 
-// --- FIX: MEMORY-SAFE RENDER PAGE FUNCTION ---
 async function renderPage(num, sessionID) {
   try {
       if (sessionID !== renderSession) return;
@@ -342,15 +343,12 @@ async function renderPage(num, sessionID) {
       const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
       
       // --- MEMORY FIX FOR IOS ---
-      // Reduce pixel density on mobile to prevent >16MB canvas crash
       let outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
       if (window.innerWidth < 800) {
-          outputScale = 1.4; // Slightly lower density on mobile to save RAM
+          outputScale = 1.4;
       }
 
       const scaledViewport = page.getViewport({ scale: finalScale * outputScale });
-      
-      // Ensure integer dimensions to prevent sub-pixel blurring
       canvas.height = Math.floor(scaledViewport.height);
       canvas.width = Math.floor(scaledViewport.width);
       
@@ -381,7 +379,6 @@ async function refreshDynamicPage() {
         const containerWidth = pdfWrapper.getBoundingClientRect().width || window.innerWidth;
         const desiredScale = (containerWidth - 40) / viewport.width;
         
-        // Same memory fix for dynamic pages
         let outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
         if (window.innerWidth < 800) outputScale = 1.4;
 
@@ -692,14 +689,25 @@ function switchTab(type, isReplay = false) {
     allContainers.forEach(con => con.classList.remove('active-log'));
     containers[type].classList.add('active-log');
 
-    if (window.innerWidth <= 700) {
-        const wrapper = document.querySelector('.cycles-wrapper');
-        const activeBtn = document.querySelector('.cycle-btn.active');
-        if (wrapper && activeBtn) {
+    // --- SMART SCROLL LOGIC ---
+    const wrapper = document.querySelector('.cycles-wrapper');
+    const activeBtn = document.querySelector('.cycle-btn.active');
+
+    if (wrapper && activeBtn) {
+        // Detect current layout direction
+        const isHorizontal = window.getComputedStyle(wrapper).flexDirection === 'row';
+
+        if (isHorizontal) {
+            // Center Horizontally (Mobile Portrait)
             const center = (wrapper.clientWidth / 2) - (activeBtn.clientWidth / 2);
             wrapper.scrollTo({ left: activeBtn.offsetLeft - center, behavior: 'smooth' });
+        } else {
+            // Center Vertically (Mobile Landscape & Desktop)
+            const center = (wrapper.clientHeight / 2) - (activeBtn.clientHeight / 2);
+            wrapper.scrollTo({ top: activeBtn.offsetTop - center, behavior: 'smooth' });
         }
     }
+    // --------------------------
 
     // Logic: If in DB and NOT currently running a replay (isReplay flag), show full.
     // If running a replay (flag is true), processQueue.
@@ -851,40 +859,18 @@ function revealPlayer() {
     setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100); 
 }
 
-// --- REFRESH ON ORIENTATION CHANGE ---
+// --- REFRESH ON ORIENTATION CHANGE (FIXED) ---
 window.addEventListener('resize', () => {
-    // Only trigger if we are not currently loading
+    // FIX: Only trigger if WIDTH actually changes (Orientation change)
+    // Ignores height changes caused by mobile address bar scrolling
+    if (window.innerWidth === lastWidth) return;
+    lastWidth = window.innerWidth;
+
     if (!isLoading && pdfDoc) {
         if (resizeTimer) clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
-            // Re-render current page to fit new width
-            const firstPage = document.querySelector('.pdf-page-wrapper');
-            if (firstPage) {
-                // Determine which page to update (usually visible ones)
-                // For simplicity, re-render all visible
-                const currentPages = document.querySelectorAll('.pdf-page-wrapper');
-                currentPages.forEach((wrapper, idx) => {
-                    // We must clear the wrapper content first to avoid stacking
-                    wrapper.innerHTML = ''; 
-                    
-                    // Create new canvas
-                    const canvas = document.createElement('canvas');
-                    canvas.className = 'pdf-page-canvas';
-                    wrapper.appendChild(canvas);
-                    
-                    // Re-render using existing logic
-                    // Note: This calls the same function used in loadDocument
-                    // We need to pass the correct page number
-                    const pageNum = parseInt(wrapper.id.split('-')[2]); 
-                    
-                    // Manually trigger the internal render logic of renderPage
-                    // We can't call renderPage directly easily because it appends new wrappers
-                    // So we reload the document fully to be safe.
-                });
-                // Actually, easiest way is to reload the document at current index
-                loadDocument(currentIndex);
-            }
-        }, 300); // 300ms debounce
+            loadDocument(currentIndex);
+        }, 300); 
     }
 });
 
