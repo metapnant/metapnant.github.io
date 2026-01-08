@@ -455,8 +455,20 @@ function loadTrack(index) {
 
 function playTrack(index) { loadTrack(index); audioPlayer.play(); isPlaying = true; updatePlayBtn(); }
 function togglePlay() {
-    if (isPlaying) { audioPlayer.pause(); isPlaying = false; }
-    else { if (!audioPlayer.src) loadTrack(0); audioPlayer.play(); isPlaying = true; }
+    if (isPlaying) { 
+        audioPlayer.pause(); 
+        isPlaying = false; 
+        
+        // NEW FIX: If we pause, ensure text is readable immediately
+        if (loadingScrambleInterval) {
+            resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
+        }
+    }
+    else { 
+        if (!audioPlayer.src) loadTrack(0); 
+        audioPlayer.play(); 
+        isPlaying = true; 
+    }
     updatePlayBtn();
 }
 function updatePlayBtn() {
@@ -629,7 +641,31 @@ if(btnPrev) btnPrev.addEventListener('click', (e) => { e.preventDefault(); prevT
 if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggleLoop(); });
 progressArea.addEventListener('mousedown', startDragMouse); document.addEventListener('mousemove', doDragMouse); document.addEventListener('mouseup', endDragMouse);
 progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); progressArea.addEventListener('touchend', endDragTouch);
-audioPlayer.addEventListener('timeupdate', () => { if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; domProgressBar.style.setProperty('--progress', `${p}%`); domCurrentTime.textContent = formatTime(audioPlayer.currentTime); domDuration.textContent = formatTime(audioPlayer.duration); }});
+audioPlayer.addEventListener('timeupdate', () => { 
+    // EXISTING LOGIC:
+    if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
+        const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
+        domProgressBar.style.setProperty('--progress', `${p}%`); 
+        domCurrentTime.textContent = formatTime(audioPlayer.currentTime); 
+        domDuration.textContent = formatTime(audioPlayer.duration); 
+    }
+    
+    // NEW FIX: FORCE STOP SCRAMBLE IF TIME IS MOVING
+    if (loadingScrambleInterval && !audioPlayer.paused) {
+        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
+        shouldAnimateReveal = false;
+        if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
+    }
+});
+// FIX FOR IOS SEEKING STUCK ON LOADING
+audioPlayer.addEventListener('seeked', () => {
+    // If we finished seeking, we have the data. Stop the scramble.
+    if (loadingScrambleInterval) {
+        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
+        shouldAnimateReveal = false;
+    }
+    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
+});
 audioPlayer.addEventListener('loadedmetadata', () => { domDuration.textContent = formatTime(audioPlayer.duration); if (pendingSeekPercent !== null) { audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); pendingSeekPercent = null; }});
 audioPlayer.addEventListener('ended', () => nextTrack(true));
 audioPlayer.addEventListener('waiting', () => { if(bufferCheckTimer) clearTimeout(bufferCheckTimer); bufferCheckTimer = setTimeout(() => { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); }, 300); });
