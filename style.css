@@ -201,124 +201,176 @@
     scrollbar-width: none;  /* Firefox */
   }
   
-  /* --- THE VOID-MECHANISM (Retractable Tools) --- */
-  .pdf-tools {
-      position: fixed;
-      right: 20px; /* Safe from scrollbar */
-      bottom: 20px;
-      z-index: 2500;
-      
-      /* The Mechanical Look */
-      height: 54px; /* Scaled up vertically */
-      display: flex;
-      align-items: center;
-      
-      /* The Container Style (Matches Original Button) */
-      background: rgba(13, 0, 34, 0.9); /* Slight opacity for readability */
-      border: 1px solid var(--arrow-color);
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-      backdrop-filter: blur(5px);
-      
-      /* The Void Animation Logic */
-      /* We animate max-width to reveal content from the "void" */
-      max-width: 54px; /* Default: Only show the flap (square) */
-      overflow: hidden; /* Hides the button when retracted */
-      transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s;
-  }
-  
-  /* Active State: Expand to reveal content */
-  .pdf-tools.active {
-      max-width: 300px; /* Arbitrary large number to fit content */
-      border-color: var(--name-color);
-  }
-  
-  /* --- THE FLAP (Toggle) --- */
-  .tools-toggle {
-      /* Fixed Dimensions for the square flap */
-      width: 54px; 
-      min-width: 54px;
-      height: 100%;
-      
-      /* Styling */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: var(--arrow-color);
-      font-size: 1.2em;
-      cursor: pointer;
-      border-right: 6px solid var(--arrow-color); /* Separator */
-      transition: color 0.3s, background-color 0.3s;
-  }
-  
-  /* --- THE CONTENT (Hidden Button) --- */
-  .tool-content {
-      /* Ensure it has width even when hidden so it slides, not squishes */
-      min-width: 160px; 
-      height: 100%;
-      display: flex;
-  }
-  
-  /* --- THE ACTION BUTTON --- */
-  .tool-btn {
-      flex-grow: 1;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 0 20px;
-      
-      /* Typography */
-      text-decoration: none;
-      color: var(--arrow-color);
-      font-family: "Space Mono", monospace; /* Tech feel */
-      font-weight: 600;
-      font-size: 0.85em;
-      letter-spacing: 1px;
-      white-space: nowrap;
-      
-      transition: color 0.3s, background-color 0.3s;
-  }
-  
-  /* --- INTERACTION STATES --- */
-  
-  /* Hover (Desktop) */
-  @media (hover: hover) {
-      .pdf-tools:hover {
-          border-color: var(--name-color);
-      }
-      
-      .tools-toggle:hover {
-          color: #fff;
-          background: rgba(152, 0, 235, 0.1);
-      }
-      
-      .tool-btn:hover {
-          color: #fff;
-          background: rgba(152, 0, 235, 0.1);
-          text-shadow: 0 0 10px var(--name-color);
-      }
-  }
-  
-  /* Active / Touch (Mobile) */
-  .tools-toggle:active, .tool-btn:active {
-      background: var(--name-color);
-      color: #fff;
-  }
-  
-  /* --- MOBILE OPTIMIZATION --- */
-  @media (max-width: 700px) {
-      .pdf-tools {
-          /* On mobile, we keep it in the corner, 
-             but slightly higher if needed to avoid bottom gestures */
-          bottom: 20px; 
-      }
-      
-      /* Make the text clearer on mobile */
-      .tool-btn {
-          font-size: 0.95em; 
-      }
-  }
+/* --- THE PHANTOM MECHANIC (Retractable Tools) --- */
+.pdf-tools {
+    position: fixed;
+    right: 20px; 
+    bottom: 20px;
+    z-index: 2500;
+    
+    /* Dimensions & Layout */
+    height: 50px; 
+    display: flex;
+    align-items: center;
+    
+    /* ORIGINAL AESTHETIC RESTORATION */
+    background-color: transparent; 
+    border: 1px solid var(--arrow-color);
+    border-radius: 0; 
+    color: var(--arrow-color);
+    
+    /* The "Living" Effect */
+    animation: faintFlash 5s infinite ease-in-out;
+    opacity: 0.8; 
+    
+    /* The Expansion Physics */
+    max-width: 50px; /* Default: Perfect Square (Toggle only) */
+    overflow: hidden; 
+    transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+                background-color 0.2s, 
+                border-color 0.2s, 
+                opacity 0.2s;
+    
+    backdrop-filter: blur(2px);
+}
+
+/* ACTIVE STATE: Expand */
+.pdf-tools.active {
+    max-width: 200px; 
+    opacity: 1;
+    animation: none; 
+    /* CHANGED: Use softer Music Player border color */
+    border-color: rgba(152, 0, 235, 0.3);
+    background-color: rgba(13, 0, 34, 0.9);
+}
+
+/* --- THE TOGGLE (The Flap) --- */
+.tools-toggle {
+    width: 50px;
+    min-width: 50px; 
+    height: 100%;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    
+    /* SEPARATOR: Matches container border for a split-button look */
+    border-right: 1px solid transparent; 
+    transition: background-color 0.2s, color 0.2s, border-right-color 0.2s;
+}
+
+/* When active, show the separator line */
+.pdf-tools.active .tools-toggle {
+    border-right-color: rgba(152, 0, 235, 0.3);
+}
+
+/* SVG ICON STYLING */
+.tools-toggle svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    transform: rotate(180deg); 
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pdf-tools.active .tools-toggle svg {
+    transform: rotate(0deg); 
+}
+
+/* --- THE CONTENT --- */
+.tool-content {
+    min-width: 120px; 
+    height: 100%;
+    display: flex;
+    opacity: 0; 
+    transition: opacity 0.3s ease 0.1s;
+}
+
+.pdf-tools.active .tool-content {
+    opacity: 1;
+}
+
+/* --- THE LINK BUTTON --- */
+.tool-btn {
+    flex-grow: 1;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    padding-right: 20px;
+    
+    text-decoration: none;
+    color: inherit; 
+    font-family: "Space Mono", monospace;
+    font-weight: 600;
+    font-size: 0.85em;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    
+    transition: background-color 0.2s, color 0.2s;
+}
+
+/* --- INTERACTION STATES (DECOUPLED) --- */
+
+/* 1. CONTAINER HOVER (Subtle Border Glow only) */
+@media (hover: hover) {
+    .pdf-tools:hover {
+        opacity: 1;
+        animation: none;
+        border-color: var(--name-color); /* Outer border glow */
+    }
+    
+    /* 2. TOGGLE HOVER (Individual) */
+    .tools-toggle:hover {
+        background-color: rgba(152, 0, 235, 0.15);
+        color: #fff;
+    }
+    
+    /* 3. BUTTON HOVER (Individual) */
+    .tool-btn:hover {
+        background-color: rgba(152, 0, 235, 0.15);
+        color: #fff;
+        text-shadow: 0 0 10px var(--name-color);
+    }
+}
+
+/* --- MOBILE TACTILE STATES --- */
+/* These classes are added via JS on touch */
+
+/* Toggle Tactile */
+.tools-toggle:active,
+.tools-toggle.active-state {
+    background-color: rgba(152, 0, 235, 0.3) !important;
+    color: var(--name-color) !important;
+}
+
+/* Button Tactile */
+.tool-btn:active,
+.tool-btn.active-state {
+    background-color: rgba(152, 0, 235, 0.3) !important;
+    color: var(--name-color) !important;
+}
+
+/* --- MOBILE OPTIMIZATION --- */
+@media (max-width: 700px) {
+    .pdf-tools {
+        bottom: 20px; 
+        height: 56px;
+        max-width: 56px; 
+    }
+    .pdf-tools.active {
+        max-width: 220px;
+    }
+    .tools-toggle {
+        width: 56px;
+        min-width: 56px;
+    }
+    .tools-toggle svg {
+        width: 24px;
+        height: 24px;
+    }
+}
   
   #song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 10px; }
   #song-link { color: var(--name-color); text-decoration: underline; text-decoration-color: var(--name-color); text-underline-offset: 2px; font-weight: 600; transition: color 0.1s; }

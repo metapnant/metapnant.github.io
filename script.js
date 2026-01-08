@@ -998,19 +998,14 @@ if (toolsToggle && toolsContainer) {
         
         toolsContainer.classList.toggle('active');
         
-        // Flip arrow visually
-        if (toolsContainer.classList.contains('active')) { 
-            toolsToggle.innerText = "▶"; 
-        } else { 
-            toolsToggle.innerText = "◀"; 
-        }
+        // Note: Icon rotation is now handled via CSS classes, 
+        // so we don't need to change innerText anymore.
     });
 
     // Auto-close if clicking outside
     document.addEventListener('click', (e) => {
         if (toolsContainer.classList.contains('active') && !toolsContainer.contains(e.target)) {
             toolsContainer.classList.remove('active');
-            toolsToggle.innerText = "◀";
         }
     });
 }
@@ -1041,19 +1036,35 @@ document.getElementById("currentYear").textContent = new Date().getFullYear();
 const prevArrowEl = document.getElementById('prev-doc');
 if(prevArrowEl) prevArrowEl.classList.add('disabled');
 
+// --- TACTILE FEEDBACK HELPER ---
 function addTactileListener(selector) {
     const els = document.querySelectorAll(selector);
     els.forEach(el => {
-        el.addEventListener('touchstart', function() { this.classList.add('active-state'); }, {passive: true});
-        el.addEventListener('touchend', function() { setTimeout(() => { this.classList.remove('active-state'); }, 50); }, {passive: true});
+        el.addEventListener('touchstart', function(e) {
+            // Stop propagation so touching the button doesn't also light up the container if we were tracking that
+            e.stopPropagation(); 
+            this.classList.add('active-state');
+        }, {passive: true});
+        
+        el.addEventListener('touchend', function() {
+            setTimeout(() => {
+                this.classList.remove('active-state');
+            }, 50);
+        }, {passive: true});
     });
 }
 
+// INIT
 initTerminalState(); 
 loadDocument(0); 
 initPlaylist(); 
 loadTrack(0, false); 
 setTimeout(() => { scrambleText(domTrackTitle, albumTracks[0].title); }, 500);
+
+// ADD INSTANT TOUCH LISTENERS
 addTactileListener('.close-terminal');
 addTactileListener('.cycle-btn');
-addTactileListener('.tools-toggle');
+
+// TARGET INDIVIDUAL PARTS FOR SEPARATE HIGHLIGHTS
+addTactileListener('.tools-toggle'); 
+addTactileListener('.tool-btn');
