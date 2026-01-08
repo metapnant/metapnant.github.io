@@ -58,8 +58,9 @@ let lyricsDoc = null;
 let isLoading = false;
 let renderSession = 0;
 let pendingScrollPage = null; 
-let resizeTimer = null; 
-let lastWidth = window.innerWidth; // FIX: Store width to detect true orientation change
+
+// -- Mobile Detection --
+const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 // -- Music State --
 const audioPlayer = new Audio();
@@ -108,19 +109,17 @@ let logState = {
 };
 
 // ==========================================
-// 3. SOUND ENGINE (UNIVERSAL IOS FIX)
+// 3. SOUND ENGINE
 // ==========================================
 const SimpleSynth = {
     ctx: null,
     unlocked: false,
-    
     init: function() {
         if (!this.ctx) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioContext();
         }
     },
-
     unlock: function() {
         this.init();
         if (this.unlocked || !this.ctx) return;
@@ -136,17 +135,14 @@ const SimpleSynth = {
             this.unlocked = true;
         } catch(e) { console.error(e); }
     },
-
     playTone: function(cssClass) {
         if (isMuted) return;
         if (!this.ctx) this.init();
         if (this.ctx.state === 'suspended') this.ctx.resume();
-        
         const t = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.connect(gain); gain.connect(this.ctx.destination);
-        
         if (cssClass.includes('operator-text')) {
             osc.type = 'triangle'; osc.frequency.setValueAtTime(500, t); osc.frequency.linearRampToValueAtTime(450, t + 0.08); gain.gain.setValueAtTime(0.04, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
         } else if (cssClass.includes('alert-text')) {
@@ -162,7 +158,6 @@ const SimpleSynth = {
         }
         osc.start(); osc.stop(t + 0.2);
     },
-
     playUnlock: function() {
         if (isMuted) return;
         if (!this.ctx) this.init();
@@ -254,6 +249,14 @@ function updateInfinityState() {
 }
 
 // --- PDF FUNCTIONS ---
+// THE LOD SYSTEM: Force High Quality for "Full Resolution" feel
+function getLODScale() {
+    // Desktop: 3.0x scale (High Fidelity)
+    // Mobile: 2.0x scale (Safe Fidelity)
+    // We ignore current zoom level and just render BIG.
+    return isMobileDevice ? 2.0 : 3.0;
+}
+
 async function loadDocument(index) {
   if (isLoading) return;
   isLoading = true; renderSession++; const currentSession = renderSession;
@@ -267,7 +270,6 @@ async function loadDocument(index) {
 
   loadingOverlay.style.display = 'flex';
   
-  // Hide arrows temporarily while loading
   prevArrow.classList.add('disabled'); 
   nextArrow.classList.add('disabled');
 
@@ -296,7 +298,6 @@ async function loadDocument(index) {
         }
         isLoading = false;
         
-        // --- FIXED ARROW VISIBILITY LOGIC ---
         prevArrow.classList.remove('disabled'); 
         nextArrow.classList.remove('disabled');
         
@@ -320,67 +321,57 @@ async function renderRestOfPages(pageNum, sessionID) {
     setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 50); 
 }
 
-// Replace your existing renderPage function with this optimized version
+// --- RENDER PAGE WITH FIXED LOD ---
 async function renderPage(num, sessionID) {
-    try {
-        if (sessionID !== renderSession) return;
-        
-        let docToRender = pdfDoc;
-        let pageIndexToRender = num;
-        
-        // Dynamic Lyrics Page Logic
-        if (currentIndex === 0 && num === 8 && appState.musicUnlocked) {
-            if (!lyricsDoc) lyricsDoc = await pdfjsLib.getDocument('lyrics.pdf').promise;
-            docToRender = lyricsDoc; pageIndexToRender = currentTrackIdx + 1;
-        }
-  
-        const page = await docToRender.getPage(pageIndexToRender);
-        
-        const wrapper = document.createElement('div');
-        wrapper.className = 'pdf-page-wrapper';
-        wrapper.id = `page-wrapper-${num}`; 
-        
-        const canvas = document.createElement('canvas');
-        canvas.className = 'pdf-page-canvas';
-        wrapper.appendChild(canvas);
-        
-        const ctx = canvas.getContext('2d');
-        
-        // --- THE FIX: RENDER AT MAX QUALITY, SCALE VISUALLY ---
-        // We get the viewport at scale 1.0 just to know the aspect ratio
-        const unscaledViewport = page.getViewport({ scale: 1 });
-        
-        // We decide on a "Render Scale". 
-        // 2.0 is usually crisp enough for Retina screens without killing memory.
-        // If you want absolute 4k sharpness, use 3.0, but 2.0 is safer for mobile.
-        const renderScale = Math.min(window.devicePixelRatio || 1, 3.0) * 2.0; 
-        
-        const viewport = page.getViewport({ scale: renderScale });
-  
-        // Set internal resolution (High Res)
-        canvas.height = Math.floor(viewport.height);
-        canvas.width = Math.floor(viewport.width);
-        
-        // Note: We DO NOT set style.width/height here. CSS handles that.
-        
-        const renderContext = {
-            canvasContext: ctx,
-            viewport: viewport
-        };
-  
-        await page.render(renderContext).promise;
-        
-        if (sessionID !== renderSession) return;
-        pdfWrapper.appendChild(wrapper);
-        
-        if (num === pendingScrollPage) { 
-            smartScrollTo(wrapper); 
-            pendingScrollPage = null; 
-        }
-    } catch (e) { 
-        if (sessionID === renderSession) console.log("Render failed", e); 
-    }
+  try {
+      if (sessionID !== renderSession) return;
+      
+      let docToRender = pdfDoc;
+      let pageIndexToRender = num;
+      
+      if (currentIndex === 0 && num === 8 && appState.musicUnlocked) {
+          if (!lyricsDoc) lyricsDoc = await pdfjsLib.getDocument('lyrics.pdf').promise;
+          docToRender = lyricsDoc; pageIndexToRender = currentTrackIdx + 1;
+      }
+
+      const page = await docToRender.getPage(pageIndexToRender);
+      
+      const wrapper = document.createElement('div');
+      wrapper.className = 'pdf-page-wrapper';
+      wrapper.id = `page-wrapper-${num}`; 
+      
+      const canvas = document.createElement('canvas');
+      canvas.className = 'pdf-page-canvas';
+      wrapper.appendChild(canvas);
+      
+      const ctx = canvas.getContext('2d');
+      
+      // LOD SYSTEM: Uses fixed high scale
+      const lodScale = getLODScale();
+
+      const viewport = page.getViewport({ scale: lodScale });
+
+      canvas.height = Math.floor(viewport.height);
+      canvas.width = Math.floor(viewport.width);
+      
+      const renderContext = {
+          canvasContext: ctx,
+          viewport: viewport
+      };
+
+      await page.render(renderContext).promise;
+      
+      if (sessionID !== renderSession) return;
+      pdfWrapper.appendChild(wrapper);
+      
+      if (num === pendingScrollPage) { 
+          smartScrollTo(wrapper); 
+          pendingScrollPage = null; 
+      }
+  } catch (e) { 
+      if (sessionID === renderSession) console.log("Render failed", e); 
   }
+}
 
 async function refreshDynamicPage() {
     if (currentIndex !== 0 || !appState.musicUnlocked) return;
@@ -393,21 +384,20 @@ async function refreshDynamicPage() {
         const currentHeight = wrapper.offsetHeight;
         wrapper.style.minHeight = `${currentHeight}px`;
         wrapper.innerHTML = '';
+        
         const canvas = document.createElement('canvas');
         canvas.className = 'pdf-page-canvas';
         wrapper.appendChild(canvas);
-        const ctx = canvas.getContext('2d');
-        const viewport = page.getViewport({ scale: 1 });
-        const containerWidth = pdfWrapper.getBoundingClientRect().width || window.innerWidth;
-        const desiredScale = (containerWidth - 40) / viewport.width;
         
-        let outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
-        if (window.innerWidth < 800) outputScale = 1.4;
-
-        const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
-        const scaledViewport = page.getViewport({ scale: finalScale * outputScale });
+        const ctx = canvas.getContext('2d');
+        
+        // Use consistent LOD scale
+        const lodScale = getLODScale();
+        
+        const scaledViewport = page.getViewport({ scale: lodScale });
         canvas.height = Math.floor(scaledViewport.height); 
         canvas.width = Math.floor(scaledViewport.width);
+        
         await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
         wrapper.style.minHeight = '';
     } catch (e) { console.error("Failed to refresh lyrics page", e); }
@@ -603,14 +593,12 @@ function checkStateIntegrity() {
 }
 
 function updateSidebarUI() {
-    // Visibility
     if (appState.unlockedTabs.includes('crash')) btnCycle00.classList.add('visible');
     if (appState.unlockedTabs.includes('echo')) btnCycleEcho.classList.add('visible');
     if (appState.unlockedTabs.includes('wake')) btnCycle01.classList.add('visible');
     if (appState.unlockedTabs.includes('bloom')) btnCycleBloom.classList.add('visible');
     if (appState.unlockedTabs.includes('gardener')) btnCycle02.classList.add('visible');
 
-    // Highlights
     const allBtns = [btnCycle00, btnCycleEcho, btnCycle01, btnCycleBloom, btnCycle02];
     allBtns.forEach(btn => btn.classList.remove('active'));
 
@@ -623,9 +611,7 @@ function updateSidebarUI() {
 
     if (activeBtn) activeBtn.classList.add('active');
 
-    // Replay Icons - REUSE EXISTING ICON TO PREVENT REBUILD FLASH
     allBtns.forEach(btn => { 
-        // We only want the icon on the ACTIVE button of a FINISHED log
         const isCurrent = btn === activeBtn;
         const type = btn === btnCycle00 ? 'crash' :
                      btn === btnCycleEcho ? 'echo' :
@@ -633,33 +619,21 @@ function updateSidebarUI() {
                      btn === btnCycleBloom ? 'bloom' : 'gardener';
         
         const isFinished = appState.finishedLogs.includes(type);
-
         let icon = btn.querySelector('.replay-icon');
 
         if (isCurrent && isFinished) {
-            // If it doesn't exist, create it
             if (!icon) {
                 icon = document.createElement('span'); 
                 icon.className = 'replay-icon'; 
                 icon.innerHTML = '↺'; 
-                
-                // CLICK HANDLER
                 icon.onclick = (e) => {
-                    e.stopPropagation(); 
-                    e.preventDefault();
-                    
-                    // Trigger Animation
-                    icon.classList.remove('spin-once');
-                    void icon.offsetWidth; 
-                    icon.classList.add('spin-once');
-                    
+                    e.stopPropagation(); e.preventDefault();
+                    icon.classList.remove('spin-once'); void icon.offsetWidth; icon.classList.add('spin-once');
                     replayLog(e, type);
                 };
-                
                 btn.appendChild(icon);
             }
         } else {
-            // Remove if it shouldn't be there
             if (icon) icon.remove();
         }
     });
@@ -674,12 +648,7 @@ function updateSidebarUI() {
 function initTerminalState() {
     checkStateIntegrity(); 
     updateSidebarUI();
-    
-    // Set initial Turbo text
-    if (btnTurbo) {
-        btnTurbo.innerText = "[ >> ]\nTURBO: OFF";
-    }
-
+    if (btnTurbo) btnTurbo.innerText = "[ >> ]\nTURBO: OFF";
     if (appState.musicUnlocked) musicSection.style.display = 'block';
 }
 
@@ -711,28 +680,20 @@ function switchTab(type, isReplay = false) {
     allContainers.forEach(con => con.classList.remove('active-log'));
     containers[type].classList.add('active-log');
 
-    // --- SMART SCROLL LOGIC ---
     const wrapper = document.querySelector('.cycles-wrapper');
     const activeBtn = document.querySelector('.cycle-btn.active');
 
     if (wrapper && activeBtn) {
-        // Detect current layout direction
         const isHorizontal = window.getComputedStyle(wrapper).flexDirection === 'row';
-
         if (isHorizontal) {
-            // Center Horizontally (Mobile Portrait)
             const center = (wrapper.clientWidth / 2) - (activeBtn.clientWidth / 2);
             wrapper.scrollTo({ left: activeBtn.offsetLeft - center, behavior: 'smooth' });
         } else {
-            // Center Vertically (Mobile Landscape & Desktop)
             const center = (wrapper.clientHeight / 2) - (activeBtn.clientHeight / 2);
             wrapper.scrollTo({ top: activeBtn.offsetTop - center, behavior: 'smooth' });
         }
     }
-    // --------------------------
 
-    // Logic: If in DB and NOT currently running a replay (isReplay flag), show full.
-    // If running a replay (flag is true), processQueue.
     if (appState.finishedLogs.includes(type) && !isReplay) {
         logState[type].finished = true;
         renderFullLog(type); 
@@ -742,14 +703,10 @@ function switchTab(type, isReplay = false) {
 }
 
 function replayLog(e, type) {
-    // Already handled stopPropagation in listener, but kept for safety
     if (activeTimer) clearTimeout(activeTimer);
-    
     containers[type].innerHTML = ""; 
     logState[type].index = 0; 
     logState[type].finished = false;
-    
-    // Pass TRUE to force typing effect
     switchTab(type, true);
 }
 
@@ -757,9 +714,7 @@ function toggleTurbo() {
     turboMode = !turboMode; 
     logSpeedMultiplier = turboMode ? 0.1 : 1; 
     btnTurbo.innerText = turboMode ? "[ >> ]\nTURBO: ON" : "[ >> ]\nTURBO: OFF"; 
-    
-    if (turboMode) btnTurbo.classList.add('active'); 
-    else btnTurbo.classList.remove('active'); 
+    if (turboMode) btnTurbo.classList.add('active'); else btnTurbo.classList.remove('active'); 
 }
 
 function toggleMute() { 
@@ -800,10 +755,7 @@ function markLogFinished(type) {
     logState[type].finished = true;
     
     if (!appState.finishedLogs.includes(type)) {
-        // ONLY SAVE STATE ON FIRST FINISH
-        if (!appState.terminalFound) {
-             appState.terminalFound = true;
-        }
+        if (!appState.terminalFound) appState.terminalFound = true;
         appState.finishedLogs.push(type);
         
         if (type === 'crash' && !appState.unlockedTabs.includes('echo')) appState.unlockedTabs.push('echo');
@@ -811,7 +763,7 @@ function markLogFinished(type) {
         if (type === 'wake' && !appState.unlockedTabs.includes('bloom')) appState.unlockedTabs.push('bloom');
         if (type === 'bloom' && !appState.unlockedTabs.includes('gardener')) appState.unlockedTabs.push('gardener');
         
-        saveState(); // <--- CRITICAL: Save everything now
+        saveState(); 
         SimpleSynth.playUnlock();
         updateSidebarUI(); 
 
@@ -866,55 +818,24 @@ function revealPlayer() {
     appState.musicUnlocked = true; 
     saveState(); 
     updateInfinityState(); 
-    
-    // Total Reset
     audioPlayer.pause();
     audioPlayer.currentTime = 0;
     isPlaying = false;
     updatePlayBtn();
-
     currentTrackIdx = 0;
-    // Load track 0 instantly reveals
     loadTrack(0, false);
     resolveLoadingScramble(domTrackTitle, albumTracks[0].title);
-    
     setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100); 
 }
 
-// --- OPTIMIZED RESIZE HANDLER ---
-// We no longer reload on every pixel change. CSS handles the visual scaling.
-// We only reload if the layout drastically changes (Orientation Flip).
-
-let resizeTimeout;
-let previousWidth = window.innerWidth;
-
-window.addEventListener('resize', () => {
-    const currentWidth = window.innerWidth;
-    
-    // Ignore vertical resize (address bar appearing/disappearing on mobile)
-    if (currentWidth === previousWidth) return;
-
-    // Check for drastic change (Orientation change or massive desktop resize)
-    // A 100px difference usually implies a layout shift, not just a UI element popping up.
-    const widthDiff = Math.abs(currentWidth - previousWidth);
-    
-    if (widthDiff > 100) {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            console.log("Drastic Layout Shift Detected: Re-rendering for clarity.");
-            previousWidth = currentWidth;
-            // Only now do we pay the cost of re-rendering
-            loadDocument(currentIndex);
-        }, 300);
-    } else {
-        // For small changes, we update our reference but DO NOT re-render.
-        // CSS 'width: 100%' handles the squishing/stretching instantly.
-        previousWidth = currentWidth;
-    }
-});
+// ==========================================
+// 7. NO RESIZE LISTENER HERE
+// ==========================================
+// We have removed the resize listener entirely. 
+// The document loads once at full LOD. 
+// Scaling is handled via CSS.
 
 // --- LISTENERS ---
-// REMOVED: Modulo looping logic. Now strictly +1 or -1.
 document.getElementById('next-doc').addEventListener('click', () => { 
     if(!isLoading && currentIndex < library.length - 1) { 
         window.scrollTo({ top: 0, behavior: 'smooth' }); 
@@ -929,16 +850,9 @@ document.getElementById('prev-doc').addEventListener('click', () => {
     }
 });
 
-// --- IOS ACTIVE STATE HELPER ---
-// Standard touch listeners to help CSS handle active states
 [document.getElementById('next-doc'), document.getElementById('prev-doc')].forEach(arrow => {
-    arrow.addEventListener('touchstart', function() {
-        this.classList.add('active-state');
-    }, {passive: true});
-    
-    arrow.addEventListener('touchend', function() {
-        this.classList.remove('active-state');
-    }, {passive: true});
+    arrow.addEventListener('touchstart', function() { this.classList.add('active-state'); }, {passive: true});
+    arrow.addEventListener('touchend', function() { this.classList.remove('active-state'); }, {passive: true});
 });
 
 if(btnPlay) btnPlay.addEventListener('click', (e) => { e.preventDefault(); togglePlay(); });
@@ -960,7 +874,6 @@ audioPlayer.addEventListener('timeupdate', () => {
         domCurrentTime.textContent = formatTime(audioPlayer.currentTime); 
         domDuration.textContent = formatTime(audioPlayer.duration); 
     }
-    // iOS FIX: Stop loading scramble if playing
     if (loadingScrambleInterval !== null && !audioPlayer.paused && audioPlayer.currentTime > 0) {
         resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
         shouldAnimateReveal = false;
@@ -1017,8 +930,7 @@ infinityBtn.addEventListener('click', (e) => {
     setTimeout(() => infinityBtn.style.color = "", 200); 
     if (secretClicks === 3) { 
         secretClicks = 0; 
-        appState.terminalFound = true; // Memory only!
-        // No saveState() here - wait for finish!
+        appState.terminalFound = true; 
         updateInfinityState(); 
         launchTerminal(); 
     } 
@@ -1034,14 +946,11 @@ document.addEventListener('keydown', (e) => {
 function formatTime(s) { if(isNaN(s) || s === Infinity) return "0:00"; const m = Math.floor(s/60); const ss = Math.floor(s%60); return `${m}:${ss<10?'0':''}${ss}`; }
 
 document.getElementById("currentYear").textContent = new Date().getFullYear();
-
-// Init
-// FIX: Force left arrow hidden BEFORE loading logic starts to avoid initial flash
 const prevArrowEl = document.getElementById('prev-doc');
 if(prevArrowEl) prevArrowEl.classList.add('disabled');
 
 initTerminalState(); 
 loadDocument(0); 
 initPlaylist(); 
-loadTrack(0, false); // No animation on boot
-setTimeout(() => { scrambleText(domTrackTitle, albumTracks[0].title); }, 500); // Matrix reveal once loaded
+loadTrack(0, false); 
+setTimeout(() => { scrambleText(domTrackTitle, albumTracks[0].title); }, 500);
