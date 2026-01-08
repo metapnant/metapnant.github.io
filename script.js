@@ -593,12 +593,14 @@ function checkStateIntegrity() {
 }
 
 function updateSidebarUI() {
+    // 1. Manage Visibility based on Unlocked Tabs
     if (appState.unlockedTabs.includes('crash')) btnCycle00.classList.add('visible');
     if (appState.unlockedTabs.includes('echo')) btnCycleEcho.classList.add('visible');
     if (appState.unlockedTabs.includes('wake')) btnCycle01.classList.add('visible');
     if (appState.unlockedTabs.includes('bloom')) btnCycleBloom.classList.add('visible');
     if (appState.unlockedTabs.includes('gardener')) btnCycle02.classList.add('visible');
 
+    // 2. Manage Active State Highlights
     const allBtns = [btnCycle00, btnCycleEcho, btnCycle01, btnCycleBloom, btnCycle02];
     allBtns.forEach(btn => btn.classList.remove('active'));
 
@@ -611,6 +613,7 @@ function updateSidebarUI() {
 
     if (activeBtn) activeBtn.classList.add('active');
 
+    // 3. Manage Replay Icons (The iOS Fix)
     allBtns.forEach(btn => { 
         const isCurrent = btn === activeBtn;
         const type = btn === btnCycle00 ? 'crash' :
@@ -622,22 +625,37 @@ function updateSidebarUI() {
         let icon = btn.querySelector('.replay-icon');
 
         if (isCurrent && isFinished) {
+            // Create icon if it doesn't exist
             if (!icon) {
                 icon = document.createElement('span'); 
                 icon.className = 'replay-icon'; 
                 icon.innerHTML = '↺'; 
+                
+                // --- CLICK HANDLER WITH IOS FIX ---
                 icon.onclick = (e) => {
-                    e.stopPropagation(); e.preventDefault();
-                    icon.classList.remove('spin-once'); void icon.offsetWidth; icon.classList.add('spin-once');
+                    e.stopPropagation(); 
+                    e.preventDefault();
+                    
+                    // Remove class immediately
+                    icon.classList.remove('spin-once');
+                    
+                    // Wait 10ms to force iOS to register the removal
+                    setTimeout(() => {
+                        icon.classList.add('spin-once');
+                    }, 10);
+                    
                     replayLog(e, type);
                 };
+                
                 btn.appendChild(icon);
             }
         } else {
+            // Remove icon if it shouldn't be there
             if (icon) icon.remove();
         }
     });
 
+    // 4. Manage Global Controls Visibility
     if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
         btnReset.classList.add('visible'); 
         btnTurbo.classList.add('visible'); 
