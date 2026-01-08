@@ -106,37 +106,44 @@ let logState = {
 };
 
 // ==========================================
-// 3. SOUND ENGINE (IOS FIX)
+// 3. SOUND ENGINE (SYNTHESIZER)
 // ==========================================
 const SimpleSynth = {
     ctx: null,
     
+    // IMPROVED INIT FOR IOS
     init: function() {
         if (!this.ctx) {
+            // Support vendor prefixes
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioContext();
         }
+        
+        // Always try to resume if suspended
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume().then(() => {
+                // THE IOS HACK: Play a silent buffer immediately upon resume.
+                // This forces the OS to recognize the app as a media source 
+                // and ignore the physical silent switch.
+                this.playSilentBuffer();
+            }).catch(console.error);
+        }
     },
 
-    unlock: function() {
-        this.init();
-        if (this.ctx && this.ctx.state === 'suspended') {
-            this.ctx.resume();
-        }
-        // Silent burst to wake hardware
-        if (this.ctx) {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            gain.gain.value = 0.001; 
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start(0);
-            osc.stop(0.1);
-        }
+    playSilentBuffer: function() {
+        if (!this.ctx) return;
+        // Create a 1-sample empty buffer
+        const buffer = this.ctx.createBuffer(1, 1, 22050);
+        const source = this.ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(this.ctx.destination);
+        source.start(0);
     },
 
     playTone: function(cssClass) {
-        if (isMuted || !this.ctx) return;
+        if (isMuted) return;
+        // Re-check context state on every play attempt for reliability
+        if (!this.ctx) this.init();
         if (this.ctx.state === 'suspended') this.ctx.resume();
 
         const t = this.ctx.currentTime;
@@ -177,7 +184,8 @@ const SimpleSynth = {
     },
 
     playUnlock: function() {
-        if (isMuted || !this.ctx) return;
+        if (isMuted) return;
+        if (!this.ctx) this.init();
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.connect(gain); gain.connect(this.ctx.destination);
@@ -188,17 +196,27 @@ const SimpleSynth = {
     }
 };
 
-// Global Unlock Handler
+// Global Unlock Handler (iOS Optimized)
 function unlockAudioEngine() {
-    SimpleSynth.unlock();
-    // Don't remove immediately on touchstart, wait for interaction
-    // We keep these active to ensure it catches the first VALID interaction
-    document.removeEventListener('click', unlockAudioEngine);
-    document.removeEventListener('keydown', unlockAudioEngine);
-    document.removeEventListener('touchend', unlockAudioEngine); 
+    // 1. Initialize Context
+    SimpleSynth.init();
+    
+    // 2. Force the silent buffer immediately (redundancy for safety)
+    SimpleSynth.playSilentBuffer();
+
+    // 3. Remove listeners once successful
+    if (SimpleSynth.ctx && SimpleSynth.ctx.state === 'running') {
+        document.removeEventListener('click', unlockAudioEngine);
+        document.removeEventListener('keydown', unlockAudioEngine);
+        document.removeEventListener('touchstart', unlockAudioEngine);
+        document.removeEventListener('touchend', unlockAudioEngine);
+    }
 }
+
+// Add strict listeners for iOS - 'touchend' is often more reliable than click for audio
 document.addEventListener('click', unlockAudioEngine);
 document.addEventListener('keydown', unlockAudioEngine);
+document.addEventListener('touchstart', unlockAudioEngine, {passive: true});
 document.addEventListener('touchend', unlockAudioEngine);
 
 // ==========================================
@@ -434,8 +452,8 @@ function loadTrack(index) {
     currentTrackIdx = index;
     const track = albumTracks[index];
     
-    // Song Change: Trigger Scramble
-    shouldAnimateReveal = true; 
+    // START SCRAMBLE ON SONG CHANGE
+    shouldAnimateReveal = true; // Allow animation
     startLoadingScramble(domTrackTitle);
     
     audioPlayer.src = track.src;
@@ -492,120 +510,44 @@ function getScrubPercent(e) {
     return Math.max(0, Math.min(100, ((clientEvent.clientX - rect.left) / width) * 100));
 }
 
-const startDragMouse = (e) => {
-    if (isTouch || e.button !== 0) return; 
-    isDragging = true;
-    
-    // FIX: Kill any existing scramble immediately on interact
-    if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
-    shouldAnimateReveal = false; 
-
-    domProgressBar.classList.add('dragging'); 
-    updateScrubVisual(getScrubPercent(e));
+const startDragMouse = (e) => { if (isTouch || e.button !== 0) return; isDragging = true; domProgressBar.classList.add('dragging'); updateScrubVisual(getScrubPercent(e)); };
+const doDragMouse = (e) => { if (!isDragging) return; e.preventDefault(); updateScrubVisual(getScrubPercent(e)); };
+const endDragMouse = (e) => { if (isDragging) { commitSeek(getScrubPercent(e)); isDragging = false; domProgressBar.classList.remove('dragging'); } };
+const startDragTouch = (e) => { isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isDragging = false; isScrolling = false; 
+    holdTimer = setTimeout(() => { if (!isScrolling) { isDragging = true; domProgressBar.classList.add('dragging'); updateScrubVisual(getScrubPercent(e)); } }, 200); 
 };
-
-const doDragMouse = (e) => {
-    if (!isDragging) return;
-    e.preventDefault(); 
-    updateScrubVisual(getScrubPercent(e));
-};
-
-const endDragMouse = (e) => { 
-    if (isDragging) {
-        commitSeek(getScrubPercent(e));
-        isDragging = false; 
-        domProgressBar.classList.remove('dragging'); 
-    } 
-};
-
-const startDragTouch = (e) => {
-    isTouch = true;
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    
-    isDragging = false; 
-    isScrolling = false; 
-
-    holdTimer = setTimeout(() => {
-        if (!isScrolling) {
-            isDragging = true;
-            
-            // FIX: Kill scramble on mobile grab too
-            if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
-            shouldAnimateReveal = false;
-
-            domProgressBar.classList.add('dragging'); 
-            updateScrubVisual(getScrubPercent(e));
-        }
-    }, 200); 
-};
-
 const doDragTouch = (e) => {
-    if (isDragging) {
-        if (e.cancelable) e.preventDefault(); 
-        updateScrubVisual(getScrubPercent(e));
-        return;
-    }
-
+    if (isDragging) { if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); return; }
     if (isScrolling) return; 
-
-    const x = e.touches[0].clientX;
-    const y = e.touches[0].clientY;
-    const dx = Math.abs(x - touchStartX);
-    const dy = Math.abs(y - touchStartY);
-
-    if (dx > 5 || dy > 5) {
-        if (holdTimer) clearTimeout(holdTimer);
-
-        if (dx > dy) {
-            isDragging = true;
-            domProgressBar.classList.add('dragging');
-            if (e.cancelable) e.preventDefault(); 
-            updateScrubVisual(getScrubPercent(e));
-        } else {
-            isScrolling = true;
-        }
-    }
+    const dx = Math.abs(e.touches[0].clientX - touchStartX); const dy = Math.abs(e.touches[0].clientY - touchStartY);
+    if (dx > 5 || dy > 5) { if (holdTimer) clearTimeout(holdTimer); if (dx > dy) { isDragging = true; domProgressBar.classList.add('dragging'); if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); } else isScrolling = true; }
 };
+const endDragTouch = (e) => { if (holdTimer) clearTimeout(holdTimer); if (isDragging) { commitSeek(parseFloat(domProgressBar.style.getPropertyValue('--progress'))); isDragging = false; domProgressBar.classList.remove('dragging'); } setTimeout(() => { isTouch = false; }, 500); };
 
-const endDragTouch = (e) => {
-    if (holdTimer) clearTimeout(holdTimer);
-
-    if (isDragging) {
-        const percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
-        commitSeek(percent);
-        
-        isDragging = false;
-        domProgressBar.classList.remove('dragging'); 
-    }
-    
-    setTimeout(() => { isTouch = false; }, 500);
-};
-
-// FIX: COMMIT SEEK WITH 800MS BUFFER
+// FIX: COMMIT SEEK WITH FLAG RESET
 function commitSeek(percent) {
+    // Disable animation flag on manual seek
     shouldAnimateReveal = false; 
-    if (loadingScrambleInterval) clearInterval(loadingScrambleInterval); // Ensure stop
 
     if (audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration !== Infinity) {
         audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
         pendingSeekPercent = null;
         
-        // Only trigger scramble if actually buffering for > 800ms
+        // Smart Buffer Check
         if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
         bufferCheckTimer = setTimeout(() => {
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
+                // Only enable if buffering hangs
                 shouldAnimateReveal = true;
                 startLoadingScramble(domTrackTitle);
             }
-        }, 800);
+        }, 300);
     } else pendingSeekPercent = percent;
 }
 
 // --- TERMINAL FUNCTIONS ---
 function saveState() { localStorage.setItem('metapnant_state', JSON.stringify(appState)); }
 function hardReset() { if (confirm("WARNING: This will wipe the terminal memory and re-seal the Chrysalis. Are you sure?")) { localStorage.removeItem('metapnant_state'); location.reload(); } }
-
 function initTerminalState() {
     if (appState.musicUnlocked) musicSection.style.display = 'block';
     checkStateIntegrity();
@@ -614,13 +556,8 @@ function initTerminalState() {
     if (appState.unlockedTabs.includes('wake')) btnCycle01.classList.add('visible');
     if (appState.unlockedTabs.includes('bloom')) btnCycleBloom.classList.add('visible');
     if (appState.unlockedTabs.includes('gardener')) btnCycle02.classList.add('visible');
-    if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
-        btnReset.classList.add('visible');
-        btnTurbo.classList.add('visible');
-        btnMute.classList.add('visible');
-    }
+    if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) btnReset.classList.add('visible');
 }
-
 function checkStateIntegrity() {
     let changed = false;
     if (appState.finishedLogs.includes('crash') && !appState.unlockedTabs.includes('echo')) { appState.unlockedTabs.push('echo'); changed = true; }
@@ -629,73 +566,39 @@ function checkStateIntegrity() {
     if (appState.finishedLogs.includes('bloom') && !appState.unlockedTabs.includes('gardener')) { appState.unlockedTabs.push('gardener'); changed = true; }
     if (changed) saveState();
 }
-
-function launchTerminal() {
-    SimpleSynth.unlock();
-    terminalRunning = true; 
-    checkStateIntegrity();
-    savedScrollTop = window.scrollY || document.documentElement.scrollTop;
-    document.body.style.position = 'fixed'; document.body.style.top = `-${savedScrollTop}px`; document.body.classList.add('no-scroll');
+function launchTerminal() { 
+    // Init Audio with fix when opening terminal
+    SimpleSynth.init(); 
+    
+    terminalRunning = true; checkStateIntegrity();
+    savedScrollTop = window.scrollY || document.documentElement.scrollTop; document.body.style.position = 'fixed'; document.body.style.top = `-${savedScrollTop}px`; document.body.classList.add('no-scroll');
     secretOverlay.classList.add('active');
     btnReset.classList.add('visible'); btnCycle00.classList.add('visible'); btnTurbo.classList.add('visible'); btnMute.classList.add('visible');
     if (!currentTab) switchTab(appState.unlockedTabs[appState.unlockedTabs.length - 1]); else processQueue();
 }
-
 function switchTab(type) {
-    // FIX: REPLAY LOGIC
     if (currentTab === type) {
-        if (logState[type].finished) {
-            replayLog(null, type);
-            return;
-        } else if (terminalRunning && appState.finishedLogs.includes(type)) {
-            // Cancel/Skip
+        if (logState[type].finished) { replayLog(null, type); return; }
+        else if (terminalRunning && appState.finishedLogs.includes(type)) {
             if (activeTimer) clearTimeout(activeTimer);
-            renderFullLog(type); 
-            logState[type].finished = true; 
-            updateReplayIcon(type); 
-            return;
+            renderFullLog(type); logState[type].finished = true; updateReplayIcon(type); return;
         }
         if (terminalRunning) return;
     }
-
-    if (activeTimer) clearTimeout(activeTimer);
-    
-    currentTab = type;
-  
-    const allBtns = [btnCycle00, btnCycle01, btnCycleEcho, btnCycleBloom, btnCycle02];
-    const allContainers = [containers.crash, containers.wake, containers.echo, containers.bloom, containers.gardener];
-    
-    allBtns.forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.querySelector('.replay-icon')) btn.removeChild(btn.querySelector('.replay-icon'));
-    });
+    if (activeTimer) clearTimeout(activeTimer); currentTab = type;
+    const allBtns = [btnCycle00, btnCycle01, btnCycleEcho, btnCycleBloom, btnCycle02]; const allContainers = [containers.crash, containers.wake, containers.echo, containers.bloom, containers.gardener];
+    allBtns.forEach(btn => { btn.classList.remove('active'); if (btn.querySelector('.replay-icon')) btn.removeChild(btn.querySelector('.replay-icon')); });
     allContainers.forEach(con => con.classList.remove('active-log'));
-    
     let activeBtn = null;
     if (type === 'crash') { activeBtn = btnCycle00; containers.crash.classList.add('active-log'); } 
     else if (type === 'echo') { activeBtn = btnCycleEcho; containers.echo.classList.add('active-log'); } 
     else if (type === 'wake') { activeBtn = btnCycle01; containers.wake.classList.add('active-log'); } 
     else if (type === 'bloom') { activeBtn = btnCycleBloom; containers.bloom.classList.add('active-log'); } 
     else if (type === 'gardener') { activeBtn = btnCycle02; containers.gardener.classList.add('active-log'); }
-  
-    if (activeBtn) {
-        activeBtn.classList.add('active');
-        setTimeout(() => {
-            activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-        }, 50);
-        
-        if (appState.finishedLogs.includes(type)) updateReplayIcon(type);
-    }
-  
-    if (appState.finishedLogs.includes(type)) {
-        renderFullLog(type);
-        logState[type].finished = true;
-        logState[type].index = logsData[type].length;
-    } else {
-        processQueue();
-    }
+    if (activeBtn) { activeBtn.classList.add('active'); setTimeout(() => { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }, 50);
+        if (appState.finishedLogs.includes(type)) updateReplayIcon(type); }
+    if (appState.finishedLogs.includes(type)) { renderFullLog(type); logState[type].finished = true; logState[type].index = logsData[type].length; } else processQueue();
 }
-
 function updateReplayIcon(type) {
     let activeBtn = null;
     if (type === 'crash') activeBtn = btnCycle00; else if (type === 'echo') activeBtn = btnCycleEcho; else if (type === 'wake') activeBtn = btnCycle01; else if (type === 'bloom') activeBtn = btnCycleBloom; else if (type === 'gardener') activeBtn = btnCycle02;
@@ -704,115 +607,39 @@ function updateReplayIcon(type) {
         activeBtn.appendChild(icon);
     }
 }
-
-// FIX: REPLAY LOGIC
 function replayLog(e, type) {
-    if (e) e.stopPropagation(); 
-    if (activeTimer) clearTimeout(activeTimer);
-    
-    currentTab = type; // Force context
-    containers[type].innerHTML = ""; 
-    logState[type].index = 0; 
-    logState[type].finished = false;
-    
-    // Remove icon while playing
+    if (e) e.stopPropagation(); if (activeTimer) clearTimeout(activeTimer);
+    containers[type].innerHTML = ""; logState[type].index = 0; logState[type].finished = false;
     let activeBtn = null;
     if (type === 'crash') activeBtn = btnCycle00; else if (type === 'echo') activeBtn = btnCycleEcho; else if (type === 'wake') activeBtn = btnCycle01; else if (type === 'bloom') activeBtn = btnCycleBloom; else if (type === 'gardener') activeBtn = btnCycle02;
     if (activeBtn && activeBtn.querySelector('.replay-icon')) activeBtn.removeChild(activeBtn.querySelector('.replay-icon'));
-    
     processQueue();
 }
-
 function toggleTurbo() { turboMode = !turboMode; logSpeedMultiplier = turboMode ? 0.1 : 1; btnTurbo.innerText = turboMode ? "[ >> ] TURBO: ON" : "[ >> ] TURBO: OFF"; if (turboMode) btnTurbo.classList.add('active'); else btnTurbo.classList.remove('active'); }
 function toggleMute() { isMuted = !isMuted; btnMute.innerText = isMuted ? "[VOL: OFF]" : "[VOL: ON]"; if (isMuted) btnMute.classList.add('active'); else btnMute.classList.remove('active'); }
-
 function processQueue() {
-    if (!currentTab || !terminalRunning) return;
-    if (logState[currentTab].finished) return;
-  
-    const idx = logState[currentTab].index;
-    if (idx >= logsData[currentTab].length) { markLogFinished(currentTab); return; }
-    const lineData = logsData[currentTab][idx];
-    const delay = lineData.delay * logSpeedMultiplier;
-
-    activeTimer = setTimeout(() => {
-      typeLine(lineData.text, lineData.class, containers[currentTab]);
-      
-      if (lineData.text.trim().length > 0) {
-          SimpleSynth.playTone(lineData.class);
-      }
-      
-      logState[currentTab].index++;
-      terminalContainer.scrollTop = terminalContainer.scrollHeight;
-      
-      if (logState[currentTab].index >= logsData[currentTab].length) {
-         markLogFinished(currentTab);
-      } else { 
-         processQueue(); 
-      }
+    if (!currentTab || !terminalRunning) return; if (logState[currentTab].finished) return;
+    const idx = logState[currentTab].index; if (idx >= logsData[currentTab].length) { markLogFinished(currentTab); return; }
+    const lineData = logsData[currentTab][idx]; const delay = lineData.delay * logSpeedMultiplier;
+    activeTimer = setTimeout(() => { typeLine(lineData.text, lineData.class, containers[currentTab]); if (lineData.text.trim().length > 0) SimpleSynth.playTone(lineData.class);
+      logState[currentTab].index++; terminalContainer.scrollTop = terminalContainer.scrollHeight;
+      if (logState[currentTab].index >= logsData[currentTab].length) markLogFinished(currentTab); else processQueue();
     }, delay);
 }
-
-function markLogFinished(type) {
-    logState[type].finished = true;
-    if (!appState.finishedLogs.includes(type)) {
-        appState.finishedLogs.push(type);
-        saveState();
-        SimpleSynth.playUnlock();
-        
-        if (type === 'crash') activeTimer = setTimeout(unlockEcho, 1500 * logSpeedMultiplier); 
-        else if (type === 'echo') activeTimer = setTimeout(unlockWake, 1500 * logSpeedMultiplier); 
-        else if (type === 'wake') activeTimer = setTimeout(unlockBloom, 1500 * logSpeedMultiplier); 
-        else if (type === 'bloom') activeTimer = setTimeout(unlockGardener, 1500 * logSpeedMultiplier);
-    } else {
-        updateReplayIcon(type);
-    }
+function markLogFinished(type) { logState[type].finished = true; if (!appState.finishedLogs.includes(type)) { appState.finishedLogs.push(type); saveState(); SimpleSynth.playUnlock();
+    if (type === 'crash') activeTimer = setTimeout(unlockEcho, 1500 * logSpeedMultiplier); else if (type === 'echo') activeTimer = setTimeout(unlockWake, 1500 * logSpeedMultiplier); else if (type === 'wake') activeTimer = setTimeout(unlockBloom, 1500 * logSpeedMultiplier); else if (type === 'bloom') activeTimer = setTimeout(unlockGardener, 1500 * logSpeedMultiplier);
+    } else updateReplayIcon(type);
 }
-
 function unlockEcho() { if(!appState.unlockedTabs.includes('echo')) { appState.unlockedTabs.push('echo'); saveState(); } btnCycleEcho.classList.add('visible'); switchTab('echo'); }
 function unlockWake() { if(!appState.unlockedTabs.includes('wake')) { appState.unlockedTabs.push('wake'); saveState(); } btnCycle01.classList.add('visible'); switchTab('wake'); }
 function unlockBloom() { if(!appState.unlockedTabs.includes('bloom')) { appState.unlockedTabs.push('bloom'); saveState(); } btnCycleBloom.classList.add('visible'); switchTab('bloom'); }
 function unlockGardener() { if(!appState.unlockedTabs.includes('gardener')) { appState.unlockedTabs.push('gardener'); saveState(); } btnCycle02.classList.add('visible'); switchTab('gardener'); }
+function renderFullLog(type) { containers[type].innerHTML = ""; logsData[type].forEach(line => { typeLine(line.text, line.class, containers[type]); }); setTimeout(() => terminalContainer.scrollTop = terminalContainer.scrollHeight, 100); }
+function typeLine(htmlText, className, container) { const lineDiv = document.createElement('div'); if (htmlText.includes('----') || htmlText.includes('====')) lineDiv.className = `terminal-line divider-line ${className}`; else lineDiv.className = `terminal-line ${className}`; lineDiv.innerHTML = htmlText; lineDiv.classList.add('active'); if(className.includes('golden-text')) lineDiv.classList.add('gold-line'); if(className.includes('white-text')) lineDiv.classList.add('white-line'); if(className.includes('magenta-text')) lineDiv.classList.add('magenta-line'); if(className.includes('system-success')) lineDiv.classList.add('blue-line'); container.appendChild(lineDiv); }
+function closeTerminal() { if(activeTimer) clearTimeout(activeTimer); secretOverlay.classList.remove('active'); document.body.classList.remove('no-scroll'); document.body.style.position = ''; document.body.style.top = ''; window.scrollTo(0, savedScrollTop); terminalRunning = false; }
+function revealPlayer() { closeTerminal(); musicSection.style.display = 'block'; appState.musicUnlocked = true; saveState(); updateInfinityState(); loadTrack(currentTrackIdx); setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100); }
 
-function renderFullLog(type) {
-    containers[type].innerHTML = "";
-    logsData[type].forEach(line => { typeLine(line.text, line.class, containers[type]); });
-    setTimeout(() => terminalContainer.scrollTop = terminalContainer.scrollHeight, 100);
-}
-
-function typeLine(htmlText, className, container) {
-    const lineDiv = document.createElement('div');
-    if (htmlText.includes('----') || htmlText.includes('====')) lineDiv.className = `terminal-line divider-line ${className}`;
-    else lineDiv.className = `terminal-line ${className}`;
-    lineDiv.innerHTML = htmlText; lineDiv.classList.add('active');
-    if(className.includes('golden-text')) lineDiv.classList.add('gold-line');
-    if(className.includes('white-text')) lineDiv.classList.add('white-line');
-    if(className.includes('magenta-text')) lineDiv.classList.add('magenta-line');
-    if(className.includes('system-success')) lineDiv.classList.add('blue-line');
-    container.appendChild(lineDiv);
-}
-
-function closeTerminal() {
-    if(activeTimer) clearTimeout(activeTimer);
-    secretOverlay.classList.remove('active');
-    document.body.classList.remove('no-scroll');
-    document.body.style.position = ''; document.body.style.top = ''; window.scrollTo(0, savedScrollTop);
-    terminalRunning = false; 
-}
-
-function revealPlayer() {
-    closeTerminal();
-    musicSection.style.display = 'block';
-    appState.musicUnlocked = true;
-    saveState();
-    loadTrack(currentTrackIdx);
-    setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100);
-}
-
-// ==========================================
-// 6. EVENT LISTENERS & INITIALIZATION
-// ==========================================
-
+// --- LISTENERS ---
 document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex + 1) % library.length); }});
 document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex - 1 + library.length) % library.length); }});
 if(btnPlay) btnPlay.addEventListener('click', (e) => { e.preventDefault(); togglePlay(); });
@@ -825,38 +652,51 @@ audioPlayer.addEventListener('timeupdate', () => { if (!isDragging && pendingSee
 audioPlayer.addEventListener('loadedmetadata', () => { domDuration.textContent = formatTime(audioPlayer.duration); if (pendingSeekPercent !== null) { audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); pendingSeekPercent = null; }});
 audioPlayer.addEventListener('ended', () => nextTrack(true));
 
-// FIX: Added 'seeked' event to catch completion of seek immediately
-audioPlayer.addEventListener('seeked', () => {
+// FIX: New listener logic for smart scramble
+audioPlayer.addEventListener('waiting', () => {
     if(bufferCheckTimer) clearTimeout(bufferCheckTimer);
-    // If we didn't start animating, do nothing. If we did, resolve it.
+    bufferCheckTimer = setTimeout(() => {
+        shouldAnimateReveal = true; // Mark that we are now scrambling
+        startLoadingScramble(domTrackTitle);
+    }, 300);
+});
+audioPlayer.addEventListener('playing', () => { 
+    if (bufferCheckTimer) clearTimeout(bufferCheckTimer); 
+    // FIX: Only resolve text if we were actually waiting for a scramble
+    if (shouldAnimateReveal) {
+        const track = albumTracks[currentTrackIdx];
+        resolveLoadingScramble(domTrackTitle, track.title);
+        shouldAnimateReveal = false; 
+    }
+});
+audioPlayer.addEventListener('canplay', () => { 
+    // Initial load: Force reveal if flag is set (e.g., track change)
     if (shouldAnimateReveal) {
         resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
         shouldAnimateReveal = false;
     }
 });
 
-audioPlayer.addEventListener('waiting', () => {
-    if(bufferCheckTimer) clearTimeout(bufferCheckTimer);
-    bufferCheckTimer = setTimeout(() => { 
-        shouldAnimateReveal = true; 
-        startLoadingScramble(domTrackTitle); 
-    }, 800); // 800ms tolerance
-});
-
-audioPlayer.addEventListener('playing', () => { 
-    if (bufferCheckTimer) clearTimeout(bufferCheckTimer); 
-    if (shouldAnimateReveal) { 
-        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); 
-        shouldAnimateReveal = false; 
-    } 
-});
-audioPlayer.addEventListener('canplay', () => { 
-    if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; } 
-});
-
 if (btnShowVoice) { btnShowVoice.addEventListener('click', (e) => { e.preventDefault(); if (currentIndex !== 0) loadDocument(0); pendingScrollPage = 8; const p8 = document.getElementById('page-wrapper-8'); if (p8) { smartScrollTo(p8); pendingScrollPage = null; } }); }
-infinityBtn.addEventListener('click', (e) => { e.preventDefault(); SimpleSynth.unlock(); if (appState.terminalFound) { launchTerminal(); return; } if (currentIndex !== 2) return; secretClicks++; infinityBtn.style.color = "#ff00ff"; setTimeout(() => infinityBtn.style.color = "", 200); if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; saveState(); updateInfinityState(); launchTerminal(); } });
-document.addEventListener('keydown', (e) => { const isPlayerVisible = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500; if (e.code === 'Space') { if (isPlayerVisible || terminalRunning) { e.preventDefault(); togglePlay(); } } if (e.code === 'ArrowRight') { if (e.shiftKey) { e.preventDefault(); nextTrack(false); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime += 5; } } if (e.code === 'ArrowLeft') { if (e.shiftKey) { e.preventDefault(); prevTrack(); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; } } });
+
+infinityBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    // Init audio immediately on interaction
+    SimpleSynth.init();
+    
+    if (appState.terminalFound) { launchTerminal(); return; }
+    if (currentIndex !== 2) return;
+    secretClicks++; infinityBtn.style.color = "#ff00ff"; setTimeout(() => infinityBtn.style.color = "", 200);
+    if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; saveState(); updateInfinityState(); launchTerminal(); }
+});
+
+document.addEventListener('keydown', (e) => {
+    const isPlayerVisible = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500;
+    if (e.code === 'Space') { if (isPlayerVisible || terminalRunning) { e.preventDefault(); togglePlay(); } }
+    if (e.code === 'ArrowRight') { if (e.shiftKey) { e.preventDefault(); nextTrack(false); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime += 5; } }
+    if (e.code === 'ArrowLeft') { if (e.shiftKey) { e.preventDefault(); prevTrack(); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; } }
+});
+
 function formatTime(s) { if(isNaN(s) || s === Infinity) return "0:00"; const m = Math.floor(s/60); const ss = Math.floor(s%60); return `${m}:${ss<10?'0':''}${ss}`; }
 
 // STARTUP
