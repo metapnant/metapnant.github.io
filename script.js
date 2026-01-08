@@ -299,110 +299,118 @@ function getLODScale() {
 }
 
 async function loadDocument(index) {
-  if (isLoading) return;
-  isLoading = true; renderSession++; const currentSession = renderSession;
-  
-  if (prevArrow) prevArrow.classList.remove('active-state');
-  if (nextArrow) nextArrow.classList.remove('active-state');
-
-  songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
-  
-  // --- LAYOUT LOCK ---
-  // Lock minHeight to keep the container tall during the swap
-  const currentHeight = pdfWrapper.getBoundingClientRect().height;
-  if (currentHeight > 0) {
-      pdfWrapper.style.minHeight = `${currentHeight}px`;
-  }
-
-  // Memory Cleanup
-  const existingPages = document.querySelectorAll('.pdf-page-wrapper');
-  existingPages.forEach(p => {
-      const canvas = p.querySelector('canvas');
-      if (canvas) { canvas.width = 1; canvas.height = 1; } 
-      p.remove();
-  });
-
-  // UI State: Hide overlay if we want to stare at the button
-  if (!waitingForLyrics) {
-      loadingOverlay.style.display = 'flex';
-  }
-  
-  prevArrow.classList.add('disabled'); 
-  nextArrow.classList.add('disabled');
-
-  currentIndex = index;
-  const currentDoc = library[currentIndex];
-  docTitle.textContent = currentDoc.title;
-  downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
-  
-  updateInfinityState();
-
-  try {
-    pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
-    await renderPage(1, currentSession);
+    if (isLoading) return;
+    isLoading = true; renderSession++; const currentSession = renderSession;
     
-    if (currentSession === renderSession) {
-        if (!waitingForLyrics) loadingOverlay.style.display = 'none';
-        document.body.classList.add("loaded");
-        const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
-        if(firstPage) firstPage.classList.add('revealed');
-
-        // IMPORTANT: We do NOT unlock height here if waiting for lyrics.
-        // We need the scroll bar to stay long so the button stays put.
-        if (!waitingForLyrics) {
-            pdfWrapper.style.minHeight = '';
+    if (prevArrow) prevArrow.classList.remove('active-state');
+    if (nextArrow) nextArrow.classList.remove('active-state');
+  
+    songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
+    
+    // --- CONDITIONAL LAYOUT LOCK ---
+    // If we are waiting for lyrics (Show Voice), we LOCK height to keep the player stable.
+    // If we are just navigating (Next/Prev), we UNLOCK immediately so the box starts small.
+    if (waitingForLyrics) {
+        const currentHeight = pdfWrapper.getBoundingClientRect().height;
+        if (currentHeight > 0) {
+            pdfWrapper.style.minHeight = `${currentHeight}px`;
         }
-
-        if (currentDoc.songUrl) {
-            songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
-            if (currentDoc.bpm > 0) songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
-            else songLink.style.animationDuration = "";
-            songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
-        }
-        isLoading = false;
-        
-        prevArrow.classList.remove('disabled'); 
-        nextArrow.classList.remove('disabled');
-        
-        if (currentIndex === 0) prevArrow.classList.add('disabled');
-        if (currentIndex === library.length - 1) nextArrow.classList.add('disabled');
-
-        if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
-    }
-  } catch (err) {
-    console.error(err);
-    pdfWrapper.style.minHeight = '';
-    loadingOverlay.innerHTML = "<div style='color:red; font-family:monospace'>ARCHIVE CORRUPTED</div>";
-    isLoading = false;
-    waitingForLyrics = false;
-    if (voiceScrambleInterval) resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
-  }
-}
-
-async function renderRestOfPages(pageNum, sessionID) {
-    if (sessionID !== renderSession || pageNum > pdfDoc.numPages) {
-        // --- COMPLETION TRIGGER ---
-        // 1. Release Height Lock
+    } else {
+        // Standard Navigation: Reset height so we see a normal loading box, not a huge ghost container.
         pdfWrapper.style.minHeight = '';
-
-        // 2. Perform the Show Voice Transition
-        if (waitingForLyrics && pageNum > pdfDoc.numPages) {
-            resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
-            const p8 = document.getElementById('page-wrapper-8'); 
-            if (p8) { 
-                jitterScrollTo(p8); 
-            }
-            waitingForLyrics = false;
-        }
-        return;
     }
-
-    await renderPage(pageNum, sessionID);
-    const pages = pdfWrapper.querySelectorAll('.pdf-page-wrapper');
-    if(pages[pageNum-1]) pages[pageNum-1].classList.add('revealed');
-    // Throttle for memory
-    setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 150); 
-}
+  
+    // Memory Cleanup
+    const existingPages = document.querySelectorAll('.pdf-page-wrapper');
+    existingPages.forEach(p => {
+        const canvas = p.querySelector('canvas');
+        if (canvas) { canvas.width = 1; canvas.height = 1; } 
+        p.remove();
+    });
+  
+    // Only show overlay if we aren't doing the seamless "Show Voice" transition
+    if (!waitingForLyrics) {
+        loadingOverlay.style.display = 'flex';
+    }
+    
+    prevArrow.classList.add('disabled'); 
+    nextArrow.classList.add('disabled');
+  
+    currentIndex = index;
+    const currentDoc = library[currentIndex];
+    docTitle.textContent = currentDoc.title;
+    downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
+    
+    updateInfinityState();
+  
+    try {
+      pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
+      await renderPage(1, currentSession);
+      
+      if (currentSession === renderSession) {
+          if (!waitingForLyrics) loadingOverlay.style.display = 'none';
+          document.body.classList.add("loaded");
+          const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
+          if(firstPage) firstPage.classList.add('revealed');
+  
+          // Note: If waitingForLyrics, height stays locked until renderRestOfPages finishes.
+          // If standard nav, height is already free to grow.
+  
+          if (currentDoc.songUrl) {
+              songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
+              if (currentDoc.bpm > 0) songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
+              else songLink.style.animationDuration = "";
+              songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
+          }
+          isLoading = false;
+          
+          prevArrow.classList.remove('disabled'); 
+          nextArrow.classList.remove('disabled');
+          
+          if (currentIndex === 0) prevArrow.classList.add('disabled');
+          if (currentIndex === library.length - 1) nextArrow.classList.add('disabled');
+  
+          if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
+      }
+    } catch (err) {
+      console.error(err);
+      pdfWrapper.style.minHeight = '';
+      loadingOverlay.innerHTML = "<div style='color:red; font-family:monospace'>ARCHIVE CORRUPTED</div>";
+      isLoading = false;
+      waitingForLyrics = false;
+      if (voiceScrambleInterval) resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
+    }
+  }
+  
+  async function renderRestOfPages(pageNum, sessionID) {
+      if (sessionID !== renderSession || pageNum > pdfDoc.numPages) {
+          // --- COMPLETION TRIGGER ---
+          // 1. Release Height Lock (Layout is now full size)
+          pdfWrapper.style.minHeight = '';
+  
+          // 2. Perform the Show Voice Transition if active
+          if (waitingForLyrics && pageNum > pdfDoc.numPages) {
+              resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
+              const p8 = document.getElementById('page-wrapper-8'); 
+              if (p8) { 
+                  jitterScrollTo(p8); 
+              }
+              waitingForLyrics = false;
+          }
+          return;
+      }
+  
+      await renderPage(pageNum, sessionID);
+      const pages = pdfWrapper.querySelectorAll('.pdf-page-wrapper');
+      if(pages[pageNum-1]) pages[pageNum-1].classList.add('revealed');
+      
+      // ADAPTIVE THROTTLE:
+      // Mobile: 150ms (Prevent crash)
+      // Desktop: 50ms (Fast load)
+      const delay = isMobileDevice ? 150 : 50;
+      
+      setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, delay); 
+  }
 
 async function renderPage(num, sessionID) {
   try {
