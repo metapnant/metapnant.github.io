@@ -402,7 +402,10 @@ function startLoadingScramble(element) {
 }
 
 function resolveLoadingScramble(element, finalText) {
-    if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
+    if (loadingScrambleInterval) {
+        clearInterval(loadingScrambleInterval);
+        loadingScrambleInterval = null; // <--- ADD THIS LINE. This stops the loop.
+    }
     scrambleText(element, finalText); 
 }
 
@@ -642,29 +645,28 @@ if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggl
 progressArea.addEventListener('mousedown', startDragMouse); document.addEventListener('mousemove', doDragMouse); document.addEventListener('mouseup', endDragMouse);
 progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); progressArea.addEventListener('touchend', endDragTouch);
 audioPlayer.addEventListener('timeupdate', () => { 
-    // EXISTING LOGIC:
+    // 1. Standard Progress Bar Logic
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
         domProgressBar.style.setProperty('--progress', `${p}%`); 
         domCurrentTime.textContent = formatTime(audioPlayer.currentTime); 
         domDuration.textContent = formatTime(audioPlayer.duration); 
     }
-    
-    // NEW FIX: FORCE STOP SCRAMBLE IF TIME IS MOVING
-    if (loadingScrambleInterval && !audioPlayer.paused) {
+
+    // 2. The iOS "Stuck on Loading" Fix
+    // Only run this if we are currently scrambling AND the audio is actually playing
+    if (loadingScrambleInterval !== null && !audioPlayer.paused && audioPlayer.currentTime > 0) {
         resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
         shouldAnimateReveal = false;
         if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
     }
 });
-// FIX FOR IOS SEEKING STUCK ON LOADING
 audioPlayer.addEventListener('seeked', () => {
-    // If we finished seeking, we have the data. Stop the scramble.
-    if (loadingScrambleInterval) {
+    // Force stop loading animation when seek finishes
+    if (loadingScrambleInterval !== null) {
         resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
         shouldAnimateReveal = false;
     }
-    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
 });
 audioPlayer.addEventListener('loadedmetadata', () => { domDuration.textContent = formatTime(audioPlayer.duration); if (pendingSeekPercent !== null) { audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); pendingSeekPercent = null; }});
 audioPlayer.addEventListener('ended', () => nextTrack(true));
