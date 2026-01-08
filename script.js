@@ -572,30 +572,46 @@ function updateSidebarUI() {
 
     if (activeBtn) activeBtn.classList.add('active');
 
-    // Replay Icons - ONLY ON CURRENT TAB
-    allBtns.forEach(btn => { if(btn.querySelector('.replay-icon')) btn.querySelector('.replay-icon').remove(); });
-    
-    // Only show replay arrow if the log is finished in DB and it's the current tab
-    if (currentTab && appState.finishedLogs.includes(currentTab) && activeBtn) {
-        const icon = document.createElement('span'); 
-        icon.className = 'replay-icon'; 
-        icon.innerHTML = '↺'; 
+    // Replay Icons - REUSE EXISTING ICON TO PREVENT REBUILD FLASH
+    allBtns.forEach(btn => { 
+        // We only want the icon on the ACTIVE button of a FINISHED log
+        const isCurrent = btn === activeBtn;
+        const type = btn === btnCycle00 ? 'crash' :
+                     btn === btnCycleEcho ? 'echo' :
+                     btn === btnCycle01 ? 'wake' :
+                     btn === btnCycleBloom ? 'bloom' : 'gardener';
         
-        // STANDARD CLICK HANDLER WITH STOP PROPAGATION AND ANIMATION
-        icon.onclick = (e) => {
-            e.stopPropagation(); // Prevents button "skip" logic
-            e.preventDefault();
-            
-            // Add spin animation class
-            icon.classList.remove('spin-once');
-            void icon.offsetWidth; // Trigger reflow
-            icon.classList.add('spin-once');
-            
-            replayLog(e, currentTab);
-        };
-        
-        activeBtn.appendChild(icon);
-    }
+        const isFinished = appState.finishedLogs.includes(type);
+
+        let icon = btn.querySelector('.replay-icon');
+
+        if (isCurrent && isFinished) {
+            // If it doesn't exist, create it
+            if (!icon) {
+                icon = document.createElement('span'); 
+                icon.className = 'replay-icon'; 
+                icon.innerHTML = '↺'; 
+                
+                // CLICK HANDLER
+                icon.onclick = (e) => {
+                    e.stopPropagation(); 
+                    e.preventDefault();
+                    
+                    // Trigger Animation
+                    icon.classList.remove('spin-once');
+                    void icon.offsetWidth; 
+                    icon.classList.add('spin-once');
+                    
+                    replayLog(e, type);
+                };
+                
+                btn.appendChild(icon);
+            }
+        } else {
+            // Remove if it shouldn't be there
+            if (icon) icon.remove();
+        }
+    });
 
     if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
         btnReset.classList.add('visible'); 
@@ -607,6 +623,12 @@ function updateSidebarUI() {
 function initTerminalState() {
     checkStateIntegrity(); 
     updateSidebarUI();
+    
+    // Set initial Turbo text
+    if (btnTurbo) {
+        btnTurbo.innerText = "[ >> ]\nTURBO: OFF";
+    }
+
     if (appState.musicUnlocked) musicSection.style.display = 'block';
 }
 
@@ -672,8 +694,10 @@ function replayLog(e, type) {
 function toggleTurbo() { 
     turboMode = !turboMode; 
     logSpeedMultiplier = turboMode ? 0.1 : 1; 
-    btnTurbo.innerText = turboMode ? "[ >> ] TURBO: ON" : "[ >> ] TURBO: OFF"; 
-    if (turboMode) btnTurbo.classList.add('active'); else btnTurbo.classList.remove('active'); 
+    btnTurbo.innerText = turboMode ? "[ >> ]\nTURBO: ON" : "[ >> ]\nTURBO: OFF"; 
+    
+    if (turboMode) btnTurbo.classList.add('active'); 
+    else btnTurbo.classList.remove('active'); 
 }
 
 function toggleMute() { 
@@ -794,19 +818,6 @@ function revealPlayer() {
 // --- LISTENERS ---
 document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex + 1) % library.length); }});
 document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex - 1 + library.length) % library.length); }});
-
-// Mobile Tap Animations for Navigation Arrows
-[document.getElementById('next-doc'), document.getElementById('prev-doc')].forEach(arrow => {
-    arrow.addEventListener('touchstart', () => {
-        arrow.style.transform = 'scale(0.8)'; // Clean scale, no translate shifts
-        arrow.style.transition = 'transform 0.1s ease';
-        arrow.style.color = 'var(--name-color)';
-    });
-    arrow.addEventListener('touchend', () => {
-        arrow.style.transform = '';
-        arrow.style.color = '';
-    });
-});
 
 if(btnPlay) btnPlay.addEventListener('click', (e) => { e.preventDefault(); togglePlay(); });
 if(btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextTrack(false); });
