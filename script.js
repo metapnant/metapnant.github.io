@@ -413,7 +413,6 @@ function initPlaylist() {
     });
 }
 
-// Update loadTrack to accept animate flag
 function loadTrack(index, animate = true) {
     if (!domTrackTitle) return;
     domProgressBar.style.setProperty('--progress', '0%');
@@ -421,7 +420,6 @@ function loadTrack(index, animate = true) {
     currentTrackIdx = index;
     const track = albumTracks[index];
     
-    // Only scramble if requested (default true)
     shouldAnimateReveal = animate; 
     if (animate) {
         startLoadingScramble(domTrackTitle);
@@ -455,7 +453,6 @@ function togglePlay() {
     if (isPlaying) { 
         audioPlayer.pause(); 
         isPlaying = false;
-        // Fix for pause/text scramble issue
         if (loadingScrambleInterval) {
              resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
@@ -555,14 +552,14 @@ function checkStateIntegrity() {
 }
 
 function updateSidebarUI() {
-    // 1. Visibility (Unlock State)
+    // Visibility
     if (appState.unlockedTabs.includes('crash')) btnCycle00.classList.add('visible');
     if (appState.unlockedTabs.includes('echo')) btnCycleEcho.classList.add('visible');
     if (appState.unlockedTabs.includes('wake')) btnCycle01.classList.add('visible');
     if (appState.unlockedTabs.includes('bloom')) btnCycleBloom.classList.add('visible');
     if (appState.unlockedTabs.includes('gardener')) btnCycle02.classList.add('visible');
 
-    // 2. Active Highlight (Current Tab)
+    // Highlights
     const allBtns = [btnCycle00, btnCycleEcho, btnCycle01, btnCycleBloom, btnCycle02];
     allBtns.forEach(btn => btn.classList.remove('active'));
 
@@ -575,35 +572,35 @@ function updateSidebarUI() {
 
     if (activeBtn) activeBtn.classList.add('active');
 
-    // 3. Replay Icons (Only show on the currently SELECTED tab)
+    // Replay Icons - ONLY ON CURRENT TAB
     allBtns.forEach(btn => { if(btn.querySelector('.replay-icon')) btn.querySelector('.replay-icon').remove(); });
     
+    // Only show replay arrow if the log is finished in DB and it's the current tab
     if (currentTab && appState.finishedLogs.includes(currentTab) && activeBtn) {
         const icon = document.createElement('span'); 
         icon.className = 'replay-icon'; 
         icon.innerHTML = '↺'; 
         
-        // Mobile-specific sizing and touch feedback
-        if (window.innerWidth <= 700) {
-            icon.style.fontSize = '1.6em';
-            icon.style.padding = '10px 15px';
-            icon.style.marginRight = '-10px';
-        }
-
+        // STANDARD CLICK HANDLER WITH STOP PROPAGATION AND ANIMATION
         icon.onclick = (e) => {
-            e.stopPropagation();
-            // Trigger a spin animation
-            icon.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-            icon.style.transform = 'rotate(-360deg)';
+            e.stopPropagation(); // Prevents button "skip" logic
+            e.preventDefault();
+            
+            // Add spin animation class
+            icon.classList.remove('spin-once');
+            void icon.offsetWidth; // Trigger reflow
+            icon.classList.add('spin-once');
+            
             replayLog(e, currentTab);
         };
         
         activeBtn.appendChild(icon);
     }
 
-    // 4. Global Controls Visibility
     if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
-        btnReset.classList.add('visible'); btnTurbo.classList.add('visible'); btnMute.classList.add('visible');
+        btnReset.classList.add('visible'); 
+        btnTurbo.classList.add('visible'); 
+        btnMute.classList.add('visible');
     }
 }
 
@@ -641,7 +638,6 @@ function switchTab(type, isReplay = false) {
     allContainers.forEach(con => con.classList.remove('active-log'));
     containers[type].classList.add('active-log');
 
-    // Smooth scroll for mobile sidebar
     if (window.innerWidth <= 700) {
         const wrapper = document.querySelector('.cycles-wrapper');
         const activeBtn = document.querySelector('.cycle-btn.active');
@@ -651,30 +647,25 @@ function switchTab(type, isReplay = false) {
         }
     }
 
-    // Logic: If the log is already in DB, default to showing the full finished log.
-    // Only run the typewriter (processQueue) if we explicitly clicked the Replay Arrow.
+    // Logic: If in DB and NOT currently running a replay (isReplay flag), show full.
+    // If running a replay (flag is true), processQueue.
     if (appState.finishedLogs.includes(type) && !isReplay) {
         logState[type].finished = true;
         renderFullLog(type); 
     } else {
-        // If not finished, or if we are replaying, start the typewriter
         processQueue();
     }
 }
 
 function replayLog(e, type) {
-    if (e) {
-        e.stopPropagation(); 
-        e.preventDefault(); // Extra safety for mobile
-    }
+    // Already handled stopPropagation in listener, but kept for safety
     if (activeTimer) clearTimeout(activeTimer);
     
-    // Reset state
     containers[type].innerHTML = ""; 
     logState[type].index = 0; 
     logState[type].finished = false;
     
-    // Explicitly pass true to signal a forced replay
+    // Pass TRUE to force typing effect
     switchTab(type, true);
 }
 
@@ -793,7 +784,7 @@ function revealPlayer() {
     updatePlayBtn();
 
     currentTrackIdx = 0;
-    // Load track 0 and ensure title is revealed instantly
+    // Load track 0 instantly reveals
     loadTrack(0, false);
     resolveLoadingScramble(domTrackTitle, albumTracks[0].title);
     
@@ -801,36 +792,22 @@ function revealPlayer() {
 }
 
 // --- LISTENERS ---
-// --- UPDATED LISTENERS WITH TAP ANIMATIONS ---
-document.getElementById('next-doc').addEventListener('click', () => { 
-    if(!isLoading) { 
-        window.scrollTo({ top: 0, behavior: 'smooth' }); 
-        loadDocument((currentIndex + 1) % library.length); 
-    }
-});
-
-document.getElementById('prev-doc').addEventListener('click', () => { 
-    if(!isLoading) { 
-        window.scrollTo({ top: 0, behavior: 'smooth' }); 
-        loadDocument((currentIndex - 1 + library.length) % library.length); 
-    }
-});
+document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex + 1) % library.length); }});
+document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex - 1 + library.length) % library.length); }});
 
 // Mobile Tap Animations for Navigation Arrows
 [document.getElementById('next-doc'), document.getElementById('prev-doc')].forEach(arrow => {
     arrow.addEventListener('touchstart', () => {
-        arrow.style.transform = 'translateX(-50%) scale(0.7)'; // Maintain the translateX since they are absolute
-        if (arrow.id === 'next-doc') arrow.style.transform = 'scale(0.7)';
+        arrow.style.transform = 'scale(0.8)'; // Clean scale, no translate shifts
         arrow.style.transition = 'transform 0.1s ease';
-        arrow.style.opacity = '1';
         arrow.style.color = 'var(--name-color)';
     });
     arrow.addEventListener('touchend', () => {
         arrow.style.transform = '';
         arrow.style.color = '';
-        arrow.style.opacity = '';
     });
 });
+
 if(btnPlay) btnPlay.addEventListener('click', (e) => { e.preventDefault(); togglePlay(); });
 if(btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextTrack(false); });
 if(btnPrev) btnPrev.addEventListener('click', (e) => { e.preventDefault(); prevTrack(); });
@@ -882,24 +859,17 @@ audioPlayer.addEventListener('playing', () => {
     if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; } 
 });
 
-// FIX: Prevent double-clicking "Show Voice" if currently loading
 if (btnShowVoice) { 
     btnShowVoice.addEventListener('click', (e) => { 
         e.preventDefault(); 
-        if (isLoading) return; // Guard clause for slow phones
-
+        if (isLoading) return; 
         if (currentIndex !== 0) {
             loadDocument(0); 
             pendingScrollPage = 8;
         } else {
-            // Already loaded, just scroll
             const p8 = document.getElementById('page-wrapper-8'); 
-            if (p8) { 
-                smartScrollTo(p8); 
-                pendingScrollPage = null; 
-            } else {
-                pendingScrollPage = 8; 
-            }
+            if (p8) { smartScrollTo(p8); pendingScrollPage = null; } 
+            else { pendingScrollPage = 8; }
         }
     }); 
 }
@@ -936,4 +906,5 @@ document.getElementById("currentYear").textContent = new Date().getFullYear();
 initTerminalState(); 
 loadDocument(0); 
 initPlaylist(); 
-loadTrack(0, false); // Load track 0 initially WITHOUT animation
+loadTrack(0, false); // No animation on boot
+setTimeout(() => { scrambleText(domTrackTitle, albumTracks[0].title); }, 500); // Matrix reveal once loaded
