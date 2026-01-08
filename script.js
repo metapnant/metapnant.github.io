@@ -256,7 +256,7 @@ async function loadDocument(index) {
   if (isLoading) return;
   isLoading = true; renderSession++; const currentSession = renderSession;
   
-  // FIX: Clear active states instantly so they don't fight the disable logic
+  // Clean UI states
   if (prevArrow) prevArrow.classList.remove('active-state');
   if (nextArrow) nextArrow.classList.remove('active-state');
 
@@ -265,7 +265,10 @@ async function loadDocument(index) {
   existingPages.forEach(p => p.remove());
 
   loadingOverlay.style.display = 'flex';
-  prevArrow.classList.add('disabled'); nextArrow.classList.add('disabled');
+  
+  // Hide arrows temporarily while loading
+  prevArrow.classList.add('disabled'); 
+  nextArrow.classList.add('disabled');
 
   currentIndex = index;
   const currentDoc = library[currentIndex];
@@ -291,7 +294,19 @@ async function loadDocument(index) {
             songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
         }
         isLoading = false;
-        prevArrow.classList.remove('disabled'); nextArrow.classList.remove('disabled');
+        
+        // --- FIXED ARROW VISIBILITY LOGIC ---
+        // 1. Determine states first
+        const isFirst = currentIndex === 0;
+        const isLast = currentIndex === library.length - 1;
+
+        // 2. Apply states cleanly without flipping back and forth
+        if (isFirst) prevArrow.classList.add('disabled');
+        else prevArrow.classList.remove('disabled');
+
+        if (isLast) nextArrow.classList.add('disabled');
+        else nextArrow.classList.remove('disabled');
+
         if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
     }
   } catch (err) {
@@ -825,8 +840,19 @@ function revealPlayer() {
 }
 
 // --- LISTENERS ---
-document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex + 1) % library.length); }});
-document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadDocument((currentIndex - 1 + library.length) % library.length); }});
+document.getElementById('next-doc').addEventListener('click', () => { 
+    if(!isLoading && currentIndex < library.length - 1) { 
+        window.scrollTo({ top: 0, behavior: 'smooth' }); 
+        loadDocument(currentIndex + 1); 
+    }
+});
+
+document.getElementById('prev-doc').addEventListener('click', () => { 
+    if(!isLoading && currentIndex > 0) { 
+        window.scrollTo({ top: 0, behavior: 'smooth' }); 
+        loadDocument(currentIndex - 1); 
+    }
+});
 
 // --- IOS ACTIVE STATE HELPER ---
 // Standard touch listeners to help CSS handle active states
@@ -935,6 +961,10 @@ function formatTime(s) { if(isNaN(s) || s === Infinity) return "0:00"; const m =
 document.getElementById("currentYear").textContent = new Date().getFullYear();
 
 // Init
+// FIX: Force left arrow hidden BEFORE loading logic starts to avoid initial flash
+const prevArrowEl = document.getElementById('prev-doc');
+if(prevArrowEl) prevArrowEl.classList.add('disabled');
+
 initTerminalState(); 
 loadDocument(0); 
 initPlaylist(); 
