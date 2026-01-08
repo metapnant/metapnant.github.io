@@ -54,12 +54,69 @@
   .pdf-page-wrapper::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 70%); background-size: 200% 200%; pointer-events: none; z-index: 10; mix-blend-mode: overlay; }
   .pdf-page-canvas { width: 100%; height: auto; display: block; background-color: var(--background-main); clip-path: inset(0 3px 2px 0); }
   
-  .nav-controls { position: fixed; bottom: calc(220px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: 100%; max-width: 900px; display: flex; justify-content: space-between; padding: 0 40px; box-sizing: border-box; z-index: 2000; pointer-events: none; -webkit-tap-highlight-color: transparent; }
-  .nav-arrow { pointer-events: auto; background: none; border: none; color: var(--arrow-color); font-size: 6rem; font-weight: 100; line-height: 1; cursor: pointer; transition: all 0.3s ease; animation: faintFlash 5s infinite ease-in-out; user-select: none; width: 80px; text-align: center; display: flex; justify-content: center; align-items: center; }
+ /* --- NAVIGATION CONTROLS --- */
+.nav-controls {
+    position: fixed;
+    /* Safe area adjustment for iOS */
+    bottom: calc(220px + env(safe-area-inset-bottom)); 
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 900px; 
+    display: flex;
+    justify-content: space-between;
+    /* Push them to the edges but keep them safe from screen bezel */
+    padding: 0 20px; 
+    box-sizing: border-box;
+    z-index: 2000;
+    
+    /* CRITICAL: Allows clicking through the empty space between arrows */
+    pointer-events: none; 
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .nav-arrow {
+    /* Re-enable clicking ONLY on the arrow glyph itself */
+    pointer-events: auto;
+    
+    background: none; 
+    border: none; 
+    color: var(--arrow-color);
+    font-size: 6rem; 
+    font-weight: 100; 
+    
+    /* FIX: Tighten the bounding box */
+    line-height: 0.7; /* Crops vertical whitespace */
+    width: auto;      /* Only as wide as the character */
+    min-width: 60px;  /* Minimum touch target */
+    height: 80px;     /* Fixed height for consistent alignment */
+    padding: 0;
+    margin: 0;
+    
+    cursor: pointer; 
+    transition: all 0.3s ease;
+    animation: faintFlash 5s infinite ease-in-out;
+    user-select: none;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
   .nav-arrow.disabled { opacity: 0 !important; pointer-events: none; }
-  @media (hover: hover) { .nav-arrow:hover { color: var(--name-color); transform: scale(1.2); animation: none; opacity: 1; filter: drop-shadow(0 0 20px var(--name-color)); } }
+  
+  @media (hover: hover) {
+    .nav-arrow:hover { 
+      color: var(--name-color); transform: scale(1.2); animation: none; 
+      opacity: 1; filter: drop-shadow(0 0 20px var(--name-color));
+    }
+  }
   .nav-arrow:active { transform: scale(0.8); }
-  @media (max-width: 700px) { .nav-controls { bottom: 180px; padding: 0 20px; } .nav-arrow { font-size: 4.5rem; width: 60px; } }
+  
+  @media (max-width: 700px) {
+      .nav-controls { bottom: 180px; padding: 0 15px; }
+      .nav-arrow { font-size: 4.5rem; min-width: 50px; height: 60px; }
+  }
   
   .pdf-button { position: fixed; right: 20px; bottom: 20px; z-index: 1000; background-color: transparent; color: var(--arrow-color); border: 1px solid var(--arrow-color); border-radius: 0; text-decoration: none; font-weight: 600; padding: 12px 22px; font-size: 0.8em; letter-spacing: 1px; opacity: 0; transition: all 0.3s; animation: faintFlash 5s infinite ease-in-out; display: flex; align-items: center; justify-content: center; gap: 10px; }
   body.loaded .pdf-button { opacity: 1; }

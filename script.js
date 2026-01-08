@@ -106,37 +106,62 @@ let logState = {
 };
 
 // ==========================================
-// 3. SOUND ENGINE (SYNTHESIZER)
+// 3. SOUND ENGINE (UNIVERSAL IOS FIX)
 // ==========================================
 const SimpleSynth = {
     ctx: null,
     unlocked: false,
+    
     init: function() {
         if (!this.ctx) {
+            // Support for older iOS/WebKit browsers
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioContext();
         }
     },
+
+    // The "Silent Buffer" Trick: Forces iOS Audio Hardware to Wake Up
     unlock: function() {
         this.init();
         if (this.unlocked || !this.ctx) return;
-        if (this.ctx.state === 'suspended') this.ctx.resume();
-        const buffer = this.ctx.createBuffer(1, 1, 22050);
-        const source = this.ctx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(this.ctx.destination);
-        source.start(0);
-        this.unlocked = true;
+
+        // 1. Resume Context (Standard)
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume().then(() => {
+                this.unlocked = true;
+            });
+        }
+
+        // 2. Play a silent buffer (Critical for old iOS)
+        // This must happen inside the user event stack
+        try {
+            const buffer = this.ctx.createBuffer(1, 1, 22050);
+            const source = this.ctx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(this.ctx.destination);
+            if (source.start) {
+                source.start(0);
+            } else if (source.noteOn) {
+                source.noteOn(0); // Very old iOS support
+            }
+            this.unlocked = true;
+        } catch(e) {
+            console.error("Audio Unlock Failed:", e);
+        }
     },
+
     playTone: function(cssClass) {
         if (isMuted) return;
+        // Aggressive init check
         if (!this.ctx) this.init();
         if (this.ctx.state === 'suspended') this.ctx.resume();
         
         const t = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-        osc.connect(gain); gain.connect(this.ctx.destination);
+        
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
         
         if (cssClass.includes('operator-text')) {
             osc.type = 'triangle'; osc.frequency.setValueAtTime(500, t); osc.frequency.linearRampToValueAtTime(450, t + 0.08); gain.gain.setValueAtTime(0.04, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08); osc.start(); osc.stop(t + 0.08);
@@ -152,10 +177,12 @@ const SimpleSynth = {
             osc.type = 'square'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(100, t + 0.04); gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04); osc.start(); osc.stop(t + 0.04);
         }
     },
+
     playUnlock: function() {
         if (isMuted) return;
         if (!this.ctx) this.init();
         if (this.ctx.state === 'suspended') this.ctx.resume();
+
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.connect(gain); gain.connect(this.ctx.destination);
@@ -163,15 +190,18 @@ const SimpleSynth = {
     }
 };
 
+// AGGRESSIVE GLOBAL UNLOCKER (HANDLES IOS)
 function unlockAudioEngine() {
     SimpleSynth.unlock();
-    if (SimpleSynth.unlocked) {
+    // Only remove listeners if context is actually running
+    if (SimpleSynth.ctx && SimpleSynth.ctx.state === 'running') {
         document.removeEventListener('click', unlockAudioEngine);
         document.removeEventListener('keydown', unlockAudioEngine);
         document.removeEventListener('touchstart', unlockAudioEngine);
         document.removeEventListener('touchend', unlockAudioEngine);
     }
 }
+// Listen on all interaction types
 document.addEventListener('click', unlockAudioEngine);
 document.addEventListener('keydown', unlockAudioEngine);
 document.addEventListener('touchstart', unlockAudioEngine);

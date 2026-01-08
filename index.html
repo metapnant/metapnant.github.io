@@ -26,6 +26,7 @@
     </main>
   </div>
 
+  <!-- NAV CONTROLS -->
   <nav class="nav-controls">
     <button class="nav-arrow" id="prev-doc" aria-label="Previous Document">‹</button>
     <button class="nav-arrow" id="next-doc" aria-label="Next Document">›</button>
@@ -38,6 +39,7 @@
   <!-- MUSIC PLAYER SECTION -->
   <section id="music-section">
     <div class="music-container">
+        <!-- LEFT COLUMN: ART + VOICE BUTTON -->
         <div class="art-column">
             <div class="album-art-wrapper">
                 <img src="music/cover.jpg" alt="Chrysalis Cover" id="album-art">
@@ -46,6 +48,7 @@
             <button id="btn-show-voice" class="voice-btn" aria-label="Show Lyrics">SHOW VOICE</button>
         </div>
         
+        <!-- RIGHT COLUMN: CONTROLS & PLAYLIST -->
         <div class="player-controls">
             <div class="track-details">
                 <h2 id="track-title">Loading...</h2>
@@ -124,7 +127,6 @@
       <button class="close-terminal" onclick="closeTerminal()">[ _ ] MINIMIZE</button>
       
       <div class="terminal-container" id="terminal-content">
-        <!-- THESE IDS ARE CRITICAL FOR SWITCHTAB TO WORK -->
         <div id="log-crash" class="log-section"></div>
         <div id="log-echo" class="log-section"></div>
         <div id="log-wake" class="log-section"></div>
