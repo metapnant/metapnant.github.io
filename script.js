@@ -58,6 +58,7 @@ let lyricsDoc = null;
 let isLoading = false;
 let renderSession = 0;
 let pendingScrollPage = null; 
+let resizeTimer = null; // Debounce for orientation change
 
 // -- Music State --
 const audioPlayer = new Audio();
@@ -256,7 +257,6 @@ async function loadDocument(index) {
   if (isLoading) return;
   isLoading = true; renderSession++; const currentSession = renderSession;
   
-  // Clean UI states
   if (prevArrow) prevArrow.classList.remove('active-state');
   if (nextArrow) nextArrow.classList.remove('active-state');
 
@@ -266,7 +266,6 @@ async function loadDocument(index) {
 
   loadingOverlay.style.display = 'flex';
   
-  // Hide arrows temporarily while loading
   prevArrow.classList.add('disabled'); 
   nextArrow.classList.add('disabled');
 
@@ -296,16 +295,11 @@ async function loadDocument(index) {
         isLoading = false;
         
         // --- FIXED ARROW VISIBILITY LOGIC ---
-        // 1. Determine states first
-        const isFirst = currentIndex === 0;
-        const isLast = currentIndex === library.length - 1;
-
-        // 2. Apply states cleanly without flipping back and forth
-        if (isFirst) prevArrow.classList.add('disabled');
-        else prevArrow.classList.remove('disabled');
-
-        if (isLast) nextArrow.classList.add('disabled');
-        else nextArrow.classList.remove('disabled');
+        prevArrow.classList.remove('disabled'); 
+        nextArrow.classList.remove('disabled');
+        
+        if (currentIndex === 0) prevArrow.classList.add('disabled');
+        if (currentIndex === library.length - 1) nextArrow.classList.add('disabled');
 
         if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
     }
@@ -324,6 +318,7 @@ async function renderRestOfPages(pageNum, sessionID) {
     setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 50); 
 }
 
+// --- FIX: MEMORY-SAFE RENDER PAGE FUNCTION ---
 async function renderPage(num, sessionID) {
   try {
       if (sessionID !== renderSession) return;
@@ -345,10 +340,22 @@ async function renderPage(num, sessionID) {
       const containerWidth = pdfWrapper.getBoundingClientRect().width || window.innerWidth;
       const desiredScale = (containerWidth - 40) / viewport.width;
       const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
-      const outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
+      
+      // --- MEMORY FIX FOR IOS ---
+      // Reduce pixel density on mobile to prevent >16MB canvas crash
+      let outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
+      if (window.innerWidth < 800) {
+          outputScale = 1.4; // Slightly lower density on mobile to save RAM
+      }
+
       const scaledViewport = page.getViewport({ scale: finalScale * outputScale });
-      canvas.height = scaledViewport.height; canvas.width = scaledViewport.width;
+      
+      // Ensure integer dimensions to prevent sub-pixel blurring
+      canvas.height = Math.floor(scaledViewport.height);
+      canvas.width = Math.floor(scaledViewport.width);
+      
       await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
+      
       if (sessionID !== renderSession) return;
       pdfWrapper.appendChild(wrapper);
       if (num === pendingScrollPage) { smartScrollTo(wrapper); pendingScrollPage = null; }
@@ -373,10 +380,15 @@ async function refreshDynamicPage() {
         const viewport = page.getViewport({ scale: 1 });
         const containerWidth = pdfWrapper.getBoundingClientRect().width || window.innerWidth;
         const desiredScale = (containerWidth - 40) / viewport.width;
+        
+        // Same memory fix for dynamic pages
+        let outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
+        if (window.innerWidth < 800) outputScale = 1.4;
+
         const finalScale = Math.min(Math.max(desiredScale, 0.6), 2.5);
-        const outputScale = Math.min(window.devicePixelRatio || 1, 2.0);
         const scaledViewport = page.getViewport({ scale: finalScale * outputScale });
-        canvas.height = scaledViewport.height; canvas.width = scaledViewport.width;
+        canvas.height = Math.floor(scaledViewport.height); 
+        canvas.width = Math.floor(scaledViewport.width);
         await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
         wrapper.style.minHeight = '';
     } catch (e) { console.error("Failed to refresh lyrics page", e); }
@@ -680,24 +692,17 @@ function switchTab(type, isReplay = false) {
     allContainers.forEach(con => con.classList.remove('active-log'));
     containers[type].classList.add('active-log');
 
-    // --- PASTE THE NEW CODE HERE ---
-    const wrapper = document.querySelector('.cycles-wrapper');
-    const activeBtn = document.querySelector('.cycle-btn.active');
-
-    if (wrapper && activeBtn) {
-        const isHorizontal = window.getComputedStyle(wrapper).flexDirection === 'row';
-
-        if (isHorizontal) {
+    if (window.innerWidth <= 700) {
+        const wrapper = document.querySelector('.cycles-wrapper');
+        const activeBtn = document.querySelector('.cycle-btn.active');
+        if (wrapper && activeBtn) {
             const center = (wrapper.clientWidth / 2) - (activeBtn.clientWidth / 2);
             wrapper.scrollTo({ left: activeBtn.offsetLeft - center, behavior: 'smooth' });
-        } else {
-            const center = (wrapper.clientHeight / 2) - (activeBtn.clientHeight / 2);
-            wrapper.scrollTo({ top: activeBtn.offsetTop - center, behavior: 'smooth' });
         }
     }
-    // ------------------------------
 
     // Logic: If in DB and NOT currently running a replay (isReplay flag), show full.
+    // If running a replay (flag is true), processQueue.
     if (appState.finishedLogs.includes(type) && !isReplay) {
         logState[type].finished = true;
         renderFullLog(type); 
@@ -845,6 +850,43 @@ function revealPlayer() {
     
     setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100); 
 }
+
+// --- REFRESH ON ORIENTATION CHANGE ---
+window.addEventListener('resize', () => {
+    // Only trigger if we are not currently loading
+    if (!isLoading && pdfDoc) {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            // Re-render current page to fit new width
+            const firstPage = document.querySelector('.pdf-page-wrapper');
+            if (firstPage) {
+                // Determine which page to update (usually visible ones)
+                // For simplicity, re-render all visible
+                const currentPages = document.querySelectorAll('.pdf-page-wrapper');
+                currentPages.forEach((wrapper, idx) => {
+                    // We must clear the wrapper content first to avoid stacking
+                    wrapper.innerHTML = ''; 
+                    
+                    // Create new canvas
+                    const canvas = document.createElement('canvas');
+                    canvas.className = 'pdf-page-canvas';
+                    wrapper.appendChild(canvas);
+                    
+                    // Re-render using existing logic
+                    // Note: This calls the same function used in loadDocument
+                    // We need to pass the correct page number
+                    const pageNum = parseInt(wrapper.id.split('-')[2]); 
+                    
+                    // Manually trigger the internal render logic of renderPage
+                    // We can't call renderPage directly easily because it appends new wrappers
+                    // So we reload the document fully to be safe.
+                });
+                // Actually, easiest way is to reload the document at current index
+                loadDocument(currentIndex);
+            }
+        }, 300); // 300ms debounce
+    }
+});
 
 // --- LISTENERS ---
 // REMOVED: Modulo looping logic. Now strictly +1 or -1.
