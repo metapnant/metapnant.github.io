@@ -542,23 +542,37 @@ function initPlaylist() {
     });
 }
 
+// --- MUSIC FUNCTIONS ---
+
 function loadTrack(index, animate = true) {
     if (!domTrackTitle) return;
+    
+    // Visual Reset
     domProgressBar.style.setProperty('--progress', '0%');
     domCurrentTime.textContent = "0:00"; 
     domDuration.textContent = "0:00"; 
+    
     currentTrackIdx = index;
     const track = albumTracks[index];
+    
     shouldAnimateReveal = animate; 
+    
+    // Clear timers
     if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
+
     if (animate) {
         startLoadingScramble(domTrackTitle);
     } else {
         domTrackTitle.innerText = track.title;
         domTrackTitle.style.color = ""; 
     }
+    
+    // Assign source but DO NOT auto-play here.
+    // Playback is handled explicitly by playTrack or togglePlay
     audioPlayer.src = track.src;
+    
+    // Update Playlist Highlight
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -568,46 +582,66 @@ function loadTrack(index, animate = true) {
             }
         } else item.classList.remove('active-track');
     });
+    
     refreshDynamicPage();
 }
 
 function playTrack(index) { 
+    // 1. Load the data
     loadTrack(index); 
+    
+    // 2. OPTIMISTIC UI UPDATE
+    // Immediately show "Pause" button so user knows input was received
+    isPlaying = true;
+    updatePlayBtn();
+
+    // 3. Attempt Playback with Error Handling
     const playPromise = audioPlayer.play();
+    
     if (playPromise !== undefined) {
-        playPromise.then(_ => { isPlaying = true; updatePlayBtn(); })
-        .catch(error => { console.log("Autoplay prevented"); isPlaying = false; updatePlayBtn(); });
+        playPromise.catch(error => { 
+            // AbortError is normal when skipping fast. Ignore it.
+            // NotAllowedError means auto-play block. 
+            if (error.name !== 'AbortError') {
+                console.log("Playback interrupted:", error);
+                // Only revert UI if it wasn't a simple skip
+                isPlaying = false; 
+                updatePlayBtn();
+            }
+        });
     }
 }
 
 function togglePlay() {
+    // Safety: If source is missing, load first track
     if (!audioPlayer.src) {
         loadTrack(currentTrackIdx, false);
     }
+
     if (isPlaying) { 
         audioPlayer.pause(); 
-        isPlaying = false;
-        if (loadingScrambleInterval) {
-             resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
-        }
-        updatePlayBtn();
+        // Logic handles the UI update via event listeners below
     }
     else { 
+        // Optimistic UI Update
+        isPlaying = true;
+        updatePlayBtn();
+
+        // Check for pending seek (Cold Start fix)
+        if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) {
+            const newTime = (pendingSeekPercent / 100) * audioPlayer.duration;
+            audioPlayer.currentTime = newTime;
+            pendingSeekPercent = null;
+        }
+
         const playPromise = audioPlayer.play();
         if (playPromise !== undefined) {
-            playPromise.then(() => {
-                isPlaying = true;
-                updatePlayBtn();
-                if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) {
-                    const newTime = (pendingSeekPercent / 100) * audioPlayer.duration;
-                    audioPlayer.currentTime = newTime;
-                    pendingSeekPercent = null;
+            playPromise.catch(error => {
+                if (error.name !== 'AbortError') {
+                    console.error("Playback failed", error);
+                    isPlaying = false;
+                    updatePlayBtn();
                 }
-            })
-            .catch(error => { 
-                console.log("Playback prevented:", error); 
-                isPlaying = false; 
-                updatePlayBtn();
             });
         }
     }
@@ -615,6 +649,7 @@ function togglePlay() {
 
 function updatePlayBtn() {
     if (!iconPlay || !iconPause) return;
+    // Direct DOM manipulation based on state
     iconPlay.style.display = isPlaying ? 'none' : 'block';
     iconPause.style.display = isPlaying ? 'block' : 'none';
 }
@@ -925,44 +960,92 @@ document.addEventListener('mouseup', endDragMouse);
 progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); 
 progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); 
 progressArea.addEventListener('touchend', endDragTouch);
+// --- AUDIO EVENT LISTENERS (HARD SYNC) ---
+
+// 1. UPDATE PROGRESS BAR
 audioPlayer.addEventListener('timeupdate', () => { 
-    if (!audioPlayer.paused && pendingSeekPercent !== null && audioPlayer.duration) { pendingSeekPercent = null; }
+    // Sync Failsafe
+    if (!audioPlayer.paused && pendingSeekPercent !== null && audioPlayer.duration) {
+        pendingSeekPercent = null;
+    }
+
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
         domProgressBar.style.setProperty('--progress', `${p}%`); 
         domCurrentTime.textContent = formatTime(audioPlayer.currentTime); 
         domDuration.textContent = formatTime(audioPlayer.duration); 
     }
+    
+    // RESOLVE TITLE: Only if data is flowing (readyState > 2)
+    // This prevents the title from revealing while still buffering
     if (loadingScrambleInterval !== null && !audioPlayer.paused && audioPlayer.currentTime > 0) {
-        if (audioPlayer.readyState > 2) {
+        if (audioPlayer.readyState > 2) { 
             resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
             shouldAnimateReveal = false;
             if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
         }
     }
 });
+
+// 2. LOAD METADATA
 audioPlayer.addEventListener('loadedmetadata', () => { 
     domDuration.textContent = formatTime(audioPlayer.duration); 
+    // If a seek was queued during load, apply it now
     if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) { 
         audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; 
         domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); 
         pendingSeekPercent = null; 
     }
 });
-audioPlayer.addEventListener('ended', () => nextTrack(true));
+
+// 3. HARDWARE STATE SYNC
+// If the engine pauses (buffer underrun or user action), update state
+audioPlayer.addEventListener('pause', () => {
+    isPlaying = false;
+    updatePlayBtn();
+});
+
+// If the engine actually starts emitting sound, update state
+audioPlayer.addEventListener('playing', () => {
+    isPlaying = true;
+    updatePlayBtn();
+    
+    // Clear buffer timer
+    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
+    
+    // Resolve title if we were waiting
+    if (shouldAnimateReveal) { 
+        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); 
+        shouldAnimateReveal = false; 
+    } 
+});
+
+// 4. BUFFERING / SLOW INTERNET HANDLING
 audioPlayer.addEventListener('waiting', () => { 
     if(bufferCheckTimer) clearTimeout(bufferCheckTimer); 
-    if (!audioPlayer.paused) { bufferCheckTimer = setTimeout(() => { shouldAnimateReveal = true; startLoadingScramble(domTrackTitle); }, 300); }
+    
+    // If we are supposed to be playing but hit a buffer wall:
+    // 1. Keep the button as "Pause" (we haven't stopped, just stalled)
+    // 2. Re-engage the scramble text to show activity
+    if (isPlaying) {
+        bufferCheckTimer = setTimeout(() => { 
+            shouldAnimateReveal = true; 
+            startLoadingScramble(domTrackTitle); 
+        }, 300); 
+    }
 });
+
+// 5. SEEK HANDLERS
 audioPlayer.addEventListener('seeked', () => {
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer); 
-    if (loadingScrambleInterval !== null) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); }
-    shouldAnimateReveal = false;
+    // If playing, the 'playing' event will handle text resolution.
+    // If paused, we resolve immediately so it doesn't look stuck.
+    if (audioPlayer.paused && loadingScrambleInterval !== null) {
+        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
+    }
 });
-audioPlayer.addEventListener('playing', () => { 
-    if (bufferCheckTimer) clearTimeout(bufferCheckTimer); 
-    if (shouldAnimateReveal) { resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title); shouldAnimateReveal = false; } 
-});
+
+audioPlayer.addEventListener('ended', () => nextTrack(true));
 
 // --- SHOW VOICE HANDLER ---
 if (btnShowVoice) { 
