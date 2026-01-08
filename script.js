@@ -528,18 +528,33 @@ function togglePlay() {
         if (loadingScrambleInterval) {
              resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
+        updatePlayBtn();
     }
     else { 
-        // Sync Fix: Apply pending seek before playing
-        if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) {
-            const newTime = (pendingSeekPercent / 100) * audioPlayer.duration;
-            audioPlayer.currentTime = newTime;
-            pendingSeekPercent = null;
+        // WAKE UP THE ENGINE
+        const playPromise = audioPlayer.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                // SUCCESS: Engine is hot.
+                isPlaying = true;
+                updatePlayBtn();
+
+                // CHECK FOR PENDING SEEK (The "Cold Start" Fix)
+                if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) {
+                    // Apply the seek now that iOS is listening
+                    const newTime = (pendingSeekPercent / 100) * audioPlayer.duration;
+                    audioPlayer.currentTime = newTime;
+                    pendingSeekPercent = null; // Release the UI lock
+                }
+            })
+            .catch(error => { 
+                console.log("Playback prevented:", error); 
+                isPlaying = false; 
+                updatePlayBtn();
+            });
         }
-        audioPlayer.play(); 
-        isPlaying = true; 
     }
-    updatePlayBtn();
 }
 
 function updatePlayBtn() {
@@ -594,30 +609,39 @@ function commitSeek(percent) {
     shouldAnimateReveal = false; 
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
 
-    const hasDuration = audioPlayer.duration && isFinite(audioPlayer.duration);
-
-    if (hasDuration) {
+    // 1. Always update visuals immediately (The UI must feel responsive)
+    if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
-        audioPlayer.currentTime = newTime;
-        pendingSeekPercent = null;
-
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
+    }
 
-        if (!audioPlayer.paused) {
+    // 2. Branch Logic based on Playback State
+    if (!audioPlayer.paused) {
+        // A. HOT SEEK (Playing)
+        // We can safely seek immediately
+        if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
+            audioPlayer.currentTime = (percent / 100) * audioPlayer.duration;
+            pendingSeekPercent = null; // Clear lock
+            
+            // Trigger Loading Animation
             bufferCheckTimer = setTimeout(() => { 
                 if (audioPlayer.seeking || audioPlayer.readyState < 3) { 
                     shouldAnimateReveal = true; 
                     startLoadingScramble(domTrackTitle); 
                 } 
             }, 200);
-        } else {
-            if (loadingScrambleInterval) {
-                resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
-            }
         }
     } else {
+        // B. COLD SEEK (Paused)
+        // iOS ignores currentTime when paused/unbuffered. 
+        // We just store the intent. 'togglePlay' will execute it on wake-up.
         pendingSeekPercent = percent;
+        
+        // Clean up any text artifacts if we were scrambling
+        if (loadingScrambleInterval) {
+            resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
+        }
     }
 }
 
@@ -950,11 +974,8 @@ progressArea.addEventListener('touchmove', doDragTouch, { passive: false });
 progressArea.addEventListener('touchend', endDragTouch);
 
 audioPlayer.addEventListener('timeupdate', () => { 
-    // FAILSAFE: Sync check
-    if (!audioPlayer.paused && pendingSeekPercent !== null && audioPlayer.duration) {
-        pendingSeekPercent = null;
-    }
-
+    // Standard Progress Bar Update
+    // We only update if the user isn't dragging AND we aren't waiting for a seek to commit
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
         domProgressBar.style.setProperty('--progress', `${p}%`); 
@@ -962,6 +983,7 @@ audioPlayer.addEventListener('timeupdate', () => {
         domDuration.textContent = formatTime(audioPlayer.duration); 
     }
     
+    // Scramble Cleanup
     if (loadingScrambleInterval !== null && !audioPlayer.paused && audioPlayer.currentTime > 0) {
         if (audioPlayer.readyState > 2) {
             resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
