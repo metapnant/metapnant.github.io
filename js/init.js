@@ -18,20 +18,15 @@ window.addEventListener('resize', () => {
         if (Math.abs(window.innerWidth - lastWidth) < 100) return;
         lastWidth = window.innerWidth;
     }
-    
-    // FIX: REMOVED loadDocument CALL
-    // We no longer reload the PDF on orientation change/resize.
-    // The CSS handles the layout reflow automatically.
     if (!isLoading && pdfDoc) {
         if (resizeTimer) clearTimeout(resizeTimer);
-        // We just update the pending scroll variable, but don't reload
         const visiblePage = getVisiblePageNumber();
         pendingScrollPage = visiblePage; 
+        resizeTimer = setTimeout(() => { loadDocument(currentIndex); }, 300);
     }
 });
 
 // UI Buttons
-// Note: performNavReset is defined in core.js now.
 document.getElementById('next-doc').addEventListener('click', () => { 
     if(!isLoading && currentIndex < library.length - 1) {
         performNavReset();
@@ -44,6 +39,20 @@ document.getElementById('prev-doc').addEventListener('click', () => {
         loadDocument(currentIndex - 1); 
     }
 });
+
+const performNavReset = () => {
+    killScrollAnimation();
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    waitingForLyrics = false;
+    if (voiceScrambleInterval) {
+        clearInterval(voiceScrambleInterval);
+        voiceScrambleInterval = null;
+    }
+    if (btnShowVoice) {
+        btnShowVoice.innerText = "SHOW VOICE";
+        btnShowVoice.style.color = "";
+    }
+};
 
 [document.getElementById('next-doc'), document.getElementById('prev-doc')].forEach(arrow => {
     arrow.addEventListener('touchstart', function() { this.classList.add('active-state'); }, {passive: true});
@@ -149,8 +158,6 @@ audioPlayer.addEventListener('timeupdate', () => {
         }
     }
 
-    updateBufferVisuals();
-
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
         domProgressBar.style.setProperty('--progress', `${p}%`); 
@@ -186,13 +193,11 @@ if (btnShowVoice) {
     btnShowVoice.addEventListener('click', (e) => { 
         e.preventDefault(); 
         
-        // FIX: Instant Visual Flash
         btnShowVoice.classList.add('active-state');
         setTimeout(() => btnShowVoice.classList.remove('active-state'), 150);
 
         if (isLoading) return; 
         
-        // Slight delay to allow UI to paint the active state before heavy work
         setTimeout(() => {
             btnShowVoice.scrollIntoView({ behavior: 'smooth', block: 'center' });
             if (currentIndex !== 0) {
@@ -210,18 +215,26 @@ if (btnShowVoice) {
 infinityBtn.addEventListener('click', (e) => { 
     e.preventDefault(); SimpleSynth.unlock(); 
     
-    // FIX: Instant Visual Flash (White)
-    if (appState.musicUnlocked || currentIndex === 2) {
+    // FIX: White Flash for Unlocked State
+    if (appState.terminalFound) { 
         infinityBtn.classList.add('active-state');
         setTimeout(() => infinityBtn.classList.remove('active-state'), 150);
-    }
-
-    if (appState.terminalFound) { launchTerminal(); return; } 
+        launchTerminal(); 
+        return; 
+    } 
+    
     if (currentIndex !== 2) return; 
     
+    // FIX: Red Flash for Unlock Progress
     secretClicks++; 
-    infinityBtn.style.color = "#ff00ff"; 
-    setTimeout(() => infinityBtn.style.color = "", 200); 
+    infinityBtn.style.color = "#ff3333"; // Red
+    infinityBtn.style.textShadow = "0 0 15px #ff0000";
+    
+    setTimeout(() => {
+        infinityBtn.style.color = "";
+        infinityBtn.style.textShadow = "";
+    }, 200);
+
     if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; updateInfinityState(); launchTerminal(); } 
 });
 

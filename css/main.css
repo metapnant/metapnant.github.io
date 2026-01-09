@@ -25,16 +25,32 @@
 .pdf-page-wrapper { 
     width: 100%; max-width: 100%; height: auto; position: relative; margin: 0 auto; 
     border-radius: 4px; overflow: visible; 
+    
+    /* Horizontal Mask to prevent side bleed */
     -webkit-mask-image: linear-gradient(to right, transparent 0%, black 2px, black calc(100% - 2px), transparent 100%);
     mask-image: linear-gradient(to right, transparent 0%, black 2px, black calc(100% - 2px), transparent 100%);
-    margin-bottom: 30px; 
+    
+    /* FIX: Removed margin-bottom (was 30px). 
+       Now relying on .pdf-container 'gap' (15px) for consistent spacing. */
+    margin-bottom: 0; 
+    
     background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%); 
     line-height: 0; flex-shrink: 0; opacity: 0; animation: fadeContentIn 0.8s ease forwards; 
 }
+
+/* Shadow Pseudo-element */
 .pdf-page-wrapper::before {
-    content: ""; position: absolute; z-index: -1; bottom: 5px; left: 4px; right: 4px; height: 20px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.7); border-radius: 50%;
+    content: "";
+    position: absolute;
+    z-index: -1;
+    bottom: 5px;
+    left: 4px; 
+    right: 4px; 
+    height: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+    border-radius: 50%;
 }
+
 .pdf-page-wrapper { box-shadow: none; }
 .pdf-page-wrapper::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 70%); background-size: 200% 200%; pointer-events: none; z-index: 10; mix-blend-mode: overlay; }
 .pdf-page-canvas { width: 100% !important; height: auto !important; display: block; background-color: var(--background-main); clip-path: inset(0 3px 2px 0); object-fit: contain; }
@@ -104,7 +120,7 @@
 #infinity-symbol.active { cursor: pointer; pointer-events: auto; }
 #infinity-symbol.active:hover { color: #fff; text-shadow: 0 0 15px var(--name-color); }
 
-/* FIX: Ensure White Flash on Touch */
+/* Active state for Infinity Button (White Flash) - Used AFTER unlock */
 #infinity-symbol.active:active, 
 #infinity-symbol.active.active-state { 
     color: #ffffff !important; 

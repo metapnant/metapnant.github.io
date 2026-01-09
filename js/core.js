@@ -169,20 +169,6 @@ function killScrollAnimation() {
     }
 }
 
-function performNavReset() {
-    killScrollAnimation();
-    window.scrollTo({ top: 0, behavior: 'auto' });
-    waitingForLyrics = false;
-    if (voiceScrambleInterval) {
-        clearInterval(voiceScrambleInterval);
-        voiceScrambleInterval = null;
-    }
-    if (btnShowVoice) {
-        btnShowVoice.innerText = "SHOW VOICE";
-        btnShowVoice.style.color = "";
-    }
-}
-
 function jitterScrollTo(element) {
     if (!element) return;
     killScrollAnimation();
