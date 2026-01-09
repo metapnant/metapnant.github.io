@@ -73,11 +73,10 @@ let holdTimer = null;
 let isTouch = false;
 let isScrolling = false;
 let pendingSeekPercent = null;
-let isSwitchingTrack = false; // Trigger for "Always Scramble" on track change
+let isSwitchingTrack = false;
 
 // -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
-let bufferDebounceTimer = null; // Defined here for global access
 
 // -- TERMINAL STATE --
 let secretClicks = 0;
@@ -209,7 +208,7 @@ function getVisiblePageNumber() {
 }
 
 // ==========================================
-// SCRAMBLE ENGINE (The Brain)
+// SCRAMBLE ENGINE (ROBUST & STATEFUL)
 // ==========================================
 
 const ScrambleEngine = {
@@ -217,7 +216,7 @@ const ScrambleEngine = {
     targetElement: null,
     isResolving: false,
     
-    // Track if we are currently doing the "Alien Loop"
+    // Tracks if we are currently in the "Alien Loop" (Buffering/Loading)
     isLooping: false,
 
     loadingGlyphs: "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝",
@@ -229,7 +228,7 @@ const ScrambleEngine = {
 
         this.clear();
         this.targetElement = element;
-        this.isLooping = true; // Flag active
+        this.isLooping = true; // Mark as looping
         this.isResolving = false;
         
         element.style.color = "var(--name-color)";
@@ -246,14 +245,12 @@ const ScrambleEngine = {
 
     // 2. REVEAL STATE (Matrix Decode)
     resolve: function(element, finalText) {
-        // If text is already correct and we aren't looping, DO NOTHING.
-        // This is crucial for instant-seek or play/pause toggles.
         if (!this.interval && element.innerText === finalText) return;
 
-        this.clear(); // Stops the loading loop
+        this.clear(); // This clears isLooping
         this.targetElement = element;
         this.isResolving = true;
-        this.isLooping = false;
+        this.isLooping = false; // Explicitly ensure we aren't looping
         
         let iterations = 0;
         element.style.color = "var(--name-color)"; 
@@ -273,9 +270,10 @@ const ScrambleEngine = {
         }, 30);
     },
 
-    // 3. INSTANT SNAP (For manual overrides/pauses)
+    // 3. INSTANT SNAP
     snap: function(element, finalText) {
         this.clear();
+        this.isLooping = false;
         element.innerText = finalText;
         element.style.color = "";
     },
