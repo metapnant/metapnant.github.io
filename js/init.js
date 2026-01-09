@@ -26,7 +26,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-// UI Buttons (Arrows) are now handled by core.js logic injected here
+// UI Buttons
 document.getElementById('next-doc').addEventListener('click', () => { 
     if(!isLoading && currentIndex < library.length - 1) {
         performNavReset();
@@ -63,11 +63,10 @@ const startBufferingCheck = () => {
         bufferDebounceTimer = setTimeout(() => {
             if (currentAudioOpId !== thisOpId) return;
 
-            // Debounce: 200ms
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
-        }, 200); 
+        }, 100); 
     }
 };
 
@@ -94,18 +93,15 @@ audioPlayer.addEventListener('playing', () => {
     isPlaying = true;
     updatePlayBtn();
 
-    // Trigger Reveal: only if we were loading/looping
+    // TRIGGER REVEAL:
+    // Only resolve if we are playing and not waiting for seek
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
-        if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
+        if (!isSeeking && (ScrambleEngine.isLooping || isSwitchingTrack)) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
-        } else {
-            // Instant snap if seek was fast
-            ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
     
     isSwitchingTrack = false;
-    isSeeking = false;
 });
 
 // 3. PAUSE
@@ -126,13 +122,14 @@ audioPlayer.addEventListener('seeked', () => {
     isSeeking = false;
     stopBufferingCheck();
     
-    if (audioPlayer.paused) {
+    if (resumeOnSeek) {
+        resumeOnSeek = false;
+        audioPlayer.play();
+        // 'playing' event will handle text
+    } else if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     } else {
-        // If we are playing and not looping (fast seek), resolve immediately
-        if (!ScrambleEngine.isLooping) {
-             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
-        }
+        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 

@@ -64,7 +64,6 @@
 }
 .cycle-btn.visible { display: flex; pointer-events: auto; }
 
-/* FIX: Hover guard */
 @media (hover: hover) {
     .cycle-btn:hover { opacity: 0.8; background-color: rgba(255,255,255,0.02); }
 }
@@ -119,7 +118,6 @@
     color: #ffffff; box-shadow: 0 0 10px rgba(0, 255, 255, 0.2); opacity: 1; 
 }
 
-/* FIX: Hover guard */
 @media (hover: hover) { 
     #btn-turbo:hover, #btn-mute:hover { color: #fff; border-color: var(--terminal-cyan); } 
     #btn-reset:hover { color: var(--terminal-error); border-color: var(--terminal-error); background-color: rgba(255, 51, 51, 0.05); } 
@@ -174,7 +172,15 @@
     .cycle-btn { white-space: nowrap; flex-shrink: 0; padding: 10px 15px; width: auto; min-height: 44px; }
     .replay-icon { margin-left: 15px; font-size: 1.5em; }
     .controls-wrapper { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--terminal-sidebar); border-top: 1px solid var(--terminal-border); padding: 8px 10px 0 10px !important; margin-top: 0; z-index: 50; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 8px !important; }
-    #btn-turbo, #btn-mute, #btn-reset { min-height: 0 !important; height: 38px !important; padding: 0 !important; font-size: 0.7em !important; display: flex; align-items: center; justify-content: center; }
+    
+    /* FIX: Ensure buttons default to hidden in portrait unless .visible is added */
+    #btn-turbo, #btn-mute, #btn-reset { 
+        min-height: 0 !important; height: 38px !important; padding: 0 !important; 
+        font-size: 0.7em !important; align-items: center; justify-content: center; 
+        display: none; 
+    }
+    #btn-turbo.visible, #btn-mute.visible, #btn-reset.visible { display: flex; }
+    
     #btn-reset { height: 44px !important; font-size: 0.7em !important; }
     .control-row-split { gap: 8px !important; }
     .terminal-container { padding-bottom: 140px; }

@@ -67,10 +67,15 @@ function updateSidebarUI() {
         }
     });
 
+    // FIX: Explicitly remove visible class if conditions aren't met
     if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
         btnReset.classList.add('visible'); 
         btnTurbo.classList.add('visible'); 
         btnMute.classList.add('visible');
+    } else {
+        btnReset.classList.remove('visible'); 
+        btnTurbo.classList.remove('visible'); 
+        btnMute.classList.remove('visible');
     }
 }
 
@@ -258,7 +263,7 @@ function revealPlayer() {
     loadTrack(0, false); 
     // Manual trigger for the title scramble since we aren't "playing" yet
     if (typeof ScrambleEngine !== 'undefined' && domTrackTitle && albumTracks[0]) {
-        ScrambleEngine.resolve(domTrackTitle, albumTracks[0].title);
+        ScrambleEngine.snap(domTrackTitle, albumTracks[0].title);
     }
     setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100); 
 }

@@ -38,17 +38,14 @@ function loadTrack(index, autoPlay = true) {
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 2. Visuals: Force "Loading..." immediately for track switch
+    // 2. Visuals
     ScrambleEngine.startLoading(domTrackTitle);
 
-    // 3. Hardware - Flush
-    audioPlayer.pause();
-    audioPlayer.currentTime = 0;
-    
+    // 3. Hardware
     audioPlayer.src = track.src;
     audioPlayer.load();
 
-    // 4. Update Playlist
+    // 4. Playlist
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -215,17 +212,12 @@ function commitSeek(percent) {
         if (wasPlayingBeforeDrag || !audioPlayer.paused) {
             // PLAYING:
             isSeeking = true;
-            // NOTE: We DO NOT force startLoading here.
-            // We rely on 'seeking' event in init.js to trigger loading ONLY if slow.
+            ScrambleEngine.startLoading(domTrackTitle);
             
-            // Wait 50ms before resuming to flush old audio buffer (iOS fix)
-            setTimeout(() => {
-                requestAnimationFrame(() => {
-                    audioPlayer.currentTime = newTime;
-                    audioPlayer.play();
-                    pendingSeekPercent = null;
-                });
-            }, 50);
+            // Revert to Resume-On-Seek logic (Step before)
+            audioPlayer.currentTime = newTime;
+            resumeOnSeek = true;
+            pendingSeekPercent = null;
         } else {
             // PAUSED:
             pendingSeekPercent = percent;
