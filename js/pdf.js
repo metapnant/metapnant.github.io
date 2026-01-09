@@ -113,46 +113,63 @@ async function renderRestOfPages(pageNum, sessionID) {
     setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 150); 
 }
 
+// Update in js/pdf.js
 async function renderPage(num, sessionID) {
-  try {
-      if (sessionID !== renderSession) return;
-      
-      let docToRender = pdfDoc;
-      let pageIndexToRender = num;
-      
-      if (currentIndex === 0 && num === 8 && appState.musicUnlocked) {
-          if (!lyricsDoc) lyricsDoc = await pdfjsLib.getDocument('lyrics.pdf').promise;
-          docToRender = lyricsDoc; pageIndexToRender = currentTrackIdx + 1;
-      }
-
-      const page = await docToRender.getPage(pageIndexToRender);
-      const wrapper = document.createElement('div');
-      wrapper.className = 'pdf-page-wrapper';
-      wrapper.id = `page-wrapper-${num}`; 
-      const canvas = document.createElement('canvas');
-      canvas.className = 'pdf-page-canvas';
-      wrapper.appendChild(canvas);
-      const ctx = canvas.getContext('2d');
-      const lodScale = getLODScale();
-      const viewport = page.getViewport({ scale: lodScale });
-      canvas.height = Math.floor(viewport.height);
-      canvas.width = Math.floor(viewport.width);
-      const renderContext = { canvasContext: ctx, viewport: viewport };
-      await page.render(renderContext).promise;
-      
-      if (sessionID !== renderSession) return;
-      pdfWrapper.appendChild(wrapper);
-      
-      if (waitingForLyrics) {
-          btnShowVoice.scrollIntoView({ block: 'center', behavior: 'auto' });
-      }
-
-      if (num === pendingScrollPage && !waitingForLyrics) { 
-          setTimeout(() => { smartScrollTo(wrapper); pendingScrollPage = null; }, 50);
-      }
-  } catch (e) { 
-      if (sessionID === renderSession) console.log("Render failed", e); 
-  }
+    try {
+        if (sessionID !== renderSession) return;
+        
+        // SAFETY: Ensure the container has width before rendering.
+        // If the browser is still "reloading", width might be 0.
+        if (pdfWrapper.clientWidth === 0) {
+            await new Promise(r => setTimeout(r, 50));
+            return renderPage(num, sessionID);
+        }
+  
+        let docToRender = pdfDoc;
+        let pageIndexToRender = num;
+        
+        if (currentIndex === 0 && num === 8 && appState.musicUnlocked) {
+            if (!lyricsDoc) lyricsDoc = await pdfjsLib.getDocument('lyrics.pdf').promise;
+            docToRender = lyricsDoc; pageIndexToRender = currentTrackIdx + 1;
+        }
+  
+        const page = await docToRender.getPage(pageIndexToRender);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'pdf-page-wrapper';
+        wrapper.id = `page-wrapper-${num}`; 
+        const canvas = document.createElement('canvas');
+        canvas.className = 'pdf-page-canvas';
+        wrapper.appendChild(canvas);
+        
+        const ctx = canvas.getContext('2d');
+        const lodScale = getLODScale();
+        
+        // FIX: Defensive viewport check
+        const viewport = page.getViewport({ scale: lodScale });
+        if (!viewport || viewport.width === 0) throw new Error("Invalid Viewport");
+  
+        canvas.height = Math.floor(viewport.height);
+        canvas.width = Math.floor(viewport.width);
+        
+        const renderContext = { canvasContext: ctx, viewport: viewport };
+        await page.render(renderContext).promise;
+        
+        if (sessionID !== renderSession) return;
+        pdfWrapper.appendChild(wrapper);
+        
+        // Trigger CSS animation
+        requestAnimationFrame(() => wrapper.classList.add('revealed'));
+  
+        if (num === pendingScrollPage && !waitingForLyrics) { 
+            setTimeout(() => { smartScrollTo(wrapper); pendingScrollPage = null; }, 50);
+        }
+    } catch (e) { 
+        console.warn("Render Page Error (Retrying...):", e);
+        // If it fails because of a blank viewport, try one more time
+        if (sessionID === renderSession) {
+            setTimeout(() => renderPage(num, sessionID), 100);
+        }
+    }
 }
 
 async function refreshDynamicPage() {

@@ -164,7 +164,7 @@ const startDrag = (e) => {
     if (e.cancelable) e.preventDefault(); 
     
     // 2. Remember state before drag
-    wasPlayingBeforeDrag = isPlaying || !audioPlayer.paused;
+    wasPlayingBeforeDrag = isPlaying;
     
     // 3. Pause hardware immediately to stop event collisions
     audioPlayer.pause(); 

@@ -256,7 +256,20 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowRight') { if (e.shiftKey) { e.preventDefault(); nextTrack(false); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime += 5; } } 
     if (e.code === 'ArrowLeft') { if (e.shiftKey) { e.preventDefault(); prevTrack(); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; } } 
 });
-
+// Update at the bottom of js/init.js
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById("currentYear").textContent = new Date().getFullYear();
+    if (typeof initTerminalState === 'function') initTerminalState();
+    
+    initPlaylist(); 
+    loadTrack(0, false); 
+    
+    // Safety delay for PDF rendering to allow CSS to settle
+    setTimeout(() => { 
+        loadDocument(0); 
+        ScrambleEngine.snap(domTrackTitle, albumTracks[0].title); 
+    }, 150); 
+});
 const interfaceSelectors = ['.close-terminal', '.cycle-btn', '.tools-toggle', '.tool-btn', '.ctrl-btn', '.voice-btn', '.playlist-item', '.secret-link', '#song-link', '.nav-arrow'];
 interfaceSelectors.forEach(s => addTactileListener(s));
 
