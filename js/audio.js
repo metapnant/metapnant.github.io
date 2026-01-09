@@ -19,9 +19,10 @@ function initPlaylist() {
 function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
-    // 1. STATE RESET
-    ScrambleEngine.reset();
+    // 1. Reset UI
+    ScrambleEngine.clear(); // Stop any previous animation
     isDragging = false;
+    wasPlayingBeforeDrag = false;
     
     domProgressBar.style.setProperty('--progress', '0%');
     if (index !== currentTrackIdx) {
@@ -32,14 +33,14 @@ function loadTrack(index, autoPlay = true) {
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 2. Visuals
+    // 2. Force Loading Text Immediately
     ScrambleEngine.startLoading(domTrackTitle);
 
-    // 3. Audio
+    // 3. Hardware
     audioPlayer.src = track.src;
     audioPlayer.load();
 
-    // 4. UI
+    // 4. Update Playlist
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -58,6 +59,7 @@ function loadTrack(index, autoPlay = true) {
         updatePlayBtn();
         audioPlayer.play().catch(e => {
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
+            // Revert state
             ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
             updatePlayBtn();
@@ -112,79 +114,89 @@ function nextTrack(auto = false) {
 }
 function prevTrack() { let prevIdx = currentTrackIdx - 1; if (prevIdx < 0) prevIdx = albumTracks.length - 1; playTrack(prevIdx); }
 
-// --- SCRUBBER MATH & LOGIC (Restored) ---
-
 function updateScrubVisual(percent) {
     domProgressBar.style.setProperty('--progress', `${percent}%`);
-    if (audioPlayer.duration && !isNaN(audioPlayer.duration)) {
-        const time = (percent / 100) * audioPlayer.duration;
-        domCurrentTime.textContent = formatTime(time);
-    }
+    if (audioPlayer.duration && !isNaN(audioPlayer.duration)) domCurrentTime.textContent = formatTime((percent / 100) * audioPlayer.duration);
 }
 
 function getScrubPercent(e) {
-    const width = progressArea.clientWidth; 
-    // Handle Touch vs Mouse events
-    const clientX = e.type.includes('touch') ? (e.touches[0] || e.changedTouches[0]).clientX : e.clientX;
+    const width = progressArea.clientWidth; const clientEvent = e.type.includes('touch') ? (e.touches[0] || e.changedTouches[0]) : e;
     const rect = progressArea.getBoundingClientRect();
-    return Math.max(0, Math.min(100, ((clientX - rect.left) / width) * 100));
+    return Math.max(0, Math.min(100, ((clientEvent.clientX - rect.left) / width) * 100));
 }
 
 // --- DRAG HANDLERS ---
 
 const startDrag = (e) => {
-    isDragging = true;
-    
-    // Pause immediately to prevent ghosting
+    // 1. Pause immediately to stop buffer drain
     if (isPlaying) {
-        audioPlayer.pause();
+        wasPlayingBeforeDrag = true;
+        audioPlayer.pause(); 
+    } else {
+        wasPlayingBeforeDrag = false;
     }
     
+    isDragging = true;
+    
+    // 2. Lock UI
     domProgressBar.classList.add('dragging');
     updateScrubVisual(getScrubPercent(e));
 };
 
-const doDrag = (e) => {
-    if (!isDragging) return;
-    if (e.cancelable) e.preventDefault(); // Stop scrolling on mobile
-    updateScrubVisual(getScrubPercent(e));
+const startDragMouse = (e) => { if (isTouch || e.button !== 0) return; startDrag(e); };
+const startDragTouch = (e) => { 
+    isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isScrolling = false; 
+    startDrag(e);
 };
 
-const endDrag = (e) => {
-    if (isDragging) {
-        const percent = getScrubPercent(e);
-        commitSeek(percent);
-        isDragging = false;
-        domProgressBar.classList.remove('dragging');
-    }
+const doDragMouse = (e) => { if (!isDragging) return; e.preventDefault(); updateScrubVisual(getScrubPercent(e)); };
+const doDragTouch = (e) => {
+    if (isDragging) { if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); return; }
 };
 
-// --- COMMIT SEEK ---
+const endDragMouse = (e) => { if (isDragging) { commitSeek(getScrubPercent(e)); isDragging = false; domProgressBar.classList.remove('dragging'); } };
+const endDragTouch = (e) => { 
+    if (isDragging) { 
+        let percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
+        if (isNaN(percent)) percent = 0;
+        commitSeek(percent); 
+        isDragging = false; 
+        domProgressBar.classList.remove('dragging'); 
+    } 
+    setTimeout(() => { isTouch = false; }, 500); 
+};
+
+if (progressArea) {
+    progressArea.addEventListener('mousedown', startDragMouse); 
+    document.addEventListener('mousemove', doDragMouse); 
+    document.addEventListener('mouseup', endDragMouse);
+    progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); 
+    progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); 
+    progressArea.addEventListener('touchend', endDragTouch);
+}
 
 function commitSeek(percent) {
+    // Clear any pending debounce checks from init.js
+    if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
+        clearTimeout(bufferDebounceTimer); 
+        bufferDebounceTimer = null;
+    }
+
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
         
-        // 1. Update Hardware
+        // 1. Force hardware update immediately
         audioPlayer.currentTime = newTime;
         
-        // 2. Resume if we were playing (UI flag)
-        if (isPlaying) {
-            audioPlayer.play().catch(e => console.log(e));
+        // 2. Resume playing if needed
+        if (wasPlayingBeforeDrag) {
+            isPlaying = true;
+            updatePlayBtn();
+            audioPlayer.play();
+        } else {
+            // Keep paused
+            isPlaying = false;
+            updatePlayBtn();
         }
     }
-}
-
-// --- EVENT BINDING ---
-// We bind these here to ensure they exist when the file loads
-if (progressArea) {
-    // Mouse
-    progressArea.addEventListener('mousedown', (e) => { if(e.button===0) startDrag(e); });
-    document.addEventListener('mousemove', (e) => { if(isDragging) doDrag(e); });
-    document.addEventListener('mouseup', (e) => { if(isDragging) endDrag(e); });
-    
-    // Touch
-    progressArea.addEventListener('touchstart', (e) => { startDrag(e); }, { passive: false });
-    progressArea.addEventListener('touchmove', (e) => { doDrag(e); }, { passive: false });
-    progressArea.addEventListener('touchend', (e) => { endDrag(e); });
 }

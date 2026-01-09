@@ -52,46 +52,66 @@ if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggl
 
 // Note: Drag events are bound in audio.js
 
-// --- AUDIO EVENT HANDLING ---
+// --- AUDIO EVENT HANDLING (The State Watchdog) ---
 
-// 1. STATE: LOADING
-audioPlayer.addEventListener('waiting', () => {
-    if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
-});
+const startBufferingCheck = () => {
+    if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
+    
+    // Only scramble if we INTEND to play
+    if (isPlaying) {
+        bufferDebounceTimer = setTimeout(() => {
+            // Check hardware state: Are we actually stuck?
+            if (audioPlayer.seeking || audioPlayer.readyState < 3) {
+                ScrambleEngine.startLoading(domTrackTitle);
+            }
+        }, 200); // 200ms grace period for fast seeks
+    }
+};
 
-audioPlayer.addEventListener('stalled', () => {
-    if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
-});
+const stopBufferingCheck = () => {
+    if (bufferDebounceTimer) {
+        clearTimeout(bufferDebounceTimer);
+        bufferDebounceTimer = null;
+    }
+};
 
-audioPlayer.addEventListener('loadstart', () => {
-    if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
-});
+// 1. BUFFERING EVENTS
+audioPlayer.addEventListener('seeking', startBufferingCheck);
+audioPlayer.addEventListener('waiting', startBufferingCheck);
+audioPlayer.addEventListener('stalled', startBufferingCheck);
 
-// 2. STATE: PLAYING
+// 2. SUCCESS EVENTS (Kill buffering, show title)
 audioPlayer.addEventListener('playing', () => {
+    stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
-    // We don't resolve here. We wait for timeupdate.
-});
-
-// 3. STATE: PAUSED
-audioPlayer.addEventListener('pause', () => {
-    // If user is dragging, ignore this pause (it's just us preventing ghost audio)
-    if (isDragging) return;
-
-    isPlaying = false;
-    updatePlayBtn();
     
+    // Force Resolve
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
-        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 4. STATE: MOVING (The Resolution)
-audioPlayer.addEventListener('timeupdate', () => { 
-    // If the time is moving, we are successful.
-    if (!audioPlayer.paused && ScrambleEngine.isLooping) {
+// 3. SEEKED (Seek done)
+audioPlayer.addEventListener('seeked', () => {
+    stopBufferingCheck();
+    
+    // If audio is paused after seek, we must snap text
+    if (audioPlayer.paused) {
+        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+    } else {
         ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+    }
+});
+
+// 4. TIMEUPDATE (The Ultimate Truth)
+audioPlayer.addEventListener('timeupdate', () => { 
+    // If time is moving, we are alive. Kill any loading state.
+    if (!audioPlayer.paused && !audioPlayer.seeking) {
+        // If still showing loading glyphs, force update immediately
+        if (domTrackTitle.innerText.includes("∞") || domTrackTitle.innerText.includes("LOADING")) {
+             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        }
     }
 
     if (!isDragging && audioPlayer.duration) { 
@@ -99,6 +119,18 @@ audioPlayer.addEventListener('timeupdate', () => {
         domProgressBar.style.setProperty('--progress', `${p}%`); 
         domCurrentTime.textContent = formatTime(audioPlayer.currentTime); 
         domDuration.textContent = formatTime(audioPlayer.duration); 
+    }
+});
+
+// 5. PAUSE
+audioPlayer.addEventListener('pause', () => {
+    stopBufferingCheck();
+    isPlaying = false;
+    updatePlayBtn();
+    
+    // Snap to static
+    if (domTrackTitle && albumTracks[currentTrackIdx]) {
+        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 

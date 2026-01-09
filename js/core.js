@@ -30,7 +30,13 @@ const iconLoopOne = document.getElementById('icon-loop-one');
 const infinityBtn = document.getElementById('infinity-symbol');
 const secretOverlay = document.getElementById('secret-overlay');
 const terminalContainer = document.getElementById('terminal-content');
-const containers = { crash: document.getElementById('log-crash'), echo: document.getElementById('log-echo'), wake: document.getElementById('log-wake'), bloom: document.getElementById('log-bloom'), gardener: document.getElementById('log-gardener') };
+const containers = { 
+    crash: document.getElementById('log-crash'), 
+    echo: document.getElementById('log-echo'), 
+    wake: document.getElementById('log-wake'), 
+    bloom: document.getElementById('log-bloom'), 
+    gardener: document.getElementById('log-gardener') 
+};
 const btnCycle00 = document.getElementById('btn-cycle-00');
 const btnCycleEcho = document.getElementById('btn-cycle-echo');
 const btnCycle01 = document.getElementById('btn-cycle-01');
@@ -40,7 +46,7 @@ const btnReset = document.getElementById('btn-reset');
 const btnTurbo = document.getElementById('btn-turbo');
 const btnMute = document.getElementById('btn-mute');
 
-// -- STATE --
+// -- PDF STATE --
 let currentIndex = 0;
 let pdfDoc = null;
 let lyricsDoc = null;
@@ -50,13 +56,27 @@ let pendingScrollPage = null;
 let waitingForLyrics = false;
 let resizeTimer = null;
 
-// -- AUDIO STATE --
+// -- MOBILE DETECTION --
+const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+let lastOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+let lastWidth = window.innerWidth;
+
+// -- MUSIC STATE --
 const audioPlayer = new Audio();
 let currentTrackIdx = 0;
 let isPlaying = false;
 let isDragging = false;
 let loopMode = 0;
+let touchStartX = 0;
+let touchStartY = 0;
+let holdTimer = null;
+let isTouch = false;
+let isScrolling = false;
+let wasPlayingBeforeDrag = false; 
+
+// -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
+let bufferDebounceTimer = null; 
 let scrollAnimationId = null;
 
 // -- TERMINAL STATE --
@@ -74,9 +94,60 @@ function loadState() { const saved = localStorage.getItem('metapnant_state'); re
 let appState = loadState();
 let logState = { crash: { index: 0, finished: false }, echo: { index: 0, finished: false }, wake: { index: 0, finished: false }, bloom: { index: 0, finished: false }, gardener: { index: 0, finished: false } };
 
-const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+// -- SOUND ENGINE --
+const SimpleSynth = {
+    ctx: null, unlocked: false,
+    init: function () { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+    unlock: function () {
+        this.init();
+        if (this.unlocked || !this.ctx) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume().then(() => { this.unlocked = true; });
+        try {
+            const buffer = this.ctx.createBuffer(1, 1, 22050);
+            const source = this.ctx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(this.ctx.destination);
+            if (source.start) source.start(0); else if (source.noteOn) source.noteOn(0);
+            this.unlocked = true;
+        } catch (e) { console.error(e); }
+    },
+    playTone: function (cssClass) {
+        if (isMuted) return;
+        if (!this.ctx) this.init();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        if (cssClass.includes('operator-text')) { osc.type = 'triangle'; osc.frequency.setValueAtTime(500, t); osc.frequency.linearRampToValueAtTime(450, t + 0.08); gain.gain.setValueAtTime(0.04, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08); }
+        else if (cssClass.includes('alert-text')) { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); gain.gain.setValueAtTime(0.06, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1); }
+        else if (cssClass.includes('comment-text')) { osc.type = 'sine'; osc.frequency.setValueAtTime(3000, t); gain.gain.setValueAtTime(0.015, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01); }
+        else if (cssClass.includes('golden-text') || cssClass.includes('white-text') || cssClass.includes('magenta-text')) { osc.type = 'sine'; osc.frequency.setValueAtTime(880, t); gain.gain.setValueAtTime(0.08, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); }
+        else if (cssClass.includes('system-success')) { osc.type = 'square'; osc.frequency.setValueAtTime(1200, t); osc.frequency.linearRampToValueAtTime(2000, t + 0.05); gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05); }
+        else { osc.type = 'square'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(100, t + 0.04); gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04); }
+        osc.start(); osc.stop(t + 0.2);
+    },
+    playUnlock: function () {
+        if (isMuted) return;
+        if (!this.ctx) this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(200, this.ctx.currentTime); osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.3); gain.gain.setValueAtTime(0.05, this.ctx.currentTime); gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3); osc.start(); osc.stop(this.ctx.currentTime + 0.3);
+    }
+};
 
-// -- HELPERS --
+function unlockAudioEngine() {
+    SimpleSynth.unlock();
+    if (SimpleSynth.ctx && SimpleSynth.ctx.state === 'running') {
+        document.removeEventListener('click', unlockAudioEngine);
+        document.removeEventListener('keydown', unlockAudioEngine);
+        document.removeEventListener('touchstart', unlockAudioEngine);
+        document.removeEventListener('touchend', unlockAudioEngine);
+    }
+}
+
+// -- SHARED HELPERS --
 function formatTime(s) { if (isNaN(s) || s === Infinity) return "0:00"; const m = Math.floor(s / 60); const ss = Math.floor(s % 60); return `${m}:${ss < 10 ? '0' : ''}${ss}`; }
 
 function updateInfinityState() {
@@ -103,14 +174,6 @@ function performNavReset() {
         btnShowVoice.innerText = "SHOW VOICE";
         btnShowVoice.style.color = "";
     }
-}
-
-function smartScrollTo(element) {
-    if (!element) return;
-    const headerOffset = 80;
-    const elementPosition = element.getBoundingClientRect().top;
-    const offsetPosition = elementPosition + window.scrollY - headerOffset;
-    window.scrollTo({ top: offsetPosition, behavior: "auto" });
 }
 
 function jitterScrollTo(element) {
@@ -143,6 +206,14 @@ function jitterScrollTo(element) {
     scrollAnimationId = requestAnimationFrame(animation);
 }
 
+function smartScrollTo(element) {
+    if (!element) return;
+    const headerOffset = 80;
+    const elementPosition = element.getBoundingClientRect().top;
+    const offsetPosition = elementPosition + window.scrollY - headerOffset;
+    window.scrollTo({ top: offsetPosition, behavior: "auto" });
+}
+
 function getVisiblePageNumber() {
     const pages = document.querySelectorAll('.pdf-page-wrapper');
     if (!pages.length) return 1;
@@ -163,26 +234,23 @@ function getVisiblePageNumber() {
     return bestPageNum;
 }
 
-// -- SCRAMBLE ENGINE --
+// ==========================================
+// SCRAMBLE ENGINE
+// ==========================================
+
 const ScrambleEngine = {
     interval: null,
     targetElement: null,
-    isResolving: false,
-    
-    // Tracks if we are showing the Alien loop
-    isLooping: false,
+    // Note: Removed complex state flags (isResolving, etc.) to simplify behavior.
+    // The "Source of Truth" is now what we tell it to do.
 
     loadingGlyphs: "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝",
     revealGlyphs: "!<>-_\\/[]{}—=+*^?#________",
 
-    // Start Alien Loop
+    // Mode 1: Infinite Alien Loop
     startLoading: function(element) {
-        if (this.targetElement === element && this.isLooping && !this.isResolving) return;
-        this.reset();
+        this.clear(); // Kill any existing animation on this element
         this.targetElement = element;
-        this.isLooping = true;
-        this.isResolving = false;
-        
         element.style.color = "var(--name-color)";
         
         const update = () => {
@@ -193,22 +261,17 @@ const ScrambleEngine = {
             }
             element.innerText = text;
         };
-        update();
+        update(); // Instant paint
         this.interval = setInterval(update, 60);
     },
 
-    // Transition to Text
+    // Mode 2: Matrix Decode to Title
     resolve: function(element, finalText) {
-        // If already correct, stop
-        if (!this.isLooping && element.innerText === finalText) {
-             this.snap(element, finalText);
-             return;
-        }
+        // If we are already displaying the correct text and not animating, abort.
+        if (!this.interval && element.innerText === finalText) return;
 
-        this.reset();
+        this.clear(); // Stop alien loop immediately
         this.targetElement = element;
-        this.isResolving = true;
-        this.isLooping = false;
         
         let iterations = 0;
         element.style.color = "var(--name-color)"; 
@@ -226,28 +289,29 @@ const ScrambleEngine = {
         }, 30);
     },
 
-    // Immediate
+    // Mode 3: Instant Text (No Animation)
     snap: function(element, finalText) {
-        this.reset();
-        element.innerText = finalText;
-        element.style.color = "";
+        this.clear();
+        if(element) {
+            element.innerText = finalText;
+            element.style.color = "";
+        }
     },
 
-    reset: function() {
-        if (this.interval) clearInterval(this.interval);
-        this.interval = null;
-        this.isResolving = false;
-        this.isLooping = false;
+    clear: function() {
+        if (this.interval) {
+            clearInterval(this.interval);
+            this.interval = null;
+        }
         this.targetElement = null;
-    },
-    clear: function() { this.reset(); }
+    }
 };
 
-// Legacy
+// Legacy support for "Show Voice" button
 function startLoadingScramble(element) {
     if (element === btnShowVoice) { if (voiceScrambleInterval) clearInterval(voiceScrambleInterval); }
     const glyphs = "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝!<>-_\\/[]{}—=+*^?#";
-    const timer = setInterval(() => {
+    const update = () => {
         let text = "";
         for (let i = 0; i < 12; i++) {
             if (i < 7 && Math.random() > 0.8) text += "LOADING"[i] || "";
@@ -255,7 +319,9 @@ function startLoadingScramble(element) {
         }
         element.innerText = text;
         element.style.color = "var(--name-color)";
-    }, 60);
+    };
+    update();
+    const timer = setInterval(update, 60);
     if (element === btnShowVoice) voiceScrambleInterval = timer;
 }
 
@@ -279,7 +345,3 @@ function resolveLoadingScramble(element, finalText) {
         ScrambleEngine.resolve(element, finalText);
     }
 }
-
-// Sound
-const SimpleSynthObj = SimpleSynth; // Alias if needed
-function unlockAudioEngine() { SimpleSynth.unlock(); }
