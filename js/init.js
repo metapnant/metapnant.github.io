@@ -18,15 +18,20 @@ window.addEventListener('resize', () => {
         if (Math.abs(window.innerWidth - lastWidth) < 100) return;
         lastWidth = window.innerWidth;
     }
+    
+    // FIX: REMOVED loadDocument CALL
+    // We no longer reload the PDF on orientation change/resize.
+    // The CSS handles the layout reflow automatically.
     if (!isLoading && pdfDoc) {
         if (resizeTimer) clearTimeout(resizeTimer);
+        // We just update the pending scroll variable, but don't reload
         const visiblePage = getVisiblePageNumber();
         pendingScrollPage = visiblePage; 
-        resizeTimer = setTimeout(() => { loadDocument(currentIndex); }, 300);
     }
 });
 
 // UI Buttons
+// Note: performNavReset is defined in core.js now.
 document.getElementById('next-doc').addEventListener('click', () => { 
     if(!isLoading && currentIndex < library.length - 1) {
         performNavReset();
@@ -62,6 +67,7 @@ const startBufferingCheck = () => {
     if (isPlaying && !audioPlayer.paused) {
         bufferDebounceTimer = setTimeout(() => {
             if (currentAudioOpId !== thisOpId) return;
+
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
@@ -76,9 +82,10 @@ const stopBufferingCheck = () => {
     }
 };
 
-// 0. LOADSTART / PROGRESS
-audioPlayer.addEventListener('loadstart', () => { if (isPlaying) ScrambleEngine.startLoading(domTrackTitle); });
-audioPlayer.addEventListener('progress', updateBufferVisuals);
+// 0. LOADSTART
+audioPlayer.addEventListener('loadstart', () => {
+    if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
+});
 
 // 1. SEEKING / WAITING / STALLED
 audioPlayer.addEventListener('seeking', startBufferingCheck);
@@ -90,7 +97,7 @@ audioPlayer.addEventListener('playing', () => {
     stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
-    
+
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
@@ -98,6 +105,7 @@ audioPlayer.addEventListener('playing', () => {
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
+    
     isSwitchingTrack = false;
     isSeeking = false;
 });
@@ -135,10 +143,12 @@ audioPlayer.addEventListener('timeupdate', () => {
     if (!audioPlayer.paused) {
         if (isSeeking) isSeeking = false;
         if (isSwitchingTrack) isSwitchingTrack = false;
+        
         if (ScrambleEngine.isLooping) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
+
     updateBufferVisuals();
 
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
@@ -176,11 +186,13 @@ if (btnShowVoice) {
     btnShowVoice.addEventListener('click', (e) => { 
         e.preventDefault(); 
         
+        // FIX: Instant Visual Flash
         btnShowVoice.classList.add('active-state');
         setTimeout(() => btnShowVoice.classList.remove('active-state'), 150);
 
         if (isLoading) return; 
         
+        // Slight delay to allow UI to paint the active state before heavy work
         setTimeout(() => {
             btnShowVoice.scrollIntoView({ behavior: 'smooth', block: 'center' });
             if (currentIndex !== 0) {
@@ -197,9 +209,19 @@ if (btnShowVoice) {
 // Secret / Terminal Trigger
 infinityBtn.addEventListener('click', (e) => { 
     e.preventDefault(); SimpleSynth.unlock(); 
+    
+    // FIX: Instant Visual Flash (White)
+    if (appState.musicUnlocked || currentIndex === 2) {
+        infinityBtn.classList.add('active-state');
+        setTimeout(() => infinityBtn.classList.remove('active-state'), 150);
+    }
+
     if (appState.terminalFound) { launchTerminal(); return; } 
     if (currentIndex !== 2) return; 
-    secretClicks++; infinityBtn.style.color = "#ff00ff"; setTimeout(() => infinityBtn.style.color = "", 200); 
+    
+    secretClicks++; 
+    infinityBtn.style.color = "#ff00ff"; 
+    setTimeout(() => infinityBtn.style.color = "", 200); 
     if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; updateInfinityState(); launchTerminal(); } 
 });
 
