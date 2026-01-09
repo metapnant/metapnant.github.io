@@ -13,24 +13,31 @@ function initPlaylist() {
         li.onclick = () => playTrack(index);
         playlistList.appendChild(li);
     });
+    // Add listeners to new items
+    if (typeof addTactileListener === 'function') addTactileListener('.playlist-item');
 }
 
 function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
-    // 1. Reset UI & Lock State
-    isSwitchingTrack = true; 
+    // 1. Reset UI
     domProgressBar.style.setProperty('--progress', '0%');
-    domCurrentTime.textContent = "0:00"; 
-    domDuration.textContent = "0:00";
+    if (index !== currentTrackIdx) {
+        domCurrentTime.textContent = "0:00"; 
+        domDuration.textContent = "0:00";
+    }
+    
+    pendingSeekPercent = null;
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 2. Force Loading Scramble on Track Switch
-    // This is the desired behavior: New Song = "Loading..." state first
+    // 2. Track Change Logic
+    isSwitchingTrack = true; // Marks this as a track change, forcing an animation cycle in init.js
+    
+    // Always start loading animation for track change (Instant Feedback)
     ScrambleEngine.startLoading(domTrackTitle);
 
-    // 3. Update Audio
+    // 3. Hardware
     audioPlayer.src = track.src;
     audioPlayer.load();
 
@@ -43,34 +50,28 @@ function loadTrack(index, autoPlay = true) {
         } else item.classList.remove('active-track');
     });
 
-    // 5. Dynamic Page
     if (appState.musicUnlocked && currentIndex === 0 && typeof refreshDynamicPage === 'function') {
         refreshDynamicPage();
     }
 
-    // 6. Autoplay
+    // 5. Autoplay
     if (autoPlay) {
-        const playPromise = audioPlayer.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(error => { 
-                if (error.name !== 'AbortError') {
-                    isSwitchingTrack = false;
-                    isPlaying = false; 
-                    updatePlayBtn();
-                    ScrambleEngine.resolve(domTrackTitle, track.title);
-                }
-            });
-        }
+        audioPlayer.play().catch(e => {
+            if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
+            // If blocked, snap text immediately
+            ScrambleEngine.snap(domTrackTitle, track.title);
+            isPlaying = false;
+            updatePlayBtn();
+        });
     } else {
-        ScrambleEngine.resolve(domTrackTitle, track.title);
+        // Initial load without play
+        ScrambleEngine.snap(domTrackTitle, track.title);
         isSwitchingTrack = false;
     }
 }
 
 function playTrack(index) { 
     loadTrack(index, true); 
-    isPlaying = true;
-    updatePlayBtn();
 }
 
 function togglePlay() {
@@ -83,15 +84,21 @@ function togglePlay() {
         audioPlayer.pause(); 
         isPlaying = false;
         updatePlayBtn();
-        ScrambleEngine.clear();
-        if (albumTracks[currentTrackIdx]) {
-            domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
-            domTrackTitle.style.color = "";
-        }
+        
+        // Manual Pause: Snap text to static immediately
+        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
     else { 
         isPlaying = true;
         updatePlayBtn();
+
+        // iOS Cold Seek Apply
+        if (pendingSeekPercent !== null && audioPlayer.duration) {
+            const seekTime = (pendingSeekPercent / 100) * audioPlayer.duration;
+            audioPlayer.currentTime = seekTime;
+            pendingSeekPercent = null;
+        }
+
         audioPlayer.play();
     }
 }
@@ -136,30 +143,31 @@ const startDragMouse = (e) => { if (isTouch || e.button !== 0) return; isDraggin
 const doDragMouse = (e) => { if (!isDragging) return; e.preventDefault(); updateScrubVisual(getScrubPercent(e)); };
 const endDragMouse = (e) => { if (isDragging) { commitSeek(getScrubPercent(e)); isDragging = false; domProgressBar.classList.remove('dragging'); } };
 const startDragTouch = (e) => { 
-    isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isDragging = false; isScrolling = false; 
-    holdTimer = setTimeout(() => { 
-        if (!isScrolling) { isDragging = true; domProgressBar.classList.add('dragging'); updateScrubVisual(getScrubPercent(e)); } 
-    }, 200); 
+    isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isScrolling = false; 
+    isDragging = true; 
+    domProgressBar.classList.add('dragging'); 
+    updateScrubVisual(getScrubPercent(e));
 };
 const doDragTouch = (e) => {
     if (isDragging) { if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); return; }
-    if (isScrolling) return; 
-    const dx = Math.abs(e.touches[0].clientX - touchStartX); const dy = Math.abs(e.touches[0].clientY - touchStartY);
-    if (dx > 5 || dy > 5) { 
-        if (holdTimer) clearTimeout(holdTimer); 
-        if (dx > dy) { isDragging = true; domProgressBar.classList.add('dragging'); if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); } 
-        else isScrolling = true; 
-    }
 };
 const endDragTouch = (e) => { 
-    if (holdTimer) clearTimeout(holdTimer); 
-    if (isDragging) { commitSeek(parseFloat(domProgressBar.style.getPropertyValue('--progress'))); isDragging = false; domProgressBar.classList.remove('dragging'); } 
+    if (isDragging) { 
+        let percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
+        if (isNaN(percent)) percent = 0;
+        commitSeek(percent); 
+        isDragging = false; 
+        domProgressBar.classList.remove('dragging'); 
+    } 
     setTimeout(() => { isTouch = false; }, 500); 
 };
 
 function commitSeek(percent) {
-    // Clear debounce timer to prevent "Loading" flash on quick seek
-    if (typeof bufferingTimer !== 'undefined' && bufferingTimer) clearTimeout(bufferingTimer);
+    // Clear debounce timer to ensure seek is responsive
+    if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
+        clearTimeout(bufferDebounceTimer); 
+        bufferDebounceTimer = null;
+    }
 
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
@@ -167,18 +175,15 @@ function commitSeek(percent) {
         domCurrentTime.textContent = formatTime(newTime);
 
         if (!audioPlayer.paused) {
-            // FIX: Removed forced startLoading here.
-            // We now rely purely on the 'waiting' event in init.js
-            // to trigger the loading animation if the network hangs.
+            // PLAYING: Safe to set currentTime.
+            // NO ANIMATION TRIGGER HERE. We let init.js handle 'waiting' vs instant 'playing'.
             audioPlayer.currentTime = newTime;
-            pendingSeekPercent = null;
         } else {
-            // Cold seek
+            // PAUSED: Safe Cold Seek.
+            // Store value, do not apply to hardware yet.
             pendingSeekPercent = percent;
-            isSwitchingTrack = false;
-            ScrambleEngine.clear(); 
+            // FORCE STATIC TEXT. No animations when scrubbing while paused.
+            ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
-    } else {
-        pendingSeekPercent = percent;
     }
 }

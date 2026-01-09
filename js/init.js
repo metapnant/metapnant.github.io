@@ -47,39 +47,39 @@ progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
 progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); 
 progressArea.addEventListener('touchend', endDragTouch);
 
-// --- AUDIO EVENT DEBOUNCING ---
-// This ensures we only scramble if the network is actually slow/buffering
-let bufferingTimer = null;
+// --- AUDIO EVENT HANDLING (Precision Logic) ---
 
-// 1. PLAYING (The Green Light)
+// 1. PLAYING
 audioPlayer.addEventListener('playing', () => {
-    // Clear any pending "Loading..." scramble check
-    if (bufferingTimer) clearTimeout(bufferingTimer);
+    // Stop the debounce timer immediately
+    if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
 
     isPlaying = true;
     updatePlayBtn();
 
-    // TRIGGER THE REVEAL
-    // This happens when:
-    // a) A new track finishes loading
-    // b) A slow seek finishes
-    // c) Initial playback starts
+    // TRIGGER REVEAL LOGIC:
+    // Only animate if we were currently "Loading" (Alien Loop) OR we just Switched Tracks.
+    // If we were just paused or scrubbing fast (scramble engine idle), do NOT animate.
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
-        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        if (ScrambleEngine.isLooping || isSwitchingTrack) {
+            ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        } else {
+            // Just ensure text is correct without animation
+            ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+        }
     }
     
     isSwitchingTrack = false;
 });
 
-// 2. WAITING (The Buffer / Seek)
+// 2. WAITING (Buffering)
 audioPlayer.addEventListener('waiting', () => {
-    if (bufferingTimer) clearTimeout(bufferingTimer);
+    if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
 
-    // DEBOUNCE: Only show "LOADING" scramble if we wait more than 150ms.
-    // This makes instant seeks feel instant (no text flash), 
-    // but slow connections get the cool effect.
-    bufferingTimer = setTimeout(() => {
-        if (isPlaying) {
+    // DEBOUNCE: 150ms Rule
+    // Only switch to Alien Glyphs if we hang for > 150ms.
+    bufferDebounceTimer = setTimeout(() => {
+        if (isPlaying && !audioPlayer.paused) {
             ScrambleEngine.startLoading(domTrackTitle);
         }
     }, 150); 
@@ -87,38 +87,45 @@ audioPlayer.addEventListener('waiting', () => {
 
 // 3. PAUSE
 audioPlayer.addEventListener('pause', () => {
-    if (bufferingTimer) clearTimeout(bufferingTimer);
+    if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
     
-    // If we pause manually, stop any active scrambles immediately
-    // and show the clean title.
-    if (!isSwitchingTrack) {
-        isPlaying = false;
-        updatePlayBtn();
-        ScrambleEngine.clear();
-        if (albumTracks[currentTrackIdx]) {
-            domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
-            domTrackTitle.style.color = "";
-        }
+    isPlaying = false;
+    updatePlayBtn();
+    
+    // Snap to static text immediately on pause
+    if (domTrackTitle && albumTracks[currentTrackIdx]) {
+        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 4. SEEKED (Seek Complete)
+// 4. SEEKED
 audioPlayer.addEventListener('seeked', () => {
-    // If seek finished very fast (before 150ms timer), cancel the timer.
-    // The text will effectively never have changed, creating a solid feel.
-    if (bufferingTimer) clearTimeout(bufferingTimer);
+    // If seek happened faster than 150ms, cancel the loading trigger.
+    if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
+    
+    if (audioPlayer.paused) {
+        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+    }
 });
 
-// 5. ENDED
+// 5. TIMEUPDATE
+audioPlayer.addEventListener('timeupdate', () => { 
+    if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
+        const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
+        domProgressBar.style.setProperty('--progress', `${p}%`); 
+        domCurrentTime.textContent = formatTime(audioPlayer.currentTime); 
+        domDuration.textContent = formatTime(audioPlayer.duration); 
+    }
+});
+
 audioPlayer.addEventListener('ended', () => { 
     ScrambleEngine.clear();
     nextTrack(true); 
 });
 
-// 6. METADATA
 audioPlayer.addEventListener('loadedmetadata', () => { 
     domDuration.textContent = formatTime(audioPlayer.duration); 
-    // Handle cold start scrub restoration
+    // Cold seek recovery
     if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) { 
         audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; 
         domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); 
@@ -191,11 +198,9 @@ const interfaceSelectors = ['.close-terminal', '.cycle-btn', '.tools-toggle', '.
 interfaceSelectors.forEach(s => addTactileListener(s));
 
 // --- BOOT SEQUENCE ---
-// Set current year
 document.getElementById("currentYear").textContent = new Date().getFullYear();
-
 initTerminalState(); 
 loadDocument(0); 
 initPlaylist(); 
 loadTrack(0, false); 
-setTimeout(() => { ScrambleEngine.resolve(domTrackTitle, albumTracks[0].title); }, 500);
+setTimeout(() => { ScrambleEngine.snap(domTrackTitle, albumTracks[0].title); }, 500);

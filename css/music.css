@@ -5,7 +5,7 @@
     margin: 40px auto 20px auto; 
     animation: fadeIn 2s ease forwards; 
     position: relative; 
-    z-index: 2100; /* Lower than nav arrows */
+    z-index: 2100; 
 }
 
 .music-container { 
@@ -164,7 +164,7 @@
     justify-content: flex-start;
     gap: 20px;
     width: 100%;
-    flex-wrap: wrap; /* Allows wrapping at high zoom */
+    flex-wrap: wrap; 
 }
 
 .ctrl-btn { 
@@ -225,7 +225,8 @@
 .playlist-container { 
     position: relative;
     width: 100%;
-    max-height: 220px;
+    /* FIX: Set to 210px to show exactly 5 items reliably */
+    height: 210px; 
     overflow-y: auto;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     margin-top: 10px;
@@ -271,7 +272,7 @@
     font-weight: bold;
 }
 
-/* --- HOVER & ACTIVE STATES (FIXED) --- */
+/* --- INTERACTIONS --- */
 @media (hover: hover) {
     .ctrl-btn:hover {
         transform: scale(1.1);
@@ -308,7 +309,6 @@
     transition: none !important;
 }
 
-/* Ensure the playlist item doesn't show a background block on tap */
 .playlist-item:active,
 .playlist-item.active-state {
     background: transparent !important;
@@ -320,7 +320,7 @@
     .music-container {
         flex-direction: column;
         align-items: center;
-        gap: 20px;
+        gap: 15px; 
     }
 
     .art-column {

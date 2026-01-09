@@ -2,7 +2,7 @@
 // CORE.JS - GLOBAL STATE & SHARED HELPERS
 // ==========================================
 
-// -- DOM ELEMENTS (Global Access) --
+// -- DOM ELEMENTS --
 const pdfWrapper = document.getElementById('pdf-wrapper');
 const loadingOverlay = document.getElementById('loading-overlay');
 const docTitle = document.getElementById('doc-title');
@@ -73,10 +73,11 @@ let holdTimer = null;
 let isTouch = false;
 let isScrolling = false;
 let pendingSeekPercent = null;
-let isSwitchingTrack = false;
+let isSwitchingTrack = false; // Trigger for "Always Scramble" on track change
 
 // -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
+let bufferDebounceTimer = null; // Defined here for global access
 
 // -- TERMINAL STATE --
 let secretClicks = 0;
@@ -208,7 +209,7 @@ function getVisiblePageNumber() {
 }
 
 // ==========================================
-// SCRAMBLE ENGINE (ROBUST & STATEFUL)
+// SCRAMBLE ENGINE (The Brain)
 // ==========================================
 
 const ScrambleEngine = {
@@ -216,17 +217,19 @@ const ScrambleEngine = {
     targetElement: null,
     isResolving: false,
     
-    // Original Monolith Char Sets
+    // Track if we are currently doing the "Alien Loop"
+    isLooping: false,
+
     loadingGlyphs: "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝",
     revealGlyphs: "!<>-_\\/[]{}—=+*^?#________",
 
     // 1. INFINITE LOADING STATE
-    // Behavior: Random "Alien" glyphs + flickering "LOADING" text
     startLoading: function(element) {
         if (this.targetElement === element && this.interval && !this.isResolving) return;
 
         this.clear();
         this.targetElement = element;
+        this.isLooping = true; // Flag active
         this.isResolving = false;
         
         element.style.color = "var(--name-color)";
@@ -234,34 +237,30 @@ const ScrambleEngine = {
         this.interval = setInterval(() => {
             let text = "";
             for (let i = 0; i < 12; i++) {
-                // 15% chance to show a letter from "LOADING", 85% random alien glyph
-                if (i < 7 && Math.random() > 0.85) {
-                    text += "LOADING"[i] || "";
-                } else {
-                    text += this.loadingGlyphs[Math.floor(Math.random() * this.loadingGlyphs.length)];
-                }
+                if (i < 7 && Math.random() > 0.85) text += "LOADING"[i] || "";
+                else text += this.loadingGlyphs[Math.floor(Math.random() * this.loadingGlyphs.length)];
             }
             element.innerText = text;
         }, 60);
     },
 
-    // 2. REVEAL STATE
-    // Behavior: Random "Tech" glyphs decoding into final text (Matrix style)
+    // 2. REVEAL STATE (Matrix Decode)
     resolve: function(element, finalText) {
+        // If text is already correct and we aren't looping, DO NOTHING.
+        // This is crucial for instant-seek or play/pause toggles.
         if (!this.interval && element.innerText === finalText) return;
 
-        this.clear();
+        this.clear(); // Stops the loading loop
         this.targetElement = element;
         this.isResolving = true;
+        this.isLooping = false;
         
         let iterations = 0;
         element.style.color = "var(--name-color)"; 
 
         this.interval = setInterval(() => {
             element.innerText = finalText.split("").map((letter, index) => {
-                if (index < iterations) {
-                    return finalText[index];
-                }
+                if (index < iterations) return finalText[index];
                 return this.revealGlyphs[Math.floor(Math.random() * this.revealGlyphs.length)];
             }).join("");
 
@@ -270,9 +269,15 @@ const ScrambleEngine = {
                 element.innerText = finalText; 
                 element.style.color = ""; 
             }
-            
             iterations += 1 / 2;
         }, 30);
+    },
+
+    // 3. INSTANT SNAP (For manual overrides/pauses)
+    snap: function(element, finalText) {
+        this.clear();
+        element.innerText = finalText;
+        element.style.color = "";
     },
 
     clear: function() {
@@ -281,11 +286,12 @@ const ScrambleEngine = {
             this.interval = null;
         }
         this.isResolving = false;
+        this.isLooping = false;
         this.targetElement = null;
     }
 };
 
-// Legacy support for "Show Voice" button (uses similar logic locally)
+// Legacy support for "Show Voice" button
 function startLoadingScramble(element) {
     if (element === btnShowVoice) { if (voiceScrambleInterval) clearInterval(voiceScrambleInterval); }
     const glyphs = "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝!<>-_\\/[]{}—=+*^?#";
