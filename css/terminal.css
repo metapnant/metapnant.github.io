@@ -88,11 +88,31 @@
 .error-char { color: var(--terminal-error); display: inline-block; font-weight: bold; animation: glitch-shake 0.08s infinite; text-shadow: 1px 0 #000; }
 
 /* CHRYSALIS LINK */
-.secret-link { display: inline-block; margin-top: 20px; margin-bottom: 10px; color: var(--terminal-bg) !important; background-color: var(--terminal-gold) !important; padding: 12px 20px; text-decoration: none; font-weight: bold; border: 1px solid var(--terminal-gold); box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); transition: all 0.3s ease; font-family: 'Space Mono', monospace; cursor: pointer; pointer-events: auto; animation: fadeIn 2s forwards; }
-@media (hover: hover) { .secret-link:hover { background-color: transparent !important; color: var(--terminal-gold) !important; box-shadow: 0 0 40px rgba(255, 215, 0, 0.9); } }
+.secret-link { 
+    display: inline-block; margin-top: 20px; margin-bottom: 10px; 
+    color: var(--terminal-bg) !important; background-color: var(--terminal-gold) !important; 
+    padding: 12px 20px; text-decoration: none; font-weight: bold; 
+    border: 1px solid var(--terminal-gold); box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); 
+    transition: all 0.2s ease; font-family: 'Space Mono', monospace; 
+    cursor: pointer; pointer-events: auto; animation: fadeIn 2s forwards; 
+    touch-action: manipulation; /* FIX: Remove 300ms tap delay */
+}
 
-/* FIX: Add active states */
-.secret-link:active, .secret-link.active-state { transform: scale(0.95); background-color: var(--terminal-gold) !important; color: #000 !important; box-shadow: 0 0 10px var(--terminal-gold); }
+@media (hover: hover) { 
+    .secret-link:hover { 
+        background-color: transparent !important; color: var(--terminal-gold) !important; 
+        box-shadow: 0 0 40px rgba(255, 215, 0, 0.9); 
+    } 
+}
+
+/* FIX: Instant Flash Active State */
+.secret-link:active, .secret-link.active-state { 
+    background-color: transparent !important; 
+    color: #ffffff !important; /* Flash to white-hot */
+    box-shadow: 0 0 50px #ffffff !important;
+    transform: scale(0.95);
+    transition: none !important; /* Instant feedback */
+}
 
 /* CLOSE BUTTON */
 .close-terminal { position: absolute; top: 20px; right: 30px; color: #444; border: 1px solid #444; background: #000; padding: 5px 10px; cursor: pointer; font-family: 'Space Mono', monospace; z-index: 20; font-size: 12px; transition: background-color 0.2s, color 0.2s; }
