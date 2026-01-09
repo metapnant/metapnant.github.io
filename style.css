@@ -1476,7 +1476,7 @@ body.no-scroll {
     font-weight: bold;
 }
 
-/* --- UNIVERSAL TACTILE HIGHLIGHT (Fill-Free Protocol) --- */
+/* --- UNIVERSAL TACTILE HIGHLIGHT (Crisp High-Contrast) --- */
 /* Target all interactive elements to remove the purple background block */
 .close-terminal:active,
 .close-terminal.active-state,
@@ -1495,12 +1495,11 @@ body.no-scroll {
     /* REMOVED: background-color: rgba(152, 0, 235, 0.3) */
     background-color: transparent !important;
 
-    /* NEW: High-Intensity Edge Glow */
+    /* NEW: Crisp White - No Blurs */
     color: #ffffff !important;
     border-color: #ffffff !important;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.2) !important;
-
-    text-shadow: 0 0 10px #fff !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
     transition: none !important;
 }
 
