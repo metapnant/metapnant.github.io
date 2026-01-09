@@ -47,18 +47,19 @@ if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggl
 const startBufferingCheck = () => {
     if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
     
-    // Capture the ID at the start of the check
+    // Capture ID to prevent stale checks from overwriting new state
     const thisOpId = currentAudioOpId;
 
     if (isPlaying && !audioPlayer.paused) {
         bufferDebounceTimer = setTimeout(() => {
-            // FIX: If the operation ID changed (user skipped again), cancel this check
-            if (thisOpId !== currentAudioOpId) return;
+            // FIX: If op ID changed, this is an old timer. Abort.
+            if (currentAudioOpId !== thisOpId) return;
 
+            // Only scramble if actually waiting
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
-        }, 100); 
+        }, 444); // 444ms hang time
     }
 };
 
@@ -69,12 +70,13 @@ const stopBufferingCheck = () => {
     }
 };
 
-// 0. LOADSTART (Instant feedback)
+// 0. LOADSTART
 audioPlayer.addEventListener('loadstart', () => {
+    // If we expect to be playing, show loading immediately
     if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
 });
 
-// 1. SEEKING / WAITING / STALLED
+// 1. WAITING / STALLED
 audioPlayer.addEventListener('seeking', startBufferingCheck);
 audioPlayer.addEventListener('waiting', startBufferingCheck);
 audioPlayer.addEventListener('stalled', startBufferingCheck);
@@ -85,6 +87,7 @@ audioPlayer.addEventListener('playing', () => {
     isPlaying = true;
     updatePlayBtn();
 
+    // Trigger Reveal
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
@@ -117,20 +120,25 @@ audioPlayer.addEventListener('seeked', () => {
     
     if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+    } else {
+        // If playing after seek, ensure resolved
+        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 5. TIMEUPDATE (Watchdog)
+// 5. ERROR (The Watchdog)
+audioPlayer.addEventListener('error', (e) => {
+    console.error("Audio Error", e);
+    isPlaying = false;
+    updatePlayBtn();
+    ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+});
+
+// 6. TIMEUPDATE
 audioPlayer.addEventListener('timeupdate', () => { 
-    // IF THE SONG IS MOVING, WE ARE NOT SEEKING OR LOADING.
-    if (!audioPlayer.paused) {
-        if (isSeeking) isSeeking = false;
-        if (isSwitchingTrack) isSwitchingTrack = false;
-        
-        // If animation is stuck in "Loading" loop, force resolve
-        if (ScrambleEngine.isLooping) {
-            ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
-        }
+    // If playing and text is still scrambled (stuck), force resolve
+    if (!audioPlayer.paused && ScrambleEngine.isLooping) {
+        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 

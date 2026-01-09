@@ -19,16 +19,16 @@ function initPlaylist() {
 function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
-    // 1. OPERATION ID: Invalidate all previous pending operations
-    currentAudioOpId++;
+    // 1. OPERATION ID & STATE RESET
+    currentAudioOpId++; // Invalidate all pending timers/promises
     
-    // 2. Reset UI
     ScrambleEngine.reset();
     isSwitchingTrack = true; 
     isSeeking = false; 
     pendingSeekPercent = null;
     wasPlayingBeforeDrag = false;
     
+    // 2. UI Reset
     domProgressBar.style.setProperty('--progress', '0%');
     if (index !== currentTrackIdx) {
         domCurrentTime.textContent = "0:00"; 
@@ -38,10 +38,15 @@ function loadTrack(index, autoPlay = true) {
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 3. Force Visual "Loading"
+    // 3. Visuals: Force "Loading..." immediately
     ScrambleEngine.startLoading(domTrackTitle);
 
-    // 4. Hardware
+    // 4. HARDWARE FLUSH (Fixes "Bar moving / No Sound" on iOS)
+    // We explicitly pause and reset time before changing source
+    // to force the OS audio stack to drop the previous buffer.
+    audioPlayer.pause();
+    audioPlayer.currentTime = 0;
+    
     audioPlayer.src = track.src;
     audioPlayer.load();
 
@@ -58,21 +63,21 @@ function loadTrack(index, autoPlay = true) {
         refreshDynamicPage();
     }
 
-    // 6. Autoplay with OpID Protection
+    // 6. Playback
     if (autoPlay) {
-        const thisOpId = currentAudioOpId; // Capture ID
-        
+        // Optimistic UI update
         isPlaying = true;
         updatePlayBtn();
 
+        const thisOpId = currentAudioOpId;
+
         audioPlayer.play().catch(e => {
-            // FIX: If we have moved to a newer op (user clicked next again), IGNORE this error.
+            // If the user skipped again, ignore this error
             if (currentAudioOpId !== thisOpId) return;
 
-            // Handle actual block
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
             
-            // Only reset if it's the CURRENT track failing
+            // Revert UI if genuine block
             isSwitchingTrack = false; 
             ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
@@ -153,6 +158,7 @@ function getScrubPercent(e) {
 // --- DRAG HANDLERS ---
 
 const startDrag = (e) => {
+    // Force pause to prevent audio stutter/ghosting during drag
     if (isPlaying) {
         wasPlayingBeforeDrag = true;
         audioPlayer.pause(); 
@@ -200,7 +206,7 @@ if (progressArea) {
 }
 
 function commitSeek(percent) {
-    currentAudioOpId++; // Increment ID to invalidate pending buffers
+    currentAudioOpId++; // Invalidate previous operations
     
     if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
         clearTimeout(bufferDebounceTimer); 
