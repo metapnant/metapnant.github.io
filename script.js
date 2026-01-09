@@ -580,15 +580,41 @@ function getScrubPercent(e) {
     return Math.max(0, Math.min(100, ((clientEvent.clientX - rect.left) / width) * 100));
 }
 
-const startDragMouse = (e) => { if (isTouch || e.button !== 0) return; isDragging = true; domProgressBar.classList.add('dragging'); updateScrubVisual(getScrubPercent(e)); };
+const startDragMouse = (e) => {
+    if (isTouch || e.button !== 0) return;
+    isDragging = true;
+    domProgressBar.classList.add('dragging');
+    updateScrubVisual(getScrubPercent(e));
+};
 const doDragMouse = (e) => { if (!isDragging) return; e.preventDefault(); updateScrubVisual(getScrubPercent(e)); };
 const endDragMouse = (e) => { if (isDragging) { commitSeek(getScrubPercent(e)); isDragging = false; domProgressBar.classList.remove('dragging'); } };
-const startDragTouch = (e) => { isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isDragging = false; isScrolling = false; holdTimer = setTimeout(() => { if (!isScrolling) { isDragging = true; domProgressBar.classList.add('dragging'); updateScrubVisual(getScrubPercent(e)); } }, 200); };
+const startDragTouch = (e) => {
+    isTouch = true;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    isDragging = false;
+    isScrolling = false;
+    holdTimer = setTimeout(() => {
+        if (!isScrolling) {
+            isDragging = true;
+            domProgressBar.classList.add('dragging');
+            updateScrubVisual(getScrubPercent(e));
+        }
+    }, 200);
+};
 const doDragTouch = (e) => {
     if (isDragging) { if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); return; }
     if (isScrolling) return;
     const dx = Math.abs(e.touches[0].clientX - touchStartX); const dy = Math.abs(e.touches[0].clientY - touchStartY);
-    if (dx > 5 || dy > 5) { if (holdTimer) clearTimeout(holdTimer); if (dx > dy) { isDragging = true; domProgressBar.classList.add('dragging'); if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); } else isScrolling = true; }
+    if (dx > 5 || dy > 5) {
+        if (holdTimer) clearTimeout(holdTimer);
+        if (dx > dy) {
+            isDragging = true;
+            domProgressBar.classList.add('dragging');
+            if (e.cancelable) e.preventDefault();
+            updateScrubVisual(getScrubPercent(e));
+        } else isScrolling = true;
+    }
 };
 const endDragTouch = (e) => { if (holdTimer) clearTimeout(holdTimer); if (isDragging) { commitSeek(parseFloat(domProgressBar.style.getPropertyValue('--progress'))); isDragging = false; domProgressBar.classList.remove('dragging'); } setTimeout(() => { isTouch = false; }, 500); };
 
@@ -605,19 +631,19 @@ function commitSeek(percent) {
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
 
-        if (!audioPlayer.paused) {
+        // Ensure playback state is robust
+        if (isPlaying) {
+            // If we were playing, set time. This will naturally cause 'waiting' if data isn't there
             audioPlayer.currentTime = newTime;
-            // The 'waiting'/'seeked' listeners will handle state/scramble naturally.
-            // But we force a check to prevent stale state.
-            if (audioPlayer.readyState < 3) {
-                // If clearly buffering immediately, we could set state, 
-                // but we let the debounce logic handle it to avoid flashing.
-            }
+
+            // If we suspect a buffer lag, we can pre-set state but avoid scramble unless waiting
+            // But actually, to fix "delay from moment ... audio stops", we want immediate feedback?
+            // No, user said "do not literally pause".
+            // The delay is hardware buffer.
         } else {
+            audioPlayer.currentTime = newTime;
             pendingSeekPercent = percent;
-            // Paused scrub: Keep title clean and stop any hanging animations
             stopScramble();
-            // Ensure static title is correct
             domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
             domTrackTitle.style.color = "";
         }
