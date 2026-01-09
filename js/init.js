@@ -46,12 +46,15 @@ if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggl
 
 const startBufferingCheck = () => {
     if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
+    
+    // Only trigger if we are supposed to be playing
     if (isPlaying && !audioPlayer.paused) {
         bufferDebounceTimer = setTimeout(() => {
+            // UPDATED: 444ms Threshold
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
-        }, 100); 
+        }, 444); 
     }
 };
 
@@ -62,14 +65,12 @@ const stopBufferingCheck = () => {
     }
 };
 
-// 0. LOADSTART (Instant feedback for rapid skipping)
+// 0. LOADSTART (Instant feedback)
 audioPlayer.addEventListener('loadstart', () => {
-    if (isPlaying) {
-        ScrambleEngine.startLoading(domTrackTitle);
-    }
+    if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
 });
 
-// 1. WAITING / STALLED
+// 1. WAITING / STALLED / SEEKING
 audioPlayer.addEventListener('seeking', startBufferingCheck);
 audioPlayer.addEventListener('waiting', startBufferingCheck);
 audioPlayer.addEventListener('stalled', startBufferingCheck);
@@ -81,17 +82,17 @@ audioPlayer.addEventListener('playing', () => {
     updatePlayBtn();
 
     // TRIGGER REVEAL:
-    // Only reveal if we are playing the track we expect to play
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         } else {
+            // If instant, just snap
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
     
     isSwitchingTrack = false;
-    isSeeking = false;
+    // Note: We do NOT clear isSeeking here. We wait for 'seeked'.
 });
 
 // 3. PAUSE
@@ -107,22 +108,35 @@ audioPlayer.addEventListener('pause', () => {
     }
 });
 
-// 4. SEEKED
+// 4. SEEKED (The Lock Release)
 audioPlayer.addEventListener('seeked', () => {
+    // CRITICAL: This is the ONLY place we allow the progress bar to start moving again
     isSeeking = false;
     stopBufferingCheck();
     
     if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+    } else {
+        // If playing after seek, resolve title
+        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 5. TIMEUPDATE
+// 5. TIMEUPDATE (Heartbeat & Safety)
 audioPlayer.addEventListener('timeupdate', () => { 
-    if (!audioPlayer.paused) {
-        if (isSeeking) isSeeking = false;
-        if (isSwitchingTrack) isSwitchingTrack = false;
-        
+    // CRITICAL FIX: If we are seeking, IGNORE all time updates.
+    // This stops the bar from snapping back to the old time.
+    if (isSeeking) return;
+
+    // WATCHDOG: If play button is active, but audio is paused (stuck state), fix it.
+    if (isPlaying && audioPlayer.paused && !isSwitchingTrack && !isDragging) {
+        // We are stuck. Force a play attempt.
+        audioPlayer.play().catch(e => console.log("Watchdog recover", e));
+        return;
+    }
+
+    // SAFETY NET: If audio is moving, we are definitely playing.
+    if (!audioPlayer.paused && !audioPlayer.seeking) {
         if (ScrambleEngine.isLooping) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
@@ -190,7 +204,7 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowLeft') { if (e.shiftKey) { e.preventDefault(); prevTrack(); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; } } 
 });
 
-// Tactile Feedback Engine - Pointer Events
+// Tactile Feedback Engine
 function addTactileListener(selector) {
     const els = document.querySelectorAll(selector);
     els.forEach(el => {
