@@ -47,24 +47,31 @@ progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
 progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); 
 progressArea.addEventListener('touchend', endDragTouch);
 
-// --- AUDIO EVENT HANDLING (Precision Logic) ---
+// --- AUDIO EVENT HANDLING ---
+
+// Helper to trigger buffering visuals
+const triggerBuffering = () => {
+    if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
+    bufferDebounceTimer = setTimeout(() => {
+        // Only show loading if we are actually supposed to be playing
+        if (isPlaying && !audioPlayer.paused) {
+            ScrambleEngine.startLoading(domTrackTitle);
+        }
+    }, 150);
+};
 
 // 1. PLAYING
 audioPlayer.addEventListener('playing', () => {
-    // Stop the debounce timer immediately
     if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
 
     isPlaying = true;
     updatePlayBtn();
 
-    // TRIGGER REVEAL LOGIC:
-    // Only animate if we were currently "Loading" (Alien Loop) OR we just Switched Tracks.
-    // If we were just paused or scrubbing fast (scramble engine idle), do NOT animate.
+    // Only animate reveal if we were in a loading state or switching tracks
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         } else {
-            // Just ensure text is correct without animation
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
@@ -72,18 +79,9 @@ audioPlayer.addEventListener('playing', () => {
     isSwitchingTrack = false;
 });
 
-// 2. WAITING (Buffering)
-audioPlayer.addEventListener('waiting', () => {
-    if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
-
-    // DEBOUNCE: 150ms Rule
-    // Only switch to Alien Glyphs if we hang for > 150ms.
-    bufferDebounceTimer = setTimeout(() => {
-        if (isPlaying && !audioPlayer.paused) {
-            ScrambleEngine.startLoading(domTrackTitle);
-        }
-    }, 150); 
-});
+// 2. WAITING & STALLED (Buffering)
+audioPlayer.addEventListener('waiting', triggerBuffering);
+audioPlayer.addEventListener('stalled', triggerBuffering);
 
 // 3. PAUSE
 audioPlayer.addEventListener('pause', () => {
@@ -91,20 +89,16 @@ audioPlayer.addEventListener('pause', () => {
     
     isPlaying = false;
     updatePlayBtn();
-    
-    // Snap to static text immediately on pause
-    if (domTrackTitle && albumTracks[currentTrackIdx]) {
-        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
-    }
+    stopScramble();
 });
 
 // 4. SEEKED
 audioPlayer.addEventListener('seeked', () => {
-    // If seek happened faster than 150ms, cancel the loading trigger.
+    // If we sought successfully and quickly, cancel the loading timer
     if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
     
     if (audioPlayer.paused) {
-        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+        stopScramble();
     }
 });
 
@@ -125,7 +119,6 @@ audioPlayer.addEventListener('ended', () => {
 
 audioPlayer.addEventListener('loadedmetadata', () => { 
     domDuration.textContent = formatTime(audioPlayer.duration); 
-    // Cold seek recovery
     if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) { 
         audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; 
         domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); 

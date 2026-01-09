@@ -13,31 +13,29 @@ function initPlaylist() {
         li.onclick = () => playTrack(index);
         playlistList.appendChild(li);
     });
-    // Add listeners to new items
     if (typeof addTactileListener === 'function') addTactileListener('.playlist-item');
 }
 
 function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
-    // 1. Reset UI
+    // 1. Reset UI & Lock State
+    isSwitchingTrack = true; 
     domProgressBar.style.setProperty('--progress', '0%');
     if (index !== currentTrackIdx) {
         domCurrentTime.textContent = "0:00"; 
         domDuration.textContent = "0:00";
     }
     
+    // CRITICAL: Clear any stale seek requests from previous tracks
     pendingSeekPercent = null;
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 2. Track Change Logic
-    isSwitchingTrack = true; // Marks this as a track change, forcing an animation cycle in init.js
-    
-    // Always start loading animation for track change (Instant Feedback)
+    // 2. Force Loading Animation (Instant Feedback)
     ScrambleEngine.startLoading(domTrackTitle);
 
-    // 3. Hardware
+    // 3. Update Audio
     audioPlayer.src = track.src;
     audioPlayer.load();
 
@@ -58,13 +56,12 @@ function loadTrack(index, autoPlay = true) {
     if (autoPlay) {
         audioPlayer.play().catch(e => {
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
-            // If blocked, snap text immediately
+            // If blocked, snap text to title
             ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
             updatePlayBtn();
         });
     } else {
-        // Initial load without play
         ScrambleEngine.snap(domTrackTitle, track.title);
         isSwitchingTrack = false;
     }
@@ -84,15 +81,14 @@ function togglePlay() {
         audioPlayer.pause(); 
         isPlaying = false;
         updatePlayBtn();
-        
-        // Manual Pause: Snap text to static immediately
+        // Pause: Snap to static text
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
     else { 
         isPlaying = true;
         updatePlayBtn();
 
-        // iOS Cold Seek Apply
+        // FIX: Apply Cold Seek before playing
         if (pendingSeekPercent !== null && audioPlayer.duration) {
             const seekTime = (pendingSeekPercent / 100) * audioPlayer.duration;
             audioPlayer.currentTime = seekTime;
@@ -163,7 +159,6 @@ const endDragTouch = (e) => {
 };
 
 function commitSeek(percent) {
-    // Clear debounce timer to ensure seek is responsive
     if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
         clearTimeout(bufferDebounceTimer); 
         bufferDebounceTimer = null;
@@ -175,15 +170,16 @@ function commitSeek(percent) {
         domCurrentTime.textContent = formatTime(newTime);
 
         if (!audioPlayer.paused) {
-            // PLAYING: Safe to set currentTime.
-            // NO ANIMATION TRIGGER HERE. We let init.js handle 'waiting' vs instant 'playing'.
+            // PLAYING: Apply immediately
             audioPlayer.currentTime = newTime;
+            // CRITICAL: Clear pending percent so timeupdate resumes immediately
+            pendingSeekPercent = null;
         } else {
-            // PAUSED: Safe Cold Seek.
-            // Store value, do not apply to hardware yet.
+            // PAUSED: Store for later
             pendingSeekPercent = percent;
-            // FORCE STATIC TEXT. No animations when scrubbing while paused.
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
+    } else {
+        pendingSeekPercent = percent;
     }
 }
