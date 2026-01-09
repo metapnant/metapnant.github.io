@@ -1,0 +1,131 @@
+/* --- LAYOUT --- */
+.explore-container { 
+    width: 100%; max-width: 900px; margin: 0 auto; flex-grow: 1; 
+    transition: opacity 1.2s ease; display: flex; flex-direction: column; overflow-x: hidden;
+}
+
+.explore-header { text-align: center; margin-bottom: 30px; }
+.explore-header h1 { 
+    color: var(--name-color); 
+    /* FIX: Adjusted clamp to shrink smaller (1.2rem) to avoid overlapping arrows */
+    font-size: clamp(1.2rem, 6vw, 3.5rem); 
+    font-style: italic; font-weight: 700; margin-bottom: 10px; 
+    letter-spacing: 1px; line-height: 1.2; padding: 0 15px;
+    overflow-wrap: break-word; word-break: break-word;
+}
+
+/* --- PDF ENGINE --- */
+.pdf-container { 
+    position: relative; background-color: rgba(255, 255, 255, 0.03); 
+    display: flex; flex-direction: column; align-items: center; 
+    min-height: 60vh; padding: 10px; gap: 15px; border-radius: 4px; width: 100%;
+}
+#loading-overlay { display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 50; background-color: var(--background-main); }
+.loading-spinner { width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: var(--name-color); border-radius: 50%; animation: spin 1s infinite linear; }
+.pdf-page-wrapper { 
+    width: 100%; max-width: 100%; height: auto; position: relative; margin: 0 auto; 
+    border-radius: 4px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); 
+    background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%); 
+    line-height: 0; flex-shrink: 0; opacity: 0; animation: fadeContentIn 0.8s ease forwards; 
+}
+.pdf-page-wrapper::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 70%); background-size: 200% 200%; pointer-events: none; z-index: 10; mix-blend-mode: overlay; }
+.pdf-page-canvas { width: 100% !important; height: auto !important; display: block; background-color: var(--background-main); clip-path: inset(0 3px 2px 0); object-fit: contain; }
+
+/* --- HUD (ARROWS) --- */
+.nav-controls {
+  position: fixed; z-index: 3000; pointer-events: none; 
+  top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%;
+  display: flex; justify-content: space-between; align-items: center; 
+  /* FIX: Added safe-area padding to prevent edge clipping */
+  max-width: 1050px; margin: 0 auto; padding: 0 20px; 
+}
+
+.nav-arrow {
+  pointer-events: auto; background: none; border: none; 
+  color: var(--arrow-color); 
+  font-size: clamp(3rem, 10vw, 6rem); 
+  font-weight: 100; 
+  
+  /* FIX: HITBOX TIGHTENING */
+  /* Removing fixed height/width so the box wraps the text exactly */
+  width: auto; 
+  height: auto;
+  line-height: 0.8; /* Snaps box to the character height */
+  padding: 10px; /* Small buffer for touch, but not huge */
+  margin: 0;
+  
+  cursor: pointer; transition: none !important; animation: faintFlash 5s infinite ease-in-out;
+  opacity: 0.6; display: flex; justify-content: center; align-items: center;
+  text-shadow: 0 0 30px rgba(0,0,0,0.8); transform: none; 
+}
+.nav-arrow.disabled { opacity: 0 !important; pointer-events: none !important; visibility: hidden; }
+
+@media (hover: hover) {
+  .nav-arrow:hover { color: var(--name-color); transform: scale(1.2); animation: none; opacity: 1; filter: drop-shadow(0 0 20px var(--name-color)); }
+}
+.nav-arrow:not(.disabled):active, .nav-arrow:not(.disabled).active-state { transform: scale(0.8) !important; color: var(--name-color) !important; opacity: 1 !important; animation: none !important; }
+
+/* --- VOID MECHANIC (PDF BUTTON) --- */
+.pdf-tools {
+    position: fixed; right: 20px; bottom: 20px; z-index: 2500; height: 50px; 
+    display: flex; align-items: center;
+    background-color: transparent; border: 1px solid var(--arrow-color); border-radius: 0; color: var(--arrow-color);
+    animation: faintFlash 5s infinite ease-in-out; opacity: 0.8; 
+    max-width: 50px; overflow: hidden; 
+    transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.2s, border-color 0.2s, opacity 0.2s;
+    backdrop-filter: blur(2px);
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+    pointer-events: none;
+}
+.pdf-tools.active { max-width: 200px; opacity: 1; animation: none; border-color: rgba(152, 0, 235, 0.3); background-color: rgba(13, 0, 34, 0.9); }
+.tools-toggle {
+    pointer-events: auto; width: 50px; min-width: 50px; height: 100%;
+    display: flex; justify-content: center; align-items: center; cursor: pointer;
+    background: rgba(13, 0, 34, 0.9); border-right: 1px solid transparent; 
+    transition: background-color 0.2s, color 0.2s, border-right-color 0.2s;
+}
+.pdf-tools.active .tools-toggle { border-right-color: rgba(152, 0, 235, 0.3); }
+.tools-toggle svg { width: 20px; height: 20px; fill: currentColor; transform: rotate(180deg); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.pdf-tools.active .tools-toggle svg { transform: rotate(0deg); }
+.tool-content { min-width: 120px; height: 100%; display: flex; opacity: 0; transition: opacity 0.3s ease 0.1s; pointer-events: auto; }
+.pdf-tools.active .tool-content { opacity: 1; }
+.tool-btn {
+    flex-grow: 1; height: 100%; display: flex; align-items: center; justify-content: center; 
+    padding-right: 20px; text-decoration: none; color: inherit; 
+    font-family: "Space Mono", monospace; font-weight: 600; 
+    font-size: clamp(0.7em, 2vw, 0.85em); 
+    letter-spacing: 1px;
+    white-space: nowrap; background: rgba(13, 0, 34, 0.9); transition: background-color 0.2s, color 0.2s;
+}
+
+/* --- FOOTER & LINKS --- */
+.footer { text-align: center; padding: 20px 0 10px 0; font-size: 0.85em; color: var(--secondary-text-color); border-top: 1px solid rgba(255, 255, 255, 0.08); margin-top: 40px; }
+#infinity-symbol { display: inline-block; transition: text-shadow 0.3s, color 0.3s; padding: 0 5px; font-weight: bold; cursor: default; pointer-events: none; }
+#infinity-symbol.active { cursor: pointer; pointer-events: auto; }
+#infinity-symbol.active:hover { color: #fff; text-shadow: 0 0 15px var(--name-color); }
+#song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 10px; }
+#song-link { color: var(--name-color); text-decoration: underline; text-decoration-color: var(--name-color); text-underline-offset: 2px; font-weight: 600; transition: color 0.1s; }
+
+/* Radiant Link */
+body #song-link.active-state, body #song-link:active {
+    background: transparent !important; border: none !important; box-shadow: none !important;
+    color: #ffd700 !important; text-shadow: 0 0 8px #ffd700, 0 0 15px rgba(255, 215, 0, 0.7) !important;
+    text-decoration: underline !important; text-decoration-color: var(--name-color) !important; 
+    text-underline-offset: 4px; animation: none !important; transition: none !important; filter: brightness(1.2) !important;
+}
+
+@media (hover: hover) {
+    .pdf-tools:hover { opacity: 1; animation: none; border-color: var(--name-color); }
+    .tools-toggle:hover { background-color: rgba(152, 0, 235, 0.15); color: #fff; }
+    .tool-btn:hover { background-color: rgba(152, 0, 235, 0.15); color: #fff; text-shadow: 0 0 10px var(--name-color); }
+    #song-link:hover { animation: strobe 1s infinite; }
+}
+
+@media (max-width: 700px) {
+    .pdf-tools { bottom: 20px; height: 56px; max-width: 56px; }
+    .pdf-tools.active { max-width: 220px; }
+    .tools-toggle { width: 56px; min-width: 56px; }
+    .tools-toggle svg { width: 24px; height: 24px; }
+    .tool-btn { font-size: 0.95em; }
+}

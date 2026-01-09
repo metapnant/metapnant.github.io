@@ -1,8 +1,36 @@
+const library = [
+    { title: "METAPNANT", url: "A%20Story%20of%20Mirthful%20Reflection.pdf", songUrl: "https://www.youtube.com/watch?v=MEPqb4DuCD8", songTitle: "In Love With", bpm: 130 },
+    { title: "THE REMINDER", url: "The%20Reminder.pdf", songUrl: "https://www.youtube.com/watch?v=JuzzliKBfss", songTitle: "Breathe Again ∞ Timelines", bpm: 120 },
+    { title: "PHOENIX NEST", url: "The%20Phoenix%20Nest.pdf", songUrl: "https://www.youtube.com/watch?v=2r1VZ9vInw0", songTitle: "Starflower", bpm: 94.54 }
+];
+
+const albumTracks = [
+    { title: "Blood-Sap", src: "music/00 - Blood-Sap.wav" },
+    { title: "First Step", src: "music/01 - First Step.wav" },
+    { title: "hidden", src: "music/02 - hidden.wav" }, 
+    { title: "Tether", src: "music/03 - Tether.wav" },
+    { title: "Lens -of-", src: "music/04 - Lens -of-.wav" },
+    { title: "Innerworld", src: "music/05 - Innerworld.wav" },
+    { title: "Disordered Fairness", src: "music/06 - Disordered Fairness.wav" }, 
+    { title: "Limerent Object", src: "music/07 - Limerent Object.wav" },
+    { title: "Final Boundaries", src: "music/08 - Final Boundaries.wav" },
+    { title: "Remember", src: "music/09 - Remember.wav" },
+    { title: "Fear", src: "music/10 - Fear.wav" },
+    { title: "My Way", src: "music/11 - My Way.wav" },
+    { title: "Sun; Rise", src: "music/12 - Sun; Rise.wav" },
+    { title: "Branches", src: "music/13 - Branches.wav" },
+    { title: "Starflower Soul", src: "music/14 - Starflower Soul.wav" },
+    { title: "In Love With", src: "music/15 - In Love With.wav" },
+    { title: "Timelines", src: "music/16 - Timelines.wav" },
+    { title: "Breathe Again", src: "music/17 - Breathe Again.wav" },
+    { title: "River of Sorrows", src: "music/18 - River of Sorrows.wav" }
+];
+
 // ==========================================
 // TERMINAL STORY LOGS
 // ==========================================
 
-const logsData = {
+window.logsData = {
     crash: [
         { text: "// =============================================================================", class: "comment-text", delay: 50 },
         { text: "// SYSTEM BOOT: BLACK_BOX_RECOVERY [EARTH_PRIME]", class: "system-text", delay: 100 },
