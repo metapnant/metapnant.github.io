@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
   <meta name="theme-color" content="#0d0022">
-  <title>THE LIBRARY</title>
+  <title>THE LIBRARY | Golden Master</title>
   <link rel="icon" href="favicon.png" type="image/png" />
   
   <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet" />
@@ -14,7 +14,14 @@
 
 <body>
   
-  <!-- MAIN CONTENT SCROLLS -->
+  <!-- NAVIGATION HUD (The Iron Grip) -->
+  <!-- Fixed container spans full height to lock arrows to vertical center without drift -->
+  <nav class="nav-controls" aria-label="Document Navigation">
+    <button class="nav-arrow" id="prev-doc" aria-label="Previous Document">‹</button>
+    <button class="nav-arrow" id="next-doc" aria-label="Next Document">›</button>
+  </nav>
+
+  <!-- MAIN CONTENT -->
   <div class="explore-container">
     <header class="explore-header">
       <h1 id="doc-title">METAPNANT</h1>
@@ -25,20 +32,16 @@
         <div id="loading-overlay">
            <div class="loading-spinner"></div>
         </div>
+        <!-- PDF Pages injected here by script.js -->
       </div>
     </main>
   </div>
 
-  <!-- NAVIGATION HUD (FIXED TO VIEWPORT) -->
-  <nav class="nav-controls">
-    <button class="nav-arrow" id="prev-doc" aria-label="Previous Document">‹</button>
-    <button class="nav-arrow" id="next-doc" aria-label="Next Document">›</button>
-  </nav>
-
-  <!-- PDF TOOLS (The Phantom Mechanic) -->
-  <div id="pdf-tools" class="pdf-tools">
-    <div id="tools-toggle" class="tools-toggle" aria-label="Toggle Menu">
-      <!-- The Play Arrow (Rotated via CSS) -->
+  <!-- THE VOID-MECHANIC (Retractable PDF Tools) -->
+  <!-- Container applies the gradient mask. Children capture events. -->
+  <div id="pdf-tools" class="pdf-tools" aria-expanded="false">
+    <div id="tools-toggle" class="tools-toggle" aria-label="Toggle PDF Menu">
+      <!-- Play arrow rotated to point into the void -->
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
       </svg>
@@ -50,7 +53,7 @@
     </div>
   </div>
 
-  <!-- MUSIC PLAYER SECTION -->
+  <!-- AUDIO ENGINE SECTION -->
   <section id="music-section">
     <div class="music-container">
         <div class="art-column">
@@ -58,16 +61,16 @@
                 <img src="music/cover.jpg" alt="Chrysalis Cover" id="album-art">
                 <div class="vinyl-shine"></div>
             </div>
-            <button id="btn-show-voice" class="voice-btn" aria-label="Show Lyrics">SHOW VOICE</button>
+            <button id="btn-show-voice" class="voice-btn">SHOW VOICE</button>
         </div>
         
         <div class="player-controls">
             <div class="track-details">
-                <h2 id="track-title">Loading...</h2>
+                <h2 id="track-title">--</h2>
                 <h3 id="track-artist">Tef Riin - Chrysalis</h3>
             </div>
             
-            <div class="progress-area" id="progress-container" role="slider" aria-label="Song Progress">
+            <div class="progress-area" id="progress-container" role="slider" aria-label="Playback Progress">
                 <div class="progress-bar" id="progress-bar"></div>
             </div>
             
@@ -80,14 +83,15 @@
                 <button id="btn-prev" class="ctrl-btn" aria-label="Previous Track">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 20L9 12L19 4V20Z" fill="currentColor"/><rect x="5" y="4" width="2" height="16" fill="currentColor"/></svg>
                 </button>
-                <button id="btn-play" class="ctrl-btn play-btn" aria-label="Play/Pause">
+                <button id="btn-play" class="ctrl-btn play-btn" aria-label="Play or Pause">
+                    <!-- Source of truth handled by event-driven logic in script.js -->
                     <svg id="icon-play" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 5V19L19 12L8 5Z" fill="currentColor"/></svg>
                     <svg id="icon-pause" style="display:none;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="4" width="4" height="16" fill="currentColor"/><rect x="14" y="4" width="4" height="16" fill="currentColor"/></svg>
                 </button>
                 <button id="btn-next" class="ctrl-btn" aria-label="Next Track">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 4L15 12L5 20V4Z" fill="currentColor"/><rect x="17" y="4" width="2" height="16" fill="currentColor"/></svg>
                 </button>
-                <button id="btn-loop" class="ctrl-btn loop-btn" aria-label="Loop Mode">
+                <button id="btn-loop" class="ctrl-btn loop-btn" aria-label="Cycle Loop Mode">
                     <svg id="icon-loop-all" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17 17H7V14L3 18L7 22V19H19V13H17V17Z" fill="currentColor"/><path d="M7 7H17V10L21 6L17 2V5H5V11H7V7Z" fill="currentColor"/></svg>
                     <svg id="icon-loop-one" style="display:none;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17 17H7V14L3 18L7 22V19H19V13H17V17Z" fill="currentColor" fill-opacity="0.5"/><path d="M7 7H17V10L21 6L17 2V5H5V11H7V7Z" fill="currentColor" fill-opacity="0.5"/><text x="12" y="15" fill="currentColor" font-family="monospace" font-size="10" text-anchor="middle" font-weight="bold">1</text></svg>
                 </button>
@@ -103,7 +107,7 @@
   <footer class="footer">
     <p><span id="currentYear"></span> Tef Riin <span id="infinity-symbol" tabindex="0">∞</span></p>
     <div id="song-link-container">
-      <a href="#" id="song-link" target="_blank">Starflower</a>
+      <a href="#" id="song-link" target="_blank"></a>
     </div>
   </footer>
 
@@ -120,10 +124,10 @@
       </div>
       <div class="controls-wrapper">
           <div style="display: flex; gap: 10px; width: 100%; margin-bottom: 10px;">
-              <button class="cycle-btn theme-gardener" id="btn-turbo" onclick="toggleTurbo()" style="flex: 1; padding: 10px 5px; text-align: center;">[>>]</button>
-              <button class="cycle-btn theme-gardener active" id="btn-mute" onclick="toggleMute()" style="flex: 1; padding: 10px 5px; text-align: center;">[VOL: ON]</button>
+              <button class="cycle-btn theme-gardener" id="btn-turbo" onclick="toggleTurbo()">[>>]</button>
+              <button class="cycle-btn theme-gardener active" id="btn-mute" onclick="toggleMute()">[VOL: ON]</button>
           </div>
-          <button class="cycle-btn theme-crash" id="btn-reset" onclick="hardReset()" style="width: 100%; text-align: center;">[ ! ] SYSTEM_RESET</button>
+          <button class="cycle-btn theme-crash" id="btn-reset" onclick="hardReset()">[ ! ] SYSTEM_RESET</button>
       </div>
     </div>
 
@@ -139,6 +143,7 @@
     </div>
   </div>
 
+  <!-- PDF.JS ENGINE -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
