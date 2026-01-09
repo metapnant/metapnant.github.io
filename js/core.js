@@ -73,12 +73,7 @@ let holdTimer = null;
 let isTouch = false;
 let isScrolling = false;
 let pendingSeekPercent = null;
-
-// CRITICAL: Global ID to track the current "Version" of audio playback.
-// Increments on every loadTrack or commitSeek.
-// Used to invalidate old timers and promises.
 let currentAudioOpId = 0; 
-
 let isSwitchingTrack = false; 
 let isSeeking = false; 
 let wasPlayingBeforeDrag = false; 
@@ -86,6 +81,7 @@ let wasPlayingBeforeDrag = false;
 // -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
 let bufferDebounceTimer = null; 
+let scrollAnimationId = null; // NEW: Track the scroll loop
 
 // -- TERMINAL STATE --
 let secretClicks = 0;
@@ -163,14 +159,24 @@ function updateInfinityState() {
     else { infinityBtn.classList.remove('active'); }
 }
 
+function killScrollAnimation() {
+    if (scrollAnimationId) {
+        cancelAnimationFrame(scrollAnimationId);
+        scrollAnimationId = null;
+    }
+}
+
 function jitterScrollTo(element) {
     if (!element) return;
+    killScrollAnimation(); // Kill any existing
+    
     const headerOffset = 80;
     const elementTop = element.getBoundingClientRect().top + window.scrollY - headerOffset;
     const startY = window.scrollY;
     const distance = elementTop - startY;
     const duration = 1500;
     let startTime = null;
+    
     function animation(currentTime) {
         if (startTime === null) startTime = currentTime;
         const timeElapsed = currentTime - startTime;
@@ -181,11 +187,17 @@ function jitterScrollTo(element) {
         const amplitude = 15 * Math.pow(1 - progress, 2);
         const vibration = Math.sin(progress * frequency) * amplitude;
         const currentPos = startY + (distance * carrier) + vibration;
+        
         window.scrollTo(0, currentPos);
-        if (timeElapsed < duration) { requestAnimationFrame(animation); }
-        else { window.scrollTo(0, elementTop); }
+        
+        if (timeElapsed < duration) { 
+            scrollAnimationId = requestAnimationFrame(animation); 
+        } else { 
+            window.scrollTo(0, elementTop); 
+            scrollAnimationId = null;
+        }
     }
-    requestAnimationFrame(animation);
+    scrollAnimationId = requestAnimationFrame(animation);
 }
 
 function smartScrollTo(element) {
@@ -231,7 +243,6 @@ const ScrambleEngine = {
 
     startLoading: function(element) {
         if (this.targetElement === element && this.interval && this.isLooping && !this.isResolving) return;
-
         this.reset();
         this.targetElement = element;
         this.isLooping = true;
@@ -247,8 +258,7 @@ const ScrambleEngine = {
             }
             element.innerText = text;
         };
-        
-        update(); // Immediate paint
+        update();
         this.interval = setInterval(update, 60);
     },
 
@@ -257,7 +267,6 @@ const ScrambleEngine = {
              this.snap(element, finalText);
              return;
         }
-
         this.reset();
         this.targetElement = element;
         this.isResolving = true;

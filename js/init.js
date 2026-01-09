@@ -26,9 +26,40 @@ window.addEventListener('resize', () => {
     }
 });
 
-// UI Buttons
-document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading && currentIndex < library.length - 1) loadDocument(currentIndex + 1); });
-document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading && currentIndex > 0) loadDocument(currentIndex - 1); });
+// --- NAVIGATION & VIEW RESET ---
+
+const performNavReset = () => {
+    // FIX: Kill any fighting scroll animations
+    killScrollAnimation();
+    
+    // Force top
+    window.scrollTo({ top: 0, behavior: 'auto' });
+
+    // Cancel Voice mode
+    waitingForLyrics = false;
+    if (voiceScrambleInterval) {
+        clearInterval(voiceScrambleInterval);
+        voiceScrambleInterval = null;
+    }
+    if (btnShowVoice) {
+        btnShowVoice.innerText = "SHOW VOICE";
+        btnShowVoice.style.color = "";
+    }
+};
+
+document.getElementById('next-doc').addEventListener('click', () => { 
+    if(!isLoading && currentIndex < library.length - 1) {
+        performNavReset();
+        loadDocument(currentIndex + 1); 
+    }
+});
+
+document.getElementById('prev-doc').addEventListener('click', () => { 
+    if(!isLoading && currentIndex > 0) {
+        performNavReset();
+        loadDocument(currentIndex - 1); 
+    }
+});
 
 [document.getElementById('next-doc'), document.getElementById('prev-doc')].forEach(arrow => {
     arrow.addEventListener('touchstart', function() { this.classList.add('active-state'); }, {passive: true});
@@ -47,19 +78,16 @@ if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggl
 const startBufferingCheck = () => {
     if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
     
-    // Capture ID to prevent stale checks from overwriting new state
     const thisOpId = currentAudioOpId;
 
     if (isPlaying && !audioPlayer.paused) {
         bufferDebounceTimer = setTimeout(() => {
-            // FIX: If op ID changed, this is an old timer. Abort.
             if (currentAudioOpId !== thisOpId) return;
 
-            // Only scramble if actually waiting
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
-        }, 444); // 444ms hang time
+        }, 100); 
     }
 };
 
@@ -72,11 +100,10 @@ const stopBufferingCheck = () => {
 
 // 0. LOADSTART
 audioPlayer.addEventListener('loadstart', () => {
-    // If we expect to be playing, show loading immediately
     if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
 });
 
-// 1. WAITING / STALLED
+// 1. WAITING / STALLED / SEEKING
 audioPlayer.addEventListener('seeking', startBufferingCheck);
 audioPlayer.addEventListener('waiting', startBufferingCheck);
 audioPlayer.addEventListener('stalled', startBufferingCheck);
@@ -87,7 +114,10 @@ audioPlayer.addEventListener('playing', () => {
     isPlaying = true;
     updatePlayBtn();
 
-    // Trigger Reveal
+    // FIX: If we are still seeking (hardware hasn't caught up), DO NOT resolve yet.
+    // Wait for the 'seeked' event.
+    if (audioPlayer.seeking) return;
+
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
@@ -121,24 +151,19 @@ audioPlayer.addEventListener('seeked', () => {
     if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     } else {
-        // If playing after seek, ensure resolved
         ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 5. ERROR (The Watchdog)
-audioPlayer.addEventListener('error', (e) => {
-    console.error("Audio Error", e);
-    isPlaying = false;
-    updatePlayBtn();
-    ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
-});
-
-// 6. TIMEUPDATE
+// 5. TIMEUPDATE
 audioPlayer.addEventListener('timeupdate', () => { 
-    // If playing and text is still scrambled (stuck), force resolve
-    if (!audioPlayer.paused && ScrambleEngine.isLooping) {
-        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+    if (!audioPlayer.paused) {
+        if (isSeeking) isSeeking = false;
+        if (isSwitchingTrack) isSwitchingTrack = false;
+        
+        if (ScrambleEngine.isLooping) {
+            ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        }
     }
 
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 

@@ -20,7 +20,7 @@ function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
     // 1. OPERATION ID & STATE RESET
-    currentAudioOpId++; // Invalidate all pending timers/promises
+    currentAudioOpId++;
     
     ScrambleEngine.reset();
     isSwitchingTrack = true; 
@@ -28,7 +28,6 @@ function loadTrack(index, autoPlay = true) {
     pendingSeekPercent = null;
     wasPlayingBeforeDrag = false;
     
-    // 2. UI Reset
     domProgressBar.style.setProperty('--progress', '0%');
     if (index !== currentTrackIdx) {
         domCurrentTime.textContent = "0:00"; 
@@ -38,19 +37,17 @@ function loadTrack(index, autoPlay = true) {
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 3. Visuals: Force "Loading..." immediately
+    // 2. Visuals
     ScrambleEngine.startLoading(domTrackTitle);
 
-    // 4. HARDWARE FLUSH (Fixes "Bar moving / No Sound" on iOS)
-    // We explicitly pause and reset time before changing source
-    // to force the OS audio stack to drop the previous buffer.
+    // 3. Hardware - Flush
     audioPlayer.pause();
     audioPlayer.currentTime = 0;
     
     audioPlayer.src = track.src;
     audioPlayer.load();
 
-    // 5. Update Playlist
+    // 4. Update Playlist
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -63,21 +60,17 @@ function loadTrack(index, autoPlay = true) {
         refreshDynamicPage();
     }
 
-    // 6. Playback
+    // 5. Playback
     if (autoPlay) {
-        // Optimistic UI update
         isPlaying = true;
         updatePlayBtn();
 
         const thisOpId = currentAudioOpId;
 
         audioPlayer.play().catch(e => {
-            // If the user skipped again, ignore this error
             if (currentAudioOpId !== thisOpId) return;
-
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
             
-            // Revert UI if genuine block
             isSwitchingTrack = false; 
             ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
@@ -158,7 +151,6 @@ function getScrubPercent(e) {
 // --- DRAG HANDLERS ---
 
 const startDrag = (e) => {
-    // Force pause to prevent audio stutter/ghosting during drag
     if (isPlaying) {
         wasPlayingBeforeDrag = true;
         audioPlayer.pause(); 
@@ -206,7 +198,7 @@ if (progressArea) {
 }
 
 function commitSeek(percent) {
-    currentAudioOpId++; // Invalidate previous operations
+    currentAudioOpId++;
     
     if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
         clearTimeout(bufferDebounceTimer); 
@@ -223,12 +215,14 @@ function commitSeek(percent) {
             isSeeking = true;
             ScrambleEngine.startLoading(domTrackTitle);
             
-            // Critical: Force DOM update
-            requestAnimationFrame(() => {
-                audioPlayer.currentTime = newTime;
-                audioPlayer.play();
-                pendingSeekPercent = null;
-            });
+            // FIX: Wait 50ms before resuming to flush old audio buffer
+            setTimeout(() => {
+                requestAnimationFrame(() => {
+                    audioPlayer.currentTime = newTime;
+                    audioPlayer.play();
+                    pendingSeekPercent = null;
+                });
+            }, 50);
         } else {
             // PAUSED:
             pendingSeekPercent = percent;
