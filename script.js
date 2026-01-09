@@ -373,7 +373,12 @@ async function refreshDynamicPage() {
 // --- MUSIC FUNCTIONS ---
 function stopScramble() {
     if (loadingScrambleInterval) { clearInterval(loadingScrambleInterval); loadingScrambleInterval = null; }
-    if (bufferCheckTimer) { clearTimeout(bufferCheckTimer); bufferCheckTimer = null; }
+
+    // Clear legacy
+    if (typeof bufferCheckTimer !== 'undefined' && bufferCheckTimer) { clearTimeout(bufferCheckTimer); bufferCheckTimer = null; }
+    // Clear new
+    if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
+
     shouldAnimateReveal = false;
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         const title = albumTracks[currentTrackIdx].title;
@@ -588,7 +593,12 @@ const doDragTouch = (e) => {
 const endDragTouch = (e) => { if (holdTimer) clearTimeout(holdTimer); if (isDragging) { commitSeek(parseFloat(domProgressBar.style.getPropertyValue('--progress'))); isDragging = false; domProgressBar.classList.remove('dragging'); } setTimeout(() => { isTouch = false; }, 500); };
 
 function commitSeek(percent) {
-    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
+    // Clear legacy/new timers
+    if (typeof bufferCheckTimer !== 'undefined' && bufferCheckTimer) clearTimeout(bufferCheckTimer);
+    if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
+        clearTimeout(bufferDebounceTimer);
+        bufferDebounceTimer = null;
+    }
 
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
@@ -597,18 +607,19 @@ function commitSeek(percent) {
 
         if (!audioPlayer.paused) {
             audioPlayer.currentTime = newTime;
-            // Note: 'waiting' listener below handles hang detection
+            // The 'waiting'/'seeked' listeners will handle state/scramble naturally.
+            // But we force a check to prevent stale state.
+            if (audioPlayer.readyState < 3) {
+                // If clearly buffering immediately, we could set state, 
+                // but we let the debounce logic handle it to avoid flashing.
+            }
         } else {
             pendingSeekPercent = percent;
             // Paused scrub: Keep title clean and stop any hanging animations
-            if (loadingScrambleInterval) {
-                clearInterval(loadingScrambleInterval);
-                loadingScrambleInterval = null;
-            }
-            if (domTrackTitle.dataset.revealing !== "true") {
-                domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
-                domTrackTitle.style.color = "";
-            }
+            stopScramble();
+            // Ensure static title is correct
+            domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
+            domTrackTitle.style.color = "";
         }
     } else {
         pendingSeekPercent = percent;
