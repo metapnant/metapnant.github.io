@@ -19,11 +19,10 @@ function initPlaylist() {
 function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
-    // 1. OPERATION ID: Invalidate all previous pending operations/listeners
+    // 1. NEW OPERATION ID
     currentAudioOpId++;
-    const thisOpId = currentAudioOpId; // Capture ID for the closure
-
-    // 2. Reset UI & State
+    
+    // 2. Reset UI
     ScrambleEngine.reset();
     isSwitchingTrack = true; 
     isSeeking = false; 
@@ -39,10 +38,14 @@ function loadTrack(index, autoPlay = true) {
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 3. Visuals: Force "Loading..." immediately
+    // 3. Start Loading Visuals
     ScrambleEngine.startLoading(domTrackTitle);
 
-    // 4. Update Playlist UI
+    // 4. Hardware
+    audioPlayer.src = track.src;
+    audioPlayer.load();
+
+    // 5. Playlist UI
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -55,44 +58,26 @@ function loadTrack(index, autoPlay = true) {
         refreshDynamicPage();
     }
 
-    // 5. HARDWARE PIPELINE (The Robust Async Fix)
-    
-    // Stop previous track immediately
-    audioPlayer.pause();
-    
-    // Define what happens when the hardware is actually ready
-    const onMediaReady = () => {
-        // If user skipped again while loading, abort this operation
-        if (currentAudioOpId !== thisOpId) return;
+    // 6. Playback
+    if (autoPlay) {
+        isPlaying = true;
+        updatePlayBtn();
 
-        if (autoPlay) {
-            isPlaying = true;
-            updatePlayBtn();
+        const thisOpId = currentAudioOpId;
+
+        audioPlayer.play().catch(e => {
+            if (currentAudioOpId !== thisOpId) return;
+            if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
             
-            audioPlayer.play().catch(e => {
-                if (currentAudioOpId !== thisOpId) return;
-                if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
-                
-                // Revert if blocked
-                isSwitchingTrack = false;
-                ScrambleEngine.snap(domTrackTitle, track.title);
-                isPlaying = false;
-                updatePlayBtn();
-            });
-        } else {
-            // No autoplay requested
-            isSwitchingTrack = false;
+            isSwitchingTrack = false; 
             ScrambleEngine.snap(domTrackTitle, track.title);
-        }
-    };
-
-    // Attach listener BEFORE setting src (Safe for cached assets)
-    // using { once: true } to prevent memory leaks or double firing
-    audioPlayer.addEventListener('loadedmetadata', onMediaReady, { once: true });
-
-    // Inject new source
-    audioPlayer.src = track.src;
-    audioPlayer.load();
+            isPlaying = false;
+            updatePlayBtn();
+        });
+    } else {
+        ScrambleEngine.snap(domTrackTitle, track.title);
+        isSwitchingTrack = false;
+    }
 }
 
 function playTrack(index) { 
@@ -115,7 +100,6 @@ function togglePlay() {
         isPlaying = true;
         updatePlayBtn();
 
-        // Cold Seek Apply
         if (pendingSeekPercent !== null && audioPlayer.duration) {
             const seekTime = (pendingSeekPercent / 100) * audioPlayer.duration;
             audioPlayer.currentTime = seekTime;
@@ -165,8 +149,6 @@ function getScrubPercent(e) {
 // --- DRAG HANDLERS ---
 
 const startDrag = (e) => {
-    // 1. Pause audio immediately (Hardware Stop)
-    // This stops the buffer from draining (Ghost Play)
     if (isPlaying) {
         wasPlayingBeforeDrag = true;
         audioPlayer.pause(); 
@@ -174,9 +156,8 @@ const startDrag = (e) => {
         wasPlayingBeforeDrag = false;
     }
     
-    // 2. Lock UI
     isDragging = true;
-    isSeeking = true; 
+    isSeeking = true; // Lock UI
     
     domProgressBar.classList.add('dragging');
     updateScrubVisual(getScrubPercent(e));
@@ -215,13 +196,8 @@ if (progressArea) {
 }
 
 function commitSeek(percent) {
-    currentAudioOpId++; // Invalidate buffers
+    currentAudioOpId++; // INVALIDATE OLD TIMERS
     
-    if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
-        clearTimeout(bufferDebounceTimer); 
-        bufferDebounceTimer = null;
-    }
-
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
         domProgressBar.style.setProperty('--progress', `${percent}%`);
@@ -230,18 +206,14 @@ function commitSeek(percent) {
         if (wasPlayingBeforeDrag || !audioPlayer.paused) {
             // PLAYING:
             isSeeking = true;
-            // Immediate visual feedback
             ScrambleEngine.startLoading(domTrackTitle);
             
-            // EXECUTE PIPELINE:
-            // 1. Ensure we are paused (handled by startDrag, but double safety)
-            audioPlayer.pause();
-            // 2. Move needle
-            audioPlayer.currentTime = newTime;
-            // 3. Request Play (Browser will handle the buffer wait naturally)
-            audioPlayer.play();
-            
-            pendingSeekPercent = null;
+            // Force hardware update
+            requestAnimationFrame(() => {
+                audioPlayer.currentTime = newTime;
+                audioPlayer.play();
+                pendingSeekPercent = null;
+            });
         } else {
             // PAUSED:
             pendingSeekPercent = percent;

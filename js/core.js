@@ -73,15 +73,16 @@ let holdTimer = null;
 let isTouch = false;
 let isScrolling = false;
 let pendingSeekPercent = null;
-let currentAudioOpId = 0; 
+
+// New Strict State Flags
+let currentAudioOpId = 0; // Tracks unique load/seek operations
 let isSwitchingTrack = false; 
-let isSeeking = false; 
+let isSeeking = false; // TRUE only during the gap between commitSeek and 'seeked' event
 let wasPlayingBeforeDrag = false; 
 
 // -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
-let bufferDebounceTimer = null; 
-let scrollAnimationId = null; // NEW: Track the scroll loop
+let scrollAnimationId = null;
 
 // -- TERMINAL STATE --
 let secretClicks = 0;
@@ -168,15 +169,13 @@ function killScrollAnimation() {
 
 function jitterScrollTo(element) {
     if (!element) return;
-    killScrollAnimation(); // Kill any existing
-    
+    killScrollAnimation();
     const headerOffset = 80;
     const elementTop = element.getBoundingClientRect().top + window.scrollY - headerOffset;
     const startY = window.scrollY;
     const distance = elementTop - startY;
     const duration = 1500;
     let startTime = null;
-    
     function animation(currentTime) {
         if (startTime === null) startTime = currentTime;
         const timeElapsed = currentTime - startTime;
@@ -187,9 +186,7 @@ function jitterScrollTo(element) {
         const amplitude = 15 * Math.pow(1 - progress, 2);
         const vibration = Math.sin(progress * frequency) * amplitude;
         const currentPos = startY + (distance * carrier) + vibration;
-        
         window.scrollTo(0, currentPos);
-        
         if (timeElapsed < duration) { 
             scrollAnimationId = requestAnimationFrame(animation); 
         } else { 
@@ -229,48 +226,72 @@ function getVisiblePageNumber() {
 }
 
 // ==========================================
-// SCRAMBLE ENGINE
+// SCRAMBLE ENGINE V2 (SMART BUFFERING)
 // ==========================================
 
 const ScrambleEngine = {
     interval: null,
+    delayTimer: null,
     targetElement: null,
     isResolving: false,
+    
+    // Status flag: Are we showing alien glyphs?
     isLooping: false,
 
     loadingGlyphs: "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝",
     revealGlyphs: "!<>-_\\/[]{}—=+*^?#________",
 
+    // 1. SMART START
+    // Doesn't show anything for 100ms. If resolve() called before then, no flash.
     startLoading: function(element) {
-        if (this.targetElement === element && this.interval && this.isLooping && !this.isResolving) return;
+        // If already loading this element, do nothing
+        if (this.targetElement === element && (this.isLooping || this.delayTimer)) return;
+
         this.reset();
         this.targetElement = element;
-        this.isLooping = true;
-        this.isResolving = false;
-        
         element.style.color = "var(--name-color)";
-        
-        const update = () => {
-            let text = "";
-            for (let i = 0; i < 12; i++) {
-                if (i < 7 && Math.random() > 0.85) text += "LOADING"[i] || "";
-                else text += this.loadingGlyphs[Math.floor(Math.random() * this.loadingGlyphs.length)];
-            }
-            element.innerText = text;
-        };
-        update();
-        this.interval = setInterval(update, 60);
+
+        // Wait 100ms before showing alien glyphs (The "No Flash" Buffer)
+        this.delayTimer = setTimeout(() => {
+            this.delayTimer = null;
+            this.isLooping = true;
+            
+            const update = () => {
+                let text = "";
+                for (let i = 0; i < 12; i++) {
+                    if (i < 7 && Math.random() > 0.85) text += "LOADING"[i] || "";
+                    else text += this.loadingGlyphs[Math.floor(Math.random() * this.loadingGlyphs.length)];
+                }
+                element.innerText = text;
+            };
+            update();
+            this.interval = setInterval(update, 60);
+        }, 100);
     },
 
+    // 2. RESOLVE (Transition to Title)
     resolve: function(element, finalText) {
+        // Scenario A: We are in the 100ms buffer period (Fast Load)
+        if (this.delayTimer) {
+            clearTimeout(this.delayTimer);
+            this.delayTimer = null;
+            // Go straight to reveal, skipping alien loop
+        }
+        
+        // Scenario B: We are not loading anything, and text is already correct
+        // (Prevents stuttering on play/pause)
         if (!this.isLooping && element.innerText === finalText) {
              this.snap(element, finalText);
              return;
         }
-        this.reset();
-        this.targetElement = element;
-        this.isResolving = true;
+
+        // Scenario C: We were loading (Alien), or it was a Fast Load
+        // Begin the Matrix Reveal
+        if (this.interval) clearInterval(this.interval);
+        this.interval = null;
         this.isLooping = false;
+        this.isResolving = true;
+        this.targetElement = element;
         
         let iterations = 0;
         element.style.color = "var(--name-color)"; 
@@ -288,15 +309,20 @@ const ScrambleEngine = {
         }, 30);
     },
 
+    // 3. SNAP (Instant Reset)
     snap: function(element, finalText) {
         this.reset();
-        element.innerText = finalText;
-        element.style.color = "";
+        if(element) {
+            element.innerText = finalText;
+            element.style.color = "";
+        }
     },
 
     reset: function() {
         if (this.interval) clearInterval(this.interval);
+        if (this.delayTimer) clearTimeout(this.delayTimer);
         this.interval = null;
+        this.delayTimer = null;
         this.isResolving = false;
         this.isLooping = false;
         this.targetElement = null;
@@ -305,6 +331,7 @@ const ScrambleEngine = {
     clear: function() { this.reset(); }
 };
 
+// Legacy support for "Show Voice" button
 function startLoadingScramble(element) {
     if (element === btnShowVoice) { if (voiceScrambleInterval) clearInterval(voiceScrambleInterval); }
     const glyphs = "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝!<>-_\\/[]{}—=+*^?#";

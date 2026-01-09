@@ -27,8 +27,32 @@ window.addEventListener('resize', () => {
 });
 
 // UI Buttons
-document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading && currentIndex < library.length - 1) loadDocument(currentIndex + 1); });
-document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading && currentIndex > 0) loadDocument(currentIndex - 1); });
+document.getElementById('next-doc').addEventListener('click', () => { 
+    if(!isLoading && currentIndex < library.length - 1) {
+        performNavReset();
+        loadDocument(currentIndex + 1); 
+    }
+});
+document.getElementById('prev-doc').addEventListener('click', () => { 
+    if(!isLoading && currentIndex > 0) {
+        performNavReset();
+        loadDocument(currentIndex - 1); 
+    }
+});
+
+const performNavReset = () => {
+    killScrollAnimation();
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    waitingForLyrics = false;
+    if (voiceScrambleInterval) {
+        clearInterval(voiceScrambleInterval);
+        voiceScrambleInterval = null;
+    }
+    if (btnShowVoice) {
+        btnShowVoice.innerText = "SHOW VOICE";
+        btnShowVoice.style.color = "";
+    }
+};
 
 [document.getElementById('next-doc'), document.getElementById('prev-doc')].forEach(arrow => {
     arrow.addEventListener('touchstart', function() { this.classList.add('active-state'); }, {passive: true});
@@ -44,77 +68,38 @@ if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggl
 
 // --- AUDIO EVENT HANDLING ---
 
-const startBufferingCheck = () => {
-    if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
-    
-    // Capture op ID
-    const thisOpId = currentAudioOpId;
-
-    if (isPlaying && !audioPlayer.paused) {
-        bufferDebounceTimer = setTimeout(() => {
-            // Strict ID check: if user clicked again, abort
-            if (currentAudioOpId !== thisOpId) return;
-
-            if (audioPlayer.seeking || audioPlayer.readyState < 3) {
-                ScrambleEngine.startLoading(domTrackTitle);
-            }
-        }, 250); 
-    }
-};
-
-const stopBufferingCheck = () => {
-    if (bufferDebounceTimer) {
-        clearTimeout(bufferDebounceTimer);
-        bufferDebounceTimer = null;
-    }
-};
-
-// 0. LOADSTART
-audioPlayer.addEventListener('loadstart', () => {
-    if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
-});
-
-// 1. WAITING / STALLED / SEEKING
-audioPlayer.addEventListener('seeking', startBufferingCheck);
-audioPlayer.addEventListener('waiting', startBufferingCheck);
-audioPlayer.addEventListener('stalled', startBufferingCheck);
-
-// 2. PLAYING
+// 1. PLAYING
 audioPlayer.addEventListener('playing', () => {
-    stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
 
+    // Force Resolve if we switched tracks or were buffering
+    // But ONLY if we aren't waiting for a seek to land
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
-        if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
+        if (!isSeeking && (ScrambleEngine.isLooping || isSwitchingTrack)) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
-        } else {
-            ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
     
     isSwitchingTrack = false;
-    isSeeking = false;
 });
 
-// 3. PAUSE
+// 2. PAUSE
 audioPlayer.addEventListener('pause', () => {
-    stopBufferingCheck();
-    // Ignore pause if track switching (handled by loadedmetadata)
     if (isSwitchingTrack) return; 
 
     isPlaying = false;
     updatePlayBtn();
     
+    // Snap immediately
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 4. SEEKED
+// 3. SEEKED (This is the primary way to clear 'isSeeking')
 audioPlayer.addEventListener('seeked', () => {
     isSeeking = false;
-    stopBufferingCheck();
     
     if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
@@ -123,17 +108,13 @@ audioPlayer.addEventListener('seeked', () => {
     }
 });
 
-// 5. TIMEUPDATE (Safety Net)
+// 4. TIMEUPDATE (Safety Net)
 audioPlayer.addEventListener('timeupdate', () => { 
-    if (!audioPlayer.paused) {
-        // If time is moving, we are done seeking/switching.
-        if (isSeeking) isSeeking = false;
-        if (isSwitchingTrack) isSwitchingTrack = false;
-        
-        // Ensure text is resolved
-        if (ScrambleEngine.isLooping) {
-            ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
-        }
+    // If audio is moving, we are NOT seeking.
+    // This fixes the "stuck seek" bug on iOS where 'seeked' might be skipped.
+    if (!audioPlayer.paused && isSeeking) {
+        isSeeking = false;
+        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
