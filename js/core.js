@@ -169,6 +169,21 @@ function killScrollAnimation() {
     }
 }
 
+// Navigation Reset Logic
+function performNavReset() {
+    killScrollAnimation();
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    waitingForLyrics = false;
+    if (voiceScrambleInterval) {
+        clearInterval(voiceScrambleInterval);
+        voiceScrambleInterval = null;
+    }
+    if (btnShowVoice) {
+        btnShowVoice.innerText = "SHOW VOICE";
+        btnShowVoice.style.color = "";
+    }
+}
+
 function jitterScrollTo(element) {
     if (!element) return;
     killScrollAnimation();
@@ -242,7 +257,6 @@ const ScrambleEngine = {
 
     startLoading: function(element) {
         if (this.targetElement === element && this.interval && this.isLooping && !this.isResolving) return;
-
         this.reset();
         this.targetElement = element;
         this.isLooping = true;
@@ -258,7 +272,7 @@ const ScrambleEngine = {
             }
             element.innerText = text;
         };
-        update();
+        update(); 
         this.interval = setInterval(update, 60);
     },
 
@@ -345,21 +359,20 @@ function resolveLoadingScramble(element, finalText) {
     }
 }
 
-// FIX: Instant Touch Feedback with enforced duration
+// FIX: Instant Touch Feedback with enforced duration (Advanced Version)
 function addTactileListener(selector) {
     const els = document.querySelectorAll(selector);
     els.forEach(el => {
-        // Use pointerdown for immediate reaction
         el.addEventListener('pointerdown', function(e) {
             this.classList.add('active-state');
-            this.dataset.pressTime = Date.now(); // Record start time
+            this.dataset.pressTime = Date.now(); 
             if(this.releasePointerCapture) this.releasePointerCapture(e.pointerId);
         });
         
         const removeActive = function() {
             const self = this;
             const pressDuration = Date.now() - (parseInt(self.dataset.pressTime) || 0);
-            const minDuration = 150; // Minimum time to show the flash
+            const minDuration = 150; 
             
             const delay = pressDuration < minDuration ? (minDuration - pressDuration) : 0;
             
