@@ -929,22 +929,32 @@ audioPlayer.addEventListener('loadstart', () => {
 // --- UPDATED LISTENERS (Immediate Feedback) ---
 
 audioPlayer.addEventListener('waiting', () => {
-    // DEBOUNCE REMOVED: Scramble engages the microsecond data stalls
-    // Only if we intend to be playing
-    if (isPlaying && !audioPlayer.paused) {
-        shouldAnimateReveal = true;
-        startLoadingScramble(domTrackTitle);
+    // Re-introduced short grace period (150ms) to ignore instant-loads
+    if (isPlaying && !audioPlayer.paused && !bufferDebounceTimer) {
+        bufferDebounceTimer = setTimeout(() => {
+            shouldAnimateReveal = true;
+            startLoadingScramble(domTrackTitle);
+            bufferDebounceTimer = null;
+        }, 150);
     }
 });
 
 audioPlayer.addEventListener('stalled', () => {
-    // Immediate feedback for slow iOS connections
-    if (isPlaying && !audioPlayer.paused) {
-        startLoadingScramble(domTrackTitle);
+    if (isPlaying && !audioPlayer.paused && !bufferDebounceTimer) {
+        bufferDebounceTimer = setTimeout(() => {
+            startLoadingScramble(domTrackTitle);
+            bufferDebounceTimer = null;
+        }, 150);
     }
 });
 
 audioPlayer.addEventListener('playing', () => {
+    // Clear any pending scramble since we are playing now
+    if (bufferDebounceTimer) {
+        clearTimeout(bufferDebounceTimer);
+        bufferDebounceTimer = null;
+    }
+
     isPlaying = true;
     updatePlayBtn();
     if (shouldAnimateReveal) {
@@ -954,21 +964,24 @@ audioPlayer.addEventListener('playing', () => {
 });
 
 audioPlayer.addEventListener('pause', () => {
+    if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
     stopScramble();
     isPlaying = false;
     updatePlayBtn();
 });
 
 audioPlayer.addEventListener('seeked', () => {
+    if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
+
     if (audioPlayer.paused) {
         stopScramble();
+        // Since we stopped, ensure title is readable
         domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
+        domTrackTitle.style.color = "";
     } else {
-        // Check if we jumped to a buffered area or not
-        if (audioPlayer.readyState >= 3) {
-            // Playing fine
-        } else {
-            startLoadingScramble(domTrackTitle);
+        // If playing, check if we need to buffer
+        if (audioPlayer.readyState < 3) {
+            // Don't force scramble here, let 'waiting' catch it with the 150ms delay
         }
     }
 });
@@ -988,10 +1001,7 @@ function commitSeek(percent) {
 
         if (!audioPlayer.paused) {
             audioPlayer.currentTime = newTime;
-            // Force immediate scramble if the seek causes a stall
-            if (audioPlayer.readyState < 3) {
-                startLoadingScramble(domTrackTitle);
-            }
+            // Native 'waiting' event will handle the scramble if it stalls > 150ms
         } else {
             audioPlayer.currentTime = newTime;
             pendingSeekPercent = percent;
