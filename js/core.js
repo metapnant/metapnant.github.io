@@ -73,10 +73,11 @@ let holdTimer = null;
 let isTouch = false;
 let isScrolling = false;
 let pendingSeekPercent = null;
-let isSwitchingTrack = false;
+let isSwitchingTrack = false; // Flag to force scramble on new track load
 
 // -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
+let bufferDebounceTimer = null; // Central timer for buffering UI
 
 // -- TERMINAL STATE --
 let secretClicks = 0;
@@ -215,21 +216,20 @@ const ScrambleEngine = {
     interval: null,
     targetElement: null,
     isResolving: false,
-    
-    // Tracks if we are currently in the "Alien Loop" (Buffering/Loading)
-    isLooping: false,
+    isLooping: false, // Tracks if we are currently in the "Alien Loop" (Buffering/Loading)
 
     loadingGlyphs: "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝",
     revealGlyphs: "!<>-_\\/[]{}—=+*^?#________",
 
-    // 1. INFINITE LOADING STATE
+    // 1. INFINITE LOADING STATE (Alien Loop + "LOADING" text)
     startLoading: function(element) {
+        // Only start if not already loading this element and not currently resolving
         if (this.targetElement === element && this.interval && !this.isResolving) return;
 
-        this.clear();
+        this.clear(); // Clear any previous state
         this.targetElement = element;
         this.isLooping = true; // Mark as looping
-        this.isResolving = false;
+        this.isResolving = false; // Not resolving yet
         
         element.style.color = "var(--name-color)";
         
@@ -245,12 +245,16 @@ const ScrambleEngine = {
 
     // 2. REVEAL STATE (Matrix Decode)
     resolve: function(element, finalText) {
-        if (!this.interval && element.innerText === finalText) return;
+        // If text is already correct and not currently looping, snap. This prevents re-animating.
+        if (!this.isLooping && element.innerText === finalText) {
+             this.snap(element, finalText);
+             return;
+        }
 
-        this.clear(); // This clears isLooping
+        this.clear(); // Clear loading loop first
         this.targetElement = element;
-        this.isResolving = true;
-        this.isLooping = false; // Explicitly ensure we aren't looping
+        this.isResolving = true; // Now resolving
+        this.isLooping = false; // No longer looping
         
         let iterations = 0;
         element.style.color = "var(--name-color)"; 
@@ -266,11 +270,11 @@ const ScrambleEngine = {
                 element.innerText = finalText; 
                 element.style.color = ""; 
             }
-            iterations += 1 / 2;
+            iterations += 1 / 2; // Speed of reveal
         }, 30);
     },
 
-    // 3. INSTANT SNAP
+    // 3. INSTANT SNAP (Static text)
     snap: function(element, finalText) {
         this.clear();
         this.isLooping = false;
@@ -284,15 +288,15 @@ const ScrambleEngine = {
             this.interval = null;
         }
         this.isResolving = false;
-        this.isLooping = false;
+        this.isLooping = false; // Always ensure this is false when cleared
         this.targetElement = null;
     }
 };
 
-// Legacy support for "Show Voice" button
+// Legacy support for "Show Voice" button (uses a separate simpler scramble)
 function startLoadingScramble(element) {
     if (element === btnShowVoice) { if (voiceScrambleInterval) clearInterval(voiceScrambleInterval); }
-    const glyphs = "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝!<>-_\\/[]{}—=+*^?#";
+    const glyphs = "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝!<>-_\\/[]{}—=+*^?#"; // Mix of alien and tech glyphs
     const timer = setInterval(() => {
         let text = "";
         for (let i = 0; i < 12; i++) {
@@ -308,7 +312,7 @@ function startLoadingScramble(element) {
 function resolveLoadingScramble(element, finalText) {
     if (element === btnShowVoice) { 
         if (voiceScrambleInterval) { clearInterval(voiceScrambleInterval); voiceScrambleInterval = null; } 
-        const chars = "!<>-_\\/[]{}—=+*^?#________";
+        const chars = "!<>-_\\/[]{}—=+*^?#________"; // Tech glyphs for reveal
         let iterations = 0;
         const interval = setInterval(() => {
             element.innerText = finalText.split("").map((letter, index) => {
@@ -322,6 +326,6 @@ function resolveLoadingScramble(element, finalText) {
             iterations += 1 / 3;
         }, 30);
     } else {
-        ScrambleEngine.resolve(element, finalText);
+        ScrambleEngine.resolve(element, finalText); // Use the main ScrambleEngine for track titles
     }
 }

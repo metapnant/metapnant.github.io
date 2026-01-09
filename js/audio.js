@@ -20,25 +20,28 @@ function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
     // 1. Reset UI
-    isSwitchingTrack = true; 
     domProgressBar.style.setProperty('--progress', '0%');
     if (index !== currentTrackIdx) {
         domCurrentTime.textContent = "0:00"; 
         domDuration.textContent = "0:00";
     }
     
-    pendingSeekPercent = null;
+    // CRITICAL: Clear any stale seek requests from previous tracks or initial states
+    pendingSeekPercent = null; 
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 2. Force Loading Animation on Track Change
+    // 2. Track Change: Force Loading Animation
+    // This tells init.js that a new track is being loaded, which ensures
+    // the "LOADING" scramble plays regardless of how fast it loads.
+    isSwitchingTrack = true; 
     ScrambleEngine.startLoading(domTrackTitle);
 
-    // 3. Update Audio
+    // 3. Hardware (Set new source)
     audioPlayer.src = track.src;
     audioPlayer.load();
 
-    // 4. Update Playlist
+    // 4. Update Playlist UI
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -51,15 +54,18 @@ function loadTrack(index, autoPlay = true) {
         refreshDynamicPage();
     }
 
-    // 5. Autoplay
+    // 5. Playback Logic
     if (autoPlay) {
+        // Attempt to play. 'playing' event in init.js will handle resolution.
         audioPlayer.play().catch(e => {
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
+            // If play fails (e.g. user hasn't interacted), snap text
             ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
             updatePlayBtn();
         });
     } else {
+        // Initial load without play: snap to title immediately
         ScrambleEngine.snap(domTrackTitle, track.title);
         isSwitchingTrack = false;
     }
@@ -79,17 +85,18 @@ function togglePlay() {
         audioPlayer.pause(); 
         isPlaying = false;
         updatePlayBtn();
+        // Manual Pause: Snap text to static
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
     else { 
         isPlaying = true;
         updatePlayBtn();
 
-        // COLD SEEK: Apply stored seek value before playing
+        // COLD SEEK: Apply stored seek value before playing (iOS fix)
         if (pendingSeekPercent !== null && audioPlayer.duration) {
             const seekTime = (pendingSeekPercent / 100) * audioPlayer.duration;
             audioPlayer.currentTime = seekTime;
-            // Note: init.js 'playing' event will clear pendingSeekPercent
+            pendingSeekPercent = null; // Clear now, as hardware update is attempted
         }
 
         audioPlayer.play();
@@ -156,7 +163,7 @@ const endDragTouch = (e) => {
 };
 
 function commitSeek(percent) {
-    // Clear debounce timer so we don't flash "Loading" if it's instant
+    // Clear debounce timer to prevent "Loading" flash on instant seek (handled by init.js)
     if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
         clearTimeout(bufferDebounceTimer); 
         bufferDebounceTimer = null;
@@ -169,21 +176,22 @@ function commitSeek(percent) {
 
         if (!audioPlayer.paused) {
             // PLAYING:
-            // 1. Force Loading visual instantly (responsive feedback)
+            // 1. Force Loading visual instantly for immediate feedback
             ScrambleEngine.startLoading(domTrackTitle);
             
-            // 2. Update Hardware
+            // 2. Update Hardware currentTime
             audioPlayer.currentTime = newTime;
             
-            // 3. Clear pending seek to unlock bar logic immediately
-            pendingSeekPercent = null;
+            // 3. Clear pending seek. This is crucial for timeupdate to resume.
+            pendingSeekPercent = null; 
         } else {
             // PAUSED:
-            // Just store the value. Do NOT start loading animation.
+            // Only update visuals and store for later. Do NOT animate text.
             pendingSeekPercent = percent;
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     } else {
+        // If duration is not available, just store the pending seek
         pendingSeekPercent = percent;
     }
 }
