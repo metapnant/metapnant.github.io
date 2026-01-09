@@ -62,11 +62,10 @@ const startBufferingCheck = () => {
     if (isPlaying && !audioPlayer.paused) {
         bufferDebounceTimer = setTimeout(() => {
             if (currentAudioOpId !== thisOpId) return;
-
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
-        }, 150); 
+        }, 100); 
     }
 };
 
@@ -77,10 +76,9 @@ const stopBufferingCheck = () => {
     }
 };
 
-// 0. LOADSTART
-audioPlayer.addEventListener('loadstart', () => {
-    if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
-});
+// 0. LOADSTART / PROGRESS
+audioPlayer.addEventListener('loadstart', () => { if (isPlaying) ScrambleEngine.startLoading(domTrackTitle); });
+audioPlayer.addEventListener('progress', updateBufferVisuals);
 
 // 1. SEEKING / WAITING / STALLED
 audioPlayer.addEventListener('seeking', startBufferingCheck);
@@ -92,7 +90,7 @@ audioPlayer.addEventListener('playing', () => {
     stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
-
+    
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
@@ -100,7 +98,6 @@ audioPlayer.addEventListener('playing', () => {
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
-    
     isSwitchingTrack = false;
     isSeeking = false;
 });
@@ -123,7 +120,10 @@ audioPlayer.addEventListener('seeked', () => {
     isSeeking = false;
     stopBufferingCheck();
     
-    if (audioPlayer.paused) {
+    if (resumeOnSeek) {
+        resumeOnSeek = false;
+        audioPlayer.play().catch(console.log);
+    } else if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     } else {
         ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
@@ -135,11 +135,11 @@ audioPlayer.addEventListener('timeupdate', () => {
     if (!audioPlayer.paused) {
         if (isSeeking) isSeeking = false;
         if (isSwitchingTrack) isSwitchingTrack = false;
-        
         if (ScrambleEngine.isLooping) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
+    updateBufferVisuals();
 
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
@@ -174,15 +174,23 @@ if (toolsToggleEl && toolsContainer) {
 // Show Voice Button
 if (btnShowVoice) { 
     btnShowVoice.addEventListener('click', (e) => { 
-        e.preventDefault(); if (isLoading) return; 
-        btnShowVoice.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        if (currentIndex !== 0) {
-            waitingForLyrics = true; startLoadingScramble(btnShowVoice); loadDocument(0); 
-        } else {
-            const p8 = document.getElementById('page-wrapper-8'); 
-            if (p8) { jitterScrollTo(p8); } 
-            else { waitingForLyrics = true; startLoadingScramble(btnShowVoice); }
-        }
+        e.preventDefault(); 
+        
+        btnShowVoice.classList.add('active-state');
+        setTimeout(() => btnShowVoice.classList.remove('active-state'), 150);
+
+        if (isLoading) return; 
+        
+        setTimeout(() => {
+            btnShowVoice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (currentIndex !== 0) {
+                waitingForLyrics = true; startLoadingScramble(btnShowVoice); loadDocument(0); 
+            } else {
+                const p8 = document.getElementById('page-wrapper-8'); 
+                if (p8) { jitterScrollTo(p8); } 
+                else { waitingForLyrics = true; startLoadingScramble(btnShowVoice); }
+            }
+        }, 20);
     }); 
 }
 
@@ -227,9 +235,8 @@ const interfaceSelectors = ['.close-terminal', '.cycle-btn', '.tools-toggle', '.
 interfaceSelectors.forEach(s => addTactileListener(s));
 
 // --- BOOT SEQUENCE ---
-// This is the ONLY place this should run
 document.getElementById("currentYear").textContent = new Date().getFullYear();
-if (typeof initTerminalState === 'function') initTerminalState();
+initTerminalState(); 
 loadDocument(0); 
 initPlaylist(); 
 loadTrack(0, false); 

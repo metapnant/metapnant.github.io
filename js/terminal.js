@@ -88,12 +88,12 @@ function initTerminalState() {
     updateSidebarUI();
     
     if (btnTurbo) {
-        btnTurbo.innerText = turboMode ? "[ >> ]\nTURBO: ON" : "[ >> ]\nTURBO: OFF";
+        btnTurbo.innerText = turboMode ? "[>>]\nTURBO: ON" : "[>>]\nTURBO: OFF";
         if (turboMode) btnTurbo.classList.add('active');
         else btnTurbo.classList.remove('active');
     }
     if (btnMute) {
-        btnMute.innerText = isMuted ? "[ VOL: OFF ]" : "[ VOL: ON ]";
+        btnMute.innerText = isMuted ? "[VOL: OFF]" : "[VOL: ON]";
         if (!isMuted) btnMute.classList.add('active');
         else btnMute.classList.remove('active');
     }
@@ -161,14 +161,14 @@ function replayLog(e, type) {
 function toggleTurbo() { 
     turboMode = !turboMode; 
     logSpeedMultiplier = turboMode ? 0.1 : 1; 
-    btnTurbo.innerText = turboMode ? "[ >> ]\nTURBO: ON" : "[ >> ]\nTURBO: OFF"; 
+    btnTurbo.innerText = turboMode ? "[>>]\nTURBO: ON" : "[>>]\nTURBO: OFF"; 
     if (turboMode) btnTurbo.classList.add('active');
     else btnTurbo.classList.remove('active'); 
 }
 
 function toggleMute() { 
     isMuted = !isMuted; 
-    btnMute.innerText = isMuted ? "[ VOL: OFF ]" : "[ VOL: ON ]"; 
+    btnMute.innerText = isMuted ? "[VOL: OFF]" : "[VOL: ON]"; 
     if (!isMuted) btnMute.classList.add('active');
     else btnMute.classList.remove('active'); 
 }
