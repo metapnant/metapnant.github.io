@@ -40,20 +40,6 @@ document.getElementById('prev-doc').addEventListener('click', () => {
     }
 });
 
-const performNavReset = () => {
-    killScrollAnimation();
-    window.scrollTo({ top: 0, behavior: 'auto' });
-    waitingForLyrics = false;
-    if (voiceScrambleInterval) {
-        clearInterval(voiceScrambleInterval);
-        voiceScrambleInterval = null;
-    }
-    if (btnShowVoice) {
-        btnShowVoice.innerText = "SHOW VOICE";
-        btnShowVoice.style.color = "";
-    }
-};
-
 [document.getElementById('next-doc'), document.getElementById('prev-doc')].forEach(arrow => {
     arrow.addEventListener('touchstart', function() { this.classList.add('active-state'); }, {passive: true});
     arrow.addEventListener('touchend', function() { this.classList.remove('active-state'); }, {passive: true});
@@ -64,19 +50,14 @@ if(btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextT
 if(btnPrev) btnPrev.addEventListener('click', (e) => { e.preventDefault(); prevTrack(); });
 if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggleLoop(); });
 
-// Note: Drag events are bound in audio.js
-
 // --- AUDIO EVENT HANDLING ---
 
 const startBufferingCheck = () => {
     if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
-    
     const thisOpId = currentAudioOpId;
-
     if (isPlaying && !audioPlayer.paused) {
         bufferDebounceTimer = setTimeout(() => {
             if (currentAudioOpId !== thisOpId) return;
-
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
@@ -91,12 +72,10 @@ const stopBufferingCheck = () => {
     }
 };
 
-// 0. LOADSTART
-audioPlayer.addEventListener('loadstart', () => {
-    if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
-});
+// 0. EVENTS
+audioPlayer.addEventListener('loadstart', () => { if (isPlaying) ScrambleEngine.startLoading(domTrackTitle); });
+audioPlayer.addEventListener('progress', updateBufferVisuals); // UPDATE BUFFER BAR
 
-// 1. SEEKING / WAITING / STALLED
 audioPlayer.addEventListener('seeking', startBufferingCheck);
 audioPlayer.addEventListener('waiting', startBufferingCheck);
 audioPlayer.addEventListener('stalled', startBufferingCheck);
@@ -106,7 +85,7 @@ audioPlayer.addEventListener('playing', () => {
     stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
-
+    
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
@@ -114,7 +93,6 @@ audioPlayer.addEventListener('playing', () => {
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
-    
     isSwitchingTrack = false;
     isSeeking = false;
 });
@@ -123,6 +101,9 @@ audioPlayer.addEventListener('playing', () => {
 audioPlayer.addEventListener('pause', () => {
     stopBufferingCheck();
     if (isSwitchingTrack) return; 
+    
+    // NOTE: If we are 'waiting' for buffer (auto-resume active), we don't treat this as a user pause
+    if (resumeOnSeek) return;
 
     isPlaying = false;
     updatePlayBtn();
@@ -137,14 +118,10 @@ audioPlayer.addEventListener('seeked', () => {
     isSeeking = false;
     stopBufferingCheck();
     
-    if (resumeOnSeek) {
-        resumeOnSeek = false;
-        audioPlayer.play().catch(console.log);
-    } else if (audioPlayer.paused) {
+    // Handled by commitSeek and canplay listener in audio.js
+    if (!resumeOnSeek && audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
-    } else {
-        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
-    }
+    } 
 });
 
 // 5. TIMEUPDATE
@@ -152,11 +129,11 @@ audioPlayer.addEventListener('timeupdate', () => {
     if (!audioPlayer.paused) {
         if (isSeeking) isSeeking = false;
         if (isSwitchingTrack) isSwitchingTrack = false;
-        
         if (ScrambleEngine.isLooping) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
+    updateBufferVisuals();
 
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
@@ -215,26 +192,17 @@ if (btnShowVoice) {
 infinityBtn.addEventListener('click', (e) => { 
     e.preventDefault(); SimpleSynth.unlock(); 
     
-    // FIX: White Flash for Unlocked State
-    if (appState.terminalFound) { 
+    if (appState.musicUnlocked || currentIndex === 2) {
         infinityBtn.classList.add('active-state');
         setTimeout(() => infinityBtn.classList.remove('active-state'), 150);
-        launchTerminal(); 
-        return; 
-    } 
-    
+    }
+
+    if (appState.terminalFound) { launchTerminal(); return; } 
     if (currentIndex !== 2) return; 
     
-    // FIX: Red Flash for Unlock Progress
     secretClicks++; 
-    infinityBtn.style.color = "#ff3333"; // Red
-    infinityBtn.style.textShadow = "0 0 15px #ff0000";
-    
-    setTimeout(() => {
-        infinityBtn.style.color = "";
-        infinityBtn.style.textShadow = "";
-    }, 200);
-
+    infinityBtn.style.color = "#ff00ff"; 
+    setTimeout(() => infinityBtn.style.color = "", 200); 
     if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; updateInfinityState(); launchTerminal(); } 
 });
 
@@ -271,7 +239,7 @@ interfaceSelectors.forEach(s => addTactileListener(s));
 
 // --- BOOT SEQUENCE ---
 document.getElementById("currentYear").textContent = new Date().getFullYear();
-initTerminalState(); 
+if (typeof initTerminalState === 'function') initTerminalState();
 loadDocument(0); 
 initPlaylist(); 
 loadTrack(0, false); 

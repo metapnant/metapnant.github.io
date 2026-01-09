@@ -2,7 +2,6 @@
 // AUDIO LOGIC
 // ==========================================
 
-// Buffer Bar Element
 let domBufferBar = null;
 
 function initPlaylist() {
@@ -42,7 +41,7 @@ function loadTrack(index, autoPlay = true) {
     resumeOnSeek = false;
     
     domProgressBar.style.setProperty('--progress', '0%');
-    if (domBufferBar) domBufferBar.style.width = '0%';
+    if (domBufferBar) domBufferBar.style.width = '0%'; // Reset buffer visuals
 
     if (index !== currentTrackIdx) {
         domCurrentTime.textContent = "0:00"; 
@@ -169,6 +168,7 @@ if (progressArea) {
     progressArea.addEventListener('touchend', endDragTouch);
 }
 
+// === SMART BUFFER SEEKING ===
 function commitSeek(percent) {
     currentAudioOpId++;
     
@@ -186,7 +186,7 @@ function commitSeek(percent) {
         audioPlayer.currentTime = newTime;
 
         if (wasPlayingBeforeDrag || !audioPlayer.paused) {
-            // WE WANT TO PLAY. BUT IS IT BUFFERED?
+            // Check if we are inside a buffered range
             let isBuffered = false;
             if (audioPlayer.buffered && audioPlayer.buffered.length > 0) {
                 for (let i = 0; i < audioPlayer.buffered.length; i++) {
@@ -198,24 +198,30 @@ function commitSeek(percent) {
             }
 
             if (isBuffered) {
-                // Buffered -> Play immediately
+                // DATA READY -> Instant Resume
                 isSeeking = true;
                 resumeOnSeek = true;
-                ScrambleEngine.startLoading(domTrackTitle);
+                ScrambleEngine.startLoading(domTrackTitle); // Quick visual feedback
                 audioPlayer.play().catch(console.log);
             } else {
-                // Not Buffered -> Pause safely (Android Behavior)
-                // Prevents glitches on slow connections
-                isPlaying = false;
-                updatePlayBtn();
+                // DATA MISSING -> Pause & Wait (YouTube Style)
+                // We keep 'isPlaying' true logically, but pause hardware.
+                // We show loading scramble, and wait for 'canplay' to resume.
+                isSeeking = true;
+                resumeOnSeek = true; // Flag for seeked/canplay handler
+                ScrambleEngine.startLoading(domTrackTitle);
                 
-                // Show title static
-                ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
-                isSeeking = false;
-                resumeOnSeek = false;
+                // Add a one-time listener to auto-resume when data arrives
+                const autoResume = () => {
+                    if (resumeOnSeek && (wasPlayingBeforeDrag || isPlaying)) {
+                        audioPlayer.play().catch(console.log);
+                        resumeOnSeek = false;
+                    }
+                };
+                audioPlayer.addEventListener('canplay', autoResume, { once: true });
             }
         } else {
-            // Was Paused -> Stay Paused
+            // PAUSED -> Stay Paused
             pendingSeekPercent = percent;
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
             isSeeking = false;
@@ -226,7 +232,7 @@ function commitSeek(percent) {
     }
 }
 
-// Function to update buffer bar
+// Visualizer for Buffer
 function updateBufferVisuals() {
     if (audioPlayer.duration && domBufferBar) {
         if (audioPlayer.buffered.length > 0) {
@@ -235,7 +241,6 @@ function updateBufferVisuals() {
             for (let i = 0; i < audioPlayer.buffered.length; i++) {
                 const start = audioPlayer.buffered.start(i);
                 const end = audioPlayer.buffered.end(i);
-                // If we are inside a range, use that range's end
                 if (now >= start && now <= end) {
                     const width = (end / audioPlayer.duration) * 100;
                     domBufferBar.style.width = `${width}%`;
@@ -243,8 +248,8 @@ function updateBufferVisuals() {
                     break;
                 }
             }
-            // Fallback: If not in range, show total buffered end
             if (!found) {
+                // If not in a range (e.g. seeking), show the furthest buffered point
                 const lastEnd = audioPlayer.buffered.end(audioPlayer.buffered.length - 1);
                 domBufferBar.style.width = `${(lastEnd / audioPlayer.duration) * 100}%`;
             }
