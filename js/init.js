@@ -51,18 +51,14 @@ progressArea.addEventListener('touchend', endDragTouch);
 
 let bufferingTimer = null;
 
-// Helper to trigger buffering visuals with debounce
+// Helper to trigger buffering visuals
 const startBufferingCheck = () => {
     if (bufferingTimer) clearTimeout(bufferingTimer);
-    
     // Only trigger if we are actively trying to play
-    if (isPlaying && !audioPlayer.paused) {
+    if (isPlaying) {
         bufferingTimer = setTimeout(() => {
-            // Check again if we are really stuck before scrambling
-            if (audioPlayer.readyState < 3) {
-                ScrambleEngine.startLoading(domTrackTitle);
-            }
-        }, 100); 
+            ScrambleEngine.startLoading(domTrackTitle);
+        }, 150); 
     }
 };
 
@@ -78,18 +74,24 @@ audioPlayer.addEventListener('seeking', startBufferingCheck);
 audioPlayer.addEventListener('waiting', startBufferingCheck);
 audioPlayer.addEventListener('stalled', startBufferingCheck);
 
-// 2. PLAYING
+// 2. PLAYING (The Fix)
 audioPlayer.addEventListener('playing', () => {
     stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
 
-    // Force Resolve: If track changed or we were loading, reveal.
+    // CRITICAL FIX: Unlock the progress bar immediately
+    // If we were "cold seeking", this tells the UI it's safe to update again.
+    pendingSeekPercent = null; 
+
+    // TRIGGER REVEAL:
+    // If we were loading (Alien Glyphs active), resolve to text.
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
+    
     isSwitchingTrack = false;
 });
 
@@ -99,7 +101,7 @@ audioPlayer.addEventListener('pause', () => {
     isPlaying = false;
     updatePlayBtn();
     
-    // Immediate static snap
+    // Snap text to static
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
@@ -107,21 +109,20 @@ audioPlayer.addEventListener('pause', () => {
 
 // 4. SEEKED
 audioPlayer.addEventListener('seeked', () => {
-    // If seek finished fast, kill the loading timer
     stopBufferingCheck();
     if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 5. TIMEUPDATE (The Safety Net)
+// 5. TIMEUPDATE (Safety Net)
 audioPlayer.addEventListener('timeupdate', () => { 
-    // SAFETY NET: If time is moving, we are NOT loading.
-    // If the "Alien Glyphs" loop is active, kill it immediately and show the title.
-    if (ScrambleEngine.isLooping && !isSwitchingTrack) {
+    // If Alien Glyphs are stuck but audio is moving, force resolve
+    if (ScrambleEngine.isLooping && !isSwitchingTrack && isPlaying) {
         ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 
+    // Only update bar if user is NOT interacting and NOT waiting for a seek to land
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
         domProgressBar.style.setProperty('--progress', `${p}%`); 
@@ -140,7 +141,7 @@ audioPlayer.addEventListener('loadedmetadata', () => {
     if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) { 
         audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; 
         domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); 
-        pendingSeekPercent = null; 
+        // Do NOT clear pendingSeekPercent here; wait for 'playing' event to ensure sync
     }
 });
 

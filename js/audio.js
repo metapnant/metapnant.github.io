@@ -31,7 +31,7 @@ function loadTrack(index, autoPlay = true) {
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 2. Force Loading on Switch
+    // 2. Force Loading Animation on Track Change
     ScrambleEngine.startLoading(domTrackTitle);
 
     // 3. Update Audio
@@ -85,11 +85,11 @@ function togglePlay() {
         isPlaying = true;
         updatePlayBtn();
 
-        // iOS Cold Seek
+        // COLD SEEK: Apply stored seek value before playing
         if (pendingSeekPercent !== null && audioPlayer.duration) {
             const seekTime = (pendingSeekPercent / 100) * audioPlayer.duration;
             audioPlayer.currentTime = seekTime;
-            pendingSeekPercent = null;
+            // Note: init.js 'playing' event will clear pendingSeekPercent
         }
 
         audioPlayer.play();
@@ -156,18 +156,30 @@ const endDragTouch = (e) => {
 };
 
 function commitSeek(percent) {
+    // Clear debounce timer so we don't flash "Loading" if it's instant
+    if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
+        clearTimeout(bufferDebounceTimer); 
+        bufferDebounceTimer = null;
+    }
+
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
 
         if (!audioPlayer.paused) {
-            // PLAYING: Apply immediate seek. 
-            // Feedback is handled by init.js 'seeking' event listener.
+            // PLAYING:
+            // 1. Force Loading visual instantly (responsive feedback)
+            ScrambleEngine.startLoading(domTrackTitle);
+            
+            // 2. Update Hardware
             audioPlayer.currentTime = newTime;
+            
+            // 3. Clear pending seek to unlock bar logic immediately
             pendingSeekPercent = null;
         } else {
-            // PAUSED: Store seek for next Play
+            // PAUSED:
+            // Just store the value. Do NOT start loading animation.
             pendingSeekPercent = percent;
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }

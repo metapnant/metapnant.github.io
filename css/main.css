@@ -41,14 +41,14 @@
 .nav-arrow {
   pointer-events: auto; background: none; border: none; 
   color: var(--arrow-color); 
-  /* FIX: Significantly increased font size for touch targets */
+  /* Huge font size for touch */
   font-size: clamp(4rem, 12vw, 7rem); 
   font-weight: 100; 
-  
   width: auto; 
   height: auto;
   line-height: 0.8;
-  padding: 15px; /* Larger hit area */
+  /* Massive padding for easy tapping */
+  padding: 20px; 
   margin: 0;
   
   cursor: pointer; transition: none !important; animation: faintFlash 5s infinite ease-in-out;
