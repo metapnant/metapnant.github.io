@@ -73,6 +73,8 @@ let holdTimer = null;
 let isTouch = false;
 let isScrolling = false;
 let pendingSeekPercent = null;
+// OPERATION ID: Increments on every track switch/seek. Used to invalidate old events.
+let currentOpId = 0; 
 let isSwitchingTrack = false; 
 let isSeeking = false; 
 let wasPlayingBeforeDrag = false; 
@@ -224,30 +226,37 @@ const ScrambleEngine = {
     revealGlyphs: "!<>-_\\/[]{}—=+*^?#________",
 
     startLoading: function(element) {
-        if (this.targetElement === element && this.interval && !this.isResolving) return;
-        this.clear();
+        if (this.targetElement === element && this.interval && this.isLooping && !this.isResolving) return;
+
+        this.reset();
         this.targetElement = element;
         this.isLooping = true;
         this.isResolving = false;
         
         element.style.color = "var(--name-color)";
         
-        this.interval = setInterval(() => {
+        const update = () => {
             let text = "";
             for (let i = 0; i < 12; i++) {
                 if (i < 7 && Math.random() > 0.85) text += "LOADING"[i] || "";
                 else text += this.loadingGlyphs[Math.floor(Math.random() * this.loadingGlyphs.length)];
             }
             element.innerText = text;
-        }, 60);
+        };
+        
+        // Immediate update to prevent visual lag
+        update();
+        this.interval = setInterval(update, 60);
     },
 
     resolve: function(element, finalText) {
+        // Safety: If not loading, and text is correct, exit.
         if (!this.isLooping && element.innerText === finalText) {
              this.snap(element, finalText);
              return;
         }
-        this.clear();
+
+        this.reset();
         this.targetElement = element;
         this.isResolving = true;
         this.isLooping = false;
@@ -262,9 +271,7 @@ const ScrambleEngine = {
             }).join("");
 
             if (iterations >= finalText.length) {
-                this.clear();
-                element.innerText = finalText; 
-                element.style.color = ""; 
+                this.snap(element, finalText);
             }
             iterations += 1 / 2;
         }, 30);

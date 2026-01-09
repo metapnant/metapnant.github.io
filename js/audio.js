@@ -19,7 +19,10 @@ function initPlaylist() {
 function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
-    // 1. Reset
+    // 1. OPERATION ID: Invalidate all previous pending operations
+    currentOpId++;
+    
+    // 2. Reset UI
     ScrambleEngine.reset();
     isSwitchingTrack = true; 
     isSeeking = false; 
@@ -35,14 +38,14 @@ function loadTrack(index, autoPlay = true) {
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 2. Visuals
+    // 3. Force Visual "Loading"
     ScrambleEngine.startLoading(domTrackTitle);
 
-    // 3. Audio
+    // 4. Hardware
     audioPlayer.src = track.src;
     audioPlayer.load();
 
-    // 4. Playlist
+    // 5. Update Playlist
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -55,12 +58,21 @@ function loadTrack(index, autoPlay = true) {
         refreshDynamicPage();
     }
 
-    // 5. Play
+    // 6. Autoplay
     if (autoPlay) {
+        const thisOpId = currentOpId; // Capture ID
+        
+        // Optimistic playing state
         isPlaying = true;
         updatePlayBtn();
+
         audioPlayer.play().catch(e => {
+            // IGNORE if user already switched track again
+            if (currentOpId !== thisOpId) return;
+
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
+            
+            // Revert state
             isSwitchingTrack = false; 
             ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
@@ -147,8 +159,10 @@ const startDrag = (e) => {
     } else {
         wasPlayingBeforeDrag = false;
     }
+    
     isDragging = true;
-    isSeeking = true; // Lock UI updates
+    isSeeking = true; 
+    
     domProgressBar.classList.add('dragging');
     updateScrubVisual(getScrubPercent(e));
 };
@@ -186,6 +200,8 @@ if (progressArea) {
 }
 
 function commitSeek(percent) {
+    currentOpId++; // Invalidate previous seek/load events
+    
     if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
         clearTimeout(bufferDebounceTimer); 
         bufferDebounceTimer = null;
@@ -198,14 +214,15 @@ function commitSeek(percent) {
 
         if (wasPlayingBeforeDrag || !audioPlayer.paused) {
             // PLAYING:
-            isSeeking = true; // Lock UI until seek completes
-            // Immediately show loading scramble. 
-            // If network is fast, seeked event will resolve it shortly.
+            isSeeking = true;
             ScrambleEngine.startLoading(domTrackTitle);
             
-            audioPlayer.currentTime = newTime;
-            audioPlayer.play();
-            pendingSeekPercent = null;
+            // Critical: Force DOM update before heavy audio work
+            requestAnimationFrame(() => {
+                audioPlayer.currentTime = newTime;
+                audioPlayer.play();
+                pendingSeekPercent = null;
+            });
         } else {
             // PAUSED:
             pendingSeekPercent = percent;

@@ -46,15 +46,12 @@ if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggl
 
 const startBufferingCheck = () => {
     if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
-    
-    // Only trigger if we are supposed to be playing
     if (isPlaying && !audioPlayer.paused) {
         bufferDebounceTimer = setTimeout(() => {
-            // UPDATED: 444ms Threshold
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
-        }, 444); 
+        }, 100); 
     }
 };
 
@@ -70,7 +67,7 @@ audioPlayer.addEventListener('loadstart', () => {
     if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
 });
 
-// 1. WAITING / STALLED / SEEKING
+// 1. SEEKING / WAITING / STALLED
 audioPlayer.addEventListener('seeking', startBufferingCheck);
 audioPlayer.addEventListener('waiting', startBufferingCheck);
 audioPlayer.addEventListener('stalled', startBufferingCheck);
@@ -81,18 +78,16 @@ audioPlayer.addEventListener('playing', () => {
     isPlaying = true;
     updatePlayBtn();
 
-    // TRIGGER REVEAL:
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         } else {
-            // If instant, just snap
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
     
     isSwitchingTrack = false;
-    // Note: We do NOT clear isSeeking here. We wait for 'seeked'.
+    isSeeking = false;
 });
 
 // 3. PAUSE
@@ -108,37 +103,30 @@ audioPlayer.addEventListener('pause', () => {
     }
 });
 
-// 4. SEEKED (The Lock Release)
+// 4. SEEKED
 audioPlayer.addEventListener('seeked', () => {
-    // CRITICAL: This is the ONLY place we allow the progress bar to start moving again
     isSeeking = false;
     stopBufferingCheck();
     
     if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     } else {
-        // If playing after seek, resolve title
         ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 5. TIMEUPDATE (Heartbeat & Safety)
+// 5. TIMEUPDATE (The Final Safety Net)
 audioPlayer.addEventListener('timeupdate', () => { 
-    // CRITICAL FIX: If we are seeking, IGNORE all time updates.
-    // This stops the bar from snapping back to the old time.
     if (isSeeking) return;
 
-    // WATCHDOG: If play button is active, but audio is paused (stuck state), fix it.
-    if (isPlaying && audioPlayer.paused && !isSwitchingTrack && !isDragging) {
-        // We are stuck. Force a play attempt.
-        audioPlayer.play().catch(e => console.log("Watchdog recover", e));
-        return;
-    }
-
-    // SAFETY NET: If audio is moving, we are definitely playing.
-    if (!audioPlayer.paused && !audioPlayer.seeking) {
-        if (ScrambleEngine.isLooping) {
-            ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+    // ULTIMATE FALLBACK: If audio is playing (moving), but text doesn't match title, force resolve.
+    if (!audioPlayer.paused && domTrackTitle && albumTracks[currentTrackIdx]) {
+        // If text is wrong OR we are stuck in a loading loop
+        if (ScrambleEngine.isLooping || domTrackTitle.innerText !== albumTracks[currentTrackIdx].title) {
+            // Only trigger if we aren't already resolving
+            if (!ScrambleEngine.isResolving) {
+                ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+            }
         }
     }
 
