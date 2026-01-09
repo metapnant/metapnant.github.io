@@ -1476,7 +1476,8 @@ body.no-scroll {
     font-weight: bold;
 }
 
-/* --- UNIVERSAL TACTILE HIGHLIGHT (Unified Purple-White) --- */
+/* --- UNIVERSAL TACTILE HIGHLIGHT (Fill-Free Protocol) --- */
+/* Target all interactive elements to remove the purple background block */
 .close-terminal:active,
 .close-terminal.active-state,
 .cycle-btn:active,
@@ -1491,12 +1492,23 @@ body.no-scroll {
 .voice-btn.active-state,
 .playlist-item:active,
 .playlist-item.active-state {
-    background-color: rgba(152, 0, 235, 0.3) !important;
+    /* REMOVED: background-color: rgba(152, 0, 235, 0.3) */
+    background-color: transparent !important;
+
+    /* NEW: High-Intensity Edge Glow */
     color: #ffffff !important;
-    /* Force icons/text to white hot */
     border-color: #ffffff !important;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.2) !important;
+
+    text-shadow: 0 0 10px #fff !important;
     transition: none !important;
+}
+
+/* Ensure the playlist item doesn't show a background block on tap */
+.playlist-item:active,
+.playlist-item.active-state {
+    background: transparent !important;
+    border-left-color: #fff !important;
 }
 
 /* --- THE RADIANT LINK (Gold Text + Purple Underline) --- */

@@ -451,61 +451,57 @@ function initPlaylist() {
     addTactileListener('.playlist-item');
 }
 
-async function loadTrack(index, autoPlay = true) {
+// --- UPDATED LOAD TRACK (Instant Reset) ---
+// Note: 'index' is the track index, 'animate' replaces 'autoPlay' in this context based on user snippet
+async function loadTrack(index, animate = true) {
+    if (!domTrackTitle) return;
+
+    // 1. HARD HARDWARE RESET (Top Priority)
+    domProgressBar.style.setProperty('--progress', '0%');
+    domCurrentTime.textContent = "0:00";
+    domDuration.textContent = "0:00";
+
     currentTrackIdx = index;
-    // Set Active UI immediately
-    const items = document.querySelectorAll('.playlist-item');
-    items.forEach((item, i) => {
-        if (i === currentTrackIdx) item.classList.add('active-track');
-        else item.classList.remove('active-track');
-    });
+    const track = albumTracks[index];
 
-    const track = albumTracks[currentTrackIdx];
+    // 2. State Verification
+    stopScramble();
+    shouldAnimateReveal = animate;
 
-    // Set Flag used by 'loadstart' listener
-    isPlaying = autoPlay;
-
-    audioPlayer.src = track.src;
-
-    // IMMEDIATE FEEDBACK: Scramble immediately if autoplaying
-    if (autoPlay) {
-        setAudioState(AudioState.LOADING);
-        try {
-            await audioPlayer.play();
-            updatePlayBtn();
-        } catch (err) {
-            console.log("Playback failed:", err);
-            setAudioState(AudioState.PAUSED);
-        }
+    if (animate) {
+        startLoadingScramble(domTrackTitle);
     } else {
-        // Just loading metadata
         domTrackTitle.innerText = track.title;
         domTrackTitle.style.color = "";
-        updatePlayBtn();
     }
 
-    // Update PDF Lyrics if needed
-    if (appState.musicUnlocked && currentIndex === 0) {
-        refreshDynamicPage();
-    }
-    // --- RESTORED PLAYLIST HIGHLIGHTING ---
+    // 3. Mount Source (Implicitly resets caching for new src)
+    audioPlayer.src = track.src;
+    // Note: 'autoPlay' logic usually follows, but user snippet implies external control or 'animate' implies intent
+    // We will assume 'animate' true means we intend to play or show loading.
+
+    // If this function is called by 'nextTrack', it expects simple loading.
+    // We need to ensure we don't break the 'async' nature if needed, 
+    // but the user snippet removed the async/await playback logic?
+    // User snippet: "audioPlayer.src = track.src; audioPlayer.load();"
+    // It seems to be synchronous setup. The play() call likely happens elsewhere or via separate 'playTrack' wrapper?
+    // Let's check 'playTrack'. 'playTrack' calls 'loadTrack(i, true)' then 'audioPlayer.play()'.
+    // So 'loadTrack' just needs to setup.
+
+    // 4. Playlist Highlight
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
             const container = document.querySelector('.playlist-container');
             if (container) {
-                // Smoothly center the active track in the list
-                container.scrollTo({
-                    top: item.offsetTop - (container.clientHeight / 2) + (item.clientHeight / 2),
-                    behavior: 'smooth'
-                });
+                container.scrollTo({ top: item.offsetTop - (container.clientHeight / 2) + (item.clientHeight / 2), behavior: 'smooth' });
             }
-        } else {
-            item.classList.remove('active-track');
-        }
+        } else item.classList.remove('active-track');
     });
 
-    refreshDynamicPage();
+    if (appState.musicUnlocked && currentIndex === 0) {
+        refreshDynamicPage();
+    }
 }
 
 function playTrack(index) {
@@ -930,61 +926,81 @@ audioPlayer.addEventListener('loadstart', () => {
     }
 });
 
+// --- UPDATED LISTENERS (Immediate Feedback) ---
+
 audioPlayer.addEventListener('waiting', () => {
-    // Hardware ran out of data. 
-    // Use a grace period (debounce) before showing scramble.
-    if (playbackState !== AudioState.PAUSED && !bufferDebounceTimer) {
-        bufferDebounceTimer = setTimeout(() => {
-            if (audioPlayer.readyState < 3 && !audioPlayer.paused) {
-                setAudioState(AudioState.BUFFERING);
-            }
-            bufferDebounceTimer = null;
-        }, 300); // 300ms grace period for seeks/hiccups
+    // DEBOUNCE REMOVED: Scramble engages the microsecond data stalls
+    // Only if we intend to be playing
+    if (isPlaying && !audioPlayer.paused) {
+        shouldAnimateReveal = true;
+        startLoadingScramble(domTrackTitle);
     }
 });
 
 audioPlayer.addEventListener('stalled', () => {
-    if (isPlaying && playbackState !== AudioState.PAUSED && !bufferDebounceTimer) {
-        bufferDebounceTimer = setTimeout(() => {
-            if (audioPlayer.readyState < 3 && !audioPlayer.paused) {
-                setAudioState(AudioState.BUFFERING);
-            }
-            bufferDebounceTimer = null;
-        }, 300);
+    // Immediate feedback for slow iOS connections
+    if (isPlaying && !audioPlayer.paused) {
+        startLoadingScramble(domTrackTitle);
     }
 });
 
 audioPlayer.addEventListener('playing', () => {
-    // Clear any pending buffer detection
-    if (bufferDebounceTimer) {
-        clearTimeout(bufferDebounceTimer);
-        bufferDebounceTimer = null;
+    isPlaying = true;
+    updatePlayBtn();
+    if (shouldAnimateReveal) {
+        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
+        shouldAnimateReveal = false;
     }
-    setAudioState(AudioState.PLAYING);
 });
 
 audioPlayer.addEventListener('pause', () => {
-    setAudioState(AudioState.PAUSED);
+    stopScramble();
+    isPlaying = false;
+    updatePlayBtn();
 });
 
 audioPlayer.addEventListener('seeked', () => {
-    if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
-
     if (audioPlayer.paused) {
-        setAudioState(AudioState.PAUSED);
+        stopScramble();
+        domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
     } else {
-        // If readyState is good, go straight to PLAYING (no scramble).
-        // If bad, 'waiting' listener will catch it or we can check here.
+        // Check if we jumped to a buffered area or not
         if (audioPlayer.readyState >= 3) {
-            setAudioState(AudioState.PLAYING);
+            // Playing fine
         } else {
-            // Do NOT force buffering yet. Let the 'waiting' event handle the 300ms delay.
-            // This prevents scramble flash on instant-seeks.
-            // But we might need to ensure we don't look 'playing' if we aren't.
-            // Actually, keep 'playing' UI until confirmed waiting.
+            startLoadingScramble(domTrackTitle);
         }
     }
 });
+
+// commitSeek update
+function commitSeek(percent) {
+    // Clear legacy timers if any exist
+    if (typeof bufferCheckTimer !== 'undefined' && bufferCheckTimer) clearTimeout(bufferCheckTimer);
+    if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
+
+    if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
+        const newTime = (percent / 100) * audioPlayer.duration;
+
+        // Immediate visual update
+        domProgressBar.style.setProperty('--progress', `${percent}%`);
+        domCurrentTime.textContent = formatTime(newTime);
+
+        if (!audioPlayer.paused) {
+            audioPlayer.currentTime = newTime;
+            // Force immediate scramble if the seek causes a stall
+            if (audioPlayer.readyState < 3) {
+                startLoadingScramble(domTrackTitle);
+            }
+        } else {
+            audioPlayer.currentTime = newTime;
+            pendingSeekPercent = percent;
+            stopScramble();
+            domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
+            domTrackTitle.style.color = "";
+        }
+    }
+}
 
 // Robust Time Update
 audioPlayer.addEventListener('timeupdate', () => {
