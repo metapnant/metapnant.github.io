@@ -10,11 +10,11 @@ const library = [
 const albumTracks = [
     { title: "Blood-Sap", src: "music/00 - Blood-Sap.wav" },
     { title: "First Step", src: "music/01 - First Step.wav" },
-    { title: "hidden", src: "music/02 - hidden.wav" }, 
+    { title: "hidden", src: "music/02 - hidden.wav" },
     { title: "Tether", src: "music/03 - Tether.wav" },
     { title: "Lens -of-", src: "music/04 - Lens -of-.wav" },
     { title: "Innerworld", src: "music/05 - Innerworld.wav" },
-    { title: "Disordered Fairness", src: "music/06 - Disordered Fairness.wav" }, 
+    { title: "Disordered Fairness", src: "music/06 - Disordered Fairness.wav" },
     { title: "Limerent Object", src: "music/07 - Limerent Object.wav" },
     { title: "Final Boundaries", src: "music/08 - Final Boundaries.wav" },
     { title: "Remember", src: "music/09 - Remember.wav" },
@@ -37,7 +37,7 @@ let pdfDoc = null;
 let lyricsDoc = null;
 let isLoading = false;
 let renderSession = 0;
-let pendingScrollPage = null; 
+let pendingScrollPage = null;
 let waitingForLyrics = false;
 const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 let lastOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
@@ -47,23 +47,23 @@ let lastWidth = window.innerWidth;
 const audioPlayer = new Audio();
 let currentTrackIdx = 0;
 let isPlaying = false;
-let isDragging = false; 
-let loopMode = 0; 
+let isDragging = false;
+let loopMode = 0;
 let touchStartX = 0;
 let touchStartY = 0;
 let holdTimer = null;
-let isTouch = false;      
-let isScrolling = false;  
+let isTouch = false;
+let isScrolling = false;
 let pendingSeekPercent = null;
-let loadingScrambleInterval = null; 
-let voiceScrambleInterval = null; 
-let bufferCheckTimer = null; 
-let shouldAnimateReveal = false; 
+let loadingScrambleInterval = null;
+let voiceScrambleInterval = null;
+let bufferCheckTimer = null;
+let shouldAnimateReveal = false;
 
 // Terminal
-let secretClicks = 0; 
-let terminalRunning = false; 
-let activeTimer = null; 
+let secretClicks = 0;
+let terminalRunning = false;
+let activeTimer = null;
 let currentTab = null;
 let savedScrollTop = 0;
 let turboMode = false;
@@ -80,8 +80,8 @@ let logState = { crash: { index: 0, finished: false }, echo: { index: 0, finishe
 // ==========================================
 const SimpleSynth = {
     ctx: null, unlocked: false,
-    init: function() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
-    unlock: function() {
+    init: function () { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+    unlock: function () {
         this.init();
         if (this.unlocked || !this.ctx) return;
         if (this.ctx.state === 'suspended') this.ctx.resume().then(() => { this.unlocked = true; });
@@ -92,9 +92,9 @@ const SimpleSynth = {
             source.connect(this.ctx.destination);
             if (source.start) source.start(0); else if (source.noteOn) source.noteOn(0);
             this.unlocked = true;
-        } catch(e) { console.error(e); }
+        } catch (e) { console.error(e); }
     },
-    playTone: function(cssClass) {
+    playTone: function (cssClass) {
         if (isMuted) return;
         if (!this.ctx) this.init();
         if (this.ctx.state === 'suspended') this.ctx.resume();
@@ -110,7 +110,7 @@ const SimpleSynth = {
         else { osc.type = 'square'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(100, t + 0.04); gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04); }
         osc.start(); osc.stop(t + 0.2);
     },
-    playUnlock: function() {
+    playUnlock: function () {
         if (isMuted) return;
         if (!this.ctx) this.init();
         const osc = this.ctx.createOscillator();
@@ -165,11 +165,11 @@ const btnMute = document.getElementById('btn-mute');
 // ==========================================
 function jitterScrollTo(element) {
     if (!element) return;
-    const headerOffset = 80; 
+    const headerOffset = 80;
     const elementTop = element.getBoundingClientRect().top + window.scrollY - headerOffset;
     const startY = window.scrollY;
     const distance = elementTop - startY;
-    const duration = 1500; 
+    const duration = 1500;
     let startTime = null;
     function animation(currentTime) {
         if (startTime === null) startTime = currentTime;
@@ -177,12 +177,12 @@ function jitterScrollTo(element) {
         let progress = timeElapsed / duration;
         if (progress > 1) progress = 1;
         const carrier = 1 - Math.pow(1 - progress, 4);
-        const frequency = 20 + (progress * 30); 
-        const amplitude = 15 * Math.pow(1 - progress, 2); 
+        const frequency = 20 + (progress * 30);
+        const amplitude = 15 * Math.pow(1 - progress, 2);
         const vibration = Math.sin(progress * frequency) * amplitude;
         const currentPos = startY + (distance * carrier) + vibration;
         window.scrollTo(0, currentPos);
-        if (timeElapsed < duration) { requestAnimationFrame(animation); } 
+        if (timeElapsed < duration) { requestAnimationFrame(animation); }
         else { window.scrollTo(0, elementTop); }
     }
     requestAnimationFrame(animation);
@@ -190,10 +190,10 @@ function jitterScrollTo(element) {
 
 function smartScrollTo(element) {
     if (!element) return;
-    const headerOffset = 80; 
+    const headerOffset = 80;
     const elementPosition = element.getBoundingClientRect().top;
     const offsetPosition = elementPosition + window.scrollY - headerOffset;
-    window.scrollTo({ top: offsetPosition, behavior: "auto" }); 
+    window.scrollTo({ top: offsetPosition, behavior: "auto" });
 }
 
 function getVisiblePageNumber() {
@@ -207,7 +207,7 @@ function getVisiblePageNumber() {
         const visibleHeight = Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
         if (visibleHeight > maxVisibility) {
             maxVisibility = visibleHeight;
-            const idParts = page.id.split('-'); 
+            const idParts = page.id.split('-');
             if (idParts.length === 3) {
                 bestPageNum = parseInt(idParts[2]);
             }
@@ -217,128 +217,139 @@ function getVisiblePageNumber() {
 }
 
 function updateInfinityState() {
-    if (appState.musicUnlocked || currentIndex === 2) { infinityBtn.classList.add('active'); } 
+    if (appState.musicUnlocked || currentIndex === 2) { infinityBtn.classList.add('active'); }
     else { infinityBtn.classList.remove('active'); }
 }
 
 function getLODScale() {
     if (!isMobileDevice) return 3.0;
     const width = window.innerWidth;
-    if (width > 600) return 1.1; 
+    if (width > 600) return 1.1;
     return 2.0;
 }
 
 async function loadDocument(index) {
-  if (isLoading) return;
-  isLoading = true; renderSession++; const currentSession = renderSession;
-  if (prevArrow) prevArrow.classList.remove('active-state');
-  if (nextArrow) nextArrow.classList.remove('active-state');
-  songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
-  
-  if (waitingForLyrics) {
-      const currentHeight = pdfWrapper.getBoundingClientRect().height;
-      if (currentHeight > 0) { pdfWrapper.style.minHeight = `${currentHeight}px`; }
-  } else {
-      pdfWrapper.style.minHeight = '';
-      window.scrollTo({ top: 0, behavior: 'auto' });
-  }
-  const existingPages = document.querySelectorAll('.pdf-page-wrapper');
-  existingPages.forEach(p => { const canvas = p.querySelector('canvas'); if (canvas) { canvas.width = 1; canvas.height = 1; } p.remove(); });
-  if (!waitingForLyrics) { loadingOverlay.style.display = 'flex'; }
-  prevArrow.classList.add('disabled'); nextArrow.classList.add('disabled');
-  currentIndex = index;
-  const currentDoc = library[currentIndex];
-  docTitle.textContent = currentDoc.title;
-  downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
-  updateInfinityState();
-  try {
-    pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
-    await renderPage(1, currentSession);
-    if (currentSession === renderSession) {
-        if (!waitingForLyrics) loadingOverlay.style.display = 'none';
-        document.body.classList.add("loaded");
-        const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
-        if(firstPage) firstPage.classList.add('revealed');
-        if (currentDoc.songUrl) {
-            songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
-            if (currentDoc.bpm > 0) songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
-            else songLink.style.animationDuration = "";
-            songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
-        }
-        isLoading = false;
-        prevArrow.classList.remove('disabled'); nextArrow.classList.remove('disabled');
-        if (currentIndex === 0) prevArrow.classList.add('disabled');
-        if (currentIndex === library.length - 1) nextArrow.classList.add('disabled');
-        if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
+    if (isLoading) return;
+    isLoading = true; renderSession++; const currentSession = renderSession;
+    if (prevArrow) prevArrow.classList.remove('active-state');
+    if (nextArrow) nextArrow.classList.remove('active-state');
+    songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
+
+    if (waitingForLyrics) {
+        const currentHeight = pdfWrapper.getBoundingClientRect().height;
+        if (currentHeight > 0) { pdfWrapper.style.minHeight = `${currentHeight}px`; }
+    } else {
+        pdfWrapper.style.minHeight = '';
+        window.scrollTo({ top: 0, behavior: 'auto' });
     }
-  } catch (err) {
-    console.error(err);
-    pdfWrapper.style.minHeight = '';
-    loadingOverlay.innerHTML = "<div style='color:red; font-family:monospace'>ARCHIVE CORRUPTED</div>";
-    isLoading = false;
-    waitingForLyrics = false;
-    if (voiceScrambleInterval) resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
-  }
+    const existingPages = document.querySelectorAll('.pdf-page-wrapper');
+    existingPages.forEach(p => { const canvas = p.querySelector('canvas'); if (canvas) { canvas.width = 1; canvas.height = 1; } p.remove(); });
+    if (!waitingForLyrics) { loadingOverlay.style.display = 'flex'; }
+    prevArrow.classList.add('disabled'); nextArrow.classList.add('disabled');
+    currentIndex = index;
+    const currentDoc = library[currentIndex];
+    docTitle.textContent = currentDoc.title;
+    downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
+    updateInfinityState();
+    try {
+        pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
+        await renderPage(1, currentSession);
+        if (currentSession === renderSession) {
+            if (!waitingForLyrics) loadingOverlay.style.display = 'none';
+            document.body.classList.add("loaded");
+            const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
+            if (firstPage) firstPage.classList.add('revealed');
+            if (currentDoc.songUrl) {
+                songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
+                if (currentDoc.bpm > 0) songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
+                else songLink.style.animationDuration = "";
+                songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
+            }
+            isLoading = false;
+            prevArrow.classList.remove('disabled'); nextArrow.classList.remove('disabled');
+            if (currentIndex === 0) prevArrow.classList.add('disabled');
+            if (currentIndex === library.length - 1) nextArrow.classList.add('disabled');
+            if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
+        }
+    } catch (err) {
+        console.error(err);
+        pdfWrapper.style.minHeight = '';
+        loadingOverlay.innerHTML = "<div style='color:red; font-family:monospace'>ARCHIVE CORRUPTED</div>";
+        isLoading = false;
+        waitingForLyrics = false;
+        if (voiceScrambleInterval) resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
+    }
 }
 
 async function renderRestOfPages(pageNum, sessionID) {
     if (sessionID !== renderSession || pageNum > pdfDoc.numPages) {
-        pdfWrapper.style.minHeight = '';
-        if (waitingForLyrics && pageNum > pdfDoc.numPages) {
+        if (!waitingForLyrics) {
+            pdfWrapper.style.minHeight = '';
+        } else if (pageNum > pdfDoc.numPages) {
+            // We are waiting for lyrics (Show Voice) and finished rendering.
+            // Do NOT unlock minHeight yet to prevent layout snap/jump.
             resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
-            const p8 = document.getElementById('page-wrapper-8'); 
+            const p8 = document.getElementById('page-wrapper-8');
+
+            // Scroll to the lyrics page while layout is stable
             if (p8) { jitterScrollTo(p8); }
+
+            // Unlock height ONLY after scroll animation (approx 1.5s)
+            setTimeout(() => {
+                pdfWrapper.style.minHeight = '';
+            }, 1000);
+
             waitingForLyrics = false;
         }
         return;
     }
     await renderPage(pageNum, sessionID);
     const pages = pdfWrapper.querySelectorAll('.pdf-page-wrapper');
-    if(pages[pageNum-1]) pages[pageNum-1].classList.add('revealed');
+    if (pages[pageNum - 1]) pages[pageNum - 1].classList.add('revealed');
     const delay = isMobileDevice ? 150 : 50;
-    setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, delay); 
+    setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, delay);
 }
 
 async function renderPage(num, sessionID) {
-  try {
-      if (sessionID !== renderSession) return;
-      let docToRender = pdfDoc;
-      let pageIndexToRender = num;
-      if (currentIndex === 0 && num === 8 && appState.musicUnlocked) {
-          if (!lyricsDoc) lyricsDoc = await pdfjsLib.getDocument('lyrics.pdf').promise;
-          docToRender = lyricsDoc; pageIndexToRender = currentTrackIdx + 1;
-      }
-      const page = await docToRender.getPage(pageIndexToRender);
-      const wrapper = document.createElement('div');
-      wrapper.className = 'pdf-page-wrapper';
-      wrapper.id = `page-wrapper-${num}`; 
-      const canvas = document.createElement('canvas');
-      canvas.className = 'pdf-page-canvas';
-      wrapper.appendChild(canvas);
-      const ctx = canvas.getContext('2d');
-      const lodScale = getLODScale();
-      const viewport = page.getViewport({ scale: lodScale });
-      canvas.height = Math.floor(viewport.height);
-      canvas.width = Math.floor(viewport.width);
-      const renderContext = { canvasContext: ctx, viewport: viewport };
-      await page.render(renderContext).promise;
-      if (sessionID !== renderSession) return;
-      pdfWrapper.appendChild(wrapper);
-      
-      if (waitingForLyrics) {
-          btnShowVoice.scrollIntoView({ block: 'center', behavior: 'auto' });
-      }
+    try {
+        if (sessionID !== renderSession) return;
+        let docToRender = pdfDoc;
+        let pageIndexToRender = num;
+        if (currentIndex === 0 && num === 8 && appState.musicUnlocked) {
+            if (!lyricsDoc) lyricsDoc = await pdfjsLib.getDocument('lyrics.pdf').promise;
+            docToRender = lyricsDoc; pageIndexToRender = currentTrackIdx + 1;
+        }
+        const page = await docToRender.getPage(pageIndexToRender);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'pdf-page-wrapper';
+        wrapper.id = `page-wrapper-${num}`;
+        const canvas = document.createElement('canvas');
+        canvas.className = 'pdf-page-canvas';
+        wrapper.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        const lodScale = getLODScale();
+        const viewport = page.getViewport({ scale: lodScale });
+        canvas.height = Math.floor(viewport.height);
+        canvas.width = Math.floor(viewport.width);
+        const renderContext = { canvasContext: ctx, viewport: viewport };
+        await page.render(renderContext).promise;
+        if (sessionID !== renderSession) return;
+        pdfWrapper.appendChild(wrapper);
 
-      if (num === pendingScrollPage && !waitingForLyrics) { 
-          setTimeout(() => { smartScrollTo(wrapper); pendingScrollPage = null; }, 50);
-      }
-  } catch (e) { if (sessionID === renderSession) console.log("Render failed", e); }
+        if (waitingForLyrics) {
+            btnShowVoice.scrollIntoView({ block: 'center', behavior: 'auto' });
+        }
+
+        if (num === pendingScrollPage && !waitingForLyrics) {
+            setTimeout(() => { smartScrollTo(wrapper); pendingScrollPage = null; }, 50);
+        }
+    } catch (e) { if (sessionID === renderSession) console.log("Render failed", e); }
 }
 
 async function refreshDynamicPage() {
     if (currentIndex !== 0 || !appState.musicUnlocked) return;
     const wrapper = document.getElementById('page-wrapper-8');
-    if (!wrapper) return; 
+    if (!wrapper) return;
     try {
         if (!lyricsDoc) lyricsDoc = await pdfjsLib.getDocument('lyrics.pdf').promise;
         const pageNum = currentTrackIdx + 1;
@@ -352,7 +363,7 @@ async function refreshDynamicPage() {
         const ctx = canvas.getContext('2d');
         const lodScale = getLODScale();
         const scaledViewport = page.getViewport({ scale: lodScale });
-        canvas.height = Math.floor(scaledViewport.height); 
+        canvas.height = Math.floor(scaledViewport.height);
         canvas.width = Math.floor(scaledViewport.width);
         await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
         wrapper.style.minHeight = '';
@@ -367,7 +378,7 @@ function stopScramble() {
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         const title = albumTracks[currentTrackIdx].title;
         domTrackTitle.innerText = title;
-        domTrackTitle.style.color = ""; 
+        domTrackTitle.style.color = "";
     }
 }
 
@@ -378,28 +389,28 @@ function startLoadingScramble(element) {
     const glyphs = "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝!<>-_\\/[]{}—=+*^?#";
     loadingScrambleInterval = setInterval(() => {
         let text = "";
-        for(let i=0; i < 12; i++) {
+        for (let i = 0; i < 12; i++) {
             if (Math.random() > 0.9) text += "LOADING"[i] || "";
             else text += glyphs[Math.floor(Math.random() * glyphs.length)];
         }
         element.innerText = text;
-        element.style.color = "var(--name-color)"; 
+        element.style.color = "var(--name-color)";
     }, 60);
 }
 
 function resolveLoadingScramble(element, finalText) {
     if (loadingScrambleInterval) {
         clearInterval(loadingScrambleInterval);
-        loadingScrambleInterval = null; 
+        loadingScrambleInterval = null;
     }
     // Start the matrix reveal
-    scrambleText(element, finalText); 
+    scrambleText(element, finalText);
 }
 
 function scrambleText(element, finalText) {
     const chars = "!<>-_\\/[]{}—=+*^?#________";
     let iterations = 0;
-    
+
     // Safety: indicate a reveal is in progress to prevent hardware interruption
     element.dataset.revealing = "true";
 
@@ -425,9 +436,9 @@ function initPlaylist() {
     playlistList.innerHTML = '';
     albumTracks.forEach((track, index) => {
         const li = document.createElement('li');
-        li.className = 'playlist-item'; 
-        li.id = `track-${index}`; 
-        li.innerHTML = `<span>${index < 10 ? '0'+index : index} - ${track.title}</span>`;
+        li.className = 'playlist-item';
+        li.id = `track-${index}`;
+        li.innerHTML = `<span>${index < 10 ? '0' + index : index} - ${track.title}</span>`;
         li.onclick = () => playTrack(index);
         playlistList.appendChild(li);
     });
@@ -437,15 +448,15 @@ function initPlaylist() {
 
 function loadTrack(index, animate = true) {
     if (!domTrackTitle) return;
-    
+
     domProgressBar.style.setProperty('--progress', '0%');
-    domCurrentTime.textContent = "0:00"; 
-    
+    domCurrentTime.textContent = "0:00";
+
     currentTrackIdx = index;
     const track = albumTracks[index];
-    
+
     // Scramble Logic
-    shouldAnimateReveal = animate; 
+    shouldAnimateReveal = animate;
     domTrackTitle.dataset.revealing = "false";
 
     if (animate) {
@@ -455,7 +466,7 @@ function loadTrack(index, animate = true) {
         domTrackTitle.innerText = track.title;
         domTrackTitle.style.color = "";
     }
-    
+
     audioPlayer.src = track.src;
     audioPlayer.load();
 
@@ -466,9 +477,9 @@ function loadTrack(index, animate = true) {
             const container = document.querySelector('.playlist-container');
             if (container) {
                 // Smoothly center the active track in the list
-                container.scrollTo({ 
-                    top: item.offsetTop - (container.clientHeight / 2) + (item.clientHeight / 2), 
-                    behavior: 'smooth' 
+                container.scrollTo({
+                    top: item.offsetTop - (container.clientHeight / 2) + (item.clientHeight / 2),
+                    behavior: 'smooth'
                 });
             }
         } else {
@@ -479,8 +490,8 @@ function loadTrack(index, animate = true) {
     refreshDynamicPage();
 }
 
-function playTrack(index) { 
-    loadTrack(index, true); 
+function playTrack(index) {
+    loadTrack(index, true);
     isPlaying = true;
     updatePlayBtn();
     audioPlayer.play().catch(e => {
@@ -491,13 +502,13 @@ function playTrack(index) {
 function togglePlay() {
     if (!audioPlayer.src) { loadTrack(currentTrackIdx, false); }
 
-    if (isPlaying) { 
+    if (isPlaying) {
         isSwitchingTrack = false;
-        audioPlayer.pause(); 
-    } else { 
+        audioPlayer.pause();
+    } else {
         isPlaying = true;
         updatePlayBtn();
-        
+
         // Execute playback promise
         const playPromise = audioPlayer.play();
         if (playPromise !== undefined) {
@@ -534,7 +545,7 @@ function updateLoopBtn() {
 function nextTrack(auto = false) {
     let nextIdx = currentTrackIdx + 1;
     if (auto) {
-        if (loopMode === 2) { playTrack(currentTrackIdx); return; } 
+        if (loopMode === 2) { playTrack(currentTrackIdx); return; }
         if (loopMode === 0 && nextIdx >= albumTracks.length) { isPlaying = false; updatePlayBtn(); return; }
     }
     if (nextIdx >= albumTracks.length) nextIdx = 0;
@@ -559,7 +570,7 @@ const endDragMouse = (e) => { if (isDragging) { commitSeek(getScrubPercent(e)); 
 const startDragTouch = (e) => { isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isDragging = false; isScrolling = false; holdTimer = setTimeout(() => { if (!isScrolling) { isDragging = true; domProgressBar.classList.add('dragging'); updateScrubVisual(getScrubPercent(e)); } }, 200); };
 const doDragTouch = (e) => {
     if (isDragging) { if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); return; }
-    if (isScrolling) return; 
+    if (isScrolling) return;
     const dx = Math.abs(e.touches[0].clientX - touchStartX); const dy = Math.abs(e.touches[0].clientY - touchStartY);
     if (dx > 5 || dy > 5) { if (holdTimer) clearTimeout(holdTimer); if (dx > dy) { isDragging = true; domProgressBar.classList.add('dragging'); if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); } else isScrolling = true; }
 };
@@ -618,33 +629,33 @@ function updateSidebarUI() {
     const allBtns = [btnCycle00, btnCycleEcho, btnCycle01, btnCycleBloom, btnCycle02];
     allBtns.forEach(btn => btn.classList.remove('active'));
 
-    const activeBtn = 
+    const activeBtn =
         currentTab === 'crash' ? btnCycle00 :
-        currentTab === 'echo' ? btnCycleEcho :
-        currentTab === 'wake' ? btnCycle01 :
-        currentTab === 'bloom' ? btnCycleBloom :
-        currentTab === 'gardener' ? btnCycle02 : null;
+            currentTab === 'echo' ? btnCycleEcho :
+                currentTab === 'wake' ? btnCycle01 :
+                    currentTab === 'bloom' ? btnCycleBloom :
+                        currentTab === 'gardener' ? btnCycle02 : null;
 
     if (activeBtn) activeBtn.classList.add('active');
 
     // 3. Replay Icons Logic
-    allBtns.forEach(btn => { 
+    allBtns.forEach(btn => {
         const type = btn === btnCycle00 ? 'crash' :
-                     btn === btnCycleEcho ? 'echo' :
-                     btn === btnCycle01 ? 'wake' :
-                     btn === btnCycleBloom ? 'bloom' : 'gardener';
-        
+            btn === btnCycleEcho ? 'echo' :
+                btn === btnCycle01 ? 'wake' :
+                    btn === btnCycleBloom ? 'bloom' : 'gardener';
+
         const isFinished = appState.finishedLogs.includes(type);
         let icon = btn.querySelector('.replay-icon');
 
         if (btn === activeBtn && isFinished) {
             if (!icon) {
-                icon = document.createElement('span'); 
-                icon.className = 'replay-icon'; 
-                icon.innerHTML = '↺'; 
+                icon = document.createElement('span');
+                icon.className = 'replay-icon';
+                icon.innerHTML = '↺';
                 icon.onclick = (e) => {
                     e.stopPropagation(); e.preventDefault();
-                    icon.classList.remove('spin-once'); 
+                    icon.classList.remove('spin-once');
                     setTimeout(() => { icon.classList.add('spin-once'); }, 10);
                     replayLog(e, type);
                 };
@@ -657,38 +668,44 @@ function updateSidebarUI() {
 
     // 4. CONTROL BUTTONS VISIBILITY (The Fix)
     if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
-        btnReset.classList.add('visible'); 
-        btnTurbo.classList.add('visible'); 
+        btnReset.classList.add('visible');
+        btnTurbo.classList.add('visible');
         btnMute.classList.add('visible');
     }
 }
 function initTerminalState() {
-    checkStateIntegrity(); 
+    checkStateIntegrity();
     updateSidebarUI();
-    
+
     // SYNC TURBO UI
     if (btnTurbo) {
         btnTurbo.innerText = turboMode ? "[ >> ]\nTURBO: ON" : "[ >> ]\nTURBO: OFF";
-        if (turboMode) btnTurbo.classList.add('active'); 
+        if (turboMode) btnTurbo.classList.add('active');
         else btnTurbo.classList.remove('active');
     }
 
     // SYNC VOLUME UI
     if (btnMute) {
+        // If isMuted is TRUE, sound is OFF -> Button dim
+        // If isMuted is FALSE, sound is ON -> Button active/highlighted
         btnMute.innerText = isMuted ? "[ VOL: OFF ]" : "[ VOL: ON ]";
-        // If NOT muted, it is highlighted (ON)
-        if (!isMuted) btnMute.classList.add('active'); 
+
+        if (!isMuted) btnMute.classList.add('active');
         else btnMute.classList.remove('active');
     }
 
-    if (appState.musicUnlocked) musicSection.style.display = 'block';
+    // HARD VISIBILITY CHECK:
+    // If the state says it's unlocked, force the section to show
+    if (appState.musicUnlocked) {
+        musicSection.style.setProperty('display', 'block', 'important');
+    }
 }
-function launchTerminal() { 
+function launchTerminal() {
     SimpleSynth.unlock(); terminalRunning = true; checkStateIntegrity(); updateSidebarUI();
-    savedScrollTop = window.scrollY || document.documentElement.scrollTop; 
+    savedScrollTop = window.scrollY || document.documentElement.scrollTop;
     document.body.style.position = 'fixed'; document.body.style.top = `-${savedScrollTop}px`; document.body.classList.add('no-scroll');
     secretOverlay.classList.add('active');
-    if (!currentTab) switchTab(appState.unlockedTabs[appState.unlockedTabs.length - 1]); else switchTab(currentTab); 
+    if (!currentTab) switchTab(appState.unlockedTabs[appState.unlockedTabs.length - 1]); else switchTab(currentTab);
 }
 function switchTab(type, isReplay = false) {
     checkStateIntegrity(); if (activeTimer) clearTimeout(activeTimer); currentTab = type; updateSidebarUI();
@@ -697,34 +714,34 @@ function switchTab(type, isReplay = false) {
     const wrapper = document.querySelector('.cycles-wrapper'); const activeBtn = document.querySelector('.cycle-btn.active');
     if (wrapper && activeBtn) {
         const isHorizontal = window.getComputedStyle(wrapper).flexDirection === 'row';
-        if (isHorizontal) { const center = (wrapper.clientWidth / 2) - (activeBtn.clientWidth / 2); wrapper.scrollTo({ left: activeBtn.offsetLeft - center, behavior: 'smooth' }); } 
+        if (isHorizontal) { const center = (wrapper.clientWidth / 2) - (activeBtn.clientWidth / 2); wrapper.scrollTo({ left: activeBtn.offsetLeft - center, behavior: 'smooth' }); }
         else { const center = (wrapper.clientHeight / 2) - (activeBtn.clientHeight / 2); wrapper.scrollTo({ top: activeBtn.offsetTop - center, behavior: 'smooth' }); }
     }
     if (appState.finishedLogs.includes(type) && !isReplay) { logState[type].finished = true; renderFullLog(type); } else { processQueue(); }
 }
 function replayLog(e, type) { if (activeTimer) clearTimeout(activeTimer); containers[type].innerHTML = ""; logState[type].index = 0; logState[type].finished = false; switchTab(type, true); }
-function toggleTurbo() { 
-    turboMode = !turboMode; 
-    logSpeedMultiplier = turboMode ? 0.1 : 1; 
-    btnTurbo.innerText = turboMode ? "[ >> ]\nTURBO: ON" : "[ >> ]\nTURBO: OFF"; 
-    
-    if (turboMode) btnTurbo.classList.add('active'); 
-    else btnTurbo.classList.remove('active'); 
+function toggleTurbo() {
+    turboMode = !turboMode;
+    logSpeedMultiplier = turboMode ? 0.1 : 1;
+    btnTurbo.innerText = turboMode ? "[ >> ]\nTURBO: ON" : "[ >> ]\nTURBO: OFF";
+
+    if (turboMode) btnTurbo.classList.add('active');
+    else btnTurbo.classList.remove('active');
 }
 
-function toggleMute() { 
-    isMuted = !isMuted; 
-    btnMute.innerText = isMuted ? "[ VOL: OFF ]" : "[ VOL: ON ]"; 
-    
+function toggleMute() {
+    isMuted = !isMuted;
+    btnMute.innerText = isMuted ? "[ VOL: OFF ]" : "[ VOL: ON ]";
+
     // Highlight when Volume is ON (not muted)
-    if (!isMuted) btnMute.classList.add('active'); 
-    else btnMute.classList.remove('active'); 
+    if (!isMuted) btnMute.classList.add('active');
+    else btnMute.classList.remove('active');
 }
 function processQueue() {
     if (!currentTab || !terminalRunning) return; if (logState[currentTab].finished) return;
     const idx = logState[currentTab].index; if (idx >= logsData[currentTab].length) { markLogFinished(currentTab); return; }
     const lineData = logsData[currentTab][idx]; const delay = lineData.delay * logSpeedMultiplier;
-    activeTimer = setTimeout(() => { 
+    activeTimer = setTimeout(() => {
         typeLine(lineData.text, lineData.class, containers[currentTab]); if (lineData.text.trim().length > 0) SimpleSynth.playTone(lineData.class);
         logState[currentTab].index++; terminalContainer.scrollTop = terminalContainer.scrollHeight;
         if (logState[currentTab].index >= logsData[currentTab].length) { markLogFinished(currentTab); } else { processQueue(); }
@@ -738,40 +755,55 @@ function markLogFinished(type) {
         if (type === 'echo' && !appState.unlockedTabs.includes('wake')) appState.unlockedTabs.push('wake');
         if (type === 'wake' && !appState.unlockedTabs.includes('bloom')) appState.unlockedTabs.push('bloom');
         if (type === 'bloom' && !appState.unlockedTabs.includes('gardener')) appState.unlockedTabs.push('gardener');
-        saveState(); SimpleSynth.playUnlock(); updateSidebarUI(); 
+        saveState(); SimpleSynth.playUnlock(); updateSidebarUI();
         let nextTab = null;
         if (type === 'crash') nextTab = 'echo'; else if (type === 'echo') nextTab = 'wake'; else if (type === 'wake') nextTab = 'bloom'; else if (type === 'bloom') nextTab = 'gardener';
         if (nextTab) { activeTimer = setTimeout(() => { switchTab(nextTab); }, 1500 * logSpeedMultiplier); }
     } else { updateSidebarUI(); }
 }
 function renderFullLog(type) { containers[type].innerHTML = ""; logsData[type].forEach(line => { typeLine(line.text, line.class, containers[type]); }); setTimeout(() => terminalContainer.scrollTop = terminalContainer.scrollHeight, 100); }
-function typeLine(htmlText, className, container) { 
-    const lineDiv = document.createElement('div'); if (htmlText.includes('----') || htmlText.includes('====')) lineDiv.className = `terminal-line divider-line ${className}`; else lineDiv.className = `terminal-line ${className}`; 
-    lineDiv.innerHTML = htmlText; lineDiv.classList.add('active'); if(className.includes('golden-text')) lineDiv.classList.add('gold-line'); if(className.includes('white-text')) lineDiv.classList.add('white-line'); if(className.includes('magenta-text')) lineDiv.classList.add('magenta-line'); if(className.includes('system-success')) lineDiv.classList.add('blue-line'); 
-    container.appendChild(lineDiv); 
+function typeLine(htmlText, className, container) {
+    const lineDiv = document.createElement('div'); if (htmlText.includes('----') || htmlText.includes('====')) lineDiv.className = `terminal-line divider-line ${className}`; else lineDiv.className = `terminal-line ${className}`;
+    lineDiv.innerHTML = htmlText; lineDiv.classList.add('active'); if (className.includes('golden-text')) lineDiv.classList.add('gold-line'); if (className.includes('white-text')) lineDiv.classList.add('white-line'); if (className.includes('magenta-text')) lineDiv.classList.add('magenta-line'); if (className.includes('system-success')) lineDiv.classList.add('blue-line');
+    container.appendChild(lineDiv);
 }
-function closeTerminal() { if(activeTimer) clearTimeout(activeTimer); secretOverlay.classList.remove('active'); document.body.classList.remove('no-scroll'); document.body.style.position = ''; document.body.style.top = ''; window.scrollTo(0, savedScrollTop); terminalRunning = false; }
-function revealPlayer() { closeTerminal(); musicSection.style.display = 'block'; appState.musicUnlocked = true; saveState(); updateInfinityState(); audioPlayer.pause(); audioPlayer.currentTime = 0; isPlaying = false; updatePlayBtn(); currentTrackIdx = 0; loadTrack(0, false); resolveLoadingScramble(domTrackTitle, albumTracks[0].title); setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100); }
+function closeTerminal() { if (activeTimer) clearTimeout(activeTimer); secretOverlay.classList.remove('active'); document.body.classList.remove('no-scroll'); document.body.style.position = ''; document.body.style.top = ''; window.scrollTo(0, savedScrollTop); terminalRunning = false; }
+function revealPlayer() {
+    closeTerminal();
+    // FORCE DISPLAY with !important
+    musicSection.style.setProperty('display', 'block', 'important');
+    appState.musicUnlocked = true;
+    saveState();
+    updateInfinityState();
+    audioPlayer.pause();
+    audioPlayer.currentTime = 0;
+    isPlaying = false;
+    updatePlayBtn();
+    currentTrackIdx = 0;
+    loadTrack(0, false);
+    resolveLoadingScramble(domTrackTitle, albumTracks[0].title);
+    setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100);
+}
 
 // ==========================================
 // 7. LISTENERS
 // ==========================================
 window.addEventListener('resize', () => {
-    if (isMobileDevice) { const currentOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait'; if (currentOrientation === lastOrientation) return; lastOrientation = currentOrientation; } 
+    if (isMobileDevice) { const currentOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait'; if (currentOrientation === lastOrientation) return; lastOrientation = currentOrientation; }
     else { if (Math.abs(window.innerWidth - lastWidth) < 100) return; lastWidth = window.innerWidth; }
     if (!isLoading && pdfDoc) { if (resizeTimer) clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { loadDocument(currentIndex); }, 300); }
 });
 
-document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading && currentIndex < library.length - 1) loadDocument(currentIndex + 1); });
-document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading && currentIndex > 0) loadDocument(currentIndex - 1); });
+document.getElementById('next-doc').addEventListener('click', () => { if (!isLoading && currentIndex < library.length - 1) loadDocument(currentIndex + 1); });
+document.getElementById('prev-doc').addEventListener('click', () => { if (!isLoading && currentIndex > 0) loadDocument(currentIndex - 1); });
 
-if(btnPlay) btnPlay.addEventListener('click', (e) => { e.preventDefault(); togglePlay(); });
-if(btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextTrack(false); });
-if(btnPrev) btnPrev.addEventListener('click', (e) => { e.preventDefault(); prevTrack(); });
-if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggleLoop(); });
-progressArea.addEventListener('mousedown', startDragMouse); 
+if (btnPlay) btnPlay.addEventListener('click', (e) => { e.preventDefault(); togglePlay(); });
+if (btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextTrack(false); });
+if (btnPrev) btnPrev.addEventListener('click', (e) => { e.preventDefault(); prevTrack(); });
+if (btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggleLoop(); });
+progressArea.addEventListener('mousedown', startDragMouse);
 document.addEventListener('mousemove', doDragMouse); document.addEventListener('mouseup', endDragMouse);
-progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); 
+progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
 progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); progressArea.addEventListener('touchend', endDragTouch);
 
 // --- AUDIO ENGINE: SOURCE OF TRUTH ---
@@ -783,7 +815,7 @@ progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); pro
 audioPlayer.addEventListener('playing', () => {
     isPlaying = true;
     updatePlayBtn();
-    
+
     // Only resolve if we were actually waiting/scrambling
     if (shouldAnimateReveal || loadingScrambleInterval) {
         resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
@@ -791,21 +823,21 @@ audioPlayer.addEventListener('playing', () => {
     }
 });
 
-audioPlayer.addEventListener('waiting', () => { 
+audioPlayer.addEventListener('waiting', () => {
     if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
 
     // GATING: 
     // 1. Must be intended to play
     // 2. Hardware must not be paused
     // 3. We must not currently be in the middle of a matrix reveal
-    if (isPlaying && !audioPlayer.paused && domTrackTitle.dataset.revealing !== "true") { 
+    if (isPlaying && !audioPlayer.paused && domTrackTitle.dataset.revealing !== "true") {
         // 250ms Hang Rule
-        bufferCheckTimer = setTimeout(() => { 
+        bufferCheckTimer = setTimeout(() => {
             if (audioPlayer.readyState < 3 && !audioPlayer.paused) {
                 shouldAnimateReveal = true;
-                startLoadingScramble(domTrackTitle); 
+                startLoadingScramble(domTrackTitle);
             }
-        }, 250); 
+        }, 250);
     }
 });
 
@@ -824,7 +856,7 @@ audioPlayer.addEventListener('pause', () => {
 });
 
 audioPlayer.addEventListener('seeked', () => {
-    if (bufferCheckTimer) clearTimeout(bufferCheckTimer); 
+    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
     // Clear title if scrubbed while paused
     if (audioPlayer.paused && domTrackTitle.dataset.revealing !== "true") {
         if (loadingScrambleInterval) {
@@ -836,13 +868,13 @@ audioPlayer.addEventListener('seeked', () => {
     }
 });
 
-audioPlayer.addEventListener('timeupdate', () => { 
+audioPlayer.addEventListener('timeupdate', () => {
     if (!audioPlayer.paused) pendingSeekPercent = null;
-    if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
-        const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
-        domProgressBar.style.setProperty('--progress', `${p}%`); 
-        domCurrentTime.textContent = formatTime(audioPlayer.currentTime); 
-        domDuration.textContent = formatTime(audioPlayer.duration); 
+    if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) {
+        const p = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        domProgressBar.style.setProperty('--progress', `${p}%`);
+        domCurrentTime.textContent = formatTime(audioPlayer.currentTime);
+        domDuration.textContent = formatTime(audioPlayer.duration);
     }
 });
 
@@ -857,40 +889,40 @@ if (toolsToggle && toolsContainer) {
 }
 
 // SHOW VOICE
-if (btnShowVoice) { 
-    btnShowVoice.addEventListener('click', (e) => { 
-        e.preventDefault(); if (isLoading) return; 
+if (btnShowVoice) {
+    btnShowVoice.addEventListener('click', (e) => {
+        e.preventDefault(); if (isLoading) return;
         btnShowVoice.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        if (currentIndex !== 0) { waitingForLyrics = true; startLoadingScramble(btnShowVoice); loadDocument(0); } 
+        if (currentIndex !== 0) { waitingForLyrics = true; startLoadingScramble(btnShowVoice); loadDocument(0); }
         else { const p8 = document.getElementById('page-wrapper-8'); if (p8) jitterScrollTo(p8); else { waitingForLyrics = true; startLoadingScramble(btnShowVoice); } }
-    }); 
+    });
 }
 
-infinityBtn.addEventListener('click', (e) => { 
-    e.preventDefault(); SimpleSynth.unlock(); 
-    if (appState.terminalFound) { launchTerminal(); return; } 
-    if (currentIndex !== 2) return; 
-    secretClicks++; infinityBtn.style.color = "#ff00ff"; setTimeout(() => infinityBtn.style.color = "", 200); 
-    if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; updateInfinityState(); launchTerminal(); } 
+infinityBtn.addEventListener('click', (e) => {
+    e.preventDefault(); SimpleSynth.unlock();
+    if (appState.terminalFound) { launchTerminal(); return; }
+    if (currentIndex !== 2) return;
+    secretClicks++; infinityBtn.style.color = "#ff00ff"; setTimeout(() => infinityBtn.style.color = "", 200);
+    if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; updateInfinityState(); launchTerminal(); }
 });
-function formatTime(s) { if(isNaN(s) || s === Infinity) return "0:00"; const m = Math.floor(s/60); const ss = Math.floor(s%60); return `${m}:${ss<10?'0':''}${ss}`; }
+function formatTime(s) { if (isNaN(s) || s === Infinity) return "0:00"; const m = Math.floor(s / 60); const ss = Math.floor(s % 60); return `${m}:${ss < 10 ? '0' : ''}${ss}`; }
 document.getElementById("currentYear").textContent = new Date().getFullYear();
-const prevArrowEl = document.getElementById('prev-doc'); if(prevArrowEl) prevArrowEl.classList.add('disabled');
+const prevArrowEl = document.getElementById('prev-doc'); if (prevArrowEl) prevArrowEl.classList.add('disabled');
 
 function addTactileListener(selector) {
     const els = document.querySelectorAll(selector);
     els.forEach(el => {
-        const handleStart = function(e) {
+        const handleStart = function (e) {
             if (e.type === 'touchstart') e.stopPropagation();
             this.classList.add('active-state');
         };
-        const handleEnd = function() {
+        const handleEnd = function () {
             const self = this;
             setTimeout(() => { self.classList.remove('active-state'); }, 100);
         };
-        el.addEventListener('touchstart', handleStart, {passive: true});
-        el.addEventListener('touchend', handleEnd, {passive: true});
-        el.addEventListener('touchcancel', () => el.classList.remove('active-state'), {passive: true});
+        el.addEventListener('touchstart', handleStart, { passive: true });
+        el.addEventListener('touchend', handleEnd, { passive: true });
+        el.addEventListener('touchcancel', () => el.classList.remove('active-state'), { passive: true });
         el.addEventListener('mousedown', handleStart);
         el.addEventListener('mouseup', handleEnd);
         el.addEventListener('mouseleave', () => el.classList.remove('active-state'));
@@ -899,18 +931,18 @@ function addTactileListener(selector) {
 
 // ATTACH TO EVERY INTERFACE SELECTOR
 const interfaceSelectors = [
-    '.close-terminal', '.cycle-btn', '.tools-toggle', '.tool-btn', 
-    '.ctrl-btn', '.voice-btn', '.playlist-item', '.secret-link', 
+    '.close-terminal', '.cycle-btn', '.tools-toggle', '.tool-btn',
+    '.ctrl-btn', '.voice-btn', '.playlist-item', '.secret-link',
     '#song-link', '.nav-arrow'
 ];
 interfaceSelectors.forEach(s => addTactileListener(s));
 
 // INIT
-initTerminalState(); 
-loadDocument(0); 
-initPlaylist(); 
+initTerminalState();
+loadDocument(0);
+initPlaylist();
 
 // Boot without scramble
-loadTrack(0, false); 
+loadTrack(0, false);
 // Matrix reveal only the static text
 setTimeout(() => { scrambleText(domTrackTitle, albumTracks[0].title); }, 500);
