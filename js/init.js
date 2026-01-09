@@ -26,40 +26,9 @@ window.addEventListener('resize', () => {
     }
 });
 
-// --- NAVIGATION & VIEW RESET ---
-
-const performNavReset = () => {
-    // FIX: Kill any fighting scroll animations
-    killScrollAnimation();
-    
-    // Force top
-    window.scrollTo({ top: 0, behavior: 'auto' });
-
-    // Cancel Voice mode
-    waitingForLyrics = false;
-    if (voiceScrambleInterval) {
-        clearInterval(voiceScrambleInterval);
-        voiceScrambleInterval = null;
-    }
-    if (btnShowVoice) {
-        btnShowVoice.innerText = "SHOW VOICE";
-        btnShowVoice.style.color = "";
-    }
-};
-
-document.getElementById('next-doc').addEventListener('click', () => { 
-    if(!isLoading && currentIndex < library.length - 1) {
-        performNavReset();
-        loadDocument(currentIndex + 1); 
-    }
-});
-
-document.getElementById('prev-doc').addEventListener('click', () => { 
-    if(!isLoading && currentIndex > 0) {
-        performNavReset();
-        loadDocument(currentIndex - 1); 
-    }
-});
+// UI Buttons
+document.getElementById('next-doc').addEventListener('click', () => { if(!isLoading && currentIndex < library.length - 1) loadDocument(currentIndex + 1); });
+document.getElementById('prev-doc').addEventListener('click', () => { if(!isLoading && currentIndex > 0) loadDocument(currentIndex - 1); });
 
 [document.getElementById('next-doc'), document.getElementById('prev-doc')].forEach(arrow => {
     arrow.addEventListener('touchstart', function() { this.classList.add('active-state'); }, {passive: true});
@@ -78,16 +47,18 @@ if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggl
 const startBufferingCheck = () => {
     if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
     
+    // Capture op ID
     const thisOpId = currentAudioOpId;
 
     if (isPlaying && !audioPlayer.paused) {
         bufferDebounceTimer = setTimeout(() => {
+            // Strict ID check: if user clicked again, abort
             if (currentAudioOpId !== thisOpId) return;
 
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
-        }, 100); 
+        }, 250); 
     }
 };
 
@@ -114,10 +85,6 @@ audioPlayer.addEventListener('playing', () => {
     isPlaying = true;
     updatePlayBtn();
 
-    // FIX: If we are still seeking (hardware hasn't caught up), DO NOT resolve yet.
-    // Wait for the 'seeked' event.
-    if (audioPlayer.seeking) return;
-
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
@@ -133,6 +100,7 @@ audioPlayer.addEventListener('playing', () => {
 // 3. PAUSE
 audioPlayer.addEventListener('pause', () => {
     stopBufferingCheck();
+    // Ignore pause if track switching (handled by loadedmetadata)
     if (isSwitchingTrack) return; 
 
     isPlaying = false;
@@ -155,12 +123,14 @@ audioPlayer.addEventListener('seeked', () => {
     }
 });
 
-// 5. TIMEUPDATE
+// 5. TIMEUPDATE (Safety Net)
 audioPlayer.addEventListener('timeupdate', () => { 
     if (!audioPlayer.paused) {
+        // If time is moving, we are done seeking/switching.
         if (isSeeking) isSeeking = false;
         if (isSwitchingTrack) isSwitchingTrack = false;
         
+        // Ensure text is resolved
         if (ScrambleEngine.isLooping) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         }

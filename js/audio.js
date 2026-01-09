@@ -19,9 +19,11 @@ function initPlaylist() {
 function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
-    // 1. OPERATION ID & STATE RESET
+    // 1. OPERATION ID: Invalidate all previous pending operations/listeners
     currentAudioOpId++;
-    
+    const thisOpId = currentAudioOpId; // Capture ID for the closure
+
+    // 2. Reset UI & State
     ScrambleEngine.reset();
     isSwitchingTrack = true; 
     isSeeking = false; 
@@ -37,17 +39,10 @@ function loadTrack(index, autoPlay = true) {
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 2. Visuals
+    // 3. Visuals: Force "Loading..." immediately
     ScrambleEngine.startLoading(domTrackTitle);
 
-    // 3. Hardware - Flush
-    audioPlayer.pause();
-    audioPlayer.currentTime = 0;
-    
-    audioPlayer.src = track.src;
-    audioPlayer.load();
-
-    // 4. Update Playlist
+    // 4. Update Playlist UI
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -60,26 +55,44 @@ function loadTrack(index, autoPlay = true) {
         refreshDynamicPage();
     }
 
-    // 5. Playback
-    if (autoPlay) {
-        isPlaying = true;
-        updatePlayBtn();
+    // 5. HARDWARE PIPELINE (The Robust Async Fix)
+    
+    // Stop previous track immediately
+    audioPlayer.pause();
+    
+    // Define what happens when the hardware is actually ready
+    const onMediaReady = () => {
+        // If user skipped again while loading, abort this operation
+        if (currentAudioOpId !== thisOpId) return;
 
-        const thisOpId = currentAudioOpId;
-
-        audioPlayer.play().catch(e => {
-            if (currentAudioOpId !== thisOpId) return;
-            if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
-            
-            isSwitchingTrack = false; 
-            ScrambleEngine.snap(domTrackTitle, track.title);
-            isPlaying = false;
+        if (autoPlay) {
+            isPlaying = true;
             updatePlayBtn();
-        });
-    } else {
-        ScrambleEngine.snap(domTrackTitle, track.title);
-        isSwitchingTrack = false;
-    }
+            
+            audioPlayer.play().catch(e => {
+                if (currentAudioOpId !== thisOpId) return;
+                if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
+                
+                // Revert if blocked
+                isSwitchingTrack = false;
+                ScrambleEngine.snap(domTrackTitle, track.title);
+                isPlaying = false;
+                updatePlayBtn();
+            });
+        } else {
+            // No autoplay requested
+            isSwitchingTrack = false;
+            ScrambleEngine.snap(domTrackTitle, track.title);
+        }
+    };
+
+    // Attach listener BEFORE setting src (Safe for cached assets)
+    // using { once: true } to prevent memory leaks or double firing
+    audioPlayer.addEventListener('loadedmetadata', onMediaReady, { once: true });
+
+    // Inject new source
+    audioPlayer.src = track.src;
+    audioPlayer.load();
 }
 
 function playTrack(index) { 
@@ -102,6 +115,7 @@ function togglePlay() {
         isPlaying = true;
         updatePlayBtn();
 
+        // Cold Seek Apply
         if (pendingSeekPercent !== null && audioPlayer.duration) {
             const seekTime = (pendingSeekPercent / 100) * audioPlayer.duration;
             audioPlayer.currentTime = seekTime;
@@ -151,6 +165,8 @@ function getScrubPercent(e) {
 // --- DRAG HANDLERS ---
 
 const startDrag = (e) => {
+    // 1. Pause audio immediately (Hardware Stop)
+    // This stops the buffer from draining (Ghost Play)
     if (isPlaying) {
         wasPlayingBeforeDrag = true;
         audioPlayer.pause(); 
@@ -158,6 +174,7 @@ const startDrag = (e) => {
         wasPlayingBeforeDrag = false;
     }
     
+    // 2. Lock UI
     isDragging = true;
     isSeeking = true; 
     
@@ -198,7 +215,7 @@ if (progressArea) {
 }
 
 function commitSeek(percent) {
-    currentAudioOpId++;
+    currentAudioOpId++; // Invalidate buffers
     
     if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
         clearTimeout(bufferDebounceTimer); 
@@ -213,16 +230,18 @@ function commitSeek(percent) {
         if (wasPlayingBeforeDrag || !audioPlayer.paused) {
             // PLAYING:
             isSeeking = true;
+            // Immediate visual feedback
             ScrambleEngine.startLoading(domTrackTitle);
             
-            // FIX: Wait 50ms before resuming to flush old audio buffer
-            setTimeout(() => {
-                requestAnimationFrame(() => {
-                    audioPlayer.currentTime = newTime;
-                    audioPlayer.play();
-                    pendingSeekPercent = null;
-                });
-            }, 50);
+            // EXECUTE PIPELINE:
+            // 1. Ensure we are paused (handled by startDrag, but double safety)
+            audioPlayer.pause();
+            // 2. Move needle
+            audioPlayer.currentTime = newTime;
+            // 3. Request Play (Browser will handle the buffer wait naturally)
+            audioPlayer.play();
+            
+            pendingSeekPercent = null;
         } else {
             // PAUSED:
             pendingSeekPercent = percent;
