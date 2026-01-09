@@ -607,31 +607,82 @@ function checkStateIntegrity() {
     if (changed) saveState();
 }
 function updateSidebarUI() {
+    // 1. Cycle Buttons Visibility
     if (appState.unlockedTabs.includes('crash')) btnCycle00.classList.add('visible');
     if (appState.unlockedTabs.includes('echo')) btnCycleEcho.classList.add('visible');
     if (appState.unlockedTabs.includes('wake')) btnCycle01.classList.add('visible');
     if (appState.unlockedTabs.includes('bloom')) btnCycleBloom.classList.add('visible');
     if (appState.unlockedTabs.includes('gardener')) btnCycle02.classList.add('visible');
+
+    // 2. Active Highlights
     const allBtns = [btnCycle00, btnCycleEcho, btnCycle01, btnCycleBloom, btnCycle02];
     allBtns.forEach(btn => btn.classList.remove('active'));
-    const activeBtn = currentTab === 'crash' ? btnCycle00 : currentTab === 'echo' ? btnCycleEcho : currentTab === 'wake' ? btnCycle01 : currentTab === 'bloom' ? btnCycleBloom : currentTab === 'gardener' ? btnCycle02 : null;
+
+    const activeBtn = 
+        currentTab === 'crash' ? btnCycle00 :
+        currentTab === 'echo' ? btnCycleEcho :
+        currentTab === 'wake' ? btnCycle01 :
+        currentTab === 'bloom' ? btnCycleBloom :
+        currentTab === 'gardener' ? btnCycle02 : null;
+
     if (activeBtn) activeBtn.classList.add('active');
+
+    // 3. Replay Icons Logic
     allBtns.forEach(btn => { 
-        const isCurrent = btn === activeBtn;
-        const type = btn === btnCycle00 ? 'crash' : btn === btnCycleEcho ? 'echo' : btn === btnCycle01 ? 'wake' : btn === btnCycleBloom ? 'bloom' : 'gardener';
+        const type = btn === btnCycle00 ? 'crash' :
+                     btn === btnCycleEcho ? 'echo' :
+                     btn === btnCycle01 ? 'wake' :
+                     btn === btnCycleBloom ? 'bloom' : 'gardener';
+        
         const isFinished = appState.finishedLogs.includes(type);
         let icon = btn.querySelector('.replay-icon');
-        if (isCurrent && isFinished) {
+
+        if (btn === activeBtn && isFinished) {
             if (!icon) {
-                icon = document.createElement('span'); icon.className = 'replay-icon'; icon.innerHTML = '↺'; 
-                icon.onclick = (e) => { e.stopPropagation(); e.preventDefault(); icon.classList.remove('spin-once'); setTimeout(() => { icon.classList.add('spin-once'); }, 10); replayLog(e, type); };
+                icon = document.createElement('span'); 
+                icon.className = 'replay-icon'; 
+                icon.innerHTML = '↺'; 
+                icon.onclick = (e) => {
+                    e.stopPropagation(); e.preventDefault();
+                    icon.classList.remove('spin-once'); 
+                    setTimeout(() => { icon.classList.add('spin-once'); }, 10);
+                    replayLog(e, type);
+                };
                 btn.appendChild(icon);
             }
-        } else { if (icon) icon.remove(); }
+        } else if (icon) {
+            icon.remove();
+        }
     });
-    if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) { btnReset.classList.add('visible'); btnTurbo.classList.add('visible'); btnMute.classList.add('visible'); }
+
+    // 4. CONTROL BUTTONS VISIBILITY (The Fix)
+    if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
+        btnReset.classList.add('visible'); 
+        btnTurbo.classList.add('visible'); 
+        btnMute.classList.add('visible');
+    }
 }
-function initTerminalState() { checkStateIntegrity(); updateSidebarUI(); if (btnTurbo) btnTurbo.innerText = "[ >> ]\nTURBO: OFF"; if (appState.musicUnlocked) musicSection.style.display = 'block'; }
+function initTerminalState() {
+    checkStateIntegrity(); 
+    updateSidebarUI();
+    
+    // SYNC TURBO UI
+    if (btnTurbo) {
+        btnTurbo.innerText = turboMode ? "[ >> ]\nTURBO: ON" : "[ >> ]\nTURBO: OFF";
+        if (turboMode) btnTurbo.classList.add('active'); 
+        else btnTurbo.classList.remove('active');
+    }
+
+    // SYNC VOLUME UI
+    if (btnMute) {
+        btnMute.innerText = isMuted ? "[ VOL: OFF ]" : "[ VOL: ON ]";
+        // If NOT muted, it is highlighted (ON)
+        if (!isMuted) btnMute.classList.add('active'); 
+        else btnMute.classList.remove('active');
+    }
+
+    if (appState.musicUnlocked) musicSection.style.display = 'block';
+}
 function launchTerminal() { 
     SimpleSynth.unlock(); terminalRunning = true; checkStateIntegrity(); updateSidebarUI();
     savedScrollTop = window.scrollY || document.documentElement.scrollTop; 
@@ -652,8 +703,23 @@ function switchTab(type, isReplay = false) {
     if (appState.finishedLogs.includes(type) && !isReplay) { logState[type].finished = true; renderFullLog(type); } else { processQueue(); }
 }
 function replayLog(e, type) { if (activeTimer) clearTimeout(activeTimer); containers[type].innerHTML = ""; logState[type].index = 0; logState[type].finished = false; switchTab(type, true); }
-function toggleTurbo() { turboMode = !turboMode; logSpeedMultiplier = turboMode ? 0.1 : 1; btnTurbo.innerText = turboMode ? "[ >> ]\nTURBO: ON" : "[ >> ]\nTURBO: OFF"; if (turboMode) btnTurbo.classList.add('active'); else btnTurbo.classList.remove('active'); }
-function toggleMute() { isMuted = !isMuted; btnMute.innerText = isMuted ? "[VOL: OFF]" : "[VOL: ON]"; if (!isMuted) btnMute.classList.add('active'); else btnMute.classList.remove('active'); }
+function toggleTurbo() { 
+    turboMode = !turboMode; 
+    logSpeedMultiplier = turboMode ? 0.1 : 1; 
+    btnTurbo.innerText = turboMode ? "[ >> ]\nTURBO: ON" : "[ >> ]\nTURBO: OFF"; 
+    
+    if (turboMode) btnTurbo.classList.add('active'); 
+    else btnTurbo.classList.remove('active'); 
+}
+
+function toggleMute() { 
+    isMuted = !isMuted; 
+    btnMute.innerText = isMuted ? "[ VOL: OFF ]" : "[ VOL: ON ]"; 
+    
+    // Highlight when Volume is ON (not muted)
+    if (!isMuted) btnMute.classList.add('active'); 
+    else btnMute.classList.remove('active'); 
+}
 function processQueue() {
     if (!currentTab || !terminalRunning) return; if (logState[currentTab].finished) return;
     const idx = logState[currentTab].index; if (idx >= logsData[currentTab].length) { markLogFinished(currentTab); return; }

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
   <meta name="theme-color" content="#0d0022">
-  <title>THE LIBRARY | Golden Master</title>
+  <title>THE LIBRARY</title>
   <link rel="icon" href="favicon.png" type="image/png" />
   
   <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,700&display=swap" rel="stylesheet" />
@@ -122,12 +122,13 @@
           <button class="cycle-btn theme-bloom" id="btn-cycle-bloom" onclick="switchTab('bloom')">[ * ] THE_BLOOM</button>
           <button class="cycle-btn theme-gardener" id="btn-cycle-02" onclick="switchTab('gardener')">[ 02 ] THE_GARDENER</button>
       </div>
-      <div class="controls-wrapper">
-          <div style="display: flex; gap: 10px; width: 100%; margin-bottom: 10px;">
-              <button class="cycle-btn theme-gardener" id="btn-turbo" onclick="toggleTurbo()">[>>]</button>
-              <button class="cycle-btn theme-gardener active" id="btn-mute" onclick="toggleMute()">[VOL: ON]</button>
+        <!-- BOTTOM: System Controls -->
+        <div class="controls-wrapper">
+          <div class="control-row-split">
+              <button class="cycle-btn" id="btn-turbo" onclick="toggleTurbo()">[ >> ]<br>TURBO: ON</button>
+              <button class="cycle-btn" id="btn-mute" onclick="toggleMute()">[ VOL: ON ]</button>
           </div>
-          <button class="cycle-btn theme-crash" id="btn-reset" onclick="hardReset()">[ ! ] SYSTEM_RESET</button>
+          <button class="cycle-btn" id="btn-reset" onclick="hardReset()">[ ! ] SYSTEM_RESET</button>
       </div>
     </div>
 
