@@ -19,15 +19,15 @@ function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
     // 1. Reset UI & Lock State
-    isSwitchingTrack = true; // Signals init.js that we are in a transition
+    isSwitchingTrack = true; 
     domProgressBar.style.setProperty('--progress', '0%');
     domCurrentTime.textContent = "0:00"; 
     domDuration.textContent = "0:00";
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 2. Force Loading Scramble
-    // Always start scrambling on track switch to show activity
+    // 2. Force Loading Scramble on Track Switch
+    // This is the desired behavior: New Song = "Loading..." state first
     ScrambleEngine.startLoading(domTrackTitle);
 
     // 3. Update Audio
@@ -43,18 +43,17 @@ function loadTrack(index, autoPlay = true) {
         } else item.classList.remove('active-track');
     });
 
-    // 5. Dynamic Page (Lyrics)
+    // 5. Dynamic Page
     if (appState.musicUnlocked && currentIndex === 0 && typeof refreshDynamicPage === 'function') {
         refreshDynamicPage();
     }
 
-    // 6. Autoplay Handling
+    // 6. Autoplay
     if (autoPlay) {
         const playPromise = audioPlayer.play();
         if (playPromise !== undefined) {
             playPromise.catch(error => { 
                 if (error.name !== 'AbortError') {
-                    // If play fails (e.g. no user interaction), stop scramble cleanly
                     isSwitchingTrack = false;
                     isPlaying = false; 
                     updatePlayBtn();
@@ -63,7 +62,6 @@ function loadTrack(index, autoPlay = true) {
             });
         }
     } else {
-        // Initial load (no autoplay): Resolve immediately to title
         ScrambleEngine.resolve(domTrackTitle, track.title);
         isSwitchingTrack = false;
     }
@@ -85,9 +83,6 @@ function togglePlay() {
         audioPlayer.pause(); 
         isPlaying = false;
         updatePlayBtn();
-        
-        // On manual pause, just stop scrambling and show static text
-        // No need to re-animate the reveal
         ScrambleEngine.clear();
         if (albumTracks[currentTrackIdx]) {
             domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
@@ -163,7 +158,7 @@ const endDragTouch = (e) => {
 };
 
 function commitSeek(percent) {
-    // Clear any existing debounce timer
+    // Clear debounce timer to prevent "Loading" flash on quick seek
     if (typeof bufferingTimer !== 'undefined' && bufferingTimer) clearTimeout(bufferingTimer);
 
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
@@ -172,14 +167,16 @@ function commitSeek(percent) {
         domCurrentTime.textContent = formatTime(newTime);
 
         if (!audioPlayer.paused) {
+            // FIX: Removed forced startLoading here.
+            // We now rely purely on the 'waiting' event in init.js
+            // to trigger the loading animation if the network hangs.
             audioPlayer.currentTime = newTime;
             pendingSeekPercent = null;
-            // Note: init.js 'waiting' event handles the buffering scramble logic now
         } else {
             // Cold seek
             pendingSeekPercent = percent;
             isSwitchingTrack = false;
-            ScrambleEngine.clear(); // Ensure static text on drag end
+            ScrambleEngine.clear(); 
         }
     } else {
         pendingSeekPercent = percent;

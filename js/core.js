@@ -76,7 +76,7 @@ let pendingSeekPercent = null;
 let isSwitchingTrack = false;
 
 // -- ANIMATION STATE --
-let voiceScrambleInterval = null; // Only for the "Show Voice" button
+let voiceScrambleInterval = null; 
 
 // -- TERMINAL STATE --
 let secretClicks = 0;
@@ -93,7 +93,7 @@ function loadState() { const saved = localStorage.getItem('metapnant_state'); re
 let appState = loadState();
 let logState = { crash: { index: 0, finished: false }, echo: { index: 0, finished: false }, wake: { index: 0, finished: false }, bloom: { index: 0, finished: false }, gardener: { index: 0, finished: false } };
 
-// -- SOUND ENGINE (SimpleSynth) --
+// -- SOUND ENGINE --
 const SimpleSynth = {
     ctx: null, unlocked: false,
     init: function () { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
@@ -138,7 +138,6 @@ const SimpleSynth = {
 
 function unlockAudioEngine() {
     SimpleSynth.unlock();
-    // Remove listeners once unlocked to prevent overhead
     if (SimpleSynth.ctx && SimpleSynth.ctx.state === 'running') {
         document.removeEventListener('click', unlockAudioEngine);
         document.removeEventListener('keydown', unlockAudioEngine);
@@ -148,7 +147,6 @@ function unlockAudioEngine() {
 }
 
 // -- SHARED HELPERS --
-
 function formatTime(s) { if (isNaN(s) || s === Infinity) return "0:00"; const m = Math.floor(s / 60); const ss = Math.floor(s % 60); return `${m}:${ss < 10 ? '0' : ''}${ss}`; }
 
 function updateInfinityState() {
@@ -218,13 +216,13 @@ const ScrambleEngine = {
     targetElement: null,
     isResolving: false,
     
-    // Tighter glyph set for better readability
-    glyphs: "!<>-_\\/[]{}—=+*^?#________", 
+    // Original Monolith Char Sets
+    loadingGlyphs: "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝",
+    revealGlyphs: "!<>-_\\/[]{}—=+*^?#________",
 
     // 1. INFINITE LOADING STATE
-    // Used when buffering or loading a new track
+    // Behavior: Random "Alien" glyphs + flickering "LOADING" text
     startLoading: function(element) {
-        // Prevent restarting if already scrambling this element (unless we want to force it)
         if (this.targetElement === element && this.interval && !this.isResolving) return;
 
         this.clear();
@@ -235,18 +233,21 @@ const ScrambleEngine = {
         
         this.interval = setInterval(() => {
             let text = "";
-            const len = Math.floor(Math.random() * 5) + 8;
-            for (let i = 0; i < len; i++) {
-                text += this.glyphs[Math.floor(Math.random() * this.glyphs.length)];
+            for (let i = 0; i < 12; i++) {
+                // 15% chance to show a letter from "LOADING", 85% random alien glyph
+                if (i < 7 && Math.random() > 0.85) {
+                    text += "LOADING"[i] || "";
+                } else {
+                    text += this.loadingGlyphs[Math.floor(Math.random() * this.loadingGlyphs.length)];
+                }
             }
             element.innerText = text;
         }, 60);
     },
 
-    // 2. REVEAL STATE (The Matrix Effect)
-    // Used when playback starts/resumes
+    // 2. REVEAL STATE
+    // Behavior: Random "Tech" glyphs decoding into final text (Matrix style)
     resolve: function(element, finalText) {
-        // If we aren't currently scrambling and text is already correct, do nothing
         if (!this.interval && element.innerText === finalText) return;
 
         this.clear();
@@ -254,27 +255,26 @@ const ScrambleEngine = {
         this.isResolving = true;
         
         let iterations = 0;
-        element.style.color = "var(--name-color)"; // Purple during reveal
+        element.style.color = "var(--name-color)"; 
 
         this.interval = setInterval(() => {
             element.innerText = finalText.split("").map((letter, index) => {
                 if (index < iterations) {
                     return finalText[index];
                 }
-                return this.glyphs[Math.floor(Math.random() * this.glyphs.length)];
+                return this.revealGlyphs[Math.floor(Math.random() * this.revealGlyphs.length)];
             }).join("");
 
             if (iterations >= finalText.length) {
                 this.clear();
-                element.innerText = finalText; // Ensure clean text
-                element.style.color = ""; // Reset to default CSS
+                element.innerText = finalText; 
+                element.style.color = ""; 
             }
             
-            iterations += 1 / 2; // Speed of reveal
+            iterations += 1 / 2;
         }, 30);
     },
 
-    // Helper to stop everything
     clear: function() {
         if (this.interval) {
             clearInterval(this.interval);
@@ -285,30 +285,25 @@ const ScrambleEngine = {
     }
 };
 
-// Legacy support for "Show Voice" button (it uses a separate simple logic to avoid conflict)
+// Legacy support for "Show Voice" button (uses similar logic locally)
 function startLoadingScramble(element) {
     if (element === btnShowVoice) { if (voiceScrambleInterval) clearInterval(voiceScrambleInterval); }
-    // Note: Main track title now uses ScrambleEngine directly
-    
     const glyphs = "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝!<>-_\\/[]{}—=+*^?#";
     const timer = setInterval(() => {
         let text = "";
         for (let i = 0; i < 12; i++) {
-            if (i < 8 && Math.random() > 0.8) text += "LOADING"[i] || "";
+            if (i < 7 && Math.random() > 0.8) text += "LOADING"[i] || "";
             else text += glyphs[Math.floor(Math.random() * glyphs.length)];
         }
         element.innerText = text;
         element.style.color = "var(--name-color)";
     }, 60);
-
     if (element === btnShowVoice) voiceScrambleInterval = timer;
 }
 
 function resolveLoadingScramble(element, finalText) {
-    // Only used for Show Voice button now
     if (element === btnShowVoice) { 
         if (voiceScrambleInterval) { clearInterval(voiceScrambleInterval); voiceScrambleInterval = null; } 
-        // Use a mini local scramble for the button reveal
         const chars = "!<>-_\\/[]{}—=+*^?#________";
         let iterations = 0;
         const interval = setInterval(() => {
@@ -323,7 +318,6 @@ function resolveLoadingScramble(element, finalText) {
             iterations += 1 / 3;
         }, 30);
     } else {
-        // Redirect track title to new engine
         ScrambleEngine.resolve(element, finalText);
     }
 }

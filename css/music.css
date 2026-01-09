@@ -271,10 +271,29 @@
     font-weight: bold;
 }
 
+/* --- HOVER & ACTIVE STATES (FIXED) --- */
 @media (hover: hover) {
-    .ctrl-btn:hover { transform: scale(1.1); background: rgba(152, 0, 235, 0.15) !important; box-shadow: 0 0 20px var(--name-color); color: #fff !important; opacity: 1 !important; }
-    .playlist-item:hover { background: rgba(255, 255, 255, 0.05) !important; color: #fff !important; padding-left: 20px; transition: all 0.2s ease; }
-    .voice-btn:hover { color: var(--name-color) !important; border-color: var(--name-color) !important; background-color: rgba(152, 0, 235, 0.05) !important; opacity: 1 !important; }
+    .ctrl-btn:hover {
+        transform: scale(1.1);
+        background: rgba(152, 0, 235, 0.15) !important;
+        box-shadow: 0 0 20px var(--name-color);
+        color: #fff !important;
+        opacity: 1 !important;
+    }
+
+    .playlist-item:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: #fff !important;
+        padding-left: 20px;
+        transition: all 0.2s ease;
+    }
+
+    .voice-btn:hover {
+        color: var(--name-color) !important;
+        border-color: var(--name-color) !important;
+        background-color: rgba(152, 0, 235, 0.05) !important;
+        opacity: 1 !important;
+    }
 }
 
 .tools-toggle:active, .tools-toggle.active-state,
@@ -289,6 +308,7 @@
     transition: none !important;
 }
 
+/* Ensure the playlist item doesn't show a background block on tap */
 .playlist-item:active,
 .playlist-item.active-state {
     background: transparent !important;
@@ -300,8 +320,7 @@
     .music-container {
         flex-direction: column;
         align-items: center;
-        /* FIX: TIGHT GAP for zoomed view */
-        gap: 15px; 
+        gap: 20px;
     }
 
     .art-column {
