@@ -2,6 +2,8 @@
 // AUDIO LOGIC
 // ==========================================
 
+let wasPlayingBeforeDrag = false; // Memory state for dragging
+
 function initPlaylist() {
     if (!playlistList) return;
     playlistList.innerHTML = '';
@@ -19,14 +21,18 @@ function initPlaylist() {
 function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
-    // 1. Reset UI
+    // 1. Reset UI & State
+    ScrambleEngine.reset();
     domProgressBar.style.setProperty('--progress', '0%');
     if (index !== currentTrackIdx) {
         domCurrentTime.textContent = "0:00"; 
         domDuration.textContent = "0:00";
     }
     
+    // Clear states
     pendingSeekPercent = null;
+    isSeeking = false; 
+    wasPlayingBeforeDrag = false;
     currentTrackIdx = index;
     const track = albumTracks[index];
 
@@ -53,10 +59,15 @@ function loadTrack(index, autoPlay = true) {
 
     // 5. Autoplay
     if (autoPlay) {
+        isPlaying = true;
+        updatePlayBtn();
+
+        const captureIndex = index;
         audioPlayer.play().catch(e => {
+            if (currentTrackIdx !== captureIndex) return; // Ignore if user skipped already
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
-            // If blocked, revert state
-            isSwitchingTrack = false;
+            
+            isSwitchingTrack = false; 
             ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
             updatePlayBtn();
@@ -87,7 +98,6 @@ function togglePlay() {
         isPlaying = true;
         updatePlayBtn();
 
-        // iOS Cold Seek Apply
         if (pendingSeekPercent !== null && audioPlayer.duration) {
             const seekTime = (pendingSeekPercent / 100) * audioPlayer.duration;
             audioPlayer.currentTime = seekTime;
@@ -137,14 +147,17 @@ function getScrubPercent(e) {
 // --- DRAG HANDLERS ---
 
 const startDrag = (e) => {
-    // 1. STOP AUDIO INSTANTLY
-    // This fixes "Ghost Play" where audio kept going while dragging
+    // 1. Pause audio immediately to prevent "Ghost Play"
     if (isPlaying) {
+        wasPlayingBeforeDrag = true;
         audioPlayer.pause(); 
+    } else {
+        wasPlayingBeforeDrag = false;
     }
     
+    // 2. Lock UI
     isDragging = true;
-    isSeeking = true; // Lock UI updates
+    isSeeking = true; 
     
     domProgressBar.classList.add('dragging');
     updateScrubVisual(getScrubPercent(e));
@@ -173,35 +186,41 @@ const endDragTouch = (e) => {
     setTimeout(() => { isTouch = false; }, 500); 
 };
 
-// Bind logic
-progressArea.addEventListener('mousedown', startDragMouse); 
-document.addEventListener('mousemove', doDragMouse); 
-document.addEventListener('mouseup', endDragMouse);
-progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); 
-progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); 
-progressArea.addEventListener('touchend', endDragTouch);
-
+// Bind listeners
+if (progressArea) {
+    progressArea.addEventListener('mousedown', startDragMouse); 
+    document.addEventListener('mousemove', doDragMouse); 
+    document.addEventListener('mouseup', endDragMouse);
+    progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); 
+    progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); 
+    progressArea.addEventListener('touchend', endDragTouch);
+}
 
 function commitSeek(percent) {
+    // Kill debounce timer
+    if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
+        clearTimeout(bufferDebounceTimer); 
+        bufferDebounceTimer = null;
+    }
+
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
 
-        // PLAYING (Was playing before drag started)
-        if (isPlaying) {
-            // 2. FORCE VISUAL LOADING INSTANTLY
-            // Don't wait for browser. User dropped handle = Loading starts.
+        // Resume if we were playing OR if audio engine thinks it's playing
+        if (wasPlayingBeforeDrag || !audioPlayer.paused) {
+            // PLAYING:
+            isSeeking = true;
+            // Immediate visual feedback
             ScrambleEngine.startLoading(domTrackTitle);
             
-            // 3. APPLY SEEK & RESUME
+            // Apply Seek & Play
             audioPlayer.currentTime = newTime;
             audioPlayer.play();
-            
             pendingSeekPercent = null;
         } else {
-            // PAUSED
-            // Just store value, do not play, do not animate.
+            // PAUSED:
             pendingSeekPercent = percent;
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
             isSeeking = false;

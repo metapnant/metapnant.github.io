@@ -40,17 +40,14 @@ if(btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextT
 if(btnPrev) btnPrev.addEventListener('click', (e) => { e.preventDefault(); prevTrack(); });
 if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggleLoop(); });
 
-// Note: Drag events are bound in audio.js for tighter scope control
+// Note: Drag events are bound in audio.js
 
 // --- AUDIO EVENT HANDLING ---
 
-let bufferingTimer = null;
-
-// Helper to trigger buffering visuals (Network lag backup)
 const startBufferingCheck = () => {
-    if (bufferingTimer) clearTimeout(bufferingTimer);
+    if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
     if (isPlaying && !audioPlayer.paused) {
-        bufferingTimer = setTimeout(() => {
+        bufferDebounceTimer = setTimeout(() => {
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
@@ -59,32 +56,40 @@ const startBufferingCheck = () => {
 };
 
 const stopBufferingCheck = () => {
-    if (bufferingTimer) {
-        clearTimeout(bufferingTimer);
-        bufferingTimer = null;
+    if (bufferDebounceTimer) {
+        clearTimeout(bufferDebounceTimer);
+        bufferDebounceTimer = null;
     }
 };
 
-// 1. BROWSER EVENTS
+// 0. LOADSTART (Instant feedback for rapid skipping)
+audioPlayer.addEventListener('loadstart', () => {
+    if (isPlaying) {
+        ScrambleEngine.startLoading(domTrackTitle);
+    }
+});
+
+// 1. WAITING / STALLED
 audioPlayer.addEventListener('seeking', startBufferingCheck);
 audioPlayer.addEventListener('waiting', startBufferingCheck);
 audioPlayer.addEventListener('stalled', startBufferingCheck);
 
-// 2. PLAYING (The Resolution)
+// 2. PLAYING
 audioPlayer.addEventListener('playing', () => {
     stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
 
-    // IF we are scrambling (because we switched tracks OR scrubbed),
-    // NOW is the time to resolve, because audio is confirmed playing.
+    // TRIGGER REVEAL:
+    // Only reveal if we are playing the track we expect to play
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        } else {
+            ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
     
-    // Reset Flags
     isSwitchingTrack = false;
     isSeeking = false;
 });
@@ -92,9 +97,7 @@ audioPlayer.addEventListener('playing', () => {
 // 3. PAUSE
 audioPlayer.addEventListener('pause', () => {
     stopBufferingCheck();
-    
-    // Ignore pause if we are in the middle of a seek-drag or track load
-    if (isSwitchingTrack || isDragging) return;
+    if (isSwitchingTrack) return; 
 
     isPlaying = false;
     updatePlayBtn();
@@ -104,13 +107,25 @@ audioPlayer.addEventListener('pause', () => {
     }
 });
 
-// 4. TIMEUPDATE (Safety Net)
+// 4. SEEKED
+audioPlayer.addEventListener('seeked', () => {
+    isSeeking = false;
+    stopBufferingCheck();
+    
+    if (audioPlayer.paused) {
+        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+    }
+});
+
+// 5. TIMEUPDATE
 audioPlayer.addEventListener('timeupdate', () => { 
-    // If audio is moving, we are NOT seeking.
-    // If the text is still "Loading", kill it.
-    if (ScrambleEngine.isLooping && isPlaying && !audioPlayer.paused) {
-        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
-        isSeeking = false;
+    if (!audioPlayer.paused) {
+        if (isSeeking) isSeeking = false;
+        if (isSwitchingTrack) isSwitchingTrack = false;
+        
+        if (ScrambleEngine.isLooping) {
+            ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        }
     }
 
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
@@ -175,7 +190,7 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowLeft') { if (e.shiftKey) { e.preventDefault(); prevTrack(); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; } } 
 });
 
-// Tactile Feedback Engine
+// Tactile Feedback Engine - Pointer Events
 function addTactileListener(selector) {
     const els = document.querySelectorAll(selector);
     els.forEach(el => {

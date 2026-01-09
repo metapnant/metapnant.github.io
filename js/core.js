@@ -74,7 +74,7 @@ let isTouch = false;
 let isScrolling = false;
 let pendingSeekPercent = null;
 let isSwitchingTrack = false; 
-let isSeeking = false; // NEW: Global seeking flag
+let isSeeking = false; 
 
 // -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
@@ -223,30 +223,35 @@ const ScrambleEngine = {
     revealGlyphs: "!<>-_\\/[]{}—=+*^?#________",
 
     startLoading: function(element) {
-        if (this.targetElement === element && this.interval && !this.isResolving) return;
-        this.clear();
+        // Prevent restarting if already in the exact same state
+        if (this.targetElement === element && this.interval && this.isLooping && !this.isResolving) return;
+
+        this.reset();
         this.targetElement = element;
         this.isLooping = true;
         this.isResolving = false;
         
         element.style.color = "var(--name-color)";
         
-        this.interval = setInterval(() => {
+        // Define the update function
+        const updateFrame = () => {
             let text = "";
             for (let i = 0; i < 12; i++) {
                 if (i < 7 && Math.random() > 0.85) text += "LOADING"[i] || "";
                 else text += this.loadingGlyphs[Math.floor(Math.random() * this.loadingGlyphs.length)];
             }
             element.innerText = text;
-        }, 60);
+        };
+
+        // EXECUTE IMMEDIATELY (Fixes empty/old title flash on fast switch)
+        updateFrame();
+        
+        // Then loop
+        this.interval = setInterval(updateFrame, 60);
     },
 
     resolve: function(element, finalText) {
-        if (!this.isLooping && element.innerText === finalText) {
-             this.snap(element, finalText);
-             return;
-        }
-        this.clear();
+        this.reset(); // Kill previous loop
         this.targetElement = element;
         this.isResolving = true;
         this.isLooping = false;
@@ -261,22 +266,18 @@ const ScrambleEngine = {
             }).join("");
 
             if (iterations >= finalText.length) {
-                this.clear();
-                element.innerText = finalText; 
-                element.style.color = ""; 
+                this.snap(element, finalText);
             }
             iterations += 1 / 2;
         }, 30);
     },
 
     snap: function(element, finalText) {
-        this.clear();
-        this.isLooping = false;
+        this.reset(); 
         element.innerText = finalText;
         element.style.color = "";
     },
 
-    // Nuclear reset used when switching tracks
     reset: function() {
         if (this.interval) clearInterval(this.interval);
         this.interval = null;
@@ -285,21 +286,13 @@ const ScrambleEngine = {
         this.targetElement = null;
     },
 
-    clear: function() {
-        if (this.interval) {
-            clearInterval(this.interval);
-            this.interval = null;
-        }
-        this.isResolving = false;
-        this.isLooping = false;
-        this.targetElement = null;
-    }
+    clear: function() { this.reset(); }
 };
 
 function startLoadingScramble(element) {
     if (element === btnShowVoice) { if (voiceScrambleInterval) clearInterval(voiceScrambleInterval); }
     const glyphs = "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝!<>-_\\/[]{}—=+*^?#";
-    const timer = setInterval(() => {
+    const update = () => {
         let text = "";
         for (let i = 0; i < 12; i++) {
             if (i < 7 && Math.random() > 0.8) text += "LOADING"[i] || "";
@@ -307,7 +300,9 @@ function startLoadingScramble(element) {
         }
         element.innerText = text;
         element.style.color = "var(--name-color)";
-    }, 60);
+    };
+    update();
+    const timer = setInterval(update, 60);
     if (element === btnShowVoice) voiceScrambleInterval = timer;
 }
 
