@@ -446,30 +446,43 @@ function initPlaylist() {
     addTactileListener('.playlist-item');
 }
 
-function loadTrack(index, animate = true) {
-    if (!domTrackTitle) return;
-
-    domProgressBar.style.setProperty('--progress', '0%');
-    domCurrentTime.textContent = "0:00";
-
+async function loadTrack(index, autoPlay = true) {
     currentTrackIdx = index;
-    const track = albumTracks[index];
+    // Set Active UI immediately
+    const items = document.querySelectorAll('.playlist-item');
+    items.forEach((item, i) => {
+        if (i === currentTrackIdx) item.classList.add('active-track');
+        else item.classList.remove('active-track');
+    });
 
-    // Scramble Logic
-    shouldAnimateReveal = animate;
-    domTrackTitle.dataset.revealing = "false";
+    const track = albumTracks[currentTrackIdx];
 
-    if (animate) {
-        startLoadingScramble(domTrackTitle);
-    } else {
-        if (loadingScrambleInterval) clearInterval(loadingScrambleInterval);
-        domTrackTitle.innerText = track.title;
-        domTrackTitle.style.color = "";
-    }
+    // Set Flag used by 'loadstart' listener
+    isPlaying = autoPlay;
 
     audioPlayer.src = track.src;
-    audioPlayer.load();
 
+    // IMMEDIATE FEEDBACK: Scramble immediately if autoplaying
+    if (autoPlay) {
+        setAudioState(AudioState.LOADING);
+        try {
+            await audioPlayer.play();
+            updatePlayBtn();
+        } catch (err) {
+            console.log("Playback failed:", err);
+            setAudioState(AudioState.PAUSED);
+        }
+    } else {
+        // Just loading metadata
+        domTrackTitle.innerText = track.title;
+        domTrackTitle.style.color = "";
+        updatePlayBtn();
+    }
+
+    // Update PDF Lyrics if needed
+    if (appState.musicUnlocked && currentIndex === 0) {
+        refreshDynamicPage();
+    }
     // --- RESTORED PLAYLIST HIGHLIGHTING ---
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
@@ -504,7 +517,7 @@ function togglePlay() {
 
     if (isPlaying) {
         isSwitchingTrack = false;
-        audioPlayer.pause();
+        audioPlayer.pause(); // Listener handles UI update
     } else {
         isPlaying = true;
         updatePlayBtn();
@@ -520,9 +533,7 @@ function togglePlay() {
                 }
             }).catch(error => {
                 if (error.name !== 'AbortError') {
-                    isPlaying = false;
-                    updatePlayBtn();
-                    stopScramble();
+                    setAudioState(AudioState.PAUSED);
                 }
             });
         }
@@ -807,69 +818,149 @@ progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
 progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); progressArea.addEventListener('touchend', endDragTouch);
 
 // --- AUDIO ENGINE: SOURCE OF TRUTH ---
+// Robust Audio State Machine
+
+const AudioState = {
+    IDLE: 'idle',
+    LOADING: 'loading',
+    PLAYING: 'playing',
+    PAUSED: 'paused',
+    BUFFERING: 'buffering'
+};
+let playbackState = AudioState.IDLE;
+let bufferDebounceTimer = null;
+
+// Helper to set state and update UI accordingly
+function setAudioState(newState) {
+    if (playbackState === newState) return;
+
+    // logic for transitions
+    const previousState = playbackState;
+    playbackState = newState;
+
+    // Clear any pending buffer trigger if we move out of potential buffering scenarios
+    if (bufferDebounceTimer && newState !== AudioState.BUFFERING) {
+        clearTimeout(bufferDebounceTimer);
+        bufferDebounceTimer = null;
+    }
+
+    // UI Updates based on state
+    if (newState === AudioState.BUFFERING || newState === AudioState.LOADING) {
+        // If coming from IDLE/PAUSED/PLAYING, we might want a grace period 
+        // to avoid flashing "Loading" during a fast seek or track switch.
+        // BUT for 'loadstart' (LOADING) we might want immediate if it's a new track.
+
+        // However, user specifically asked to only show if it "actually hangs".
+        // So we just ensure the scramble logic is called. 
+        // The debounce is handled at the event listener level for 'waiting'/'stalled'.
+        // For 'LOADING' (new track), we allow immediate scramble IF autoplay was requested.
+
+        startLoadingScramble(domTrackTitle);
+
+    } else if (newState === AudioState.PLAYING) {
+        // ONLY Resolve (Animate) if we were previously SCRAMBLING (Loading/Buffering).
+        // If we resume from PAUSED, do NOT animate, just ensure text is solid.
+        if (previousState === AudioState.LOADING || previousState === AudioState.BUFFERING) {
+            resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
+        } else {
+            // Coming from PAUSED or similar: Just ensure text is static and correct
+            stopScramble(); // Clears intervals/timers
+            domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
+            domTrackTitle.style.color = "";
+        }
+        isPlaying = true;
+        updatePlayBtn();
+
+    } else if (newState === AudioState.PAUSED) {
+        // Just freeze/stop scramble.
+        stopScramble();
+        // Ensure title is readable
+        domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
+        domTrackTitle.style.color = "";
+
+        isPlaying = false;
+        updatePlayBtn();
+    }
+}
 
 // --- HARDWARE LISTENERS ---
 
-// --- HARDWARE OBSERVERS ---
-
-audioPlayer.addEventListener('playing', () => {
-    isPlaying = true;
-    updatePlayBtn();
-
-    // Only resolve if we were actually waiting/scrambling
-    if (shouldAnimateReveal || loadingScrambleInterval) {
-        resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
-        shouldAnimateReveal = false;
+audioPlayer.addEventListener('loadstart', () => {
+    // Only go to LOADING state if we intend to play (isPlaying flag is set by loadTrack/togglePlay)
+    // If we are just loading a track for metadata (initial load), stay IDLE/PAUSED.
+    if (isPlaying) {
+        setAudioState(AudioState.LOADING);
     }
 });
 
 audioPlayer.addEventListener('waiting', () => {
-    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
-
-    // GATING: 
-    // 1. Must be intended to play
-    // 2. Hardware must not be paused
-    // 3. We must not currently be in the middle of a matrix reveal
-    if (isPlaying && !audioPlayer.paused && domTrackTitle.dataset.revealing !== "true") {
-        // 250ms Hang Rule
-        bufferCheckTimer = setTimeout(() => {
+    // Hardware ran out of data. 
+    // Use a grace period (debounce) before showing scramble.
+    if (playbackState !== AudioState.PAUSED && !bufferDebounceTimer) {
+        bufferDebounceTimer = setTimeout(() => {
             if (audioPlayer.readyState < 3 && !audioPlayer.paused) {
-                shouldAnimateReveal = true;
-                startLoadingScramble(domTrackTitle);
+                setAudioState(AudioState.BUFFERING);
             }
-        }, 250);
+            bufferDebounceTimer = null;
+        }, 300); // 300ms grace period for seeks/hiccups
     }
+});
+
+audioPlayer.addEventListener('stalled', () => {
+    if (isPlaying && playbackState !== AudioState.PAUSED && !bufferDebounceTimer) {
+        bufferDebounceTimer = setTimeout(() => {
+            if (audioPlayer.readyState < 3 && !audioPlayer.paused) {
+                setAudioState(AudioState.BUFFERING);
+            }
+            bufferDebounceTimer = null;
+        }, 300);
+    }
+});
+
+audioPlayer.addEventListener('playing', () => {
+    // Clear any pending buffer detection
+    if (bufferDebounceTimer) {
+        clearTimeout(bufferDebounceTimer);
+        bufferDebounceTimer = null;
+    }
+    setAudioState(AudioState.PLAYING);
 });
 
 audioPlayer.addEventListener('pause', () => {
-    // Kill the jitter loop if we pause
-    if (loadingScrambleInterval) {
-        clearInterval(loadingScrambleInterval);
-        loadingScrambleInterval = null;
-        if (domTrackTitle.dataset.revealing !== "true") {
-            domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
-            domTrackTitle.style.color = "";
-        }
-    }
-    isPlaying = false;
-    updatePlayBtn();
+    setAudioState(AudioState.PAUSED);
 });
 
 audioPlayer.addEventListener('seeked', () => {
-    if (bufferCheckTimer) clearTimeout(bufferCheckTimer);
-    // Clear title if scrubbed while paused
-    if (audioPlayer.paused && domTrackTitle.dataset.revealing !== "true") {
-        if (loadingScrambleInterval) {
-            clearInterval(loadingScrambleInterval);
-            loadingScrambleInterval = null;
+    if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
+
+    if (audioPlayer.paused) {
+        setAudioState(AudioState.PAUSED);
+    } else {
+        // If readyState is good, go straight to PLAYING (no scramble).
+        // If bad, 'waiting' listener will catch it or we can check here.
+        if (audioPlayer.readyState >= 3) {
+            setAudioState(AudioState.PLAYING);
+        } else {
+            // Do NOT force buffering yet. Let the 'waiting' event handle the 300ms delay.
+            // This prevents scramble flash on instant-seeks.
+            // But we might need to ensure we don't look 'playing' if we aren't.
+            // Actually, keep 'playing' UI until confirmed waiting.
         }
-        domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
-        domTrackTitle.style.color = "";
     }
 });
 
+// Robust Time Update
 audioPlayer.addEventListener('timeupdate', () => {
+    // 1. Sync Playback State
+    if (!audioPlayer.paused && playbackState !== AudioState.PLAYING && audioPlayer.readyState >= 3) {
+        // If we somehow got out of sync or recovered from buffering without a 'playing' event
+        setAudioState(AudioState.PLAYING);
+    }
+
+    // 2. Clear seek flag
     if (!audioPlayer.paused) pendingSeekPercent = null;
+
+    // 3. Update Progress Bar
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) {
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100;
         domProgressBar.style.setProperty('--progress', `${p}%`);
