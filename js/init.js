@@ -49,18 +49,21 @@ progressArea.addEventListener('touchend', endDragTouch);
 
 // --- AUDIO EVENT HANDLING ---
 
-// Debounce Helper: Only show "LOADING" if we wait > 100ms
+// Debounce Helper
 const startBufferingCheck = () => {
     if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
     
+    // FIX: Grace Period check. If we just resumed, ignore buffering signals for a moment.
+    if (ignoreWaiting) return;
+
     // Only trigger if we are supposed to be playing
     if (isPlaying && !audioPlayer.paused) {
         bufferDebounceTimer = setTimeout(() => {
-            // Check state again: If we are actively seeking or readyState is low, show loading
-            if (audioPlayer.seeking || audioPlayer.readyState < 3) {
+            // Re-check: only scramble if we truly don't have data
+            if (audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
-        }, 100); 
+        }, 150); 
     }
 };
 
@@ -71,70 +74,64 @@ const stopBufferingCheck = () => {
     }
 };
 
-// 1. SEEKING (Immediate trigger when scrub is released)
+// 1. WAITING / STALLED / SEEKING
 audioPlayer.addEventListener('seeking', startBufferingCheck);
-
-// 2. WAITING / STALLED (Network lag)
 audioPlayer.addEventListener('waiting', startBufferingCheck);
 audioPlayer.addEventListener('stalled', startBufferingCheck);
 
-// 3. PLAYING (Success)
+// 2. PLAYING
 audioPlayer.addEventListener('playing', () => {
     stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
 
-    // TRIGGER REVEAL:
-    // Only animate if we were "Looping" (Alien Glyphs) or switching tracks.
+    // Activate Grace Period: Ignore 'waiting' events for 500ms
+    // This prevents the loading animation from flashing if audio stutters on start
+    ignoreWaiting = true;
+    setTimeout(() => { ignoreWaiting = false; }, 500);
+
+    // Resolve Text
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         } else {
-            // Instant seek -> Static text
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
-    
     isSwitchingTrack = false;
 });
 
-// 4. PAUSE
+// 3. PAUSE
 audioPlayer.addEventListener('pause', () => {
     stopBufferingCheck();
     
-    // CRITICAL: Ignore pause event if it's caused by track switch.
-    // This keeps the button in "Playing" (Pause icon) state while loading new track.
+    // If switching tracks, keep button as "Playing"
     if (isSwitchingTrack) return;
 
     isPlaying = false;
     updatePlayBtn();
     
-    // Snap text
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 5. SEEKED
+// 4. SEEKED
 audioPlayer.addEventListener('seeked', () => {
-    // Note: We don't resolve text here. We wait for 'playing' or 'timeupdate'.
-    // If we resolve here, we might flash text before 'waiting' fires on slow networks.
-    
+    stopBufferingCheck();
     if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 6. TIMEUPDATE (Heartbeat)
+// 5. TIMEUPDATE (Heartbeat)
 audioPlayer.addEventListener('timeupdate', () => { 
-    // SAFETY NET:
-    // If the "Alien Loop" is active, BUT:
-    // 1. We are playing
-    // 2. We are NOT paused
-    // 3. We are NOT currently seeking (browser says it's done seeking)
-    // THEN -> We must resolve.
+    // SAFETY NET: If text is still loading but time is moving, force resolve immediately.
+    // Also extend the grace period because we are clearly playing fine.
     if (ScrambleEngine.isLooping && isPlaying && !audioPlayer.paused && !audioPlayer.seeking) {
         ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        ignoreWaiting = true;
+        setTimeout(() => { ignoreWaiting = false; }, 500);
     }
 
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
@@ -199,24 +196,26 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowLeft') { if (e.shiftKey) { e.preventDefault(); prevTrack(); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; } } 
 });
 
-// Tactile Feedback Engine
+// Tactile Feedback Engine - FIX: Use Pointer Events
 function addTactileListener(selector) {
     const els = document.querySelectorAll(selector);
     els.forEach(el => {
-        const handleStart = function(e) {
-            if (e.type === 'touchstart') e.stopPropagation();
+        // Use pointerdown for instant response without ghost clicks
+        el.addEventListener('pointerdown', function(e) {
             this.classList.add('active-state');
-        };
-        const handleEnd = function() {
+            // Release capture so scrolling still works if they drag off
+            if(this.releasePointerCapture) this.releasePointerCapture(e.pointerId);
+        });
+        
+        const removeActive = function() {
+            // Small timeout to ensure visual feedback is seen on fast taps
             const self = this;
-            setTimeout(() => { self.classList.remove('active-state'); }, 100);
+            setTimeout(() => { self.classList.remove('active-state'); }, 150);
         };
-        el.addEventListener('touchstart', handleStart, {passive: true});
-        el.addEventListener('touchend', handleEnd, {passive: true});
-        el.addEventListener('touchcancel', () => el.classList.remove('active-state'), {passive: true});
-        el.addEventListener('mousedown', handleStart);
-        el.addEventListener('mouseup', handleEnd);
-        el.addEventListener('mouseleave', () => el.classList.remove('active-state'));
+
+        el.addEventListener('pointerup', removeActive);
+        el.addEventListener('pointerleave', removeActive);
+        el.addEventListener('pointercancel', removeActive);
     });
 }
 

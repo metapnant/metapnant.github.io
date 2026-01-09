@@ -22,7 +22,17 @@
 /* FIX: Removes yellow outline when clicking/focusing elements */
 :focus-visible { outline: none !important; }
 
-* { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; box-sizing: border-box; }
+* { 
+  -webkit-tap-highlight-color: transparent; 
+  -webkit-touch-callout: none; 
+  user-select: none; 
+  box-sizing: border-box; 
+}
+
+/* FIX: Disable double-tap-to-zoom delay on interactive elements */
+a, button, input, .playlist-item, .voice-btn, .ctrl-btn, .cycle-btn, #infinity-symbol, .nav-arrow {
+  touch-action: manipulation;
+}
 
 html { 
   background-color: var(--background-main); 

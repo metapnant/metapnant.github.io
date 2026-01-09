@@ -73,11 +73,12 @@ let holdTimer = null;
 let isTouch = false;
 let isScrolling = false;
 let pendingSeekPercent = null;
-let isSwitchingTrack = false; // Prevents UI pause during track load
+let isSwitchingTrack = false;
 
 // -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
 let bufferDebounceTimer = null; 
+let ignoreWaiting = false; // New flag for the "Grace Period"
 
 // -- TERMINAL STATE --
 let secretClicks = 0;
@@ -221,7 +222,6 @@ const ScrambleEngine = {
     loadingGlyphs: "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝",
     revealGlyphs: "!<>-_\\/[]{}—=+*^?#________",
 
-    // 1. INFINITE LOADING (Alien)
     startLoading: function(element) {
         if (this.targetElement === element && this.interval && !this.isResolving) return;
         this.clear();
@@ -241,14 +241,11 @@ const ScrambleEngine = {
         }, 60);
     },
 
-    // 2. REVEAL (Matrix)
     resolve: function(element, finalText) {
-        // If not actively looping (loading), and text is already correct, ignore.
         if (!this.isLooping && element.innerText === finalText) {
              this.snap(element, finalText);
              return;
         }
-
         this.clear();
         this.targetElement = element;
         this.isResolving = true;
@@ -272,7 +269,6 @@ const ScrambleEngine = {
         }, 30);
     },
 
-    // 3. SNAP (Instant)
     snap: function(element, finalText) {
         this.clear();
         this.isLooping = false;
@@ -291,7 +287,6 @@ const ScrambleEngine = {
     }
 };
 
-// Legacy support for "Show Voice" button
 function startLoadingScramble(element) {
     if (element === btnShowVoice) { if (voiceScrambleInterval) clearInterval(voiceScrambleInterval); }
     const glyphs = "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝!<>-_\\/[]{}—=+*^?#";
