@@ -256,6 +256,7 @@ const ScrambleEngine = {
 
     startLoading: function(element) {
         if (this.targetElement === element && this.interval && this.isLooping && !this.isResolving) return;
+
         this.reset();
         this.targetElement = element;
         this.isLooping = true;
@@ -271,7 +272,7 @@ const ScrambleEngine = {
             }
             element.innerText = text;
         };
-        update(); // Paint frame 1 immediately
+        update();
         this.interval = setInterval(update, 60);
     },
 
@@ -356,4 +357,33 @@ function resolveLoadingScramble(element, finalText) {
     } else {
         ScrambleEngine.resolve(element, finalText);
     }
+}
+
+// FIX: Instant Touch Feedback with enforced duration
+function addTactileListener(selector) {
+    const els = document.querySelectorAll(selector);
+    els.forEach(el => {
+        // Use pointerdown for immediate reaction
+        el.addEventListener('pointerdown', function(e) {
+            this.classList.add('active-state');
+            this.dataset.pressTime = Date.now(); // Record start time
+            if(this.releasePointerCapture) this.releasePointerCapture(e.pointerId);
+        });
+        
+        const removeActive = function() {
+            const self = this;
+            const pressDuration = Date.now() - (parseInt(self.dataset.pressTime) || 0);
+            const minDuration = 150; // Minimum time to show the flash
+            
+            const delay = pressDuration < minDuration ? (minDuration - pressDuration) : 0;
+            
+            setTimeout(() => { 
+                self.classList.remove('active-state'); 
+            }, delay);
+        };
+
+        el.addEventListener('pointerup', removeActive);
+        el.addEventListener('pointerleave', removeActive);
+        el.addEventListener('pointercancel', removeActive);
+    });
 }

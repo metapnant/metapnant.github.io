@@ -282,18 +282,13 @@
         opacity: 1 !important;
     }
 
-    /* FIX: Loop Button Specific Override (Hover) */
-    /* Only scale, do not add white glow or circle if disabled */
+    /* Loop Button Hover: No BG, No Shadow */
     .loop-btn:hover {
         background: transparent !important;
         box-shadow: none !important;
         color: var(--name-color) !important;
+        opacity: 1 !important;
         transform: scale(1.1);
-    }
-    
-    /* Ensure opacity stays low on hover if not active */
-    .loop-btn:not(.active):not(.active-one):hover {
-        opacity: 0.3 !important;
     }
 
     .playlist-item:hover {
@@ -311,11 +306,22 @@
     }
 }
 
+/* FIX: Instant Active State for Voice Button */
+/* This ensures the button flashes properly on touch */
+.voice-btn:active, 
+.voice-btn.active-state {
+    background-color: rgba(152, 0, 235, 0.3) !important;
+    color: #ffffff !important;
+    border-color: #ffffff !important;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+    transform: scale(0.95);
+    transition: none !important; /* Instant transition */
+}
+
 /* Generic Active State (Press) for Control Buttons */
 .tools-toggle:active, .tools-toggle.active-state,
 .tool-btn:active, .tool-btn.active-state,
 .ctrl-btn:active, .ctrl-btn.active-state,
-.voice-btn:active, .voice-btn.active-state,
 .playlist-item:active, .playlist-item.active-state {
     background-color: rgba(152, 0, 235, 0.3) !important;
     color: #ffffff !important;
@@ -324,7 +330,7 @@
     transition: none !important;
 }
 
-/* FIX: Specific Override for Loop Button Active State (Press) */
+/* Override for Loop Button Active State (Press) */
 .loop-btn:active,
 .loop-btn.active-state {
     background: transparent !important;
@@ -332,12 +338,7 @@
     border: none !important;
     color: var(--name-color) !important; 
     transform: scale(0.95);
-}
-
-/* Ensure opacity stays low on press if not active */
-.loop-btn:not(.active):not(.active-one):active, 
-.loop-btn:not(.active):not(.active-one).active-state {
-    opacity: 0.3 !important;
+    opacity: 1 !important;
 }
 
 .playlist-item:active,
