@@ -73,9 +73,8 @@ let holdTimer = null;
 let isTouch = false;
 let isScrolling = false;
 let pendingSeekPercent = null;
-// Flags for "Ghost" prevention
 let isSwitchingTrack = false; 
-let isSeeking = false; 
+let isSeeking = false; // NEW: Global seeking flag
 
 // -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
@@ -271,12 +270,13 @@ const ScrambleEngine = {
     },
 
     snap: function(element, finalText) {
-        this.clear(); // Kill all timers
+        this.clear();
+        this.isLooping = false;
         element.innerText = finalText;
         element.style.color = "";
     },
 
-    // NEW: Nuclear reset used when rapid switching tracks
+    // Nuclear reset used when switching tracks
     reset: function() {
         if (this.interval) clearInterval(this.interval);
         this.interval = null;

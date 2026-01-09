@@ -40,19 +40,17 @@ if(btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextT
 if(btnPrev) btnPrev.addEventListener('click', (e) => { e.preventDefault(); prevTrack(); });
 if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggleLoop(); });
 
-progressArea.addEventListener('mousedown', startDragMouse); 
-document.addEventListener('mousemove', doDragMouse); 
-document.addEventListener('mouseup', endDragMouse);
-progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); 
-progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); 
-progressArea.addEventListener('touchend', endDragTouch);
+// Note: Drag events are bound in audio.js for tighter scope control
 
 // --- AUDIO EVENT HANDLING ---
 
+let bufferingTimer = null;
+
+// Helper to trigger buffering visuals (Network lag backup)
 const startBufferingCheck = () => {
-    if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
+    if (bufferingTimer) clearTimeout(bufferingTimer);
     if (isPlaying && !audioPlayer.paused) {
-        bufferDebounceTimer = setTimeout(() => {
+        bufferingTimer = setTimeout(() => {
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
@@ -61,39 +59,32 @@ const startBufferingCheck = () => {
 };
 
 const stopBufferingCheck = () => {
-    if (bufferDebounceTimer) {
-        clearTimeout(bufferDebounceTimer);
-        bufferDebounceTimer = null;
+    if (bufferingTimer) {
+        clearTimeout(bufferingTimer);
+        bufferingTimer = null;
     }
 };
 
-// 0. LOADSTART (Instant feedback for rapid skipping)
-// This ensures that even before 'waiting' fires, we see the loading animation
-audioPlayer.addEventListener('loadstart', () => {
-    if (isPlaying) {
-        ScrambleEngine.startLoading(domTrackTitle);
-    }
-});
-
-// 1. SEEKING / WAITING / STALLED
+// 1. BROWSER EVENTS
 audioPlayer.addEventListener('seeking', startBufferingCheck);
 audioPlayer.addEventListener('waiting', startBufferingCheck);
 audioPlayer.addEventListener('stalled', startBufferingCheck);
 
-// 2. PLAYING
+// 2. PLAYING (The Resolution)
 audioPlayer.addEventListener('playing', () => {
     stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
 
+    // IF we are scrambling (because we switched tracks OR scrubbed),
+    // NOW is the time to resolve, because audio is confirmed playing.
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
-        // If we were "Loading", or Switching Tracks, OR Seeking, resolve the text.
-        // This catches the case where a seek finishes but 'seeked' didn't trigger a resolve.
         if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
     
+    // Reset Flags
     isSwitchingTrack = false;
     isSeeking = false;
 });
@@ -101,7 +92,9 @@ audioPlayer.addEventListener('playing', () => {
 // 3. PAUSE
 audioPlayer.addEventListener('pause', () => {
     stopBufferingCheck();
-    if (isSwitchingTrack) return; 
+    
+    // Ignore pause if we are in the middle of a seek-drag or track load
+    if (isSwitchingTrack || isDragging) return;
 
     isPlaying = false;
     updatePlayBtn();
@@ -111,28 +104,13 @@ audioPlayer.addEventListener('pause', () => {
     }
 });
 
-// 4. SEEKED
-audioPlayer.addEventListener('seeked', () => {
-    isSeeking = false;
-    stopBufferingCheck();
-    
-    if (audioPlayer.paused) {
-        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
-    }
-});
-
-// 5. TIMEUPDATE (The "State Fixer")
+// 4. TIMEUPDATE (Safety Net)
 audioPlayer.addEventListener('timeupdate', () => { 
-    // IF THE SONG IS MOVING, WE ARE NOT SEEKING OR LOADING.
-    // Force reset all blocking flags.
-    if (!audioPlayer.paused) {
-        if (isSeeking) isSeeking = false;
-        if (isSwitchingTrack) isSwitchingTrack = false;
-        
-        // If animation is stuck in "Loading" loop, force resolve
-        if (ScrambleEngine.isLooping) {
-            ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
-        }
+    // If audio is moving, we are NOT seeking.
+    // If the text is still "Loading", kill it.
+    if (ScrambleEngine.isLooping && isPlaying && !audioPlayer.paused) {
+        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        isSeeking = false;
     }
 
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 

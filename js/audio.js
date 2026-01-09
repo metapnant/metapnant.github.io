@@ -19,30 +19,26 @@ function initPlaylist() {
 function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
-    // 1. NUCLEAR STATE RESET (Fixes rapid skipping bugs)
-    ScrambleEngine.reset(); // Kill any running text animations immediately
-    isSwitchingTrack = true; 
-    isSeeking = false; // Reset seek state from previous track
-    pendingSeekPercent = null; // Clear pending cold seeks
-    
-    // 2. Reset UI
+    // 1. Reset UI
     domProgressBar.style.setProperty('--progress', '0%');
     if (index !== currentTrackIdx) {
         domCurrentTime.textContent = "0:00"; 
         domDuration.textContent = "0:00";
     }
     
+    pendingSeekPercent = null;
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 3. Force Visual "Loading" immediately
+    // 2. Track Change: Force Loading Animation
+    isSwitchingTrack = true; 
     ScrambleEngine.startLoading(domTrackTitle);
 
-    // 4. Update Hardware
+    // 3. Hardware
     audioPlayer.src = track.src;
     audioPlayer.load();
 
-    // 5. Update Playlist
+    // 4. Update Playlist
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -55,12 +51,12 @@ function loadTrack(index, autoPlay = true) {
         refreshDynamicPage();
     }
 
-    // 6. Autoplay
+    // 5. Autoplay
     if (autoPlay) {
         audioPlayer.play().catch(e => {
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
-            // Revert state if blocked
-            isSwitchingTrack = false; 
+            // If blocked, revert state
+            isSwitchingTrack = false;
             ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
             updatePlayBtn();
@@ -91,7 +87,7 @@ function togglePlay() {
         isPlaying = true;
         updatePlayBtn();
 
-        // COLD SEEK
+        // iOS Cold Seek Apply
         if (pendingSeekPercent !== null && audioPlayer.duration) {
             const seekTime = (pendingSeekPercent / 100) * audioPlayer.duration;
             audioPlayer.currentTime = seekTime;
@@ -138,18 +134,34 @@ function getScrubPercent(e) {
     return Math.max(0, Math.min(100, ((clientEvent.clientX - rect.left) / width) * 100));
 }
 
-const startDragMouse = (e) => { if (isTouch || e.button !== 0) return; isDragging = true; domProgressBar.classList.add('dragging'); updateScrubVisual(getScrubPercent(e)); };
-const doDragMouse = (e) => { if (!isDragging) return; e.preventDefault(); updateScrubVisual(getScrubPercent(e)); };
-const endDragMouse = (e) => { if (isDragging) { commitSeek(getScrubPercent(e)); isDragging = false; domProgressBar.classList.remove('dragging'); } };
-const startDragTouch = (e) => { 
-    isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isScrolling = false; 
-    isDragging = true; 
-    domProgressBar.classList.add('dragging'); 
+// --- DRAG HANDLERS ---
+
+const startDrag = (e) => {
+    // 1. STOP AUDIO INSTANTLY
+    // This fixes "Ghost Play" where audio kept going while dragging
+    if (isPlaying) {
+        audioPlayer.pause(); 
+    }
+    
+    isDragging = true;
+    isSeeking = true; // Lock UI updates
+    
+    domProgressBar.classList.add('dragging');
     updateScrubVisual(getScrubPercent(e));
 };
+
+const startDragMouse = (e) => { if (isTouch || e.button !== 0) return; startDrag(e); };
+const startDragTouch = (e) => { 
+    isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isScrolling = false; 
+    startDrag(e);
+};
+
+const doDragMouse = (e) => { if (!isDragging) return; e.preventDefault(); updateScrubVisual(getScrubPercent(e)); };
 const doDragTouch = (e) => {
     if (isDragging) { if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); return; }
 };
+
+const endDragMouse = (e) => { if (isDragging) { commitSeek(getScrubPercent(e)); isDragging = false; domProgressBar.classList.remove('dragging'); } };
 const endDragTouch = (e) => { 
     if (isDragging) { 
         let percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
@@ -161,28 +173,38 @@ const endDragTouch = (e) => {
     setTimeout(() => { isTouch = false; }, 500); 
 };
 
-function commitSeek(percent) {
-    if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
-        clearTimeout(bufferDebounceTimer); 
-        bufferDebounceTimer = null;
-    }
+// Bind logic
+progressArea.addEventListener('mousedown', startDragMouse); 
+document.addEventListener('mousemove', doDragMouse); 
+document.addEventListener('mouseup', endDragMouse);
+progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); 
+progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); 
+progressArea.addEventListener('touchend', endDragTouch);
 
+
+function commitSeek(percent) {
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
 
-        if (!audioPlayer.paused) {
-            // PLAYING: Apply immediate seek
-            // We set isSeeking = true so timeupdate ignores the gap silence
-            isSeeking = true;
+        // PLAYING (Was playing before drag started)
+        if (isPlaying) {
+            // 2. FORCE VISUAL LOADING INSTANTLY
+            // Don't wait for browser. User dropped handle = Loading starts.
             ScrambleEngine.startLoading(domTrackTitle);
+            
+            // 3. APPLY SEEK & RESUME
             audioPlayer.currentTime = newTime;
+            audioPlayer.play();
+            
             pendingSeekPercent = null;
         } else {
-            // PAUSED: Store for later
+            // PAUSED
+            // Just store value, do not play, do not animate.
             pendingSeekPercent = percent;
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+            isSeeking = false;
         }
     } else {
         pendingSeekPercent = percent;
