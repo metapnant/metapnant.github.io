@@ -309,6 +309,6 @@ window.logsData = {
         { text: "", class: "system-text", delay: 2500 },
         { text: "> END OF LINE.", class: "system-text", delay: 2500 },
         { text: "> [ SYSTEM INTEGRATION: COMPLETE. LOOP STABLE. ]", class: "system-success", delay: 1000 },
-        { text: "<span class='secret-link' onclick='revealPlayer()'>[ ENTER THE CHRYSALIS ]</span>", class: "system-success", delay: 0 }
+        { text: "<span class='secret-link'>[ ENTER THE CHRYSALIS ]</span>", class: "system-success", delay: 0 }
     ]
 };

@@ -231,21 +231,42 @@ function renderFullLog(type) {
 function typeLine(htmlText, className, container) { 
     if (!container) return;
     const lineDiv = document.createElement('div'); 
-    if (htmlText.includes('----') || htmlText.includes('====')) { lineDiv.className = `terminal-line divider-line ${className}`; } 
-    else { lineDiv.className = `terminal-line ${className}`; }
+    
+    if (htmlText.includes('----') || htmlText.includes('====')) { 
+        lineDiv.className = `terminal-line divider-line ${className}`; 
+    } else { 
+        lineDiv.className = `terminal-line ${className}`; 
+    }
+    
     lineDiv.innerHTML = htmlText; 
     
-    // FIX: Detect if this line contains the Secret Link and attach listeners
+    // --- FIX START: ROBUST LISTENER ATTACHMENT ---
     const link = lineDiv.querySelector('.secret-link');
-    if (link && typeof addTactileListener === 'function') {
-        addTactileListener(link);
+    if (link) {
+        // 1. Add visual/tactile feedback (existing logic)
+        if (typeof addTactileListener === 'function') {
+            addTactileListener(link);
+        }
+
+        // 2. Explicitly attach the click event logic
+        // This ensures it works even if the inline 'onclick' fails
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            revealPlayer();
+        });
+
+        // 3. Ensure it behaves like a button for accessibility
+        link.style.cursor = "pointer";
     }
+    // --- FIX END ---
     
     lineDiv.classList.add('active'); 
     if(className.includes('golden-text')) lineDiv.classList.add('gold-line'); 
     if(className.includes('white-text')) lineDiv.classList.add('white-line'); 
     if(className.includes('magenta-text')) lineDiv.classList.add('magenta-line'); 
     if(className.includes('system-success')) lineDiv.classList.add('blue-line'); 
+    
     container.appendChild(lineDiv); 
 }
 
