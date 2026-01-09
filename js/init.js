@@ -54,60 +54,30 @@ if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggl
 
 // --- AUDIO EVENT HANDLING ---
 
-const startBufferingCheck = () => {
-    if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
-    
-    const thisOpId = currentAudioOpId;
+// 1. STATE: LOADING
+audioPlayer.addEventListener('waiting', () => {
+    if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
+});
 
-    if (isPlaying && !audioPlayer.paused) {
-        bufferDebounceTimer = setTimeout(() => {
-            if (currentAudioOpId !== thisOpId) return;
+audioPlayer.addEventListener('stalled', () => {
+    if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
+});
 
-            if (audioPlayer.seeking || audioPlayer.readyState < 3) {
-                ScrambleEngine.startLoading(domTrackTitle);
-            }
-        }, 100); 
-    }
-};
-
-const stopBufferingCheck = () => {
-    if (bufferDebounceTimer) {
-        clearTimeout(bufferDebounceTimer);
-        bufferDebounceTimer = null;
-    }
-};
-
-// 0. LOADSTART
 audioPlayer.addEventListener('loadstart', () => {
     if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
 });
 
-// 1. SEEKING / WAITING / STALLED
-audioPlayer.addEventListener('seeking', startBufferingCheck);
-audioPlayer.addEventListener('waiting', startBufferingCheck);
-audioPlayer.addEventListener('stalled', startBufferingCheck);
-
-// 2. PLAYING
+// 2. STATE: PLAYING
 audioPlayer.addEventListener('playing', () => {
-    stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
-
-    // TRIGGER REVEAL:
-    // Only resolve if we are playing and not waiting for seek
-    if (domTrackTitle && albumTracks[currentTrackIdx]) {
-        if (!isSeeking && (ScrambleEngine.isLooping || isSwitchingTrack)) {
-            ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
-        }
-    }
-    
-    isSwitchingTrack = false;
+    // We don't resolve here. We wait for timeupdate.
 });
 
-// 3. PAUSE
+// 3. STATE: PAUSED
 audioPlayer.addEventListener('pause', () => {
-    stopBufferingCheck();
-    if (isSwitchingTrack) return; 
+    // If user is dragging, ignore this pause (it's just us preventing ghost audio)
+    if (isDragging) return;
 
     isPlaying = false;
     updatePlayBtn();
@@ -117,34 +87,14 @@ audioPlayer.addEventListener('pause', () => {
     }
 });
 
-// 4. SEEKED
-audioPlayer.addEventListener('seeked', () => {
-    isSeeking = false;
-    stopBufferingCheck();
-    
-    if (resumeOnSeek) {
-        resumeOnSeek = false;
-        audioPlayer.play();
-        // 'playing' event will handle text
-    } else if (audioPlayer.paused) {
-        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
-    } else {
+// 4. STATE: MOVING (The Resolution)
+audioPlayer.addEventListener('timeupdate', () => { 
+    // If the time is moving, we are successful.
+    if (!audioPlayer.paused && ScrambleEngine.isLooping) {
         ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
-});
 
-// 5. TIMEUPDATE
-audioPlayer.addEventListener('timeupdate', () => { 
-    if (!audioPlayer.paused) {
-        if (isSeeking) isSeeking = false;
-        if (isSwitchingTrack) isSwitchingTrack = false;
-        
-        if (ScrambleEngine.isLooping) {
-            ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
-        }
-    }
-
-    if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
+    if (!isDragging && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
         domProgressBar.style.setProperty('--progress', `${p}%`); 
         domCurrentTime.textContent = formatTime(audioPlayer.currentTime); 
@@ -159,11 +109,6 @@ audioPlayer.addEventListener('ended', () => {
 
 audioPlayer.addEventListener('loadedmetadata', () => { 
     domDuration.textContent = formatTime(audioPlayer.duration); 
-    if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) { 
-        audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; 
-        domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); 
-        pendingSeekPercent = null; 
-    }
 });
 
 // PDF Tools Toggle

@@ -21,12 +21,42 @@
 }
 #loading-overlay { display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 50; background-color: var(--background-main); }
 .loading-spinner { width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: var(--name-color); border-radius: 50%; animation: spin 1s infinite linear; }
+
 .pdf-page-wrapper { 
     width: 100%; max-width: 100%; height: auto; position: relative; margin: 0 auto; 
-    border-radius: 4px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); 
+    border-radius: 4px; overflow: visible; /* Changed to visible for shadow, handled by mask below */
+    
+    box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.6); 
+    
+    /* FIX: Mask to cut off horizontal bleed */
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 100%); 
+    mask-image: linear-gradient(to bottom, black 0%, black 100%);
+    
+    /* Ensure shadow paints outside the mask where needed (bottom) but not sides */
+    /* Actually, a better approach for the smear is margin boxing */
+    margin-bottom: 20px;
+
     background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%); 
     line-height: 0; flex-shrink: 0; opacity: 0; animation: fadeContentIn 0.8s ease forwards; 
 }
+
+/* FIX: Use a pseudo-element for the shadow instead of box-shadow on the main element.
+   This allows us to size the shadow narrower than the box, ensuring no side-smear. */
+.pdf-page-wrapper::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    bottom: 5px;
+    left: 2px;  /* Inset from left */
+    right: 2px; /* Inset from right */
+    height: 20px;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+    border-radius: 50%; /* Rounded shadow bottom */
+}
+
+/* Remove default box-shadow from wrapper since we use pseudo-element */
+.pdf-page-wrapper { box-shadow: none; }
+
 .pdf-page-wrapper::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 70%); background-size: 200% 200%; pointer-events: none; z-index: 10; mix-blend-mode: overlay; }
 .pdf-page-canvas { width: 100% !important; height: auto !important; display: block; background-color: var(--background-main); clip-path: inset(0 3px 2px 0); object-fit: contain; }
 
@@ -41,16 +71,9 @@
 .nav-arrow {
   pointer-events: auto; background: none; border: none; 
   color: var(--arrow-color); 
-  /* Huge font size for touch */
   font-size: clamp(4rem, 12vw, 7rem); 
   font-weight: 100; 
-  width: auto; 
-  height: auto;
-  line-height: 0.8;
-  /* Massive padding for easy tapping */
-  padding: 20px; 
-  margin: 0;
-  
+  width: auto; height: auto; line-height: 0.8; padding: 20px; margin: 0;
   cursor: pointer; transition: none !important; animation: faintFlash 5s infinite ease-in-out;
   opacity: 0.6; display: flex; justify-content: center; align-items: center;
   text-shadow: 0 0 30px rgba(0,0,0,0.8); transform: none; 
