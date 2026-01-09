@@ -19,15 +19,14 @@ function initPlaylist() {
 function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
-    // 1. NEW OPERATION ID
+    // 1. Reset
     currentAudioOpId++;
-    
-    // 2. Reset UI
     ScrambleEngine.reset();
     isSwitchingTrack = true; 
     isSeeking = false; 
     pendingSeekPercent = null;
     wasPlayingBeforeDrag = false;
+    resumeOnSeek = false;
     
     domProgressBar.style.setProperty('--progress', '0%');
     if (index !== currentTrackIdx) {
@@ -38,14 +37,14 @@ function loadTrack(index, autoPlay = true) {
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 3. Start Loading Visuals
+    // 2. Visuals
     ScrambleEngine.startLoading(domTrackTitle);
 
-    // 4. Hardware
+    // 3. Hardware
     audioPlayer.src = track.src;
     audioPlayer.load();
 
-    // 5. Playlist UI
+    // 4. Update Playlist
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -58,7 +57,7 @@ function loadTrack(index, autoPlay = true) {
         refreshDynamicPage();
     }
 
-    // 6. Playback
+    // 5. Playback
     if (autoPlay) {
         isPlaying = true;
         updatePlayBtn();
@@ -157,7 +156,8 @@ const startDrag = (e) => {
     }
     
     isDragging = true;
-    isSeeking = true; // Lock UI
+    isSeeking = true; 
+    resumeOnSeek = false;
     
     domProgressBar.classList.add('dragging');
     updateScrubVisual(getScrubPercent(e));
@@ -196,8 +196,13 @@ if (progressArea) {
 }
 
 function commitSeek(percent) {
-    currentAudioOpId++; // INVALIDATE OLD TIMERS
+    currentAudioOpId++;
     
+    if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
+        clearTimeout(bufferDebounceTimer); 
+        bufferDebounceTimer = null;
+    }
+
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
         domProgressBar.style.setProperty('--progress', `${percent}%`);
@@ -208,17 +213,16 @@ function commitSeek(percent) {
             isSeeking = true;
             ScrambleEngine.startLoading(domTrackTitle);
             
-            // Force hardware update
-            requestAnimationFrame(() => {
-                audioPlayer.currentTime = newTime;
-                audioPlayer.play();
-                pendingSeekPercent = null;
-            });
+            // FIX: Set currentTime, but defer play() until 'seeked' fires
+            audioPlayer.currentTime = newTime;
+            resumeOnSeek = true;
+            pendingSeekPercent = null;
         } else {
             // PAUSED:
             pendingSeekPercent = percent;
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
             isSeeking = false;
+            resumeOnSeek = false;
         }
     } else {
         pendingSeekPercent = percent;

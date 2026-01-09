@@ -74,15 +74,16 @@ let isTouch = false;
 let isScrolling = false;
 let pendingSeekPercent = null;
 
-// New Strict State Flags
-let currentAudioOpId = 0; // Tracks unique load/seek operations
+// State Flags
+let currentAudioOpId = 0; 
 let isSwitchingTrack = false; 
-let isSeeking = false; // TRUE only during the gap between commitSeek and 'seeked' event
+let isSeeking = false; 
 let wasPlayingBeforeDrag = false; 
+let resumeOnSeek = false; // NEW: Defer playback until seek completes
 
 // -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
-let scrollAnimationId = null;
+let bufferDebounceTimer = null; 
 
 // -- TERMINAL STATE --
 let secretClicks = 0;
@@ -226,72 +227,56 @@ function getVisiblePageNumber() {
 }
 
 // ==========================================
-// SCRAMBLE ENGINE V2 (SMART BUFFERING)
+// SCRAMBLE ENGINE
 // ==========================================
 
 const ScrambleEngine = {
     interval: null,
-    delayTimer: null,
     targetElement: null,
     isResolving: false,
-    
-    // Status flag: Are we showing alien glyphs?
     isLooping: false,
+    currentTargetText: "", // NEW: Tracks the intended final text
 
     loadingGlyphs: "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝",
     revealGlyphs: "!<>-_\\/[]{}—=+*^?#________",
 
-    // 1. SMART START
-    // Doesn't show anything for 100ms. If resolve() called before then, no flash.
     startLoading: function(element) {
-        // If already loading this element, do nothing
-        if (this.targetElement === element && (this.isLooping || this.delayTimer)) return;
-
+        if (this.targetElement === element && this.interval && this.isLooping && !this.isResolving) return;
         this.reset();
         this.targetElement = element;
+        this.isLooping = true;
+        this.isResolving = false;
+        
         element.style.color = "var(--name-color)";
-
-        // Wait 100ms before showing alien glyphs (The "No Flash" Buffer)
-        this.delayTimer = setTimeout(() => {
-            this.delayTimer = null;
-            this.isLooping = true;
-            
-            const update = () => {
-                let text = "";
-                for (let i = 0; i < 12; i++) {
-                    if (i < 7 && Math.random() > 0.85) text += "LOADING"[i] || "";
-                    else text += this.loadingGlyphs[Math.floor(Math.random() * this.loadingGlyphs.length)];
-                }
-                element.innerText = text;
-            };
-            update();
-            this.interval = setInterval(update, 60);
-        }, 100);
+        
+        const update = () => {
+            let text = "";
+            for (let i = 0; i < 12; i++) {
+                if (i < 7 && Math.random() > 0.85) text += "LOADING"[i] || "";
+                else text += this.loadingGlyphs[Math.floor(Math.random() * this.loadingGlyphs.length)];
+            }
+            element.innerText = text;
+        };
+        update();
+        this.interval = setInterval(update, 60);
     },
 
-    // 2. RESOLVE (Transition to Title)
     resolve: function(element, finalText) {
-        // Scenario A: We are in the 100ms buffer period (Fast Load)
-        if (this.delayTimer) {
-            clearTimeout(this.delayTimer);
-            this.delayTimer = null;
-            // Go straight to reveal, skipping alien loop
-        }
-        
-        // Scenario B: We are not loading anything, and text is already correct
-        // (Prevents stuttering on play/pause)
+        // FIX: Double Reveal Guard
+        // If we are already resolving to this EXACT string, don't restart.
+        if (this.isResolving && this.currentTargetText === finalText) return;
+
+        // If text is already correct and stable, exit.
         if (!this.isLooping && element.innerText === finalText) {
              this.snap(element, finalText);
              return;
         }
 
-        // Scenario C: We were loading (Alien), or it was a Fast Load
-        // Begin the Matrix Reveal
-        if (this.interval) clearInterval(this.interval);
-        this.interval = null;
-        this.isLooping = false;
-        this.isResolving = true;
+        this.reset();
         this.targetElement = element;
+        this.isResolving = true;
+        this.isLooping = false;
+        this.currentTargetText = finalText; // Store target
         
         let iterations = 0;
         element.style.color = "var(--name-color)"; 
@@ -309,29 +294,24 @@ const ScrambleEngine = {
         }, 30);
     },
 
-    // 3. SNAP (Instant Reset)
     snap: function(element, finalText) {
         this.reset();
-        if(element) {
-            element.innerText = finalText;
-            element.style.color = "";
-        }
+        element.innerText = finalText;
+        element.style.color = "";
     },
 
     reset: function() {
         if (this.interval) clearInterval(this.interval);
-        if (this.delayTimer) clearTimeout(this.delayTimer);
         this.interval = null;
-        this.delayTimer = null;
         this.isResolving = false;
         this.isLooping = false;
         this.targetElement = null;
+        this.currentTargetText = "";
     },
 
     clear: function() { this.reset(); }
 };
 
-// Legacy support for "Show Voice" button
 function startLoadingScramble(element) {
     if (element === btnShowVoice) { if (voiceScrambleInterval) clearInterval(voiceScrambleInterval); }
     const glyphs = "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝!<>-_\\/[]{}—=+*^?#";

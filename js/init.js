@@ -68,53 +68,97 @@ if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggl
 
 // --- AUDIO EVENT HANDLING ---
 
-// 1. PLAYING
+const startBufferingCheck = () => {
+    if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
+    
+    const thisOpId = currentAudioOpId;
+
+    if (isPlaying && !audioPlayer.paused) {
+        bufferDebounceTimer = setTimeout(() => {
+            if (currentAudioOpId !== thisOpId) return;
+
+            if (audioPlayer.seeking || audioPlayer.readyState < 3) {
+                ScrambleEngine.startLoading(domTrackTitle);
+            }
+        }, 100); 
+    }
+};
+
+const stopBufferingCheck = () => {
+    if (bufferDebounceTimer) {
+        clearTimeout(bufferDebounceTimer);
+        bufferDebounceTimer = null;
+    }
+};
+
+// 0. LOADSTART
+audioPlayer.addEventListener('loadstart', () => {
+    if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
+});
+
+// 1. SEEKING / WAITING / STALLED
+audioPlayer.addEventListener('seeking', startBufferingCheck);
+audioPlayer.addEventListener('waiting', startBufferingCheck);
+audioPlayer.addEventListener('stalled', startBufferingCheck);
+
+// 2. PLAYING
 audioPlayer.addEventListener('playing', () => {
+    stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
 
-    // Force Resolve if we switched tracks or were buffering
-    // But ONLY if we aren't waiting for a seek to land
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
-        if (!isSeeking && (ScrambleEngine.isLooping || isSwitchingTrack)) {
+        if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        } else {
+            ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
     
     isSwitchingTrack = false;
+    isSeeking = false;
 });
 
-// 2. PAUSE
+// 3. PAUSE
 audioPlayer.addEventListener('pause', () => {
+    stopBufferingCheck();
     if (isSwitchingTrack) return; 
 
     isPlaying = false;
     updatePlayBtn();
     
-    // Snap immediately
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 3. SEEKED (This is the primary way to clear 'isSeeking')
+// 4. SEEKED
 audioPlayer.addEventListener('seeked', () => {
     isSeeking = false;
+    stopBufferingCheck();
     
-    if (audioPlayer.paused) {
+    // FIX: iOS Silent Playback Fix
+    // If we have deferred playback, trigger it now that seek is done.
+    if (resumeOnSeek) {
+        resumeOnSeek = false;
+        audioPlayer.play();
+        // The 'playing' event will handle text resolution
+    } else if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     } else {
         ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 4. TIMEUPDATE (Safety Net)
+// 5. TIMEUPDATE
 audioPlayer.addEventListener('timeupdate', () => { 
-    // If audio is moving, we are NOT seeking.
-    // This fixes the "stuck seek" bug on iOS where 'seeked' might be skipped.
-    if (!audioPlayer.paused && isSeeking) {
-        isSeeking = false;
-        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+    if (!audioPlayer.paused) {
+        if (isSeeking) isSeeking = false;
+        if (isSwitchingTrack) isSwitchingTrack = false;
+        
+        if (ScrambleEngine.isLooping) {
+            ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        }
     }
 
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
