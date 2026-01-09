@@ -49,21 +49,14 @@ progressArea.addEventListener('touchend', endDragTouch);
 
 // --- AUDIO EVENT HANDLING ---
 
-// Debounce Helper
 const startBufferingCheck = () => {
     if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
-    
-    // FIX: Grace Period check. If we just resumed, ignore buffering signals for a moment.
-    if (ignoreWaiting) return;
-
-    // Only trigger if we are supposed to be playing
     if (isPlaying && !audioPlayer.paused) {
         bufferDebounceTimer = setTimeout(() => {
-            // Re-check: only scramble if we truly don't have data
-            if (audioPlayer.readyState < 3) {
+            if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
-        }, 150); 
+        }, 100); 
     }
 };
 
@@ -74,8 +67,7 @@ const stopBufferingCheck = () => {
     }
 };
 
-// 1. WAITING / STALLED / SEEKING
-audioPlayer.addEventListener('seeking', startBufferingCheck);
+// 1. WAITING / STALLED (Network)
 audioPlayer.addEventListener('waiting', startBufferingCheck);
 audioPlayer.addEventListener('stalled', startBufferingCheck);
 
@@ -85,12 +77,7 @@ audioPlayer.addEventListener('playing', () => {
     isPlaying = true;
     updatePlayBtn();
 
-    // Activate Grace Period: Ignore 'waiting' events for 500ms
-    // This prevents the loading animation from flashing if audio stutters on start
-    ignoreWaiting = true;
-    setTimeout(() => { ignoreWaiting = false; }, 500);
-
-    // Resolve Text
+    // Trigger Reveal if we were loading
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
@@ -104,9 +91,7 @@ audioPlayer.addEventListener('playing', () => {
 // 3. PAUSE
 audioPlayer.addEventListener('pause', () => {
     stopBufferingCheck();
-    
-    // If switching tracks, keep button as "Playing"
-    if (isSwitchingTrack) return;
+    if (isSwitchingTrack) return; // Ignore pauses caused by loading new track
 
     isPlaying = false;
     updatePlayBtn();
@@ -116,22 +101,29 @@ audioPlayer.addEventListener('pause', () => {
     }
 });
 
-// 4. SEEKED
+// 4. SEEKED (Seek Completed)
 audioPlayer.addEventListener('seeked', () => {
+    // Seek finished. Turn off seeking flag.
+    isSeeking = false;
     stopBufferingCheck();
+    
     if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+    } else {
+        // If playing, resolve the "LOADING" text we started in commitSeek
+        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
 // 5. TIMEUPDATE (Heartbeat)
 audioPlayer.addEventListener('timeupdate', () => { 
-    // SAFETY NET: If text is still loading but time is moving, force resolve immediately.
-    // Also extend the grace period because we are clearly playing fine.
+    // CRITICAL FIX: If we are waiting for a seek to complete, DO NOT update the bar.
+    // This stops the bar from jumping back to the old timestamp while the "Ghost Audio" plays.
+    if (isSeeking) return;
+
+    // Safety: If audio is moving, text should be resolved
     if (ScrambleEngine.isLooping && isPlaying && !audioPlayer.paused && !audioPlayer.seeking) {
         ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
-        ignoreWaiting = true;
-        setTimeout(() => { ignoreWaiting = false; }, 500);
     }
 
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
@@ -196,19 +188,16 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowLeft') { if (e.shiftKey) { e.preventDefault(); prevTrack(); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; } } 
 });
 
-// Tactile Feedback Engine - FIX: Use Pointer Events
+// Tactile Feedback Engine
 function addTactileListener(selector) {
     const els = document.querySelectorAll(selector);
     els.forEach(el => {
-        // Use pointerdown for instant response without ghost clicks
         el.addEventListener('pointerdown', function(e) {
             this.classList.add('active-state');
-            // Release capture so scrolling still works if they drag off
             if(this.releasePointerCapture) this.releasePointerCapture(e.pointerId);
         });
         
         const removeActive = function() {
-            // Small timeout to ensure visual feedback is seen on fast taps
             const self = this;
             setTimeout(() => { self.classList.remove('active-state'); }, 150);
         };

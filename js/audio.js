@@ -31,10 +31,7 @@ function loadTrack(index, autoPlay = true) {
     const track = albumTracks[index];
 
     // 2. Track Change: Force Loading Animation
-    // We explicitly set this flag to prevent the 'pause' event from updating the button
     isSwitchingTrack = true; 
-    
-    // Always show loading for a full track switch (it usually takes time)
     ScrambleEngine.startLoading(domTrackTitle);
 
     // 3. Hardware
@@ -56,13 +53,8 @@ function loadTrack(index, autoPlay = true) {
 
     // 5. Autoplay
     if (autoPlay) {
-        // We leave isPlaying=false initially. 
-        // The 'playing' event in init.js will set it to true and update the button.
-        // This prevents the button from showing "Pause" (Playing) if the browser blocks autoplay.
-        
         audioPlayer.play().catch(e => {
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
-            // If blocked, revert state
             isSwitchingTrack = false; 
             ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
@@ -88,14 +80,12 @@ function togglePlay() {
         audioPlayer.pause(); 
         isPlaying = false;
         updatePlayBtn();
-        // Manual Pause: Snap text
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
     else { 
         isPlaying = true;
         updatePlayBtn();
 
-        // iOS Cold Seek Apply
         if (pendingSeekPercent !== null && audioPlayer.duration) {
             const seekTime = (pendingSeekPercent / 100) * audioPlayer.duration;
             audioPlayer.currentTime = seekTime;
@@ -166,7 +156,6 @@ const endDragTouch = (e) => {
 };
 
 function commitSeek(percent) {
-    // Clear debounce timer to prevent overlap
     if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
         clearTimeout(bufferDebounceTimer); 
         bufferDebounceTimer = null;
@@ -178,13 +167,16 @@ function commitSeek(percent) {
         domCurrentTime.textContent = formatTime(newTime);
 
         if (!audioPlayer.paused) {
-            // PLAYING: Apply immediate seek.
-            // We DO NOT force startLoading here. init.js listens for 'seeking'/'waiting'
-            // and will handle the visual feedback if it takes too long.
+            // PLAYING:
+            // 1. Mark as seeking explicitly
+            isSeeking = true;
+            // 2. Force Loading visual instantly (Immediate feedback)
+            ScrambleEngine.startLoading(domTrackTitle);
+            // 3. Update Hardware
             audioPlayer.currentTime = newTime;
             pendingSeekPercent = null;
         } else {
-            // PAUSED: Store for later. No animation.
+            // PAUSED:
             pendingSeekPercent = percent;
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }

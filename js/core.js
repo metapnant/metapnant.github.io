@@ -73,12 +73,12 @@ let holdTimer = null;
 let isTouch = false;
 let isScrolling = false;
 let pendingSeekPercent = null;
-let isSwitchingTrack = false;
+let isSwitchingTrack = false; 
+let isSeeking = false; // NEW: Tracks if we are waiting for the browser to seek
 
 // -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
 let bufferDebounceTimer = null; 
-let ignoreWaiting = false; // New flag for the "Grace Period"
 
 // -- TERMINAL STATE --
 let secretClicks = 0;
