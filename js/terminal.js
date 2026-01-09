@@ -54,10 +54,11 @@ function updateSidebarUI() {
                 icon = document.createElement('span'); 
                 icon.className = 'replay-icon'; 
                 icon.innerHTML = '↺'; 
+                // Add click handler for replay
                 icon.onclick = (e) => {
                     e.stopPropagation(); e.preventDefault();
                     
-                    // FIX: Use setTimeout to force iOS to recognize the class change
+                    // FIX: Force DOM Reflow to restart animation instantly
                     icon.classList.remove('spin-once');
                     setTimeout(() => {
                         icon.classList.add('spin-once');
@@ -270,9 +271,8 @@ function revealPlayer() {
     updatePlayBtn();
     currentTrackIdx = 0;
     
-    // Global function from audio.js
     loadTrack(0, false); 
-    // Manual trigger for the title scramble since we aren't "playing" yet
+    
     if (typeof ScrambleEngine !== 'undefined' && domTrackTitle && albumTracks[0]) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[0].title);
     }

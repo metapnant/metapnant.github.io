@@ -26,12 +26,10 @@
     width: 100%; max-width: 100%; height: auto; position: relative; margin: 0 auto; 
     border-radius: 4px; overflow: visible; 
     
-    /* Horizontal Mask to prevent side bleed */
+    /* Horizontal Mask */
     -webkit-mask-image: linear-gradient(to right, transparent 0%, black 2px, black calc(100% - 2px), transparent 100%);
     mask-image: linear-gradient(to right, transparent 0%, black 2px, black calc(100% - 2px), transparent 100%);
     
-    /* FIX: Removed margin-bottom (was 30px). 
-       Now relying on .pdf-container 'gap' (15px) for consistent spacing. */
     margin-bottom: 0; 
     
     background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%); 
@@ -57,10 +55,28 @@
 
 /* --- HUD (ARROWS) --- */
 .nav-controls {
-  position: fixed; z-index: 3000; pointer-events: none; 
-  top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%;
-  display: flex; justify-content: space-between; align-items: center; 
-  max-width: 1050px; margin: 0 auto; padding: 0 10px; 
+  position: fixed; 
+  z-index: 3000; 
+  pointer-events: none; 
+  
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  /* FIX: Do not use bottom: 0; rely on height instead */
+  width: 100%; 
+
+  /* FIX: Use 100lvh (Large Viewport Height). 
+     This locks the height to the physical screen size ignoring the URL bar. */
+  height: 100vh; /* Fallback */
+  height: 100lvh; 
+  
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  
+  max-width: 1050px; 
+  margin: 0 auto; 
+  padding: 0 10px; 
 }
 
 .nav-arrow {
@@ -119,15 +135,6 @@
 #infinity-symbol { display: inline-block; transition: text-shadow 0.3s, color 0.3s; padding: 0 5px; font-weight: bold; cursor: default; pointer-events: none; }
 #infinity-symbol.active { cursor: pointer; pointer-events: auto; }
 #infinity-symbol.active:hover { color: #fff; text-shadow: 0 0 15px var(--name-color); }
-
-/* Active state for Infinity Button (White Flash) - Used AFTER unlock */
-#infinity-symbol.active:active, 
-#infinity-symbol.active.active-state { 
-    color: #ffffff !important; 
-    text-shadow: 0 0 15px #ffffff, 0 0 30px var(--name-color) !important;
-    transition: none !important;
-}
-
 #song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 10px; }
 #song-link { color: var(--name-color); text-decoration: underline; text-decoration-color: var(--name-color); text-underline-offset: 2px; font-weight: 600; transition: color 0.1s; }
 
