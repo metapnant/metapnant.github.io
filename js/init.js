@@ -46,8 +46,15 @@ if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggl
 
 const startBufferingCheck = () => {
     if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
+    
+    // Capture the ID at the start of the check
+    const thisOpId = currentAudioOpId;
+
     if (isPlaying && !audioPlayer.paused) {
         bufferDebounceTimer = setTimeout(() => {
+            // FIX: If the operation ID changed (user skipped again), cancel this check
+            if (thisOpId !== currentAudioOpId) return;
+
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
@@ -110,23 +117,19 @@ audioPlayer.addEventListener('seeked', () => {
     
     if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
-    } else {
-        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 5. TIMEUPDATE (The Final Safety Net)
+// 5. TIMEUPDATE (Watchdog)
 audioPlayer.addEventListener('timeupdate', () => { 
-    if (isSeeking) return;
-
-    // ULTIMATE FALLBACK: If audio is playing (moving), but text doesn't match title, force resolve.
-    if (!audioPlayer.paused && domTrackTitle && albumTracks[currentTrackIdx]) {
-        // If text is wrong OR we are stuck in a loading loop
-        if (ScrambleEngine.isLooping || domTrackTitle.innerText !== albumTracks[currentTrackIdx].title) {
-            // Only trigger if we aren't already resolving
-            if (!ScrambleEngine.isResolving) {
-                ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
-            }
+    // IF THE SONG IS MOVING, WE ARE NOT SEEKING OR LOADING.
+    if (!audioPlayer.paused) {
+        if (isSeeking) isSeeking = false;
+        if (isSwitchingTrack) isSwitchingTrack = false;
+        
+        // If animation is stuck in "Loading" loop, force resolve
+        if (ScrambleEngine.isLooping) {
+            ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
 

@@ -73,8 +73,12 @@ let holdTimer = null;
 let isTouch = false;
 let isScrolling = false;
 let pendingSeekPercent = null;
-// OPERATION ID: Increments on every track switch/seek. Used to invalidate old events.
-let currentOpId = 0; 
+
+// CRITICAL: Global ID to track the current "Version" of audio playback.
+// Increments on every loadTrack or commitSeek.
+// Used to invalidate old timers and promises.
+let currentAudioOpId = 0; 
+
 let isSwitchingTrack = false; 
 let isSeeking = false; 
 let wasPlayingBeforeDrag = false; 
@@ -244,13 +248,11 @@ const ScrambleEngine = {
             element.innerText = text;
         };
         
-        // Immediate update to prevent visual lag
-        update();
+        update(); // Immediate paint
         this.interval = setInterval(update, 60);
     },
 
     resolve: function(element, finalText) {
-        // Safety: If not loading, and text is correct, exit.
         if (!this.isLooping && element.innerText === finalText) {
              this.snap(element, finalText);
              return;

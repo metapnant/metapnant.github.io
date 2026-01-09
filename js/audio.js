@@ -20,7 +20,7 @@ function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
     // 1. OPERATION ID: Invalidate all previous pending operations
-    currentOpId++;
+    currentAudioOpId++;
     
     // 2. Reset UI
     ScrambleEngine.reset();
@@ -58,21 +58,21 @@ function loadTrack(index, autoPlay = true) {
         refreshDynamicPage();
     }
 
-    // 6. Autoplay
+    // 6. Autoplay with OpID Protection
     if (autoPlay) {
-        const thisOpId = currentOpId; // Capture ID
+        const thisOpId = currentAudioOpId; // Capture ID
         
-        // Optimistic playing state
         isPlaying = true;
         updatePlayBtn();
 
         audioPlayer.play().catch(e => {
-            // IGNORE if user already switched track again
-            if (currentOpId !== thisOpId) return;
+            // FIX: If we have moved to a newer op (user clicked next again), IGNORE this error.
+            if (currentAudioOpId !== thisOpId) return;
 
+            // Handle actual block
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
             
-            // Revert state
+            // Only reset if it's the CURRENT track failing
             isSwitchingTrack = false; 
             ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
@@ -200,7 +200,7 @@ if (progressArea) {
 }
 
 function commitSeek(percent) {
-    currentOpId++; // Invalidate previous seek/load events
+    currentAudioOpId++; // Increment ID to invalidate pending buffers
     
     if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
         clearTimeout(bufferDebounceTimer); 
@@ -217,7 +217,7 @@ function commitSeek(percent) {
             isSeeking = true;
             ScrambleEngine.startLoading(domTrackTitle);
             
-            // Critical: Force DOM update before heavy audio work
+            // Critical: Force DOM update
             requestAnimationFrame(() => {
                 audioPlayer.currentTime = newTime;
                 audioPlayer.play();
