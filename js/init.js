@@ -123,22 +123,20 @@ audioPlayer.addEventListener('seeked', () => {
     isSeeking = false;
     stopBufferingCheck();
     
-    // FIX: iOS Silent Playback / Deferred Playback Logic
+    // Check if commitSeek told us to resume
     if (resumeOnSeek) {
         resumeOnSeek = false;
         
-        // Only call play() now that the hardware confirms it has reached the destination
-        audioPlayer.play().catch(e => {
-            console.warn("Deferred play failed:", e);
-            isPlaying = false;
+        // On iOS, we call play() ONLY here. 
+        // Calling it earlier (during drag) causes the random jumping.
+        audioPlayer.play().then(() => {
+            isPlaying = true;
             updatePlayBtn();
+        }).catch(e => {
+            console.log("iOS delayed play prevented:", e);
         });
     } else if (audioPlayer.paused) {
-        // If we're paused, make sure the title isn't stuck in "LOADING"
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
-    } else {
-        // Normal title resolution if playing and not deferred
-        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 

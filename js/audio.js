@@ -160,21 +160,18 @@ function getScrubPercent(e) {
 let dragRafId = null; // Animation Frame ID
 
 const startDrag = (e) => {
-    // Prevent default to stop text selection/scrolling immediately
+    // 1. Immediately prevent iOS from trying to scroll the page
     if (e.cancelable) e.preventDefault(); 
     
-    if (isPlaying) {
-        wasPlayingBeforeDrag = true;
-        audioPlayer.pause(); 
-    } else {
-        wasPlayingBeforeDrag = false;
-    }
+    // 2. Remember state before drag
+    wasPlayingBeforeDrag = isPlaying || !audioPlayer.paused;
+    
+    // 3. Pause hardware immediately to stop event collisions
+    audioPlayer.pause(); 
     
     isDragging = true;
     isSeeking = true; 
     domProgressBar.classList.add('dragging');
-    
-    // Immediate visual update
     updateScrubVisual(getScrubPercent(e));
 };
 
@@ -187,17 +184,11 @@ const startDragTouch = (e) => {
     startDrag(e); 
 };
 
-// RAF THROTTLED DRAG: Prevents UI locking on older phones
 const doDrag = (e) => { 
     if (!isDragging) return; 
-    
-    // Stop browser from handling this gesture
-    if(e.cancelable) e.preventDefault(); 
+    if (e.cancelable) e.preventDefault(); 
 
-    // Cancel previous frame if it hasn't run yet
     if (dragRafId) cancelAnimationFrame(dragRafId);
-
-    // Schedule visual update for next paint
     dragRafId = requestAnimationFrame(() => {
         updateScrubVisual(getScrubPercent(e));
     });
@@ -207,11 +198,11 @@ const endDrag = (e) => {
     if (isDragging) { 
         if (dragRafId) cancelAnimationFrame(dragRafId);
         
-        // Use the exact percentage currently displayed on the bar
-        let percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
-        if (isNaN(percent)) percent = 0;
-
+        // Use the exact percentage from the visual bar (what the user sees)
+        let percent = parseFloat(domProgressBar.style.getPropertyValue('--progress')) || 0;
+        
         commitSeek(percent); 
+        
         isDragging = false; 
         domProgressBar.classList.remove('dragging'); 
     } 
@@ -234,53 +225,60 @@ if (progressArea) {
 // ROBUST SEEK LOGIC (Prevents Hanging)
 // ==========================================
 
+// === BUFFER GATED SEEKING (The Shared Logic) ===
 function commitSeek(percent) {
     currentAudioOpId++;
+    const thisOpId = currentAudioOpId;
     
-    // Clear any existing buffering timers
-    if (bufferDebounceTimer) {
-        clearTimeout(bufferDebounceTimer); 
-        bufferDebounceTimer = null;
-    }
-
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
         
-        // 1. Force UI to match the final drop point
+        // Force visual sync
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
+        
+        // LOCK: Tell the hardware where to go
+        audioPlayer.currentTime = newTime;
 
         if (wasPlayingBeforeDrag) {
-            // 2. STATE: We were playing, so we need to resume after seeking
-            isSeeking = true;
-            resumeOnSeek = true; // Tell init.js to play() only when 'seeked' fires
-            
-            ScrambleEngine.startLoading(domTrackTitle);
-            
-            // 3. HARDWARE: Trigger the seek
-            audioPlayer.currentTime = newTime;
-            
-            // 4. SAFETY VALVE: If iOS hangs for more than 2s, force a reset
-            const safetyId = currentAudioOpId;
-            setTimeout(() => {
-                if (currentAudioOpId === safetyId && isSeeking) {
-                    isSeeking = false;
-                    resumeOnSeek = false;
-                    ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+            // Check if the area we dropped into is already downloaded
+            let isBuffered = false;
+            if (audioPlayer.buffered.length > 0) {
+                for (let i = 0; i < audioPlayer.buffered.length; i++) {
+                    if (newTime >= audioPlayer.buffered.start(i) && newTime <= audioPlayer.buffered.end(i)) {
+                        isBuffered = true;
+                        break;
+                    }
                 }
-            }, 2000);
+            }
 
+            if (isBuffered) {
+                // DATA IS READY: Defer playback until the 'seeked' event fires
+                resumeOnSeek = true;
+                isSeeking = true;
+                ScrambleEngine.startLoading(domTrackTitle);
+            } else {
+                // DATA MISSING: iOS will hang if we try to play now. 
+                // We enter a "Safe Pause" state.
+                isPlaying = false;
+                updatePlayBtn();
+                ScrambleEngine.startLoading(domTrackTitle);
+                
+                // Set a listener to auto-resume ONLY when data arrives
+                audioPlayer.addEventListener('canplay', () => {
+                    if (currentAudioOpId === thisOpId) {
+                        isPlaying = true;
+                        updatePlayBtn();
+                        audioPlayer.play();
+                    }
+                }, { once: true });
+            }
         } else {
-            // 5. STATE: We were paused, just move the playhead
-            audioPlayer.currentTime = newTime;
-            pendingSeekPercent = null;
+            // We were paused anyway. Just snap the text.
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
             isSeeking = false;
             resumeOnSeek = false;
         }
-    } else {
-        // If metadata isn't loaded yet, store it for later
-        pendingSeekPercent = percent;
     }
 }
 
@@ -308,3 +306,6 @@ function updateBufferVisuals() {
         }
     }
 }
+// Safety catch-all for stuck yellow bars
+window.addEventListener('mouseup', endDrag);
+window.addEventListener('touchend', endDrag);
