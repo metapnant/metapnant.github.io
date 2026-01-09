@@ -54,10 +54,15 @@ function updateSidebarUI() {
                 icon = document.createElement('span'); 
                 icon.className = 'replay-icon'; 
                 icon.innerHTML = '↺'; 
+                // Add click handler for replay
                 icon.onclick = (e) => {
                     e.stopPropagation(); e.preventDefault();
-                    icon.classList.remove('spin-once'); 
-                    setTimeout(() => { icon.classList.add('spin-once'); }, 10);
+                    
+                    // FIX: Force DOM Reflow to restart animation instantly
+                    icon.classList.remove('spin-once');
+                    void icon.offsetWidth; // Trigger reflow
+                    icon.classList.add('spin-once');
+                    
                     replayLog(e, type);
                 };
                 btn.appendChild(icon);
@@ -67,18 +72,19 @@ function updateSidebarUI() {
         }
     });
 
-    // FIX: Explicitly remove visible class if conditions aren't met
     if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
         btnReset.classList.add('visible'); 
         btnTurbo.classList.add('visible'); 
         btnMute.classList.add('visible');
     } else {
+        // Fix: Properly hide them if condition fails
         btnReset.classList.remove('visible'); 
         btnTurbo.classList.remove('visible'); 
         btnMute.classList.remove('visible');
     }
 }
 
+// ... Rest of terminal.js logic (initTerminalState, launchTerminal, switchTab, etc.) remains standard ...
 function initTerminalState() {
     checkStateIntegrity(); 
     updateSidebarUI();

@@ -72,7 +72,14 @@ let touchStartY = 0;
 let holdTimer = null;
 let isTouch = false;
 let isScrolling = false;
+let pendingSeekPercent = null;
+
+// ROBUST STATE FLAGS
+let currentAudioOpId = 0; 
+let isSwitchingTrack = false; 
+let isSeeking = false; 
 let wasPlayingBeforeDrag = false; 
+let resumeOnSeek = false; 
 
 // -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
@@ -241,16 +248,19 @@ function getVisiblePageNumber() {
 const ScrambleEngine = {
     interval: null,
     targetElement: null,
-    // Note: Removed complex state flags (isResolving, etc.) to simplify behavior.
-    // The "Source of Truth" is now what we tell it to do.
+    isResolving: false,
+    isLooping: false,
 
     loadingGlyphs: "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝",
     revealGlyphs: "!<>-_\\/[]{}—=+*^?#________",
 
-    // Mode 1: Infinite Alien Loop
     startLoading: function(element) {
-        this.clear(); // Kill any existing animation on this element
+        if (this.targetElement === element && this.interval && this.isLooping && !this.isResolving) return;
+        this.reset();
         this.targetElement = element;
+        this.isLooping = true;
+        this.isResolving = false;
+        
         element.style.color = "var(--name-color)";
         
         const update = () => {
@@ -261,17 +271,20 @@ const ScrambleEngine = {
             }
             element.innerText = text;
         };
-        update(); // Instant paint
+        update(); // Paint frame 1 immediately
         this.interval = setInterval(update, 60);
     },
 
-    // Mode 2: Matrix Decode to Title
     resolve: function(element, finalText) {
-        // If we are already displaying the correct text and not animating, abort.
-        if (!this.interval && element.innerText === finalText) return;
+        if (!this.isLooping && element.innerText === finalText) {
+             this.snap(element, finalText);
+             return;
+        }
 
-        this.clear(); // Stop alien loop immediately
+        this.reset();
         this.targetElement = element;
+        this.isResolving = true;
+        this.isLooping = false;
         
         let iterations = 0;
         element.style.color = "var(--name-color)"; 
@@ -289,29 +302,30 @@ const ScrambleEngine = {
         }, 30);
     },
 
-    // Mode 3: Instant Text (No Animation)
     snap: function(element, finalText) {
-        this.clear();
+        this.reset();
         if(element) {
             element.innerText = finalText;
             element.style.color = "";
         }
     },
 
-    clear: function() {
-        if (this.interval) {
-            clearInterval(this.interval);
-            this.interval = null;
-        }
+    reset: function() {
+        if (this.interval) clearInterval(this.interval);
+        this.interval = null;
+        this.isResolving = false;
+        this.isLooping = false;
         this.targetElement = null;
-    }
+    },
+
+    clear: function() { this.reset(); }
 };
 
 // Legacy support for "Show Voice" button
 function startLoadingScramble(element) {
     if (element === btnShowVoice) { if (voiceScrambleInterval) clearInterval(voiceScrambleInterval); }
     const glyphs = "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝!<>-_\\/[]{}—=+*^?#";
-    const update = () => {
+    const timer = setInterval(() => {
         let text = "";
         for (let i = 0; i < 12; i++) {
             if (i < 7 && Math.random() > 0.8) text += "LOADING"[i] || "";
@@ -319,9 +333,7 @@ function startLoadingScramble(element) {
         }
         element.innerText = text;
         element.style.color = "var(--name-color)";
-    };
-    update();
-    const timer = setInterval(update, 60);
+    }, 60);
     if (element === btnShowVoice) voiceScrambleInterval = timer;
 }
 

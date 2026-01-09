@@ -19,10 +19,15 @@ function initPlaylist() {
 function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
-    // 1. Reset UI
-    ScrambleEngine.clear(); // Stop any previous animation
-    isDragging = false;
+    // 1. OPERATION ID & STATE RESET
+    currentAudioOpId++;
+    
+    ScrambleEngine.reset();
+    isSwitchingTrack = true; 
+    isSeeking = false; 
+    pendingSeekPercent = null;
     wasPlayingBeforeDrag = false;
+    resumeOnSeek = false;
     
     domProgressBar.style.setProperty('--progress', '0%');
     if (index !== currentTrackIdx) {
@@ -33,7 +38,7 @@ function loadTrack(index, autoPlay = true) {
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 2. Force Loading Text Immediately
+    // 2. Visuals: Force "Loading..." immediately
     ScrambleEngine.startLoading(domTrackTitle);
 
     // 3. Hardware
@@ -57,15 +62,21 @@ function loadTrack(index, autoPlay = true) {
     if (autoPlay) {
         isPlaying = true;
         updatePlayBtn();
+
+        const thisOpId = currentAudioOpId;
+
         audioPlayer.play().catch(e => {
+            if (currentAudioOpId !== thisOpId) return;
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
-            // Revert state
+            
+            isSwitchingTrack = false; 
             ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
             updatePlayBtn();
         });
     } else {
         ScrambleEngine.snap(domTrackTitle, track.title);
+        isSwitchingTrack = false;
     }
 }
 
@@ -82,11 +93,21 @@ function togglePlay() {
     if (isPlaying) { 
         audioPlayer.pause(); 
         isPlaying = false;
-    } else { 
+        updatePlayBtn();
+        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+    }
+    else { 
         isPlaying = true;
+        updatePlayBtn();
+
+        if (pendingSeekPercent !== null && audioPlayer.duration) {
+            const seekTime = (pendingSeekPercent / 100) * audioPlayer.duration;
+            audioPlayer.currentTime = seekTime;
+            pendingSeekPercent = null;
+        }
+
         audioPlayer.play();
     }
-    updatePlayBtn();
 }
 
 function updatePlayBtn() {
@@ -128,7 +149,6 @@ function getScrubPercent(e) {
 // --- DRAG HANDLERS ---
 
 const startDrag = (e) => {
-    // 1. Pause immediately to stop buffer drain
     if (isPlaying) {
         wasPlayingBeforeDrag = true;
         audioPlayer.pause(); 
@@ -137,8 +157,9 @@ const startDrag = (e) => {
     }
     
     isDragging = true;
+    isSeeking = true; 
+    resumeOnSeek = false;
     
-    // 2. Lock UI
     domProgressBar.classList.add('dragging');
     updateScrubVisual(getScrubPercent(e));
 };
@@ -176,7 +197,8 @@ if (progressArea) {
 }
 
 function commitSeek(percent) {
-    // Clear any pending debounce checks from init.js
+    currentAudioOpId++;
+    
     if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
         clearTimeout(bufferDebounceTimer); 
         bufferDebounceTimer = null;
@@ -184,19 +206,31 @@ function commitSeek(percent) {
 
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
-        
-        // 1. Force hardware update immediately
-        audioPlayer.currentTime = newTime;
-        
-        // 2. Resume playing if needed
-        if (wasPlayingBeforeDrag) {
-            isPlaying = true;
-            updatePlayBtn();
-            audioPlayer.play();
+        domProgressBar.style.setProperty('--progress', `${percent}%`);
+        domCurrentTime.textContent = formatTime(newTime);
+
+        if (wasPlayingBeforeDrag || !audioPlayer.paused) {
+            isSeeking = true;
+            resumeOnSeek = true; 
+            
+            ScrambleEngine.startLoading(domTrackTitle);
+            
+            // Wait 50ms before resuming to flush old audio buffer (iOS fix)
+            setTimeout(() => {
+                requestAnimationFrame(() => {
+                    audioPlayer.currentTime = newTime;
+                    audioPlayer.play();
+                    pendingSeekPercent = null;
+                });
+            }, 50);
         } else {
-            // Keep paused
-            isPlaying = false;
-            updatePlayBtn();
+            pendingSeekPercent = percent;
+            ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+            isSeeking = false;
+            resumeOnSeek = false;
+            audioPlayer.currentTime = newTime; // Just update time silently
         }
+    } else {
+        pendingSeekPercent = percent;
     }
 }

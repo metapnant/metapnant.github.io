@@ -52,19 +52,21 @@ if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggl
 
 // Note: Drag events are bound in audio.js
 
-// --- AUDIO EVENT HANDLING (The State Watchdog) ---
+// --- AUDIO EVENT HANDLING ---
 
 const startBufferingCheck = () => {
     if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
     
-    // Only scramble if we INTEND to play
-    if (isPlaying) {
+    const thisOpId = currentAudioOpId;
+
+    if (isPlaying && !audioPlayer.paused) {
         bufferDebounceTimer = setTimeout(() => {
-            // Check hardware state: Are we actually stuck?
+            if (currentAudioOpId !== thisOpId) return;
+
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
-        }, 200); // 200ms grace period for fast seeks
+        }, 100); 
     }
 };
 
@@ -75,62 +77,78 @@ const stopBufferingCheck = () => {
     }
 };
 
-// 1. BUFFERING EVENTS
+// 0. LOADSTART
+audioPlayer.addEventListener('loadstart', () => {
+    if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
+});
+
+// 1. SEEKING / WAITING / STALLED
 audioPlayer.addEventListener('seeking', startBufferingCheck);
 audioPlayer.addEventListener('waiting', startBufferingCheck);
 audioPlayer.addEventListener('stalled', startBufferingCheck);
 
-// 2. SUCCESS EVENTS (Kill buffering, show title)
+// 2. PLAYING
 audioPlayer.addEventListener('playing', () => {
     stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
-    
-    // Force Resolve
+
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
-        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
+            ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        } else {
+            ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+        }
+    }
+    
+    isSwitchingTrack = false;
+    isSeeking = false;
+});
+
+// 3. PAUSE
+audioPlayer.addEventListener('pause', () => {
+    stopBufferingCheck();
+    if (isSwitchingTrack) return; 
+
+    isPlaying = false;
+    updatePlayBtn();
+    
+    if (domTrackTitle && albumTracks[currentTrackIdx]) {
+        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 3. SEEKED (Seek done)
+// 4. SEEKED
 audioPlayer.addEventListener('seeked', () => {
+    isSeeking = false;
     stopBufferingCheck();
     
-    // If audio is paused after seek, we must snap text
-    if (audioPlayer.paused) {
+    if (resumeOnSeek) {
+        resumeOnSeek = false;
+        audioPlayer.play();
+    } else if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     } else {
         ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 4. TIMEUPDATE (The Ultimate Truth)
+// 5. TIMEUPDATE
 audioPlayer.addEventListener('timeupdate', () => { 
-    // If time is moving, we are alive. Kill any loading state.
-    if (!audioPlayer.paused && !audioPlayer.seeking) {
-        // If still showing loading glyphs, force update immediately
-        if (domTrackTitle.innerText.includes("∞") || domTrackTitle.innerText.includes("LOADING")) {
-             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+    if (!audioPlayer.paused) {
+        if (isSeeking) isSeeking = false;
+        if (isSwitchingTrack) isSwitchingTrack = false;
+        
+        if (ScrambleEngine.isLooping) {
+            ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
 
-    if (!isDragging && audioPlayer.duration) { 
+    if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
         domProgressBar.style.setProperty('--progress', `${p}%`); 
         domCurrentTime.textContent = formatTime(audioPlayer.currentTime); 
         domDuration.textContent = formatTime(audioPlayer.duration); 
-    }
-});
-
-// 5. PAUSE
-audioPlayer.addEventListener('pause', () => {
-    stopBufferingCheck();
-    isPlaying = false;
-    updatePlayBtn();
-    
-    // Snap to static
-    if (domTrackTitle && albumTracks[currentTrackIdx]) {
-        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
@@ -141,6 +159,11 @@ audioPlayer.addEventListener('ended', () => {
 
 audioPlayer.addEventListener('loadedmetadata', () => { 
     domDuration.textContent = formatTime(audioPlayer.duration); 
+    if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) { 
+        audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; 
+        domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); 
+        pendingSeekPercent = null; 
+    }
 });
 
 // PDF Tools Toggle
