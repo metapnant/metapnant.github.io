@@ -451,44 +451,44 @@ function initPlaylist() {
     addTactileListener('.playlist-item');
 }
 
-// --- UPDATED LOAD TRACK (Instant Reset) ---
-// Note: 'index' is the track index, 'animate' replaces 'autoPlay' in this context based on user snippet
-async function loadTrack(index, animate = true) {
+// --- PHASE I: TRACK LOADING (The "Clean Slate") ---
+async function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
-    // 1. HARD HARDWARE RESET (Top Priority)
+    // 1. HARD HARDWARE RESET (Top Priority - Sync Fix)
     domProgressBar.style.setProperty('--progress', '0%');
-    domCurrentTime.textContent = "0:00";
-    domDuration.textContent = "0:00";
+    // For visual stability, only hard reset 0:00 if it's a new track or explicit reset
+    if (index !== currentTrackIdx) {
+        domCurrentTime.textContent = "0:00";
+        domDuration.textContent = "0:00";
+    } else if (!autoPlay) {
+        // If just loading metadata (re-init), keeping 0:00 is fine
+        domCurrentTime.textContent = "0:00";
+    }
+
+    pendingSeekPercent = null;
 
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 2. State Verification
-    stopScramble();
-    shouldAnimateReveal = animate;
+    // 2. Animation State (Scramble Fix)
+    stopScramble(); // Clears all timers and intervals
+    shouldAnimateReveal = autoPlay;
 
-    if (animate) {
-        startLoadingScramble(domTrackTitle);
+    if (autoPlay) {
+        // startLoadingScramble(domTrackTitle); // REMOVED: Prevent premature "LOADING" flash
+        domTrackTitle.innerText = track.title; // Set target immediately
+        domTrackTitle.style.color = "";
     } else {
         domTrackTitle.innerText = track.title;
         domTrackTitle.style.color = "";
     }
 
-    // 3. Mount Source (Implicitly resets caching for new src)
+    // 3. Hardware Injection
     audioPlayer.src = track.src;
-    // Note: 'autoPlay' logic usually follows, but user snippet implies external control or 'animate' implies intent
-    // We will assume 'animate' true means we intend to play or show loading.
+    audioPlayer.load();
 
-    // If this function is called by 'nextTrack', it expects simple loading.
-    // We need to ensure we don't break the 'async' nature if needed, 
-    // but the user snippet removed the async/await playback logic?
-    // User snippet: "audioPlayer.src = track.src; audioPlayer.load();"
-    // It seems to be synchronous setup. The play() call likely happens elsewhere or via separate 'playTrack' wrapper?
-    // Let's check 'playTrack'. 'playTrack' calls 'loadTrack(i, true)' then 'audioPlayer.play()'.
-    // So 'loadTrack' just needs to setup.
-
-    // 4. Playlist Highlight
+    // 4. Update Playlist UI
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -502,40 +502,39 @@ async function loadTrack(index, animate = true) {
     if (appState.musicUnlocked && currentIndex === 0) {
         refreshDynamicPage();
     }
+
+    // 5. Trigger Playback (If requested)
+    if (autoPlay) {
+        try {
+            await audioPlayer.play();
+        } catch (e) {
+            if (e.name !== 'AbortError') console.log("Playback start failed", e);
+        }
+    }
 }
 
 function playTrack(index) {
+    // Simply delegate to loadTrack which handles the Phase I logic
     loadTrack(index, true);
-    isPlaying = true;
-    updatePlayBtn();
-    audioPlayer.play().catch(e => {
-        if (e.name !== 'AbortError') { isPlaying = false; updatePlayBtn(); }
-    });
 }
 
+// --- PHASE III: RESUMING (The Cold Start Rescue) ---
 function togglePlay() {
-    if (!audioPlayer.src) { loadTrack(currentTrackIdx, false); }
+    if (!audioPlayer.src) { loadTrack(currentTrackIdx, true); return; }
 
     if (isPlaying) {
-        isSwitchingTrack = false;
-        audioPlayer.pause(); // Listener handles UI update
+        audioPlayer.pause();
     } else {
-        isPlaying = true;
-        updatePlayBtn();
-
-        // Execute playback promise
         const playPromise = audioPlayer.play();
         if (playPromise !== undefined) {
             playPromise.then(() => {
-                // Apply Cold Start Seek after engine is warm
-                if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) {
+                // RESUME FROM COLD SCRUB (iOS Fix)
+                if (pendingSeekPercent !== null && audioPlayer.duration) {
                     audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration;
                     pendingSeekPercent = null;
                 }
             }).catch(error => {
-                if (error.name !== 'AbortError') {
-                    setAudioState(AudioState.PAUSED);
-                }
+                if (error.name !== 'AbortError') console.error("Toggle play failed", error);
             });
         }
     }
@@ -588,65 +587,38 @@ const startDragTouch = (e) => {
     isTouch = true;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
-    isDragging = false;
     isScrolling = false;
-    holdTimer = setTimeout(() => {
-        if (!isScrolling) {
-            isDragging = true;
-            domProgressBar.classList.add('dragging');
-            updateScrubVisual(getScrubPercent(e));
-        }
-    }, 200);
+
+    // Immediate engagement for better responsiveness
+    isDragging = true;
+    domProgressBar.classList.add('dragging');
+    updateScrubVisual(getScrubPercent(e));
 };
+
 const doDragTouch = (e) => {
-    if (isDragging) { if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); return; }
-    if (isScrolling) return;
-    const dx = Math.abs(e.touches[0].clientX - touchStartX); const dy = Math.abs(e.touches[0].clientY - touchStartY);
-    if (dx > 5 || dy > 5) {
-        if (holdTimer) clearTimeout(holdTimer);
-        if (dx > dy) {
-            isDragging = true;
-            domProgressBar.classList.add('dragging');
-            if (e.cancelable) e.preventDefault();
-            updateScrubVisual(getScrubPercent(e));
-        } else isScrolling = true;
+    // If we determined it's a drag, consume the event
+    if (isDragging) {
+        if (e.cancelable) e.preventDefault();
+        updateScrubVisual(getScrubPercent(e));
+        return;
     }
+    // Vertical scroll detection override could go here if we wanted to support scroll + scrub
+    // but the progress bar is horizontal, so horizontal moves should be seeks.
 };
-const endDragTouch = (e) => { if (holdTimer) clearTimeout(holdTimer); if (isDragging) { commitSeek(parseFloat(domProgressBar.style.getPropertyValue('--progress'))); isDragging = false; domProgressBar.classList.remove('dragging'); } setTimeout(() => { isTouch = false; }, 500); };
-
-function commitSeek(percent) {
-    // Clear legacy/new timers
-    if (typeof bufferCheckTimer !== 'undefined' && bufferCheckTimer) clearTimeout(bufferCheckTimer);
-    if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
-        clearTimeout(bufferDebounceTimer);
-        bufferDebounceTimer = null;
+const endDragTouch = (e) => {
+    if (typeof holdTimer !== 'undefined' && holdTimer) clearTimeout(holdTimer);
+    if (isDragging) {
+        // Ensure we commit the visual value
+        const currentVis = domProgressBar.style.getPropertyValue('--progress');
+        // Parse float safely
+        let p = parseFloat(currentVis);
+        if (isNaN(p)) p = 0;
+        commitSeek(p);
+        isDragging = false;
+        domProgressBar.classList.remove('dragging');
     }
-
-    if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
-        const newTime = (percent / 100) * audioPlayer.duration;
-        domProgressBar.style.setProperty('--progress', `${percent}%`);
-        domCurrentTime.textContent = formatTime(newTime);
-
-        // Ensure playback state is robust
-        if (isPlaying) {
-            // If we were playing, set time. This will naturally cause 'waiting' if data isn't there
-            audioPlayer.currentTime = newTime;
-
-            // If we suspect a buffer lag, we can pre-set state but avoid scramble unless waiting
-            // But actually, to fix "delay from moment ... audio stops", we want immediate feedback?
-            // No, user said "do not literally pause".
-            // The delay is hardware buffer.
-        } else {
-            audioPlayer.currentTime = newTime;
-            pendingSeekPercent = percent;
-            stopScramble();
-            domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
-            domTrackTitle.style.color = "";
-        }
-    } else {
-        pendingSeekPercent = percent;
-    }
-}
+    setTimeout(() => { isTouch = false; }, 500);
+};
 
 // ==========================================
 // 6. TERMINAL LOGIC
@@ -850,160 +822,76 @@ document.addEventListener('mousemove', doDragMouse); document.addEventListener('
 progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
 progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); progressArea.addEventListener('touchend', endDragTouch);
 
-// --- AUDIO ENGINE: SOURCE OF TRUTH ---
-// Robust Audio State Machine
-
-const AudioState = {
-    IDLE: 'idle',
-    LOADING: 'loading',
-    PLAYING: 'playing',
-    PAUSED: 'paused',
-    BUFFERING: 'buffering'
-};
-let playbackState = AudioState.IDLE;
-let bufferDebounceTimer = null;
-
-// Helper to set state and update UI accordingly
-function setAudioState(newState) {
-    if (playbackState === newState) return;
-
-    // logic for transitions
-    const previousState = playbackState;
-    playbackState = newState;
-
-    // Clear any pending buffer trigger if we move out of potential buffering scenarios
-    if (bufferDebounceTimer && newState !== AudioState.BUFFERING) {
-        clearTimeout(bufferDebounceTimer);
-        bufferDebounceTimer = null;
-    }
-
-    // UI Updates based on state
-    if (newState === AudioState.BUFFERING || newState === AudioState.LOADING) {
-        // If coming from IDLE/PAUSED/PLAYING, we might want a grace period 
-        // to avoid flashing "Loading" during a fast seek or track switch.
-        // BUT for 'loadstart' (LOADING) we might want immediate if it's a new track.
-
-        // However, user specifically asked to only show if it "actually hangs".
-        // So we just ensure the scramble logic is called. 
-        // The debounce is handled at the event listener level for 'waiting'/'stalled'.
-        // For 'LOADING' (new track), we allow immediate scramble IF autoplay was requested.
-
-        startLoadingScramble(domTrackTitle);
-
-    } else if (newState === AudioState.PLAYING) {
-        // ONLY Resolve (Animate) if we were previously SCRAMBLING (Loading/Buffering).
-        // If we resume from PAUSED, do NOT animate, just ensure text is solid.
-        if (previousState === AudioState.LOADING || previousState === AudioState.BUFFERING) {
-            resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
-        } else {
-            // Coming from PAUSED or similar: Just ensure text is static and correct
-            stopScramble(); // Clears intervals/timers
-            domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
-            domTrackTitle.style.color = "";
-        }
-        isPlaying = true;
-        updatePlayBtn();
-
-    } else if (newState === AudioState.PAUSED) {
-        // Just freeze/stop scramble.
-        stopScramble();
-        // Ensure title is readable
-        domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
-        domTrackTitle.style.color = "";
-
-        isPlaying = false;
-        updatePlayBtn();
-    }
-}
-
-// --- HARDWARE LISTENERS ---
-
-audioPlayer.addEventListener('loadstart', () => {
-    // Only go to LOADING state if we intend to play (isPlaying flag is set by loadTrack/togglePlay)
-    // If we are just loading a track for metadata (initial load), stay IDLE/PAUSED.
-    if (isPlaying) {
-        setAudioState(AudioState.LOADING);
-    }
-});
-
-// --- UPDATED LISTENERS (Immediate Feedback) ---
+// --- PHASE II: PLAYBACK STATE (The "Heartbeat") ---
+// Note: AudioState enum and setAudioState removed as we rely on Hardware Events directly.
+// loadstart is handled by loadTrack logic.
 
 audioPlayer.addEventListener('waiting', () => {
-    // Re-introduced short grace period (150ms) to ignore instant-loads
-    if (isPlaying && !audioPlayer.paused && !bufferDebounceTimer) {
-        bufferDebounceTimer = setTimeout(() => {
-            shouldAnimateReveal = true;
-            startLoadingScramble(domTrackTitle);
-            bufferDebounceTimer = null;
-        }, 150);
+    // B. The "Waiting" Event (Buffering)
+    // Optimization: prevent "Double Reveal" by checking if already scrambling
+    if (isPlaying && !audioPlayer.paused && !loadingScrambleInterval) {
+        shouldAnimateReveal = true;
+        startLoadingScramble(domTrackTitle);
     }
 });
 
 audioPlayer.addEventListener('stalled', () => {
-    if (isPlaying && !audioPlayer.paused && !bufferDebounceTimer) {
-        bufferDebounceTimer = setTimeout(() => {
-            startLoadingScramble(domTrackTitle);
-            bufferDebounceTimer = null;
-        }, 150);
+    if (isPlaying && !audioPlayer.paused && !loadingScrambleInterval) {
+        shouldAnimateReveal = true;
+        startLoadingScramble(domTrackTitle);
     }
 });
 
 audioPlayer.addEventListener('playing', () => {
-    // Clear any pending scramble since we are playing now
-    if (bufferDebounceTimer) {
-        clearTimeout(bufferDebounceTimer);
-        bufferDebounceTimer = null;
-    }
-
+    // A. The "Playing" Event (Success)
     isPlaying = true;
     updatePlayBtn();
+
+    // Logic: This is the ONLY event allowed to resolve the "Loading..." text
     if (shouldAnimateReveal) {
         resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
         shouldAnimateReveal = false;
-    }
-});
-
-audioPlayer.addEventListener('pause', () => {
-    if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
-    stopScramble();
-    isPlaying = false;
-    updatePlayBtn();
-});
-
-audioPlayer.addEventListener('seeked', () => {
-    if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
-
-    if (audioPlayer.paused) {
-        stopScramble();
-        // Since we stopped, ensure title is readable
-        domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
-        domTrackTitle.style.color = "";
     } else {
-        // If playing, check if we need to buffer
-        if (audioPlayer.readyState < 3) {
-            // Don't force scramble here, let 'waiting' catch it with the 150ms delay
+        // Fail-safe: ensure text validates if checking against active interval
+        if (loadingScrambleInterval) {
+            resolveLoadingScramble(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
 });
 
-// commitSeek update
+audioPlayer.addEventListener('pause', () => {
+    // C. The "Pause" Event (Stop)
+    isPlaying = false;
+    updatePlayBtn();
+    stopScramble(); // Enforce static text
+});
+
+audioPlayer.addEventListener('seeked', () => {
+    // Handled mostly by waiting/playing, but ensure pause state is clean
+    if (audioPlayer.paused) {
+        stopScramble();
+    }
+});
+
+// --- PHASE III: SCRUBBING (The "Cold Start" Edge Case) ---
 function commitSeek(percent) {
-    // Clear legacy timers if any exist
     if (typeof bufferCheckTimer !== 'undefined' && bufferCheckTimer) clearTimeout(bufferCheckTimer);
     if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
 
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
-        const newTime = (percent / 100) * audioPlayer.duration;
-
-        // Immediate visual update
+        // Phase III / Scenario B: Visuals Update Immediately
         domProgressBar.style.setProperty('--progress', `${percent}%`);
+        const newTime = (percent / 100) * audioPlayer.duration;
         domCurrentTime.textContent = formatTime(newTime);
 
         if (!audioPlayer.paused) {
+            // Scenario A: Scrubbing while Playing
             audioPlayer.currentTime = newTime;
-            // Native 'waiting' event will handle the scramble if it stalls > 150ms
         } else {
-            audioPlayer.currentTime = newTime;
+            // Scenario B: Scrubbing while Paused (The iOS Bug Fix)
+            // DO NOT update currentTime yet (prevents deadlock)
+            // Instead, we just visually flag it and stop animations.
+            // Resume will pick this up via pendingSeekPercent.
             pendingSeekPercent = percent;
             stopScramble();
             domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
@@ -1014,16 +902,8 @@ function commitSeek(percent) {
 
 // Robust Time Update
 audioPlayer.addEventListener('timeupdate', () => {
-    // 1. Sync Playback State
-    if (!audioPlayer.paused && playbackState !== AudioState.PLAYING && audioPlayer.readyState >= 3) {
-        // If we somehow got out of sync or recovered from buffering without a 'playing' event
-        setAudioState(AudioState.PLAYING);
-    }
-
-    // 2. Clear seek flag
+    // Legacy check removed (setAudioState)
     if (!audioPlayer.paused) pendingSeekPercent = null;
-
-    // 3. Update Progress Bar
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) {
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100;
         domProgressBar.style.setProperty('--progress', `${p}%`);
