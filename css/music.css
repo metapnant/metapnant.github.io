@@ -1,4 +1,4 @@
-/* --- EXISTING STYLES --- */
+/* --- EXISTING STYLES... KEEP TOP PARTS... --- */
 #music-section { display: none; width: 100%; max-width: 900px; margin: 40px auto 20px auto; animation: fadeIn 2s ease forwards; position: relative; z-index: 2100; }
 .music-container { background: linear-gradient(180deg, rgba(13, 0, 34, 0.9) 0%, rgba(5, 0, 10, 0.95) 100%); border: 1px solid rgba(152, 0, 235, 0.3); border-radius: 8px; padding: clamp(15px, 5vw, 30px); display: flex; flex-wrap: wrap; gap: clamp(20px, 4vw, 40px); box-shadow: 0 0 40px rgba(0, 0, 0, 0.9); align-items: flex-start; }
 .art-column { flex: 1 1 250px; min-width: 0; width: 100%; display: flex; flex-direction: column; gap: 15px; align-items: center; }
@@ -9,47 +9,11 @@
 .player-controls { flex: 1.5 1 320px; min-width: 0; width: 100%; display: flex; flex-direction: column; justify-content: center; }
 .track-details h2 { font-family: 'Space Mono', monospace; color: var(--name-color); margin: 0 0 5px 0; font-size: clamp(1.1rem, 5vw, 1.4rem); text-shadow: 0 0 10px rgba(152, 0, 235, 0.4); height: auto; line-height: 1.3; white-space: normal; word-break: break-word; overflow: visible; display: block; }
 .track-details h3 { font-family: 'Zilla Slab', serif; color: var(--secondary-text-color); margin: 0 0 20px 0; font-weight: 400; font-style: italic; white-space: normal; font-size: clamp(0.9rem, 4vw, 1.1rem); }
-
-/* --- PROGRESS AREA (With Buffer Bar) --- */
-.progress-area { 
-    width: 100%; margin-bottom: 25px; cursor: pointer; padding: 12px 0; 
-    touch-action: pan-y; position: relative; /* Essential for absolute bars */
-}
-
-/* 1. The Background Line (Bottom Layer) */
-.progress-bar { 
-    width: 100%; height: 6px; 
-    background: rgba(255, 255, 255, 0.1); 
-    border-radius: 3px; 
-    position: relative; 
-    overflow: hidden; 
-    z-index: 2; /* Sit on top of buffer */
-}
-
-/* 2. The Playback Progress (Foreground) */
-.progress-bar::after { 
-    content: ''; position: absolute; top: 0; left: 0; bottom: 0; 
-    width: var(--progress, 0%); 
-    background: var(--name-color); 
-    border-radius: 3px; 
-    box-shadow: 0 0 10px var(--name-color); 
-}
+.progress-area { width: 100%; margin-bottom: 25px; cursor: pointer; padding: 12px 0; touch-action: pan-y; position: relative; }
+.progress-bar { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; position: relative; overflow: hidden; z-index: 2; }
+.progress-bar::after { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: var(--progress, 0%); background: var(--name-color); border-radius: 3px; box-shadow: 0 0 10px var(--name-color); }
 .progress-bar.dragging::after { background: #ffd700; box-shadow: 0 0 15px #ffd700; }
-
-/* 3. The Buffer Loading Bar (Middle Layer) */
-.buffer-bar {
-    position: absolute;
-    top: 12px; /* Aligns with progress-area padding */
-    left: 0;
-    height: 6px;
-    background: rgba(152, 0, 235, 0.4); /* Visible Purple */
-    border-radius: 3px;
-    width: 0%;
-    pointer-events: none;
-    z-index: 1; /* Behind progress, above background */
-    transition: width 0.2s ease;
-}
-
+.buffer-bar { position: absolute; top: 12px; left: 0; height: 6px; background: rgba(152, 0, 235, 0.3); border-radius: 3px; width: 0%; pointer-events: none; z-index: 1; transition: width 0.2s ease; }
 .time-marker { display: flex; justify-content: space-between; font-family: 'Space Mono', monospace; font-size: 0.75em; color: #888; margin-top: -5px; margin-bottom: 15px; pointer-events: none; }
 .buttons { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 20px; width: 100%; flex-wrap: wrap; }
 .ctrl-btn { background: transparent; border: 1px solid var(--name-color); color: var(--name-color); width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease, background-color 0.2s ease, opacity 0.3s ease; padding: 0; box-shadow: 0 0 5px rgba(152, 0, 235, 0.1); -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
@@ -59,7 +23,20 @@
 .loop-btn { width: 35px; height: 35px; border: none; box-shadow: none; margin-left: auto; opacity: 0.3; flex-shrink: 0; }
 .loop-btn.active, .loop-btn.active-one { opacity: 1; color: var(--name-color); text-shadow: 0 0 10px var(--name-color); }
 
-.playlist-container { position: relative; width: 100%; max-height: 250px; overflow-y: auto; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 10px; padding-top: 10px; scrollbar-width: thin; scrollbar-color: var(--name-color) #000; overscroll-behavior: auto; touch-action: pan-y; }
+/* --- PLAYLIST --- */
+.playlist-container { 
+    position: relative; 
+    width: 100%; 
+    max-height: 250px; /* Desktop default */
+    overflow-y: auto; 
+    border-top: 1px solid rgba(255, 255, 255, 0.1); 
+    margin-top: 10px; 
+    padding-top: 10px; 
+    scrollbar-width: thin; 
+    scrollbar-color: var(--name-color) #000; 
+    overscroll-behavior: auto; 
+    touch-action: pan-y; 
+}
 .playlist-container::-webkit-scrollbar { width: 6px; }
 .playlist-container::-webkit-scrollbar-thumb { background: var(--name-color); border-radius: 3px; }
 #playlist-list { list-style: none; padding: 0; margin: 0; }
@@ -85,4 +62,6 @@
     .album-art-wrapper { order: 2 !important; }
     .buttons { justify-content: flex-start !important; margin-top: 30px !important; margin-bottom: 20px !important; }
     .loop-btn { margin-left: auto !important; }
+    /* FIX: Reduce height on mobile to show ~5 items */
+    .playlist-container { max-height: 220px; }
 }

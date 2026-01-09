@@ -41,7 +41,7 @@ function loadTrack(index, autoPlay = true) {
     resumeOnSeek = false;
     
     domProgressBar.style.setProperty('--progress', '0%');
-    if (domBufferBar) domBufferBar.style.width = '0%'; // Reset buffer visuals
+    if (domBufferBar) domBufferBar.style.width = '0%';
 
     if (index !== currentTrackIdx) {
         domCurrentTime.textContent = "0:00"; 
@@ -76,6 +76,7 @@ function loadTrack(index, autoPlay = true) {
         audioPlayer.play().catch(e => {
             if (currentAudioOpId !== thisOpId) return;
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
+            
             isSwitchingTrack = false; 
             ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
@@ -87,10 +88,15 @@ function loadTrack(index, autoPlay = true) {
     }
 }
 
-function playTrack(index) { loadTrack(index, true); }
+function playTrack(index) { 
+    loadTrack(index, true); 
+}
 
 function togglePlay() {
-    if (!audioPlayer.src) { loadTrack(currentTrackIdx, true); return; }
+    if (!audioPlayer.src) {
+        loadTrack(currentTrackIdx, true);
+        return;
+    }
 
     if (isPlaying) { 
         audioPlayer.pause(); 
@@ -139,25 +145,45 @@ function getScrubPercent(e) {
 }
 
 // --- DRAG HANDLERS ---
+
 const startDrag = (e) => {
+    // 1. Pause immediately (Hardware Stop)
     if (isPlaying) {
         wasPlayingBeforeDrag = true;
         audioPlayer.pause(); 
     } else {
         wasPlayingBeforeDrag = false;
     }
+    
     isDragging = true;
     isSeeking = true; 
+    
     domProgressBar.classList.add('dragging');
     updateScrubVisual(getScrubPercent(e));
 };
 
 const startDragMouse = (e) => { if (isTouch || e.button !== 0) return; startDrag(e); };
-const startDragTouch = (e) => { isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isScrolling = false; startDrag(e); };
+const startDragTouch = (e) => { 
+    isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isScrolling = false; 
+    startDrag(e);
+};
+
 const doDragMouse = (e) => { if (!isDragging) return; e.preventDefault(); updateScrubVisual(getScrubPercent(e)); };
-const doDragTouch = (e) => { if (isDragging) { if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); return; } };
+const doDragTouch = (e) => {
+    if (isDragging) { if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); return; }
+};
+
 const endDragMouse = (e) => { if (isDragging) { commitSeek(getScrubPercent(e)); isDragging = false; domProgressBar.classList.remove('dragging'); } };
-const endDragTouch = (e) => { if (isDragging) { let percent = parseFloat(domProgressBar.style.getPropertyValue('--progress')); if (isNaN(percent)) percent = 0; commitSeek(percent); isDragging = false; domProgressBar.classList.remove('dragging'); } setTimeout(() => { isTouch = false; }, 500); };
+const endDragTouch = (e) => { 
+    if (isDragging) { 
+        let percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
+        if (isNaN(percent)) percent = 0;
+        commitSeek(percent); 
+        isDragging = false; 
+        domProgressBar.classList.remove('dragging'); 
+    } 
+    setTimeout(() => { isTouch = false; }, 500); 
+};
 
 if (progressArea) {
     progressArea.addEventListener('mousedown', startDragMouse); 
@@ -168,9 +194,8 @@ if (progressArea) {
     progressArea.addEventListener('touchend', endDragTouch);
 }
 
-// === SMART BUFFER SEEKING ===
 function commitSeek(percent) {
-    currentAudioOpId++;
+    currentAudioOpId++; // Invalidate previous operations
     
     if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
         clearTimeout(bufferDebounceTimer); 
@@ -181,47 +206,22 @@ function commitSeek(percent) {
         const newTime = (percent / 100) * audioPlayer.duration;
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
-        
-        // Always update hardware time
+
+        // Hardware Update
         audioPlayer.currentTime = newTime;
 
         if (wasPlayingBeforeDrag || !audioPlayer.paused) {
-            // Check if we are inside a buffered range
-            let isBuffered = false;
-            if (audioPlayer.buffered && audioPlayer.buffered.length > 0) {
-                for (let i = 0; i < audioPlayer.buffered.length; i++) {
-                    if (newTime >= audioPlayer.buffered.start(i) && newTime <= audioPlayer.buffered.end(i)) {
-                        isBuffered = true;
-                        break;
-                    }
-                }
-            }
-
-            if (isBuffered) {
-                // DATA READY -> Instant Resume
-                isSeeking = true;
-                resumeOnSeek = true;
-                ScrambleEngine.startLoading(domTrackTitle); // Quick visual feedback
-                audioPlayer.play().catch(console.log);
-            } else {
-                // DATA MISSING -> Pause & Wait (YouTube Style)
-                // We keep 'isPlaying' true logically, but pause hardware.
-                // We show loading scramble, and wait for 'canplay' to resume.
-                isSeeking = true;
-                resumeOnSeek = true; // Flag for seeked/canplay handler
-                ScrambleEngine.startLoading(domTrackTitle);
-                
-                // Add a one-time listener to auto-resume when data arrives
-                const autoResume = () => {
-                    if (resumeOnSeek && (wasPlayingBeforeDrag || isPlaying)) {
-                        audioPlayer.play().catch(console.log);
-                        resumeOnSeek = false;
-                    }
-                };
-                audioPlayer.addEventListener('canplay', autoResume, { once: true });
-            }
+            // PLAYING:
+            isSeeking = true;
+            resumeOnSeek = true; // Tell init.js to play when 'seeked' fires
+            
+            // Immediate visual feedback
+            ScrambleEngine.startLoading(domTrackTitle);
+            
+            // Note: We DO NOT call play() here. We wait for the 'seeked' event.
+            // This prevents the "Buffer race condition".
         } else {
-            // PAUSED -> Stay Paused
+            // PAUSED:
             pendingSeekPercent = percent;
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
             isSeeking = false;
@@ -232,7 +232,6 @@ function commitSeek(percent) {
     }
 }
 
-// Visualizer for Buffer
 function updateBufferVisuals() {
     if (audioPlayer.duration && domBufferBar) {
         if (audioPlayer.buffered.length > 0) {
@@ -249,7 +248,6 @@ function updateBufferVisuals() {
                 }
             }
             if (!found) {
-                // If not in a range (e.g. seeking), show the furthest buffered point
                 const lastEnd = audioPlayer.buffered.end(audioPlayer.buffered.length - 1);
                 domBufferBar.style.width = `${(lastEnd / audioPlayer.duration) * 100}%`;
             }
