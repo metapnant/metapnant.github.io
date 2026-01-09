@@ -169,7 +169,6 @@ function killScrollAnimation() {
     }
 }
 
-// Navigation Reset Logic
 function performNavReset() {
     killScrollAnimation();
     window.scrollTo({ top: 0, behavior: 'auto' });
@@ -359,9 +358,16 @@ function resolveLoadingScramble(element, finalText) {
     }
 }
 
-// FIX: Instant Touch Feedback with enforced duration (Advanced Version)
-function addTactileListener(selector) {
-    const els = document.querySelectorAll(selector);
+// FIX: Instant Touch Feedback with enforced duration
+// Now accepts strings OR direct Element references
+function addTactileListener(target) {
+    let els = [];
+    if (typeof target === 'string') {
+        els = document.querySelectorAll(target);
+    } else if (target instanceof Element) {
+        els = [target];
+    }
+
     els.forEach(el => {
         el.addEventListener('pointerdown', function(e) {
             this.classList.add('active-state');

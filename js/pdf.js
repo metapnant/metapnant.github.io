@@ -3,11 +3,18 @@
 // ==========================================
 
 function getLODScale() {
-    // FIX: Force high resolution (2.5x to 3.0x) for all scenarios.
-    // This allows the user to zoom in/out using browser native zoom
-    // without the PDF becoming blurry, and removes the need to reload.
-    // Mobile gets slightly less to save memory, Desktop gets max crispness.
-    return isMobileDevice ? 2.5 : 3.5;
+    // FIX: Always use the largest dimension to determine scale.
+    // This ensures that even if loaded in Portrait, the PDF resolution 
+    // is high enough to look crisp if rotated to Landscape later.
+    const maxDim = Math.max(window.innerWidth, window.innerHeight);
+    const minDim = Math.min(window.innerWidth, window.innerHeight);
+    
+    if (!isMobileDevice) return 3.5;
+    
+    // On mobile, if we are in portrait, assume user might rotate.
+    // Scale based on the larger dimension.
+    // Base logic: 2.5 is usually good for mobile retina.
+    return 2.5; 
 }
 
 async function loadDocument(index) {

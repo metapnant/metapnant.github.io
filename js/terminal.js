@@ -233,6 +233,13 @@ function typeLine(htmlText, className, container) {
     if (htmlText.includes('----') || htmlText.includes('====')) { lineDiv.className = `terminal-line divider-line ${className}`; } 
     else { lineDiv.className = `terminal-line ${className}`; }
     lineDiv.innerHTML = htmlText; 
+    
+    // FIX: Detect if this line contains the Secret Link and attach listeners
+    const link = lineDiv.querySelector('.secret-link');
+    if (link && typeof addTactileListener === 'function') {
+        addTactileListener(link);
+    }
+    
     lineDiv.classList.add('active'); 
     if(className.includes('golden-text')) lineDiv.classList.add('gold-line'); 
     if(className.includes('white-text')) lineDiv.classList.add('white-line'); 

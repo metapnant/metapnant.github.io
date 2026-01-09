@@ -18,15 +18,17 @@ window.addEventListener('resize', () => {
         if (Math.abs(window.innerWidth - lastWidth) < 100) return;
         lastWidth = window.innerWidth;
     }
+    
+    // FIX: NO RELOAD on resize. CSS + High DPI canvas handles it.
     if (!isLoading && pdfDoc) {
         if (resizeTimer) clearTimeout(resizeTimer);
         const visiblePage = getVisiblePageNumber();
         pendingScrollPage = visiblePage; 
-        resizeTimer = setTimeout(() => { loadDocument(currentIndex); }, 300);
     }
 });
 
 // UI Buttons
+// performNavReset is defined in core.js
 document.getElementById('next-doc').addEventListener('click', () => { 
     if(!isLoading && currentIndex < library.length - 1) {
         performNavReset();
@@ -50,14 +52,19 @@ if(btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextT
 if(btnPrev) btnPrev.addEventListener('click', (e) => { e.preventDefault(); prevTrack(); });
 if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggleLoop(); });
 
+// Note: Drag events are bound in audio.js
+
 // --- AUDIO EVENT HANDLING ---
 
 const startBufferingCheck = () => {
     if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
+    
     const thisOpId = currentAudioOpId;
+
     if (isPlaying && !audioPlayer.paused) {
         bufferDebounceTimer = setTimeout(() => {
             if (currentAudioOpId !== thisOpId) return;
+
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
@@ -72,11 +79,12 @@ const stopBufferingCheck = () => {
     }
 };
 
-// 0. LOADSTART / PROGRESS
-audioPlayer.addEventListener('loadstart', () => { if (isPlaying) ScrambleEngine.startLoading(domTrackTitle); });
-audioPlayer.addEventListener('progress', updateBufferVisuals);
+// 0. LOADSTART
+audioPlayer.addEventListener('loadstart', () => {
+    if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
+});
 
-// 1. SEEKING / WAITING
+// 1. SEEKING / WAITING / STALLED
 audioPlayer.addEventListener('seeking', startBufferingCheck);
 audioPlayer.addEventListener('waiting', startBufferingCheck);
 audioPlayer.addEventListener('stalled', startBufferingCheck);
@@ -86,7 +94,7 @@ audioPlayer.addEventListener('playing', () => {
     stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
-    
+
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
@@ -94,6 +102,7 @@ audioPlayer.addEventListener('playing', () => {
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
+    
     isSwitchingTrack = false;
     isSeeking = false;
 });
@@ -131,10 +140,12 @@ audioPlayer.addEventListener('timeupdate', () => {
     if (!audioPlayer.paused) {
         if (isSeeking) isSeeking = false;
         if (isSwitchingTrack) isSwitchingTrack = false;
+        
         if (ScrambleEngine.isLooping) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
+
     updateBufferVisuals();
 
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
@@ -169,17 +180,13 @@ if (toolsToggleEl && toolsContainer) {
 
 // Show Voice Button
 if (btnShowVoice) { 
-    // FIX: Manual touch listener for instant response
-    btnShowVoice.addEventListener('touchstart', () => {
-        btnShowVoice.classList.add('active-state');
-    }, {passive: true});
-
-    btnShowVoice.addEventListener('touchend', () => {
-        setTimeout(() => btnShowVoice.classList.remove('active-state'), 150);
-    }, {passive: true});
-
     btnShowVoice.addEventListener('click', (e) => { 
         e.preventDefault(); 
+        
+        // Manual visual trigger
+        btnShowVoice.classList.add('active-state');
+        setTimeout(() => btnShowVoice.classList.remove('active-state'), 150);
+
         if (isLoading) return; 
         
         setTimeout(() => {
@@ -199,7 +206,7 @@ if (btnShowVoice) {
 infinityBtn.addEventListener('click', (e) => { 
     e.preventDefault(); SimpleSynth.unlock(); 
     
-    // FIX: Unlocked State Flash
+    // FIX: Manual White Flash (Instant)
     if (appState.terminalFound) { 
         infinityBtn.classList.add('active-state');
         setTimeout(() => infinityBtn.classList.remove('active-state'), 150);
@@ -209,7 +216,6 @@ infinityBtn.addEventListener('click', (e) => {
     
     if (currentIndex !== 2) return; 
     
-    // FIX: Locked State Flash
     secretClicks++; 
     infinityBtn.style.color = "#ff3333"; 
     infinityBtn.style.textShadow = "0 0 15px #ff0000";
@@ -222,12 +228,13 @@ infinityBtn.addEventListener('click', (e) => {
     if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; updateInfinityState(); launchTerminal(); } 
 });
 
-// Explicit Touch Listener for Infinity to guarantee instant response
+// FIX: Instant Touch feedback for Infinity Button to match 'click' logic
 infinityBtn.addEventListener('touchstart', () => {
     if (appState.terminalFound) {
         infinityBtn.classList.add('active-state');
     }
 }, {passive: true});
+
 infinityBtn.addEventListener('touchend', () => {
     setTimeout(() => infinityBtn.classList.remove('active-state'), 150);
 }, {passive: true});
@@ -242,25 +249,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Tactile Feedback Engine
-function addTactileListener(selector) {
-    const els = document.querySelectorAll(selector);
-    els.forEach(el => {
-        el.addEventListener('pointerdown', function(e) {
-            this.classList.add('active-state');
-            if(this.releasePointerCapture) this.releasePointerCapture(e.pointerId);
-        });
-        
-        const removeActive = function() {
-            const self = this;
-            setTimeout(() => { self.classList.remove('active-state'); }, 150);
-        };
-
-        el.addEventListener('pointerup', removeActive);
-        el.addEventListener('pointerleave', removeActive);
-        el.addEventListener('pointercancel', removeActive);
-    });
-}
-
+// Note: Advanced addTactileListener is defined in core.js
 const interfaceSelectors = ['.close-terminal', '.cycle-btn', '.tools-toggle', '.tool-btn', '.ctrl-btn', '.voice-btn', '.playlist-item', '.secret-link', '#song-link', '.nav-arrow'];
 interfaceSelectors.forEach(s => addTactileListener(s));
 
