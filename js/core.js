@@ -73,8 +73,9 @@ let holdTimer = null;
 let isTouch = false;
 let isScrolling = false;
 let pendingSeekPercent = null;
+// Flags for "Ghost" prevention
 let isSwitchingTrack = false; 
-let isSeeking = false; // NEW: Tracks if we are waiting for the browser to seek
+let isSeeking = false; 
 
 // -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
@@ -270,10 +271,18 @@ const ScrambleEngine = {
     },
 
     snap: function(element, finalText) {
-        this.clear();
-        this.isLooping = false;
+        this.clear(); // Kill all timers
         element.innerText = finalText;
         element.style.color = "";
+    },
+
+    // NEW: Nuclear reset used when rapid switching tracks
+    reset: function() {
+        if (this.interval) clearInterval(this.interval);
+        this.interval = null;
+        this.isResolving = false;
+        this.isLooping = false;
+        this.targetElement = null;
     },
 
     clear: function() {

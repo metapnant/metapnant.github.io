@@ -67,7 +67,16 @@ const stopBufferingCheck = () => {
     }
 };
 
-// 1. WAITING / STALLED (Network)
+// 0. LOADSTART (Instant feedback for rapid skipping)
+// This ensures that even before 'waiting' fires, we see the loading animation
+audioPlayer.addEventListener('loadstart', () => {
+    if (isPlaying) {
+        ScrambleEngine.startLoading(domTrackTitle);
+    }
+});
+
+// 1. SEEKING / WAITING / STALLED
+audioPlayer.addEventListener('seeking', startBufferingCheck);
 audioPlayer.addEventListener('waiting', startBufferingCheck);
 audioPlayer.addEventListener('stalled', startBufferingCheck);
 
@@ -77,21 +86,22 @@ audioPlayer.addEventListener('playing', () => {
     isPlaying = true;
     updatePlayBtn();
 
-    // Trigger Reveal if we were loading
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
-        if (ScrambleEngine.isLooping || isSwitchingTrack) {
+        // If we were "Loading", or Switching Tracks, OR Seeking, resolve the text.
+        // This catches the case where a seek finishes but 'seeked' didn't trigger a resolve.
+        if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
-        } else {
-            ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
+    
     isSwitchingTrack = false;
+    isSeeking = false;
 });
 
 // 3. PAUSE
 audioPlayer.addEventListener('pause', () => {
     stopBufferingCheck();
-    if (isSwitchingTrack) return; // Ignore pauses caused by loading new track
+    if (isSwitchingTrack) return; 
 
     isPlaying = false;
     updatePlayBtn();
@@ -101,29 +111,28 @@ audioPlayer.addEventListener('pause', () => {
     }
 });
 
-// 4. SEEKED (Seek Completed)
+// 4. SEEKED
 audioPlayer.addEventListener('seeked', () => {
-    // Seek finished. Turn off seeking flag.
     isSeeking = false;
     stopBufferingCheck();
     
     if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
-    } else {
-        // If playing, resolve the "LOADING" text we started in commitSeek
-        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 5. TIMEUPDATE (Heartbeat)
+// 5. TIMEUPDATE (The "State Fixer")
 audioPlayer.addEventListener('timeupdate', () => { 
-    // CRITICAL FIX: If we are waiting for a seek to complete, DO NOT update the bar.
-    // This stops the bar from jumping back to the old timestamp while the "Ghost Audio" plays.
-    if (isSeeking) return;
-
-    // Safety: If audio is moving, text should be resolved
-    if (ScrambleEngine.isLooping && isPlaying && !audioPlayer.paused && !audioPlayer.seeking) {
-        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+    // IF THE SONG IS MOVING, WE ARE NOT SEEKING OR LOADING.
+    // Force reset all blocking flags.
+    if (!audioPlayer.paused) {
+        if (isSeeking) isSeeking = false;
+        if (isSwitchingTrack) isSwitchingTrack = false;
+        
+        // If animation is stuck in "Loading" loop, force resolve
+        if (ScrambleEngine.isLooping) {
+            ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        }
     }
 
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 

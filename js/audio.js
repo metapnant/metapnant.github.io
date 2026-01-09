@@ -19,26 +19,30 @@ function initPlaylist() {
 function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
-    // 1. Reset UI
+    // 1. NUCLEAR STATE RESET (Fixes rapid skipping bugs)
+    ScrambleEngine.reset(); // Kill any running text animations immediately
+    isSwitchingTrack = true; 
+    isSeeking = false; // Reset seek state from previous track
+    pendingSeekPercent = null; // Clear pending cold seeks
+    
+    // 2. Reset UI
     domProgressBar.style.setProperty('--progress', '0%');
     if (index !== currentTrackIdx) {
         domCurrentTime.textContent = "0:00"; 
         domDuration.textContent = "0:00";
     }
     
-    pendingSeekPercent = null;
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 2. Track Change: Force Loading Animation
-    isSwitchingTrack = true; 
+    // 3. Force Visual "Loading" immediately
     ScrambleEngine.startLoading(domTrackTitle);
 
-    // 3. Hardware
+    // 4. Update Hardware
     audioPlayer.src = track.src;
     audioPlayer.load();
 
-    // 4. Update Playlist
+    // 5. Update Playlist
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('active-track');
@@ -51,10 +55,11 @@ function loadTrack(index, autoPlay = true) {
         refreshDynamicPage();
     }
 
-    // 5. Autoplay
+    // 6. Autoplay
     if (autoPlay) {
         audioPlayer.play().catch(e => {
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
+            // Revert state if blocked
             isSwitchingTrack = false; 
             ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
@@ -86,6 +91,7 @@ function togglePlay() {
         isPlaying = true;
         updatePlayBtn();
 
+        // COLD SEEK
         if (pendingSeekPercent !== null && audioPlayer.duration) {
             const seekTime = (pendingSeekPercent / 100) * audioPlayer.duration;
             audioPlayer.currentTime = seekTime;
@@ -167,16 +173,14 @@ function commitSeek(percent) {
         domCurrentTime.textContent = formatTime(newTime);
 
         if (!audioPlayer.paused) {
-            // PLAYING:
-            // 1. Mark as seeking explicitly
+            // PLAYING: Apply immediate seek
+            // We set isSeeking = true so timeupdate ignores the gap silence
             isSeeking = true;
-            // 2. Force Loading visual instantly (Immediate feedback)
             ScrambleEngine.startLoading(domTrackTitle);
-            // 3. Update Hardware
             audioPlayer.currentTime = newTime;
             pendingSeekPercent = null;
         } else {
-            // PAUSED:
+            // PAUSED: Store for later
             pendingSeekPercent = percent;
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
