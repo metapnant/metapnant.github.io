@@ -7,7 +7,6 @@ let domBufferBar = null;
 function initPlaylist() {
     if (!playlistList) return;
     
-    // Inject Buffer Bar if missing
     if (!document.querySelector('.buffer-bar') && progressArea) {
         domBufferBar = document.createElement('div');
         domBufferBar.className = 'buffer-bar';
@@ -88,14 +87,18 @@ function loadTrack(index, autoPlay = true) {
     }
 }
 
-function playTrack(index) { 
-    loadTrack(index, true); 
-}
+function playTrack(index) { loadTrack(index, true); }
 
 function togglePlay() {
-    if (!audioPlayer.src) {
-        loadTrack(currentTrackIdx, true);
-        return;
+    if (!audioPlayer.src) { loadTrack(currentTrackIdx, true); return; }
+
+    // PERFORMANCE FIX: Check if connection died during sleep
+    // NETWORK_NO_SOURCE (3) means the browser disconnected the stream.
+    if (audioPlayer.networkState === 3) {
+        console.log("Resurrecting audio connection...");
+        const currentTime = audioPlayer.currentTime;
+        audioPlayer.src = audioPlayer.src; // Re-assign triggers reconnect
+        audioPlayer.currentTime = currentTime;
     }
 
     if (isPlaying) { 
@@ -103,7 +106,11 @@ function togglePlay() {
         isPlaying = false;
     } else { 
         isPlaying = true;
-        audioPlayer.play();
+        audioPlayer.play().catch(e => {
+            console.warn("Play failed", e);
+            isPlaying = false;
+            updatePlayBtn();
+        });
     }
     updatePlayBtn();
 }
@@ -145,45 +152,25 @@ function getScrubPercent(e) {
 }
 
 // --- DRAG HANDLERS ---
-
 const startDrag = (e) => {
-    // 1. Pause immediately (Hardware Stop)
     if (isPlaying) {
         wasPlayingBeforeDrag = true;
         audioPlayer.pause(); 
     } else {
         wasPlayingBeforeDrag = false;
     }
-    
     isDragging = true;
     isSeeking = true; 
-    
     domProgressBar.classList.add('dragging');
     updateScrubVisual(getScrubPercent(e));
 };
 
 const startDragMouse = (e) => { if (isTouch || e.button !== 0) return; startDrag(e); };
-const startDragTouch = (e) => { 
-    isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isScrolling = false; 
-    startDrag(e);
-};
-
+const startDragTouch = (e) => { isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isScrolling = false; startDrag(e); };
 const doDragMouse = (e) => { if (!isDragging) return; e.preventDefault(); updateScrubVisual(getScrubPercent(e)); };
-const doDragTouch = (e) => {
-    if (isDragging) { if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); return; }
-};
-
+const doDragTouch = (e) => { if (isDragging) { if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); return; } };
 const endDragMouse = (e) => { if (isDragging) { commitSeek(getScrubPercent(e)); isDragging = false; domProgressBar.classList.remove('dragging'); } };
-const endDragTouch = (e) => { 
-    if (isDragging) { 
-        let percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
-        if (isNaN(percent)) percent = 0;
-        commitSeek(percent); 
-        isDragging = false; 
-        domProgressBar.classList.remove('dragging'); 
-    } 
-    setTimeout(() => { isTouch = false; }, 500); 
-};
+const endDragTouch = (e) => { if (isDragging) { let percent = parseFloat(domProgressBar.style.getPropertyValue('--progress')); if (isNaN(percent)) percent = 0; commitSeek(percent); isDragging = false; domProgressBar.classList.remove('dragging'); } setTimeout(() => { isTouch = false; }, 500); };
 
 if (progressArea) {
     progressArea.addEventListener('mousedown', startDragMouse); 
@@ -195,7 +182,7 @@ if (progressArea) {
 }
 
 function commitSeek(percent) {
-    currentAudioOpId++; // Invalidate previous operations
+    currentAudioOpId++;
     
     if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
         clearTimeout(bufferDebounceTimer); 
@@ -206,22 +193,43 @@ function commitSeek(percent) {
         const newTime = (percent / 100) * audioPlayer.duration;
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
-
-        // Hardware Update
+        
         audioPlayer.currentTime = newTime;
 
         if (wasPlayingBeforeDrag || !audioPlayer.paused) {
-            // PLAYING:
-            isSeeking = true;
-            resumeOnSeek = true; // Tell init.js to play when 'seeked' fires
-            
-            // Immediate visual feedback
-            ScrambleEngine.startLoading(domTrackTitle);
-            
-            // Note: We DO NOT call play() here. We wait for the 'seeked' event.
-            // This prevents the "Buffer race condition".
+            let isBuffered = false;
+            if (audioPlayer.buffered && audioPlayer.buffered.length > 0) {
+                for (let i = 0; i < audioPlayer.buffered.length; i++) {
+                    if (newTime >= audioPlayer.buffered.start(i) && newTime <= audioPlayer.buffered.end(i)) {
+                        isBuffered = true;
+                        break;
+                    }
+                }
+            }
+
+            if (isBuffered) {
+                isSeeking = true;
+                resumeOnSeek = true;
+                ScrambleEngine.startLoading(domTrackTitle); 
+                audioPlayer.play().catch(console.log);
+            } else {
+                isPlaying = false;
+                updatePlayBtn();
+                
+                ScrambleEngine.startLoading(domTrackTitle);
+                
+                isSeeking = true;
+                resumeOnSeek = true;
+                
+                const autoResume = () => {
+                    if (resumeOnSeek && (wasPlayingBeforeDrag || isPlaying)) {
+                        audioPlayer.play().catch(console.log);
+                        resumeOnSeek = false;
+                    }
+                };
+                audioPlayer.addEventListener('canplay', autoResume, { once: true });
+            }
         } else {
-            // PAUSED:
             pendingSeekPercent = percent;
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
             isSeeking = false;

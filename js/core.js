@@ -358,8 +358,7 @@ function resolveLoadingScramble(element, finalText) {
     }
 }
 
-// FIX: Instant Touch Feedback with enforced duration
-// Now accepts strings OR direct Element references
+// FIX: Instant Touch Feedback with enforced duration (Advanced Version)
 function addTactileListener(target) {
     let els = [];
     if (typeof target === 'string') {

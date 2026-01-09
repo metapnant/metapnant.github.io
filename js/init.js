@@ -18,17 +18,40 @@ window.addEventListener('resize', () => {
         if (Math.abs(window.innerWidth - lastWidth) < 100) return;
         lastWidth = window.innerWidth;
     }
-    
-    // FIX: NO RELOAD on resize. CSS + High DPI canvas handles it.
     if (!isLoading && pdfDoc) {
         if (resizeTimer) clearTimeout(resizeTimer);
         const visiblePage = getVisiblePageNumber();
         pendingScrollPage = visiblePage; 
+        resizeTimer = setTimeout(() => { loadDocument(currentIndex); }, 300);
+    }
+});
+
+// PERFORMANCE: Handle Sleep/Wake Logic
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        // Tab hidden: Browser throttles us. 
+        // We trust the audio engine to keep playing or pause as OS dictates.
+    } else {
+        // Tab Wakes Up: RESYNC UI
+        if (audioPlayer.paused && isPlaying) {
+            // OS paused us in background? Update UI.
+            isPlaying = false;
+            updatePlayBtn();
+            if (domTrackTitle && albumTracks[currentTrackIdx]) {
+                ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+            }
+        } else if (!audioPlayer.paused && !isPlaying) {
+            // Playing but UI says paused? Fix it.
+            isPlaying = true;
+            updatePlayBtn();
+        }
+        
+        // Ensure buffer bar is accurate
+        updateBufferVisuals();
     }
 });
 
 // UI Buttons
-// performNavReset is defined in core.js
 document.getElementById('next-doc').addEventListener('click', () => { 
     if(!isLoading && currentIndex < library.length - 1) {
         performNavReset();
@@ -52,19 +75,14 @@ if(btnNext) btnNext.addEventListener('click', (e) => { e.preventDefault(); nextT
 if(btnPrev) btnPrev.addEventListener('click', (e) => { e.preventDefault(); prevTrack(); });
 if(btnLoop) btnLoop.addEventListener('click', (e) => { e.preventDefault(); toggleLoop(); });
 
-// Note: Drag events are bound in audio.js
-
 // --- AUDIO EVENT HANDLING ---
 
 const startBufferingCheck = () => {
     if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
-    
     const thisOpId = currentAudioOpId;
-
     if (isPlaying && !audioPlayer.paused) {
         bufferDebounceTimer = setTimeout(() => {
             if (currentAudioOpId !== thisOpId) return;
-
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
@@ -79,12 +97,11 @@ const stopBufferingCheck = () => {
     }
 };
 
-// 0. LOADSTART
-audioPlayer.addEventListener('loadstart', () => {
-    if (isPlaying) ScrambleEngine.startLoading(domTrackTitle);
-});
+// 0. LOADSTART / PROGRESS
+audioPlayer.addEventListener('loadstart', () => { if (isPlaying) ScrambleEngine.startLoading(domTrackTitle); });
+audioPlayer.addEventListener('progress', updateBufferVisuals);
 
-// 1. SEEKING / WAITING / STALLED
+// 1. SEEKING / WAITING
 audioPlayer.addEventListener('seeking', startBufferingCheck);
 audioPlayer.addEventListener('waiting', startBufferingCheck);
 audioPlayer.addEventListener('stalled', startBufferingCheck);
@@ -94,7 +111,7 @@ audioPlayer.addEventListener('playing', () => {
     stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
-
+    
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
@@ -102,7 +119,6 @@ audioPlayer.addEventListener('playing', () => {
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
-    
     isSwitchingTrack = false;
     isSeeking = false;
 });
@@ -115,8 +131,11 @@ audioPlayer.addEventListener('pause', () => {
     isPlaying = false;
     updatePlayBtn();
     
+    // Performance Fix: Kill animations immediately to prevent "Lost Chunk" perception
+    ScrambleEngine.clear(); 
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
-        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+        domTrackTitle.innerText = albumTracks[currentTrackIdx].title;
+        domTrackTitle.style.color = "";
     }
 });
 
@@ -140,12 +159,10 @@ audioPlayer.addEventListener('timeupdate', () => {
     if (!audioPlayer.paused) {
         if (isSeeking) isSeeking = false;
         if (isSwitchingTrack) isSwitchingTrack = false;
-        
         if (ScrambleEngine.isLooping) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
-
     updateBufferVisuals();
 
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
@@ -183,7 +200,6 @@ if (btnShowVoice) {
     btnShowVoice.addEventListener('click', (e) => { 
         e.preventDefault(); 
         
-        // Manual visual trigger
         btnShowVoice.classList.add('active-state');
         setTimeout(() => btnShowVoice.classList.remove('active-state'), 150);
 
@@ -206,7 +222,6 @@ if (btnShowVoice) {
 infinityBtn.addEventListener('click', (e) => { 
     e.preventDefault(); SimpleSynth.unlock(); 
     
-    // FIX: Manual White Flash (Instant)
     if (appState.terminalFound) { 
         infinityBtn.classList.add('active-state');
         setTimeout(() => infinityBtn.classList.remove('active-state'), 150);
@@ -228,18 +243,6 @@ infinityBtn.addEventListener('click', (e) => {
     if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; updateInfinityState(); launchTerminal(); } 
 });
 
-// FIX: Instant Touch feedback for Infinity Button to match 'click' logic
-infinityBtn.addEventListener('touchstart', () => {
-    if (appState.terminalFound) {
-        infinityBtn.classList.add('active-state');
-    }
-}, {passive: true});
-
-infinityBtn.addEventListener('touchend', () => {
-    setTimeout(() => infinityBtn.classList.remove('active-state'), 150);
-}, {passive: true});
-
-
 // Keyboard Controls
 document.addEventListener('keydown', (e) => { 
     const isPlayerVisible = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500; 
@@ -249,7 +252,25 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Tactile Feedback Engine
-// Note: Advanced addTactileListener is defined in core.js
+function addTactileListener(selector) {
+    const els = document.querySelectorAll(selector);
+    els.forEach(el => {
+        el.addEventListener('pointerdown', function(e) {
+            this.classList.add('active-state');
+            if(this.releasePointerCapture) this.releasePointerCapture(e.pointerId);
+        });
+        
+        const removeActive = function() {
+            const self = this;
+            setTimeout(() => { self.classList.remove('active-state'); }, 150);
+        };
+
+        el.addEventListener('pointerup', removeActive);
+        el.addEventListener('pointerleave', removeActive);
+        el.addEventListener('pointercancel', removeActive);
+    });
+}
+
 const interfaceSelectors = ['.close-terminal', '.cycle-btn', '.tools-toggle', '.tool-btn', '.ctrl-btn', '.voice-btn', '.playlist-item', '.secret-link', '#song-link', '.nav-arrow'];
 interfaceSelectors.forEach(s => addTactileListener(s));
 
