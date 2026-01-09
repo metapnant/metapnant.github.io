@@ -47,31 +47,53 @@ progressArea.addEventListener('touchstart', startDragTouch, { passive: false });
 progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); 
 progressArea.addEventListener('touchend', endDragTouch);
 
-// --- AUDIO EVENT HANDLING ---
+// --- ROBUST BUFFERING DETECTION SYSTEM ---
 
-// Helper to trigger buffering visuals
-const triggerBuffering = () => {
-    if (bufferDebounceTimer) clearTimeout(bufferDebounceTimer);
-    bufferDebounceTimer = setTimeout(() => {
-        // Only show loading if we are actually supposed to be playing
-        if (isPlaying && !audioPlayer.paused) {
+let bufferingTimer = null;
+
+// Helper: Starts the countdown to show "LOADING..."
+// If playback resumes before this timer hits, the user sees nothing (Instant Seek)
+const startBufferingCheck = () => {
+    if (bufferingTimer) clearTimeout(bufferingTimer);
+    
+    // Only trigger if we are supposed to be playing
+    if (isPlaying && !audioPlayer.paused) {
+        bufferingTimer = setTimeout(() => {
+            // If we are STILL waiting after 100ms, trigger the Alien Glyphs
             ScrambleEngine.startLoading(domTrackTitle);
-        }
-    }, 150);
+        }, 100); 
+    }
 };
 
-// 1. PLAYING
-audioPlayer.addEventListener('playing', () => {
-    if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
+// Helper: Clears the check (Resume or Pause)
+const stopBufferingCheck = () => {
+    if (bufferingTimer) {
+        clearTimeout(bufferingTimer);
+        bufferingTimer = null;
+    }
+};
 
+// 1. SEEKING (User just dropped the handle)
+audioPlayer.addEventListener('seeking', startBufferingCheck);
+
+// 2. WAITING / STALLED (Network lag)
+audioPlayer.addEventListener('waiting', startBufferingCheck);
+audioPlayer.addEventListener('stalled', startBufferingCheck);
+
+// 3. PLAYING (Success!)
+audioPlayer.addEventListener('playing', () => {
+    stopBufferingCheck();
     isPlaying = true;
     updatePlayBtn();
 
-    // Only animate reveal if we were in a loading state or switching tracks
+    // Logic: If we were "Looping" (Alien Glyphs were active) OR we just Switched Tracks,
+    // we perform the Matrix Reveal. 
+    // If the seek was instant (timer never fired), we just Snap the text (invisible update).
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         } else {
+            // Instant seek finished: Ensure text is correct without animation
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
@@ -79,31 +101,21 @@ audioPlayer.addEventListener('playing', () => {
     isSwitchingTrack = false;
 });
 
-// 2. WAITING & STALLED (Buffering)
-audioPlayer.addEventListener('waiting', triggerBuffering);
-audioPlayer.addEventListener('stalled', triggerBuffering);
-
-// 3. PAUSE
+// 4. PAUSE (Manual Stop)
 audioPlayer.addEventListener('pause', () => {
-    if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
-    
+    stopBufferingCheck();
     isPlaying = false;
     updatePlayBtn();
-    stopScramble();
-});
-
-// 4. SEEKED
-audioPlayer.addEventListener('seeked', () => {
-    // If we sought successfully and quickly, cancel the loading timer
-    if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
     
-    if (audioPlayer.paused) {
-        stopScramble();
+    // If we pause, force static text immediately.
+    if (domTrackTitle && albumTracks[currentTrackIdx]) {
+        ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 5. TIMEUPDATE
+// 5. TIMEUPDATE (Sync Bar)
 audioPlayer.addEventListener('timeupdate', () => { 
+    // Strict check: Don't update if dragging or if a cold seek is pending
     if (!isDragging && pendingSeekPercent === null && audioPlayer.duration) { 
         const p = (audioPlayer.currentTime / audioPlayer.duration) * 100; 
         domProgressBar.style.setProperty('--progress', `${p}%`); 
@@ -119,6 +131,7 @@ audioPlayer.addEventListener('ended', () => {
 
 audioPlayer.addEventListener('loadedmetadata', () => { 
     domDuration.textContent = formatTime(audioPlayer.duration); 
+    // Cold Seek Recovery (iOS Fix)
     if (pendingSeekPercent !== null && audioPlayer.duration && isFinite(audioPlayer.duration)) { 
         audioPlayer.currentTime = (pendingSeekPercent / 100) * audioPlayer.duration; 
         domProgressBar.style.setProperty('--progress', `${pendingSeekPercent}%`); 

@@ -19,7 +19,7 @@ function initPlaylist() {
 function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle) return;
 
-    // 1. Reset UI & Lock State
+    // 1. Reset UI
     isSwitchingTrack = true; 
     domProgressBar.style.setProperty('--progress', '0%');
     if (index !== currentTrackIdx) {
@@ -27,12 +27,11 @@ function loadTrack(index, autoPlay = true) {
         domDuration.textContent = "0:00";
     }
     
-    // CRITICAL: Clear any stale seek requests from previous tracks
     pendingSeekPercent = null;
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 2. Force Loading Animation (Instant Feedback)
+    // 2. Force Loading on Switch
     ScrambleEngine.startLoading(domTrackTitle);
 
     // 3. Update Audio
@@ -56,7 +55,6 @@ function loadTrack(index, autoPlay = true) {
     if (autoPlay) {
         audioPlayer.play().catch(e => {
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
-            // If blocked, snap text to title
             ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
             updatePlayBtn();
@@ -81,14 +79,13 @@ function togglePlay() {
         audioPlayer.pause(); 
         isPlaying = false;
         updatePlayBtn();
-        // Pause: Snap to static text
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
     else { 
         isPlaying = true;
         updatePlayBtn();
 
-        // FIX: Apply Cold Seek before playing
+        // iOS Cold Seek
         if (pendingSeekPercent !== null && audioPlayer.duration) {
             const seekTime = (pendingSeekPercent / 100) * audioPlayer.duration;
             audioPlayer.currentTime = seekTime;
@@ -159,23 +156,18 @@ const endDragTouch = (e) => {
 };
 
 function commitSeek(percent) {
-    if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
-        clearTimeout(bufferDebounceTimer); 
-        bufferDebounceTimer = null;
-    }
-
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
 
         if (!audioPlayer.paused) {
-            // PLAYING: Apply immediately
+            // PLAYING: Apply immediate seek. 
+            // Feedback is handled by init.js 'seeking' event listener.
             audioPlayer.currentTime = newTime;
-            // CRITICAL: Clear pending percent so timeupdate resumes immediately
             pendingSeekPercent = null;
         } else {
-            // PAUSED: Store for later
+            // PAUSED: Store seek for next Play
             pendingSeekPercent = percent;
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
