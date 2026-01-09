@@ -207,21 +207,14 @@ const endDrag = (e) => {
     if (isDragging) { 
         if (dragRafId) cancelAnimationFrame(dragRafId);
         
-        // Handle Mouse vs Touch event data differences
-        let clientEvent = e;
-        if (e.changedTouches && e.changedTouches.length > 0) {
-            clientEvent = e.changedTouches[0]; 
-        }
+        // Use the exact percentage currently displayed on the bar
+        let percent = parseFloat(domProgressBar.style.getPropertyValue('--progress'));
+        if (isNaN(percent)) percent = 0;
 
-        // Calculate final percentage one last time
-        let percent = getScrubPercent(clientEvent); 
-        
         commitSeek(percent); 
         isDragging = false; 
         domProgressBar.classList.remove('dragging'); 
     } 
-    
-    // Reset touch flag after a delay to prevent ghost clicks
     setTimeout(() => { isTouch = false; }, 500); 
 };
 
@@ -242,62 +235,51 @@ if (progressArea) {
 // ==========================================
 
 function commitSeek(percent) {
-    currentAudioOpId++; // Invalidate previous async operations
+    currentAudioOpId++;
     
-    if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
+    // Clear any existing buffering timers
+    if (bufferDebounceTimer) {
+        clearTimeout(bufferDebounceTimer); 
+        bufferDebounceTimer = null;
+    }
 
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
         
-        // Update UI immediately
+        // 1. Force UI to match the final drop point
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
-        
-        // Attempt Seek
-        try {
-            audioPlayer.currentTime = newTime;
-        } catch(err) {
-            console.warn("Seek error:", err);
-        }
-
-        // SAFETY VALVE: If 'seeked' event doesn't fire in 2 seconds, force unlock.
-        // This fixes the "Hanging Indefinitely" bug.
-        const safetyOpId = currentAudioOpId;
-        setTimeout(() => {
-            if (currentAudioOpId === safetyOpId && isSeeking) {
-                console.log("Force clearing seek state (Safety Valve)");
-                isSeeking = false;
-                ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
-            }
-        }, 2000);
 
         if (wasPlayingBeforeDrag) {
+            // 2. STATE: We were playing, so we need to resume after seeking
             isSeeking = true;
+            resumeOnSeek = true; // Tell init.js to play() only when 'seeked' fires
+            
             ScrambleEngine.startLoading(domTrackTitle);
             
-            // Simple Play Attempt
-            const attemptPlay = () => {
-                audioPlayer.play().catch(e => {
-                    console.log("Resume failed", e);
-                    isPlaying = false; 
-                    updatePlayBtn();
+            // 3. HARDWARE: Trigger the seek
+            audioPlayer.currentTime = newTime;
+            
+            // 4. SAFETY VALVE: If iOS hangs for more than 2s, force a reset
+            const safetyId = currentAudioOpId;
+            setTimeout(() => {
+                if (currentAudioOpId === safetyId && isSeeking) {
                     isSeeking = false;
+                    resumeOnSeek = false;
                     ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
-                });
-            };
+                }
+            }, 2000);
 
-            // If buffered, play immediately. If not, wait for event.
-            if (audioPlayer.readyState >= 3) {
-                attemptPlay();
-            } else {
-                audioPlayer.addEventListener('canplay', attemptPlay, { once: true });
-            }
         } else {
-            // If we were paused, stay paused but snap title back
+            // 5. STATE: We were paused, just move the playhead
+            audioPlayer.currentTime = newTime;
+            pendingSeekPercent = null;
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
             isSeeking = false;
+            resumeOnSeek = false;
         }
     } else {
+        // If metadata isn't loaded yet, store it for later
         pendingSeekPercent = percent;
     }
 }

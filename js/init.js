@@ -123,12 +123,21 @@ audioPlayer.addEventListener('seeked', () => {
     isSeeking = false;
     stopBufferingCheck();
     
+    // FIX: iOS Silent Playback / Deferred Playback Logic
     if (resumeOnSeek) {
         resumeOnSeek = false;
-        audioPlayer.play().catch(console.log);
+        
+        // Only call play() now that the hardware confirms it has reached the destination
+        audioPlayer.play().catch(e => {
+            console.warn("Deferred play failed:", e);
+            isPlaying = false;
+            updatePlayBtn();
+        });
     } else if (audioPlayer.paused) {
+        // If we're paused, make sure the title isn't stuck in "LOADING"
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     } else {
+        // Normal title resolution if playing and not deferred
         ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
