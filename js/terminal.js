@@ -174,6 +174,7 @@ function toggleMute() {
     else btnMute.classList.remove('active'); 
 }
 
+// In js/terminal.js
 function processQueue() {
     if (!currentTab || !terminalRunning) return; 
     if (logState[currentTab].finished) return;
@@ -189,10 +190,21 @@ function processQueue() {
     activeTimer = setTimeout(() => { 
         typeLine(lineData.text, lineData.class, containers[currentTab]); 
         if (lineData.text.trim().length > 0 && typeof SimpleSynth !== 'undefined') SimpleSynth.playTone(lineData.class);
+        
         logState[currentTab].index++; 
-        if (terminalContainer) terminalContainer.scrollTop = terminalContainer.scrollHeight;
-        if (logState[currentTab].index >= currentLogArray.length) { markLogFinished(currentTab); } 
-        else { processQueue(); }
+
+        // FIX: Scroll after a brief frame to ensure the new element's height is counted
+        requestAnimationFrame(() => {
+            if (terminalContainer) {
+                terminalContainer.scrollTop = terminalContainer.scrollHeight;
+            }
+        });
+
+        if (logState[currentTab].index >= currentLogArray.length) { 
+            markLogFinished(currentTab); 
+        } else { 
+            processQueue(); 
+        }
     }, delay);
 }
 
@@ -231,35 +243,25 @@ function renderFullLog(type) {
 function typeLine(htmlText, className, container) { 
     if (!container) return;
     const lineDiv = document.createElement('div'); 
-    
     if (htmlText.includes('----') || htmlText.includes('====')) { 
         lineDiv.className = `terminal-line divider-line ${className}`; 
     } else { 
         lineDiv.className = `terminal-line ${className}`; 
     }
-    
     lineDiv.innerHTML = htmlText; 
     
-    // --- FIX START: ROBUST LISTENER ATTACHMENT ---
+    // --- ATTACH BUTTON LOGIC ---
     const link = lineDiv.querySelector('.secret-link');
     if (link) {
-        // 1. Add visual/tactile feedback (existing logic)
-        if (typeof addTactileListener === 'function') {
-            addTactileListener(link);
-        }
-
-        // 2. Explicitly attach the click event logic
-        // This ensures it works even if the inline 'onclick' fails
+        // Add touch/click feedback using the GOOD function from core.js
+        if (typeof addTactileListener === 'function') addTactileListener(link);
+        
+        // Explicitly attach the logic here to bypass data.js scope issues
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopPropagation();
             revealPlayer();
         });
-
-        // 3. Ensure it behaves like a button for accessibility
-        link.style.cursor = "pointer";
     }
-    // --- FIX END ---
     
     lineDiv.classList.add('active'); 
     if(className.includes('golden-text')) lineDiv.classList.add('gold-line'); 
@@ -267,7 +269,7 @@ function typeLine(htmlText, className, container) {
     if(className.includes('magenta-text')) lineDiv.classList.add('magenta-line'); 
     if(className.includes('system-success')) lineDiv.classList.add('blue-line'); 
     
-    container.appendChild(lineDiv); 
+    container.appendChild(lineDiv); // This was never reached before because of the crash
 }
 
 function closeTerminal() { 

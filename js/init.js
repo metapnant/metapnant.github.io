@@ -250,26 +250,6 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowLeft') { if (e.shiftKey) { e.preventDefault(); prevTrack(); } else if (isPlayerVisible) { e.preventDefault(); audioPlayer.currentTime -= 5; } } 
 });
 
-// Tactile Feedback Engine
-function addTactileListener(selector) {
-    const els = document.querySelectorAll(selector);
-    els.forEach(el => {
-        el.addEventListener('pointerdown', function(e) {
-            this.classList.add('active-state');
-            if(this.releasePointerCapture) this.releasePointerCapture(e.pointerId);
-        });
-        
-        const removeActive = function() {
-            const self = this;
-            setTimeout(() => { self.classList.remove('active-state'); }, 150);
-        };
-
-        el.addEventListener('pointerup', removeActive);
-        el.addEventListener('pointerleave', removeActive);
-        el.addEventListener('pointercancel', removeActive);
-    });
-}
-
 const interfaceSelectors = ['.close-terminal', '.cycle-btn', '.tools-toggle', '.tool-btn', '.ctrl-btn', '.voice-btn', '.playlist-item', '.secret-link', '#song-link', '.nav-arrow'];
 interfaceSelectors.forEach(s => addTactileListener(s));
 
