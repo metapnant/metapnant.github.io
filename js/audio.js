@@ -27,7 +27,6 @@ function loadTrack(index, autoPlay = true) {
     isSeeking = false; 
     pendingSeekPercent = null;
     wasPlayingBeforeDrag = false;
-    resumeOnSeek = false;
     
     domProgressBar.style.setProperty('--progress', '0%');
     if (index !== currentTrackIdx) {
@@ -38,7 +37,7 @@ function loadTrack(index, autoPlay = true) {
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    // 2. Visuals: Force "Loading..." immediately
+    // 2. Visuals
     ScrambleEngine.startLoading(domTrackTitle);
 
     // 3. Hardware
@@ -158,7 +157,6 @@ const startDrag = (e) => {
     
     isDragging = true;
     isSeeking = true; 
-    resumeOnSeek = false;
     
     domProgressBar.classList.add('dragging');
     updateScrubVisual(getScrubPercent(e));
@@ -198,6 +196,7 @@ if (progressArea) {
 
 function commitSeek(percent) {
     currentAudioOpId++;
+    const thisOpId = currentAudioOpId;
     
     if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
         clearTimeout(bufferDebounceTimer); 
@@ -206,29 +205,41 @@ function commitSeek(percent) {
 
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
+        
+        // 1. Update UI Visuals immediately
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
 
+        // 2. Resume Logic
         if (wasPlayingBeforeDrag || !audioPlayer.paused) {
+            // PLAYING:
             isSeeking = true;
-            resumeOnSeek = true; 
-            
             ScrambleEngine.startLoading(domTrackTitle);
             
-            // Wait 50ms before resuming to flush old audio buffer (iOS fix)
-            setTimeout(() => {
-                requestAnimationFrame(() => {
-                    audioPlayer.currentTime = newTime;
-                    audioPlayer.play();
-                    pendingSeekPercent = null;
-                });
-            }, 50);
+            // Set time
+            audioPlayer.currentTime = newTime;
+            
+            // CRITICAL: Don't just call play(). Wait for the buffer.
+            // If the readyState is low, waiting for 'canplay' prevents the glitch.
+            const resumePlayback = () => {
+                if (currentAudioOpId !== thisOpId) return; // Stale seek
+                audioPlayer.play().catch(e => console.log(e));
+                pendingSeekPercent = null;
+            };
+
+            if (audioPlayer.readyState >= 3) {
+                resumePlayback();
+            } else {
+                // Wait for buffer to fill
+                audioPlayer.addEventListener('canplay', resumePlayback, { once: true });
+            }
         } else {
+            // PAUSED:
             pendingSeekPercent = percent;
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
             isSeeking = false;
-            resumeOnSeek = false;
-            audioPlayer.currentTime = newTime; // Just update time silently
+            // Just update hardware time, don't play
+            audioPlayer.currentTime = newTime;
         }
     } else {
         pendingSeekPercent = percent;

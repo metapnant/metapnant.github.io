@@ -66,7 +66,7 @@ const startBufferingCheck = () => {
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
-        }, 100); 
+        }, 150); 
     }
 };
 
@@ -123,23 +123,22 @@ audioPlayer.addEventListener('seeked', () => {
     isSeeking = false;
     stopBufferingCheck();
     
-    if (resumeOnSeek) {
-        resumeOnSeek = false;
-        audioPlayer.play();
-    } else if (audioPlayer.paused) {
+    if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     } else {
         ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
     }
 });
 
-// 5. TIMEUPDATE
+// 5. TIMEUPDATE (Robust Safety Net)
 audioPlayer.addEventListener('timeupdate', () => { 
+    // Only resolve text if we have DATA (readyState >= 3)
+    // This stops "Loading" from disappearing if we are technically playing but buffering
     if (!audioPlayer.paused) {
         if (isSeeking) isSeeking = false;
         if (isSwitchingTrack) isSwitchingTrack = false;
         
-        if (ScrambleEngine.isLooping) {
+        if (ScrambleEngine.isLooping && audioPlayer.readyState >= 3) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
