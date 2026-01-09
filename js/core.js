@@ -79,11 +79,12 @@ let currentAudioOpId = 0;
 let isSwitchingTrack = false; 
 let isSeeking = false; 
 let wasPlayingBeforeDrag = false; 
-let resumeOnSeek = false; // NEW: Defer playback until seek completes
+let resumeOnSeek = false; 
 
 // -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
 let bufferDebounceTimer = null; 
+let scrollAnimationId = null;
 
 // -- TERMINAL STATE --
 let secretClicks = 0;
@@ -168,6 +169,21 @@ function killScrollAnimation() {
     }
 }
 
+// Navigation Reset Logic (Moved to Core to ensure availability)
+function performNavReset() {
+    killScrollAnimation();
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    waitingForLyrics = false;
+    if (voiceScrambleInterval) {
+        clearInterval(voiceScrambleInterval);
+        voiceScrambleInterval = null;
+    }
+    if (btnShowVoice) {
+        btnShowVoice.innerText = "SHOW VOICE";
+        btnShowVoice.style.color = "";
+    }
+}
+
 function jitterScrollTo(element) {
     if (!element) return;
     killScrollAnimation();
@@ -235,7 +251,6 @@ const ScrambleEngine = {
     targetElement: null,
     isResolving: false,
     isLooping: false,
-    currentTargetText: "", // NEW: Tracks the intended final text
 
     loadingGlyphs: "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝",
     revealGlyphs: "!<>-_\\/[]{}—=+*^?#________",
@@ -262,21 +277,14 @@ const ScrambleEngine = {
     },
 
     resolve: function(element, finalText) {
-        // FIX: Double Reveal Guard
-        // If we are already resolving to this EXACT string, don't restart.
-        if (this.isResolving && this.currentTargetText === finalText) return;
-
-        // If text is already correct and stable, exit.
         if (!this.isLooping && element.innerText === finalText) {
              this.snap(element, finalText);
              return;
         }
-
         this.reset();
         this.targetElement = element;
         this.isResolving = true;
         this.isLooping = false;
-        this.currentTargetText = finalText; // Store target
         
         let iterations = 0;
         element.style.color = "var(--name-color)"; 
@@ -306,7 +314,6 @@ const ScrambleEngine = {
         this.isResolving = false;
         this.isLooping = false;
         this.targetElement = null;
-        this.currentTargetText = "";
     },
 
     clear: function() { this.reset(); }

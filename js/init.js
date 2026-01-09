@@ -26,7 +26,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-// UI Buttons
+// UI Buttons (Arrows) are now handled by core.js logic injected here
 document.getElementById('next-doc').addEventListener('click', () => { 
     if(!isLoading && currentIndex < library.length - 1) {
         performNavReset();
@@ -39,20 +39,6 @@ document.getElementById('prev-doc').addEventListener('click', () => {
         loadDocument(currentIndex - 1); 
     }
 });
-
-const performNavReset = () => {
-    killScrollAnimation();
-    window.scrollTo({ top: 0, behavior: 'auto' });
-    waitingForLyrics = false;
-    if (voiceScrambleInterval) {
-        clearInterval(voiceScrambleInterval);
-        voiceScrambleInterval = null;
-    }
-    if (btnShowVoice) {
-        btnShowVoice.innerText = "SHOW VOICE";
-        btnShowVoice.style.color = "";
-    }
-};
 
 [document.getElementById('next-doc'), document.getElementById('prev-doc')].forEach(arrow => {
     arrow.addEventListener('touchstart', function() { this.classList.add('active-state'); }, {passive: true});
@@ -77,10 +63,11 @@ const startBufferingCheck = () => {
         bufferDebounceTimer = setTimeout(() => {
             if (currentAudioOpId !== thisOpId) return;
 
+            // Debounce: 200ms
             if (audioPlayer.seeking || audioPlayer.readyState < 3) {
                 ScrambleEngine.startLoading(domTrackTitle);
             }
-        }, 100); 
+        }, 200); 
     }
 };
 
@@ -107,10 +94,12 @@ audioPlayer.addEventListener('playing', () => {
     isPlaying = true;
     updatePlayBtn();
 
+    // Trigger Reveal: only if we were loading/looping
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
         } else {
+            // Instant snap if seek was fast
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
@@ -137,16 +126,13 @@ audioPlayer.addEventListener('seeked', () => {
     isSeeking = false;
     stopBufferingCheck();
     
-    // FIX: iOS Silent Playback Fix
-    // If we have deferred playback, trigger it now that seek is done.
-    if (resumeOnSeek) {
-        resumeOnSeek = false;
-        audioPlayer.play();
-        // The 'playing' event will handle text resolution
-    } else if (audioPlayer.paused) {
+    if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     } else {
-        ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        // If we are playing and not looping (fast seek), resolve immediately
+        if (!ScrambleEngine.isLooping) {
+             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
+        }
     }
 });
 
