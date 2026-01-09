@@ -113,34 +113,44 @@
     font-size: clamp(0.9rem, 4vw, 1.1rem);
 }
 
-/* --- PROGRESS BAR AREA --- */
+/* Find .progress-area (approx line 105) */
 .progress-area { 
     width: 100%;
     margin-bottom: 25px;
     cursor: pointer;
     padding: 12px 0;
-    touch-action: pan-y;
+    
+    /* CRITICAL FIX FOR IPHONE: Prevents page scrolling while scrubbing */
+    touch-action: none; 
+    
     position: relative; 
+    /* Increase tap target size for easier grabbing */
+    min-height: 40px; 
+    display: flex;
+    align-items: center;
 }
 
+/* Updated in css/music.css */
 .progress-bar { 
     width: 100%;
     height: 6px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 3px;
     position: relative;
-    overflow: hidden;
+    /* Ensure child bars don't bleed past rounded corners */
+    overflow: hidden; 
     z-index: 2; 
 }
 
+/* The Progress (top layer) */
 .progress-bar::after { 
     content: '';
     position: absolute;
     top: 0; left: 0; bottom: 0;
     width: var(--progress, 0%);
     background: var(--name-color);
-    border-radius: 3px;
     box-shadow: 0 0 10px var(--name-color);
+    z-index: 2; /* Sits above the buffer */
 }
 
 .progress-bar.dragging::after { 
@@ -148,17 +158,17 @@
     box-shadow: 0 0 15px #ffd700;
 }
 
+/* The Buffer (middle layer) */
 .buffer-bar {
     position: absolute;
-    top: 12px; 
+    top: 0; 
     left: 0;
-    height: 6px;
+    height: 100%; /* Match parent height exactly */
     background: rgba(152, 0, 235, 0.3); 
-    border-radius: 3px;
     width: 0%;
     pointer-events: none;
-    z-index: 1; 
-    transition: width 0.2s ease;
+    z-index: 1; /* Sits below the progress line */
+    transition: width 0.3s ease; /* Smoother transition for network chunks */
 }
 
 .time-marker { 

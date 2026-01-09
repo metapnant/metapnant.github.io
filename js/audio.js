@@ -4,13 +4,15 @@
 
 let domBufferBar = null;
 
+// Updated snippet in js/audio.js
 function initPlaylist() {
     if (!playlistList) return;
     
-    if (!document.querySelector('.buffer-bar') && progressArea) {
+    // FIX: Attach buffer bar INSIDE the progress bar for perfect alignment
+    if (!document.querySelector('.buffer-bar') && domProgressBar) {
         domBufferBar = document.createElement('div');
         domBufferBar.className = 'buffer-bar';
-        progressArea.appendChild(domBufferBar);
+        domProgressBar.appendChild(domBufferBar); // Moved from progressArea to domProgressBar
     } else {
         domBufferBar = document.querySelector('.buffer-bar');
     }
@@ -151,89 +153,149 @@ function getScrubPercent(e) {
     return Math.max(0, Math.min(100, ((clientEvent.clientX - rect.left) / width) * 100));
 }
 
-// --- DRAG HANDLERS ---
+// ==========================================
+// OPTIMIZED DRAG HANDLERS (iPhone 8 Fix)
+// ==========================================
+
+let dragRafId = null; // Animation Frame ID
+
 const startDrag = (e) => {
+    // Prevent default to stop text selection/scrolling immediately
+    if (e.cancelable) e.preventDefault(); 
+    
     if (isPlaying) {
         wasPlayingBeforeDrag = true;
         audioPlayer.pause(); 
     } else {
         wasPlayingBeforeDrag = false;
     }
+    
     isDragging = true;
     isSeeking = true; 
     domProgressBar.classList.add('dragging');
+    
+    // Immediate visual update
     updateScrubVisual(getScrubPercent(e));
 };
 
 const startDragMouse = (e) => { if (isTouch || e.button !== 0) return; startDrag(e); };
-const startDragTouch = (e) => { isTouch = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; isScrolling = false; startDrag(e); };
-const doDragMouse = (e) => { if (!isDragging) return; e.preventDefault(); updateScrubVisual(getScrubPercent(e)); };
-const doDragTouch = (e) => { if (isDragging) { if (e.cancelable) e.preventDefault(); updateScrubVisual(getScrubPercent(e)); return; } };
-const endDragMouse = (e) => { if (isDragging) { commitSeek(getScrubPercent(e)); isDragging = false; domProgressBar.classList.remove('dragging'); } };
-const endDragTouch = (e) => { if (isDragging) { let percent = parseFloat(domProgressBar.style.getPropertyValue('--progress')); if (isNaN(percent)) percent = 0; commitSeek(percent); isDragging = false; domProgressBar.classList.remove('dragging'); } setTimeout(() => { isTouch = false; }, 500); };
 
+const startDragTouch = (e) => { 
+    isTouch = true; 
+    touchStartX = e.touches[0].clientX; 
+    isScrolling = false; 
+    startDrag(e); 
+};
+
+// RAF THROTTLED DRAG: Prevents UI locking on older phones
+const doDrag = (e) => { 
+    if (!isDragging) return; 
+    
+    // Stop browser from handling this gesture
+    if(e.cancelable) e.preventDefault(); 
+
+    // Cancel previous frame if it hasn't run yet
+    if (dragRafId) cancelAnimationFrame(dragRafId);
+
+    // Schedule visual update for next paint
+    dragRafId = requestAnimationFrame(() => {
+        updateScrubVisual(getScrubPercent(e));
+    });
+};
+
+const endDrag = (e) => { 
+    if (isDragging) { 
+        if (dragRafId) cancelAnimationFrame(dragRafId);
+        
+        // Handle Mouse vs Touch event data differences
+        let clientEvent = e;
+        if (e.changedTouches && e.changedTouches.length > 0) {
+            clientEvent = e.changedTouches[0]; 
+        }
+
+        // Calculate final percentage one last time
+        let percent = getScrubPercent(clientEvent); 
+        
+        commitSeek(percent); 
+        isDragging = false; 
+        domProgressBar.classList.remove('dragging'); 
+    } 
+    
+    // Reset touch flag after a delay to prevent ghost clicks
+    setTimeout(() => { isTouch = false; }, 500); 
+};
+
+// Bind Listeners
 if (progressArea) {
     progressArea.addEventListener('mousedown', startDragMouse); 
-    document.addEventListener('mousemove', doDragMouse); 
-    document.addEventListener('mouseup', endDragMouse);
+    document.addEventListener('mousemove', doDrag); 
+    document.addEventListener('mouseup', endDrag);
+    
+    // Passive: false is crucial for preventing scroll interference
     progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); 
-    progressArea.addEventListener('touchmove', doDragTouch, { passive: false }); 
-    progressArea.addEventListener('touchend', endDragTouch);
+    progressArea.addEventListener('touchmove', doDrag, { passive: false }); 
+    progressArea.addEventListener('touchend', endDrag);
 }
 
+// ==========================================
+// ROBUST SEEK LOGIC (Prevents Hanging)
+// ==========================================
+
 function commitSeek(percent) {
-    currentAudioOpId++;
+    currentAudioOpId++; // Invalidate previous async operations
     
-    if (typeof bufferDebounceTimer !== 'undefined' && bufferDebounceTimer) {
-        clearTimeout(bufferDebounceTimer); 
-        bufferDebounceTimer = null;
-    }
+    if (bufferDebounceTimer) { clearTimeout(bufferDebounceTimer); bufferDebounceTimer = null; }
 
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
+        
+        // Update UI immediately
         domProgressBar.style.setProperty('--progress', `${percent}%`);
         domCurrentTime.textContent = formatTime(newTime);
         
-        audioPlayer.currentTime = newTime;
+        // Attempt Seek
+        try {
+            audioPlayer.currentTime = newTime;
+        } catch(err) {
+            console.warn("Seek error:", err);
+        }
 
-        if (wasPlayingBeforeDrag || !audioPlayer.paused) {
-            let isBuffered = false;
-            if (audioPlayer.buffered && audioPlayer.buffered.length > 0) {
-                for (let i = 0; i < audioPlayer.buffered.length; i++) {
-                    if (newTime >= audioPlayer.buffered.start(i) && newTime <= audioPlayer.buffered.end(i)) {
-                        isBuffered = true;
-                        break;
-                    }
-                }
+        // SAFETY VALVE: If 'seeked' event doesn't fire in 2 seconds, force unlock.
+        // This fixes the "Hanging Indefinitely" bug.
+        const safetyOpId = currentAudioOpId;
+        setTimeout(() => {
+            if (currentAudioOpId === safetyOpId && isSeeking) {
+                console.log("Force clearing seek state (Safety Valve)");
+                isSeeking = false;
+                ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
             }
+        }, 2000);
 
-            if (isBuffered) {
-                isSeeking = true;
-                resumeOnSeek = true;
-                ScrambleEngine.startLoading(domTrackTitle); 
-                audioPlayer.play().catch(console.log);
+        if (wasPlayingBeforeDrag) {
+            isSeeking = true;
+            ScrambleEngine.startLoading(domTrackTitle);
+            
+            // Simple Play Attempt
+            const attemptPlay = () => {
+                audioPlayer.play().catch(e => {
+                    console.log("Resume failed", e);
+                    isPlaying = false; 
+                    updatePlayBtn();
+                    isSeeking = false;
+                    ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+                });
+            };
+
+            // If buffered, play immediately. If not, wait for event.
+            if (audioPlayer.readyState >= 3) {
+                attemptPlay();
             } else {
-                isPlaying = false;
-                updatePlayBtn();
-                
-                ScrambleEngine.startLoading(domTrackTitle);
-                
-                isSeeking = true;
-                resumeOnSeek = true;
-                
-                const autoResume = () => {
-                    if (resumeOnSeek && (wasPlayingBeforeDrag || isPlaying)) {
-                        audioPlayer.play().catch(console.log);
-                        resumeOnSeek = false;
-                    }
-                };
-                audioPlayer.addEventListener('canplay', autoResume, { once: true });
+                audioPlayer.addEventListener('canplay', attemptPlay, { once: true });
             }
         } else {
-            pendingSeekPercent = percent;
+            // If we were paused, stay paused but snap title back
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
             isSeeking = false;
-            resumeOnSeek = false;
         }
     } else {
         pendingSeekPercent = percent;
