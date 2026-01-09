@@ -87,7 +87,6 @@ audioPlayer.addEventListener('playing', () => {
     isPlaying = true;
     updatePlayBtn();
     
-    // Resolve Text
     if (domTrackTitle && albumTracks[currentTrackIdx]) {
         if (ScrambleEngine.isLooping || isSwitchingTrack || isSeeking) {
             ScrambleEngine.resolve(domTrackTitle, albumTracks[currentTrackIdx].title);
@@ -95,7 +94,6 @@ audioPlayer.addEventListener('playing', () => {
             ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
         }
     }
-    
     isSwitchingTrack = false;
     isSeeking = false;
 });
@@ -118,11 +116,9 @@ audioPlayer.addEventListener('seeked', () => {
     isSeeking = false;
     stopBufferingCheck();
     
-    // RESUME ON SEEK LOGIC (Restored)
     if (resumeOnSeek) {
         resumeOnSeek = false;
         audioPlayer.play().catch(console.log);
-        // 'playing' event will handle text resolution
     } else if (audioPlayer.paused) {
         ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
     } else {
@@ -184,11 +180,6 @@ if (btnShowVoice) {
 
     btnShowVoice.addEventListener('click', (e) => { 
         e.preventDefault(); 
-        
-        // Backup visual trigger
-        btnShowVoice.classList.add('active-state');
-        setTimeout(() => btnShowVoice.classList.remove('active-state'), 150);
-
         if (isLoading) return; 
         
         setTimeout(() => {
@@ -208,6 +199,7 @@ if (btnShowVoice) {
 infinityBtn.addEventListener('click', (e) => { 
     e.preventDefault(); SimpleSynth.unlock(); 
     
+    // FIX: Unlocked State Flash
     if (appState.terminalFound) { 
         infinityBtn.classList.add('active-state');
         setTimeout(() => infinityBtn.classList.remove('active-state'), 150);
@@ -217,6 +209,7 @@ infinityBtn.addEventListener('click', (e) => {
     
     if (currentIndex !== 2) return; 
     
+    // FIX: Locked State Flash
     secretClicks++; 
     infinityBtn.style.color = "#ff3333"; 
     infinityBtn.style.textShadow = "0 0 15px #ff0000";
@@ -228,6 +221,17 @@ infinityBtn.addEventListener('click', (e) => {
 
     if (secretClicks === 3) { secretClicks = 0; appState.terminalFound = true; updateInfinityState(); launchTerminal(); } 
 });
+
+// Explicit Touch Listener for Infinity to guarantee instant response
+infinityBtn.addEventListener('touchstart', () => {
+    if (appState.terminalFound) {
+        infinityBtn.classList.add('active-state');
+    }
+}, {passive: true});
+infinityBtn.addEventListener('touchend', () => {
+    setTimeout(() => infinityBtn.classList.remove('active-state'), 150);
+}, {passive: true});
+
 
 // Keyboard Controls
 document.addEventListener('keydown', (e) => { 
@@ -257,7 +261,6 @@ function addTactileListener(selector) {
     });
 }
 
-// FIX: Added .close-terminal explicit listener logic check
 const interfaceSelectors = ['.close-terminal', '.cycle-btn', '.tools-toggle', '.tool-btn', '.ctrl-btn', '.voice-btn', '.playlist-item', '.secret-link', '#song-link', '.nav-arrow'];
 interfaceSelectors.forEach(s => addTactileListener(s));
 
