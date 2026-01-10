@@ -182,26 +182,33 @@ if (toolsToggleEl && toolsContainer) {
     document.addEventListener('click', (e) => { if (toolsContainer.classList.contains('active') && !toolsContainer.contains(e.target)) { toolsContainer.classList.remove('active'); } });
 }
 
-// Show Voice Button
+// Check this in js/init.js
 if (btnShowVoice) { 
     btnShowVoice.addEventListener('click', (e) => { 
         e.preventDefault(); 
-        
+        if (isLoading) return; 
+
+        // Tactile Feedback
         btnShowVoice.classList.add('active-state');
         setTimeout(() => btnShowVoice.classList.remove('active-state'), 150);
 
-        if (isLoading) return; 
-        
-        setTimeout(() => {
-            btnShowVoice.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            if (currentIndex !== 0) {
-                waitingForLyrics = true; startLoadingScramble(btnShowVoice); loadDocument(0); 
-            } else {
-                const p8 = document.getElementById('page-wrapper-8'); 
-                if (p8) { jitterScrollTo(p8); } 
-                else { waitingForLyrics = true; startLoadingScramble(btnShowVoice); }
+        // Center on the button IMMEDIATELY so the user is looking at it
+        btnShowVoice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        if (currentIndex !== 0) {
+            waitingForLyrics = true; 
+            startLoadingScramble(btnShowVoice); 
+            loadDocument(0); // Switch to METAPNANT
+        } else {
+            const p8 = document.getElementById('page-wrapper-8'); 
+            if (p8) { 
+                jitterScrollTo(p8); 
+            } else { 
+                waitingForLyrics = true; 
+                startLoadingScramble(btnShowVoice); 
+                // Document is correct, but renderRestOfPages will trigger finishVoiceTransition
             }
-        }, 20);
+        }
     }); 
 }
 

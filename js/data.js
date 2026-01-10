@@ -5,25 +5,25 @@ const library = [
 ];
 
 const albumTracks = [
-    { title: "Blood-Sap", src: "music/00 - Blood-Sap.wav" },
-    { title: "First Step", src: "music/01 - First Step.wav" },
-    { title: "hidden", src: "music/02 - hidden.wav" }, 
-    { title: "Tether", src: "music/03 - Tether.wav" },
-    { title: "Lens -of-", src: "music/04 - Lens -of-.wav" },
-    { title: "Innerworld", src: "music/05 - Innerworld.wav" },
-    { title: "Disordered Fairness", src: "music/06 - Disordered Fairness.wav" }, 
-    { title: "Limerent Object", src: "music/07 - Limerent Object.wav" },
-    { title: "Final Boundaries", src: "music/08 - Final Boundaries.wav" },
-    { title: "Remember", src: "music/09 - Remember.wav" },
-    { title: "Fear", src: "music/10 - Fear.wav" },
-    { title: "My Way", src: "music/11 - My Way.wav" },
-    { title: "Sun; Rise", src: "music/12 - Sun; Rise.wav" },
-    { title: "Branches", src: "music/13 - Branches.wav" },
-    { title: "Starflower Soul", src: "music/14 - Starflower Soul.wav" },
-    { title: "In Love With", src: "music/15 - In Love With.wav" },
-    { title: "Timelines", src: "music/16 - Timelines.wav" },
-    { title: "Breathe Again", src: "music/17 - Breathe Again.wav" },
-    { title: "River of Sorrows", src: "music/18 - River of Sorrows.wav" }
+    { title: "Blood-Sap", src: "music/00 - Blood-Sap.mp3" },
+    { title: "First Step", src: "music/01 - First Step.mp3" },
+    { title: "hidden", src: "music/02 - hidden.mp3" }, 
+    { title: "Tether", src: "music/03 - Tether.mp3" },
+    { title: "Lens -of-", src: "music/04 - Lens -of-.mp3" },
+    { title: "Innerworld", src: "music/05 - Innerworld.mp3" },
+    { title: "Disordered Fairness", src: "music/06 - Disordered Fairness.mp3" }, 
+    { title: "Limerent Object", src: "music/07 - Limerent Object.mp3" },
+    { title: "Final Boundaries", src: "music/08 - Final Boundaries.mp3" },
+    { title: "Remember", src: "music/09 - Remember.mp3" },
+    { title: "Fear", src: "music/10 - Fear.mp3" },
+    { title: "My Way", src: "music/11 - My Way.mp3" },
+    { title: "Sun; Rise", src: "music/12 - Sun; Rise.mp3" },
+    { title: "Branches", src: "music/13 - Branches.mp3" },
+    { title: "Starflower Soul", src: "music/14 - Starflower Soul.mp3" },
+    { title: "In Love With", src: "music/15 - In Love With.mp3" },
+    { title: "Timelines", src: "music/16 - Timelines.mp3" },
+    { title: "Breathe Again", src: "music/17 - Breathe Again.mp3" },
+    { title: "River of Sorrows", src: "music/18 - River of Sorrows.mp3" }
 ];
 
 // ==========================================

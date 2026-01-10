@@ -18,100 +18,132 @@ function getLODScale() {
 }
 
 async function loadDocument(index) {
-  if (isLoading) return;
-  isLoading = true; renderSession++; const currentSession = renderSession;
-  
-  if (prevArrow) prevArrow.classList.remove('active-state');
-  if (nextArrow) nextArrow.classList.remove('active-state');
-
-  songContainer.style.opacity = "0"; songContainer.style.visibility = "hidden"; songLink.href = "javascript:void(0)";
-  
-  if (waitingForLyrics) {
-      const currentHeight = pdfWrapper.getBoundingClientRect().height;
-      if (currentHeight > 0) {
-          pdfWrapper.style.minHeight = `${currentHeight}px`;
-      }
-  } else {
-      pdfWrapper.style.minHeight = '';
-      window.scrollTo({ top: 0, behavior: 'auto' });
-  }
-
-  const existingPages = document.querySelectorAll('.pdf-page-wrapper');
-  existingPages.forEach(p => {
-      const canvas = p.querySelector('canvas');
-      if (canvas) { canvas.width = 1; canvas.height = 1; } 
-      p.remove();
-  });
-
-  if (!waitingForLyrics) {
-      loadingOverlay.style.display = 'flex';
-  }
-  
-  prevArrow.classList.add('disabled'); 
-  nextArrow.classList.add('disabled');
-
-  currentIndex = index;
-  const currentDoc = library[currentIndex];
-  docTitle.textContent = currentDoc.title;
-  downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
-  
-  updateInfinityState();
-
-  try {
-    pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
-    await renderPage(1, currentSession);
+    if (isLoading) return;
+    isLoading = true; renderSession++; const currentSession = renderSession;
     
-    if (currentSession === renderSession) {
-        if (!waitingForLyrics) loadingOverlay.style.display = 'none';
-        document.body.classList.add("loaded");
-        const firstPage = pdfWrapper.querySelector('.pdf-page-wrapper');
-        if(firstPage) firstPage.classList.add('revealed');
-
-        if (!waitingForLyrics) { pdfWrapper.style.minHeight = ''; }
-
-        if (currentDoc.songUrl) {
-            songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
-            if (currentDoc.bpm > 0) songLink.style.animationDuration = (60 / currentDoc.bpm).toFixed(5) + "s";
-            else songLink.style.animationDuration = "";
-            songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
+    // Visual Reset
+    if (prevArrow) prevArrow.classList.remove('active-state');
+    if (nextArrow) nextArrow.classList.remove('active-state');
+    songContainer.style.opacity = "0"; 
+    songContainer.style.visibility = "hidden";
+    
+    // FIX: SCROLL ANCHORING
+    // If switching via "Show Voice", we lock the height of the PDF container 
+    // to its current size. This keeps the button below it from moving 
+    // while the PDF is cleared and re-rendered.
+    if (waitingForLyrics) {
+        const currentHeight = pdfWrapper.offsetHeight;
+        if (currentHeight > 0) {
+            pdfWrapper.style.minHeight = `${currentHeight}px`;
         }
-        isLoading = false;
-        
-        prevArrow.classList.remove('disabled'); 
-        nextArrow.classList.remove('disabled');
-        
-        if (currentIndex === 0) prevArrow.classList.add('disabled');
-        if (currentIndex === library.length - 1) nextArrow.classList.add('disabled');
-
-        if (pdfDoc.numPages > 1) renderRestOfPages(2, currentSession);
-    }
-  } catch (err) {
-    console.error(err);
-    pdfWrapper.style.minHeight = '';
-    loadingOverlay.innerHTML = "<div style='color:red; font-family:monospace'>ARCHIVE CORRUPTED</div>";
-    isLoading = false;
-    waitingForLyrics = false;
-    if (voiceScrambleInterval) resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
-  }
-}
-
-async function renderRestOfPages(pageNum, sessionID) {
-    if (sessionID !== renderSession || pageNum > pdfDoc.numPages) {
+        // Force the browser to stay centered on the button during the document swap
+        btnShowVoice.scrollIntoView({ block: 'center', behavior: 'instant' });
+    } else {
         pdfWrapper.style.minHeight = '';
-        if (waitingForLyrics && pageNum > pdfDoc.numPages) {
-            resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
-            const p8 = document.getElementById('page-wrapper-8'); 
-            if (p8) { jitterScrollTo(p8); }
-            waitingForLyrics = false;
-        }
-        return;
+        window.scrollTo({ top: 0, behavior: 'auto' });
     }
-
-    await renderPage(pageNum, sessionID);
-    const pages = pdfWrapper.querySelectorAll('.pdf-page-wrapper');
-    if(pages[pageNum-1]) pages[pageNum-1].classList.add('revealed');
-    setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 150); 
-}
+  
+    // Clear canvases
+    const existingPages = document.querySelectorAll('.pdf-page-wrapper');
+    existingPages.forEach(p => {
+        const canvas = p.querySelector('canvas');
+        if (canvas) { canvas.width = 1; canvas.height = 1; } 
+        p.remove();
+    });
+  
+    if (!waitingForLyrics) loadingOverlay.style.display = 'flex';
+    
+    prevArrow.classList.add('disabled'); 
+    nextArrow.classList.add('disabled');
+  
+    currentIndex = index;
+    const currentDoc = library[currentIndex];
+    docTitle.textContent = currentDoc.title;
+    downloadBtn.href = currentDoc.url + '?t=' + new Date().getTime();
+    
+    updateInfinityState();
+  
+    try {
+      pdfDoc = await pdfjsLib.getDocument(downloadBtn.href).promise;
+      
+      // Render first page immediately
+      await renderPage(1, currentSession);
+      
+      if (currentSession === renderSession) {
+          if (!waitingForLyrics) loadingOverlay.style.display = 'none';
+          document.body.classList.add("loaded");
+  
+          if (currentDoc.songUrl) {
+              songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
+              songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
+          }
+          
+          isLoading = false;
+          prevArrow.classList.remove('disabled'); 
+          nextArrow.classList.remove('disabled');
+          if (currentIndex === 0) prevArrow.classList.add('disabled');
+          if (currentIndex === library.length - 1) nextArrow.classList.add('disabled');
+  
+          // Start rendering the rest of the document
+          if (pdfDoc.numPages > 1) {
+              renderRestOfPages(2, currentSession);
+          } else if (waitingForLyrics) {
+              // Document only has 1 page (unlikely for METAPNANT, but for safety)
+              finishVoiceTransition();
+          }
+      }
+    } catch (err) {
+      console.error("Archive Load Error:", err);
+      pdfWrapper.style.minHeight = '';
+      isLoading = false;
+      waitingForLyrics = false;
+      if (voiceScrambleInterval) resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
+    }
+  }
+  
+  async function renderRestOfPages(pageNum, sessionID) {
+      if (sessionID !== renderSession) return;
+  
+      // IF FINISHED: Trigger the final transition
+      if (pageNum > pdfDoc.numPages) {
+          if (waitingForLyrics) {
+              finishVoiceTransition();
+          } else {
+              pdfWrapper.style.minHeight = ''; 
+          }
+          return;
+      }
+  
+      // Render the current page
+      await renderPage(pageNum, sessionID);
+      
+      // Continue loop
+      setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 100); 
+  }
+  
+  // Helper to handle the "Lyrics found" transition
+  function finishVoiceTransition() {
+      // 1. Resolve Scramble
+      resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
+      
+      // 2. Release Height Lock
+      pdfWrapper.style.minHeight = '';
+      
+      // 3. Wait for browser layout to settle, then scroll
+      requestAnimationFrame(() => {
+          setTimeout(() => {
+              const p8 = document.getElementById('page-wrapper-8'); 
+              if (p8) { 
+                  jitterScrollTo(p8); 
+              } else if (currentIndex === 0) {
+                  // If Page 8 isn't METAPNANT's target, scroll to the last page instead
+                  const lastPage = pdfWrapper.lastElementChild;
+                  if (lastPage) jitterScrollTo(lastPage);
+              }
+              waitingForLyrics = false;
+          }, 50);
+      });
+  }
 
 // Update in js/pdf.js
 async function renderPage(num, sessionID) {
