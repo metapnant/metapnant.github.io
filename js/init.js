@@ -182,7 +182,6 @@ if (toolsToggleEl && toolsContainer) {
     document.addEventListener('click', (e) => { if (toolsContainer.classList.contains('active') && !toolsContainer.contains(e.target)) { toolsContainer.classList.remove('active'); } });
 }
 
-// Check this in js/init.js
 if (btnShowVoice) { 
     btnShowVoice.addEventListener('click', (e) => { 
         e.preventDefault(); 
@@ -192,7 +191,7 @@ if (btnShowVoice) {
         btnShowVoice.classList.add('active-state');
         setTimeout(() => btnShowVoice.classList.remove('active-state'), 150);
 
-        // Center on the button IMMEDIATELY so the user is looking at it
+        // STICKY FOCUS: center immediately
         btnShowVoice.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
         if (currentIndex !== 0) {
@@ -204,9 +203,9 @@ if (btnShowVoice) {
             if (p8) { 
                 jitterScrollTo(p8); 
             } else { 
+                // METAPNANT is loaded but pages aren't ready
                 waitingForLyrics = true; 
                 startLoadingScramble(btnShowVoice); 
-                // Document is correct, but renderRestOfPages will trigger finishVoiceTransition
             }
         }
     }); 

@@ -101,51 +101,57 @@ async function loadDocument(index) {
     }
   }
   
-  async function renderRestOfPages(pageNum, sessionID) {
-      if (sessionID !== renderSession) return;
-  
-      // IF FINISHED: Trigger the final transition
-      if (pageNum > pdfDoc.numPages) {
-          if (waitingForLyrics) {
-              finishVoiceTransition();
-          } else {
-              pdfWrapper.style.minHeight = ''; 
-          }
-          return;
-      }
-  
-      // Render the current page
-      await renderPage(pageNum, sessionID);
-      
-      // Continue loop
-      setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 100); 
-  }
-  
-  // Helper to handle the "Lyrics found" transition
-  function finishVoiceTransition() {
-      // 1. Resolve Scramble
-      resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
-      
-      // 2. Release Height Lock
-      pdfWrapper.style.minHeight = '';
-      
-      // 3. Wait for browser layout to settle, then scroll
-      requestAnimationFrame(() => {
-          setTimeout(() => {
-              const p8 = document.getElementById('page-wrapper-8'); 
-              if (p8) { 
-                  jitterScrollTo(p8); 
-              } else if (currentIndex === 0) {
-                  // If Page 8 isn't METAPNANT's target, scroll to the last page instead
-                  const lastPage = pdfWrapper.lastElementChild;
-                  if (lastPage) jitterScrollTo(lastPage);
-              }
-              waitingForLyrics = false;
-          }, 50);
-      });
-  }
+// Updated in js/pdf.js
 
-// Update in js/pdf.js
+async function renderRestOfPages(pageNum, sessionID) {
+    if (sessionID !== renderSession) return;
+
+    // IF ALL PAGES FINISHED: Trigger the final scroll UP
+    if (pageNum > pdfDoc.numPages) {
+        if (waitingForLyrics) {
+            // Wait a tiny beat for the last page to physically mount to the DOM
+            setTimeout(() => {
+                finishVoiceTransition();
+            }, 100);
+        } else {
+            pdfWrapper.style.minHeight = ''; 
+        }
+        return;
+    }
+
+    // Render the current page
+    await renderPage(pageNum, sessionID);
+    
+    // FIX: THE SCROLL LOCK
+    // While loading, keep the "Show Voice" button centered in the viewport
+    // even as the document above it grows and tries to push it down.
+    if (waitingForLyrics) {
+        btnShowVoice.scrollIntoView({ block: 'center', behavior: 'instant' });
+    }
+
+    // Continue loop
+    setTimeout(() => { renderRestOfPages(pageNum + 1, sessionID); }, 50); 
+}
+
+function finishVoiceTransition() {
+    // 1. Resolve Scramble
+    resolveLoadingScramble(btnShowVoice, "SHOW VOICE");
+    
+    // 2. Release Height Lock
+    pdfWrapper.style.minHeight = '';
+    
+    // 3. Perform the final scroll UP to the lyrics
+    const p8 = document.getElementById('page-wrapper-8'); 
+    if (p8) { 
+        jitterScrollTo(p8); 
+    } else {
+        // Fallback: If page 8 doesn't exist, scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    waitingForLyrics = false;
+}
+
 async function renderPage(num, sessionID) {
     try {
         if (sessionID !== renderSession) return;
