@@ -308,7 +308,7 @@ window.logsData = {
         { text: "", class: "system-text", delay: 2500 },
         { text: "> COME IN.", class: "system-text", delay: 2500 },
         { text: "> [ რიინ სჳაან ]", class: "operator-text", delay: 2500 },
-        { text: "> (Riin Suaan)", class: "operator-text", delay: 1000 },
+        { text: "> (Riin Súaan)", class: "operator-text", delay: 1000 },
         { text: "> \"WE [ARE] THE LIVING STAR.\"", class: "golden-text", delay: 2000 },
         { text: "> THE LIBRARY IS OPEN.", class: "system-success", delay: 2500 },
         { text: "", class: "system-text", delay: 2500 },
