@@ -18,12 +18,13 @@ const albumTracks = [
     { title: "Fear", src: "music/10 - Fear.mp3" },
     { title: "My Way", src: "music/11 - My Way.mp3" },
     { title: "Sun; Rise", src: "music/12 - Sun; Rise.mp3" },
-    { title: "Branches", src: "music/13 - Branches.mp3" },
-    { title: "Starflower Soul", src: "music/14 - Starflower Soul.mp3" },
-    { title: "In Love With", src: "music/15 - In Love With.mp3" },
-    { title: "Timelines", src: "music/16 - Timelines.mp3" },
-    { title: "Breathe Again", src: "music/17 - Breathe Again.mp3" },
-    { title: "River of Sorrows", src: "music/18 - River of Sorrows.mp3" }
+    { title: "Hæy", src: "music/13 - Hæy.mp3" },
+    { title: "Branches", src: "music/14 - Branches.mp3" },
+    { title: "Starflower Soul", src: "music/15 - Starflower Soul.mp3" },
+    { title: "In Love With", src: "music/16 - In Love With.mp3" },
+    { title: "Timelines", src: "music/17 - Timelines.mp3" },
+    { title: "Breathe Again", src: "music/18 - Breathe Again.mp3" },
+    { title: "River of Sorrows", src: "music/19 - River of Sorrows.mp3" }
 ];
 
 // ==========================================
