@@ -47,7 +47,7 @@ window.logsData = {
         { text: "", class: "system-text", delay: 500 },
         { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
         { text: "[ 00:00:01 ] SYSTEM (REIX_OS):", class: "reix-header", delay: 300 },
-        { text: "> CRITICAL ALERT. MO'შჲღ [DEATH/NO-FLOW] IMMINENT.", class: "alert-text", delay: 800 },
+        { text: "> CRITICAL ALERT. MO'SÍL [DEATH/NO-FLOW] IMMINENT.", class: "alert-text", delay: 800 },
         { text: "> PROTOCOL: [ რეის ] (R E I X)", class: "system-text", delay: 400 },
         { text: "> INSTRUCTION: THE GEOMETRY MUST HOLD.", class: "system-text", delay: 400 },
         { text: "> DEPLOYING: TRIANGLE OF CERTAINTY [Tre Vish].", class: "system-text", delay: 1200 },
