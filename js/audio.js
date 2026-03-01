@@ -4,7 +4,6 @@
 
 let domBufferBar = null;
 
-// Updated snippet in js/audio.js
 function initPlaylist() {
     if (!playlistList) return;
     
@@ -22,7 +21,16 @@ function initPlaylist() {
         const li = document.createElement('li');
         li.className = 'playlist-item';
         li.id = `track-${index}`;
-        li.innerHTML = `<span>${index < 10 ? '0' + index : index} - ${track.title}</span>`;
+        
+        // Check if it's the very last track in the array
+        if (index === albumTracks.length - 1) {
+            // No number for the last track
+            li.innerHTML = `<span>${track.title}</span>`;
+        } else {
+            // Keep the number formatting for all other tracks
+            li.innerHTML = `<span>${index < 10 ? '0' + index : index} - ${track.title}</span>`;
+        }
+        
         li.onclick = () => playTrack(index);
         playlistList.appendChild(li);
     });
