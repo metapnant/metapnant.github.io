@@ -25,7 +25,8 @@ const albumTracks = [
     { title: "Starflower Soul", src: "music/17 - Starflower Soul.mp3" },
     { title: "Breathe Again", src: "music/18 - Breathe Again.mp3" },
     { title: "Timelines", src: "music/19 - Timelines.mp3" },
-    { title: "River of Sorrows", src: "music/20 - River of Sorrows.mp3" }
+    { title: "River of Sorrows", src: "music/20 - River of Sorrows.mp3" },
+    { title: "Nowhere", src: "music/Nowhere.mp3" }
 ];
 
 // ==========================================
