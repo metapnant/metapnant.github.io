@@ -7,60 +7,113 @@ let domBufferBar = null;
 function initPlaylist() {
     if (!playlistList) return;
     
-    // FIX: Attach buffer bar INSIDE the progress bar for perfect alignment
     if (!document.querySelector('.buffer-bar') && domProgressBar) {
         domBufferBar = document.createElement('div');
         domBufferBar.className = 'buffer-bar';
-        domProgressBar.appendChild(domBufferBar); // Moved from progressArea to domProgressBar
+        domProgressBar.appendChild(domBufferBar); 
     } else {
         domBufferBar = document.querySelector('.buffer-bar');
     }
 
     playlistList.innerHTML = '';
+    
+    if (typeof albumTracks === 'undefined' || !albumTracks) return;
+
     albumTracks.forEach((track, index) => {
         const li = document.createElement('li');
         li.className = 'playlist-item';
         li.id = `track-${index}`;
         
-        // Check if it's the very last track in the array
-        if (index === albumTracks.length - 1) {
-            // No number for the last track
-            li.innerHTML = `<span>${track.title}</span>`;
-        } else {
-            // Keep the number formatting for all other tracks
-            li.innerHTML = `<span>${index < 10 ? '0' + index : index} - ${track.title}</span>`;
+        // Reapply selected state if it persists
+        if (selectedTracks && selectedTracks.includes(index)) {
+            li.classList.add('selected-track');
         }
         
-        li.onclick = () => playTrack(index);
+        let displayTitle = index === albumTracks.length - 1 
+            ? track.title 
+            : `${index < 10 ? '0' + index : index} - ${track.title}`;
+        
+        // Ethereal Glass Puppet Eye
+        li.innerHTML = `
+            <span class="track-label">${displayTitle}</span>
+            <span class="track-selector" aria-label="Select Track">
+                <div class="glass-eye"></div>
+            </span>
+        `;
+
+        li.onclick = (e) => {
+            const isSelectorClick = e.target && e.target.closest && e.target.closest('.track-selector');
+            
+            // Only trigger selection if the eye itself is clicked/tapped
+            if (isSelectorClick) {
+                toggleTrackSelection(e, index);
+                return;
+            }
+            playTrack(index);
+        };
+        
         playlistList.appendChild(li);
     });
-    if (typeof addTactileListener === 'function') addTactileListener('.playlist-item');
+    
+    if (typeof addTactileListener === 'function') {
+        addTactileListener('.playlist-item');
+        // Add tactile feedback to the selector itself for the snappy sun burst
+        addTactileListener('.track-selector');
+    }
+}
+
+// === SIMPLIFIED MULTI-SELECT LOGIC ===
+function toggleTrackSelection(e, index) {
+    if (e) e.stopPropagation();
+    if (!selectedTracks) selectedTracks =[];
+    
+    // Standard Toggle (No Shift/Ctrl logic)
+    const idxInArray = selectedTracks.indexOf(index);
+    if (idxInArray > -1) {
+        selectedTracks.splice(idxInArray, 1);
+        updateTrackUI(index, false);
+    } else {
+        selectedTracks.push(index);
+        selectedTracks.sort((a, b) => a - b);
+        updateTrackUI(index, true);
+    }
+}
+
+function updateTrackUI(index, isSelected) {
+    const li = document.getElementById(`track-${index}`);
+    if (!li) return;
+    
+    if (isSelected) {
+        li.classList.add('selected-track');
+    } else {
+        li.classList.remove('selected-track');
+    }
 }
 
 function loadTrack(index, autoPlay = true) {
-    if (!domTrackTitle) return;
+    if (!domTrackTitle || typeof albumTracks === 'undefined' || !albumTracks[index]) return;
 
     currentAudioOpId++;
     
-    ScrambleEngine.reset();
+    if (typeof ScrambleEngine !== 'undefined') ScrambleEngine.reset();
     isSwitchingTrack = true; 
     isSeeking = false; 
     pendingSeekPercent = null;
     wasPlayingBeforeDrag = false;
     resumeOnSeek = false;
     
-    domProgressBar.style.setProperty('--progress', '0%');
+    if (domProgressBar) domProgressBar.style.setProperty('--progress', '0%');
     if (domBufferBar) domBufferBar.style.width = '0%';
 
     if (index !== currentTrackIdx) {
-        domCurrentTime.textContent = "0:00"; 
-        domDuration.textContent = "0:00";
+        if (domCurrentTime) domCurrentTime.textContent = "0:00"; 
+        if (domDuration) domDuration.textContent = "0:00";
     }
     
     currentTrackIdx = index;
     const track = albumTracks[index];
 
-    ScrambleEngine.startLoading(domTrackTitle);
+    if (typeof ScrambleEngine !== 'undefined') ScrambleEngine.startLoading(domTrackTitle);
 
     audioPlayer.src = track.src;
     audioPlayer.load();
@@ -70,10 +123,12 @@ function loadTrack(index, autoPlay = true) {
             item.classList.add('active-track');
             const container = document.querySelector('.playlist-container');
             if (container) container.scrollTo({ top: item.offsetTop - (container.clientHeight / 2) + (item.clientHeight / 2), behavior: 'smooth' });
-        } else item.classList.remove('active-track');
+        } else {
+            item.classList.remove('active-track');
+        }
     });
 
-    if (appState.musicUnlocked && currentIndex === 0 && typeof refreshDynamicPage === 'function') {
+    if (appState && appState.musicUnlocked && currentIndex === 0 && typeof refreshDynamicPage === 'function') {
         refreshDynamicPage();
     }
 
@@ -87,12 +142,12 @@ function loadTrack(index, autoPlay = true) {
             if (e.name !== 'AbortError') console.log("Auto-play blocked", e);
             
             isSwitchingTrack = false; 
-            ScrambleEngine.snap(domTrackTitle, track.title);
+            if (typeof ScrambleEngine !== 'undefined') ScrambleEngine.snap(domTrackTitle, track.title);
             isPlaying = false;
             updatePlayBtn();
         });
     } else {
-        ScrambleEngine.snap(domTrackTitle, track.title);
+        if (typeof ScrambleEngine !== 'undefined') ScrambleEngine.snap(domTrackTitle, track.title);
         isSwitchingTrack = false;
     }
 }
@@ -102,12 +157,10 @@ function playTrack(index) { loadTrack(index, true); }
 function togglePlay() {
     if (!audioPlayer.src) { loadTrack(currentTrackIdx, true); return; }
 
-    // PERFORMANCE FIX: Check if connection died during sleep
-    // NETWORK_NO_SOURCE (3) means the browser disconnected the stream.
     if (audioPlayer.networkState === 3) {
         console.log("Resurrecting audio connection...");
         const currentTime = audioPlayer.currentTime;
-        audioPlayer.src = audioPlayer.src; // Re-assign triggers reconnect
+        audioPlayer.src = audioPlayer.src; 
         audioPlayer.currentTime = currentTime;
     }
 
@@ -131,55 +184,121 @@ function updatePlayBtn() {
     iconPause.style.display = isPlaying ? 'block' : 'none';
 }
 
-function toggleLoop() { loopMode++; if (loopMode > 2) loopMode = 0; updateLoopBtn(); }
+function toggleLoop() { 
+    loopMode++; 
+    if (loopMode > 2) loopMode = 0; 
+    updateLoopBtn(); 
+}
+
 function updateLoopBtn() {
+    if (!btnLoop || !iconLoopAll || !iconLoopOne) return;
     btnLoop.classList.remove('active', 'active-one');
-    iconLoopAll.style.display = 'block'; iconLoopOne.style.display = 'none';
-    if (loopMode === 1) btnLoop.classList.add('active');
-    else if (loopMode === 2) { btnLoop.classList.add('active-one'); iconLoopAll.style.display = 'none'; iconLoopOne.style.display = 'block'; }
+    iconLoopAll.style.display = 'block'; 
+    iconLoopOne.style.display = 'none';
+    
+    if (loopMode === 1) {
+        btnLoop.classList.add('active');
+    } else if (loopMode === 2) { 
+        btnLoop.classList.add('active-one'); 
+        iconLoopAll.style.display = 'none'; 
+        iconLoopOne.style.display = 'block'; 
+    }
 }
 
 function nextTrack(auto = false) {
-    let nextIdx = currentTrackIdx + 1;
-    if (auto) {
-        if (loopMode === 2) { playTrack(currentTrackIdx); return; }
-        if (loopMode === 0 && nextIdx >= albumTracks.length) { isPlaying = false; updatePlayBtn(); return; }
+    if (typeof albumTracks === 'undefined' || !albumTracks) return;
+
+    if (auto && loopMode === 2) { 
+        playTrack(currentTrackIdx); 
+        return; 
     }
-    if (nextIdx >= albumTracks.length) nextIdx = 0;
+
+    let nextIdx;
+    if (selectedTracks && selectedTracks.length > 0) {
+        const selIdx = selectedTracks.indexOf(currentTrackIdx);
+        if (selIdx === -1) {
+            nextIdx = selectedTracks[0];
+        } else {
+            if (auto && loopMode === 0 && selIdx >= selectedTracks.length - 1) {
+                isPlaying = false; 
+                updatePlayBtn(); 
+                return;
+            }
+            nextIdx = selectedTracks[(selIdx + 1) % selectedTracks.length];
+        }
+    } else {
+        nextIdx = currentTrackIdx + 1;
+        if (auto && loopMode === 0 && nextIdx >= albumTracks.length) { 
+            isPlaying = false; 
+            updatePlayBtn(); 
+            return; 
+        }
+        if (nextIdx >= albumTracks.length) nextIdx = 0;
+    }
+
     playTrack(nextIdx);
 }
-function prevTrack() { let prevIdx = currentTrackIdx - 1; if (prevIdx < 0) prevIdx = albumTracks.length - 1; playTrack(prevIdx); }
+
+function prevTrack() {
+    if (typeof albumTracks === 'undefined' || !albumTracks) return;
+    
+    let prevIdx;
+    if (selectedTracks && selectedTracks.length > 0) {
+        const selIdx = selectedTracks.indexOf(currentTrackIdx);
+        if (selIdx === -1) {
+            prevIdx = selectedTracks[selectedTracks.length - 1];
+        } else {
+            prevIdx = selectedTracks[(selIdx - 1 + selectedTracks.length) % selectedTracks.length];
+        }
+    } else {
+        prevIdx = currentTrackIdx - 1; 
+        if (prevIdx < 0) prevIdx = albumTracks.length - 1; 
+    }
+    playTrack(prevIdx);
+}
+
+function downloadCurrentTrack() {
+    if (typeof albumTracks === 'undefined' || !albumTracks) return;
+    const track = albumTracks[currentTrackIdx];
+    if (!track || !track.src) return;
+    
+    const a = document.createElement('a');
+    a.href = track.src;
+    a.download = track.title + '.mp3';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
 
 function updateScrubVisual(percent) {
-    domProgressBar.style.setProperty('--progress', `${percent}%`);
-    if (audioPlayer.duration && !isNaN(audioPlayer.duration)) domCurrentTime.textContent = formatTime((percent / 100) * audioPlayer.duration);
+    if (domProgressBar) domProgressBar.style.setProperty('--progress', `${percent}%`);
+    if (domCurrentTime && audioPlayer.duration && !isNaN(audioPlayer.duration)) {
+        domCurrentTime.textContent = formatTime((percent / 100) * audioPlayer.duration);
+    }
 }
 
 function getScrubPercent(e) {
-    const width = progressArea.clientWidth; const clientEvent = e.type.includes('touch') ? (e.touches[0] || e.changedTouches[0]) : e;
+    if (!progressArea) return 0;
+    const width = progressArea.clientWidth; 
+    const clientEvent = e.type.includes('touch') ? (e.touches[0] || e.changedTouches[0]) : e;
     const rect = progressArea.getBoundingClientRect();
     return Math.max(0, Math.min(100, ((clientEvent.clientX - rect.left) / width) * 100));
 }
 
 // ==========================================
-// OPTIMIZED DRAG HANDLERS (iPhone 8 Fix)
+// OPTIMIZED DRAG HANDLERS
 // ==========================================
 
-let dragRafId = null; // Animation Frame ID
+let dragRafId = null;
 
 const startDrag = (e) => {
-    // 1. Immediately prevent iOS from trying to scroll the page
     if (e.cancelable) e.preventDefault(); 
-    
-    // 2. Remember state before drag
     wasPlayingBeforeDrag = isPlaying;
-    
-    // 3. Pause hardware immediately to stop event collisions
     audioPlayer.pause(); 
     
     isDragging = true;
     isSeeking = true; 
-    domProgressBar.classList.add('dragging');
+    if (domProgressBar) domProgressBar.classList.add('dragging');
     updateScrubVisual(getScrubPercent(e));
 };
 
@@ -187,7 +306,7 @@ const startDragMouse = (e) => { if (isTouch || e.button !== 0) return; startDrag
 
 const startDragTouch = (e) => { 
     isTouch = true; 
-    touchStartX = e.touches[0].clientX; 
+    if (e.touches && e.touches.length > 0) touchStartX = e.touches[0].clientX; 
     isScrolling = false; 
     startDrag(e); 
 };
@@ -205,35 +324,30 @@ const doDrag = (e) => {
 const endDrag = (e) => { 
     if (isDragging) { 
         if (dragRafId) cancelAnimationFrame(dragRafId);
-        
-        // Use the exact percentage from the visual bar (what the user sees)
-        let percent = parseFloat(domProgressBar.style.getPropertyValue('--progress')) || 0;
-        
+        let percent = 0;
+        if (domProgressBar) {
+            percent = parseFloat(domProgressBar.style.getPropertyValue('--progress')) || 0;
+            domProgressBar.classList.remove('dragging'); 
+        }
         commitSeek(percent); 
-        
         isDragging = false; 
-        domProgressBar.classList.remove('dragging'); 
     } 
     setTimeout(() => { isTouch = false; }, 500); 
 };
 
-// Bind Listeners
 if (progressArea) {
     progressArea.addEventListener('mousedown', startDragMouse); 
     document.addEventListener('mousemove', doDrag); 
     document.addEventListener('mouseup', endDrag);
-    
-    // Passive: false is crucial for preventing scroll interference
     progressArea.addEventListener('touchstart', startDragTouch, { passive: false }); 
     progressArea.addEventListener('touchmove', doDrag, { passive: false }); 
     progressArea.addEventListener('touchend', endDrag);
 }
 
 // ==========================================
-// ROBUST SEEK LOGIC (Prevents Hanging)
+// ROBUST SEEK LOGIC
 // ==========================================
 
-// === BUFFER GATED SEEKING (The Shared Logic) ===
 function commitSeek(percent) {
     currentAudioOpId++;
     const thisOpId = currentAudioOpId;
@@ -241,15 +355,12 @@ function commitSeek(percent) {
     if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
         const newTime = (percent / 100) * audioPlayer.duration;
         
-        // Force visual sync
-        domProgressBar.style.setProperty('--progress', `${percent}%`);
-        domCurrentTime.textContent = formatTime(newTime);
+        if (domProgressBar) domProgressBar.style.setProperty('--progress', `${percent}%`);
+        if (domCurrentTime) domCurrentTime.textContent = formatTime(newTime);
         
-        // LOCK: Tell the hardware where to go
         audioPlayer.currentTime = newTime;
 
         if (wasPlayingBeforeDrag) {
-            // Check if the area we dropped into is already downloaded
             let isBuffered = false;
             if (audioPlayer.buffered.length > 0) {
                 for (let i = 0; i < audioPlayer.buffered.length; i++) {
@@ -261,18 +372,14 @@ function commitSeek(percent) {
             }
 
             if (isBuffered) {
-                // DATA IS READY: Defer playback until the 'seeked' event fires
                 resumeOnSeek = true;
                 isSeeking = true;
-                ScrambleEngine.startLoading(domTrackTitle);
+                if (typeof ScrambleEngine !== 'undefined') ScrambleEngine.startLoading(domTrackTitle);
             } else {
-                // DATA MISSING: iOS will hang if we try to play now. 
-                // We enter a "Safe Pause" state.
                 isPlaying = false;
                 updatePlayBtn();
-                ScrambleEngine.startLoading(domTrackTitle);
+                if (typeof ScrambleEngine !== 'undefined') ScrambleEngine.startLoading(domTrackTitle);
                 
-                // Set a listener to auto-resume ONLY when data arrives
                 audioPlayer.addEventListener('canplay', () => {
                     if (currentAudioOpId === thisOpId) {
                         isPlaying = true;
@@ -282,8 +389,9 @@ function commitSeek(percent) {
                 }, { once: true });
             }
         } else {
-            // We were paused anyway. Just snap the text.
-            ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+            if (typeof ScrambleEngine !== 'undefined' && typeof albumTracks !== 'undefined' && albumTracks[currentTrackIdx]) {
+                ScrambleEngine.snap(domTrackTitle, albumTracks[currentTrackIdx].title);
+            }
             isSeeking = false;
             resumeOnSeek = false;
         }
@@ -314,6 +422,6 @@ function updateBufferVisuals() {
         }
     }
 }
-// Safety catch-all for stuck yellow bars
+
 window.addEventListener('mouseup', endDrag);
 window.addEventListener('touchend', endDrag);

@@ -113,36 +113,28 @@
     font-size: clamp(0.9rem, 4vw, 1.1rem);
 }
 
-/* Find .progress-area (approx line 105) */
 .progress-area { 
     width: 100%;
     margin-bottom: 25px;
     cursor: pointer;
     padding: 12px 0;
-    
-    /* CRITICAL FIX FOR IPHONE: Prevents page scrolling while scrubbing */
     touch-action: none; 
-    
     position: relative; 
-    /* Increase tap target size for easier grabbing */
     min-height: 40px; 
     display: flex;
     align-items: center;
 }
 
-/* Updated in css/music.css */
 .progress-bar { 
     width: 100%;
     height: 6px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 3px;
     position: relative;
-    /* Ensure child bars don't bleed past rounded corners */
     overflow: hidden; 
     z-index: 2; 
 }
 
-/* The Progress (top layer) */
 .progress-bar::after { 
     content: '';
     position: absolute;
@@ -150,7 +142,7 @@
     width: var(--progress, 0%);
     background: var(--name-color);
     box-shadow: 0 0 10px var(--name-color);
-    z-index: 2; /* Sits above the buffer */
+    z-index: 2; 
 }
 
 .progress-bar.dragging::after { 
@@ -158,17 +150,16 @@
     box-shadow: 0 0 15px #ffd700;
 }
 
-/* The Buffer (middle layer) */
 .buffer-bar {
     position: absolute;
     top: 0; 
     left: 0;
-    height: 100%; /* Match parent height exactly */
+    height: 100%; 
     background: rgba(152, 0, 235, 0.3); 
     width: 0%;
     pointer-events: none;
-    z-index: 1; /* Sits below the progress line */
-    transition: width 0.3s ease; /* Smoother transition for network chunks */
+    z-index: 1; 
+    transition: width 0.3s ease; 
 }
 
 .time-marker { 
@@ -230,13 +221,20 @@
     height: 28px;
 }
 
-/* Loop button base: Dimmed */
-.loop-btn { 
+.utility-btns {
+    display: flex;
+    gap: 15px;
+    margin-left: auto;
+    align-items: center;
+}
+
+/* Download and Loop Button Base: Dimmed, no circle */
+.download-btn, .loop-btn { 
     width: 35px;
     height: 35px;
-    border: none;
-    box-shadow: none;
-    margin-left: auto;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
     opacity: 0.3; /* Base dimness */
     flex-shrink: 0;
 }
@@ -258,14 +256,14 @@
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     margin-top: 10px;
     padding-top: 10px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--name-color) #000;
+    scrollbar-width: none; /* Hide scrollbar in Firefox */
     overscroll-behavior: auto;
     touch-action: pan-y;
 }
 
-.playlist-container::-webkit-scrollbar { width: 6px; }
-.playlist-container::-webkit-scrollbar-thumb { background: var(--name-color); border-radius: 3px; }
+.playlist-container::-webkit-scrollbar { 
+    display: none; /* Hide scrollbar in Chrome/Safari/Edge */
+}
 
 #playlist-list { 
     list-style: none;
@@ -276,12 +274,13 @@
 .playlist-item { 
     font-family: 'Space Mono', monospace;
     font-size: clamp(0.8rem, 4vw, 0.95rem);
-    padding: clamp(8px, 2vw, 12px) 15px;
+    padding: 0 15px;
     cursor: pointer;
     transition: background 0.1s;
     color: #888;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     border-left: 2px solid transparent;
     margin-bottom: 2px;
     white-space: normal !important;
@@ -289,6 +288,98 @@
     min-width: 0 !important;
     width: 100%;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.track-label {
+    flex-grow: 1;
+    padding: 12px 0;
+    pointer-events: none;
+}
+
+/* =========================================
+   ETHEREAL GLASS PUPPET EYES (Checkboxes)
+   ========================================= */
+.track-selector {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    opacity: 0.4;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    flex-shrink: 0;
+    margin-right: -5px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.track-selector * { pointer-events: none; }
+
+.glass-eye {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(222, 212, 235, 0.2);
+    /* Hollow dark glass look */
+    background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.1) 0%, rgba(5, 0, 10, 0.8) 70%);
+    box-shadow: inset 0 -2px 5px rgba(152, 0, 235, 0.1), 0 0 4px rgba(0,0,0,0.8);
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Golden Iris (Sun) hidden by default */
+.glass-eye::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    transform: translate(-50%, -50%) scale(0);
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff7a1 0%, #ffd700 40%, #ff8c00 100%);
+    box-shadow: 0 0 8px #ffd700;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    z-index: 1; /* Below the white glint */
+}
+
+/* Spectral Glint (The reflection in the eye) */
+.glass-eye::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    filter: blur(0.5px);
+    transition: all 0.3s ease;
+    z-index: 2; /* Keep above the iris */
+}
+
+/* Selected State */
+.playlist-item.selected-track {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #fff;
+}
+
+.playlist-item.selected-track .track-selector { opacity: 1; }
+
+.playlist-item.selected-track .glass-eye {
+    border-color: var(--name-color);
+    /* The awakened glowing pupil */
+    background: radial-gradient(circle at 50% 50%, #fff 0%, var(--name-color) 40%, rgba(13, 0, 34, 0.9) 85%);
+    box-shadow: 0 0 12px var(--name-color), inset 0 0 8px var(--name-color);
+    transform: scale(1.1);
+}
+
+.playlist-item.selected-track .glass-eye::after {
+    background: #fff;
+    box-shadow: 0 0 4px #fff;
+    filter: blur(0px);
 }
 
 .playlist-item.active-track { 
@@ -301,7 +392,7 @@
 
 /* --- HOVER STATES --- */
 @media (hover: hover) {
-    .ctrl-btn:hover {
+    .ctrl-btn:not(.loop-btn):not(.download-btn):hover {
         transform: scale(1.1);
         background: rgba(152, 0, 235, 0.15) !important;
         box-shadow: 0 0 20px var(--name-color);
@@ -309,17 +400,15 @@
         opacity: 1 !important;
     }
 
-    /* FIX: Disabled Loop Button Hover - STRICTLY DIM */
     .loop-btn:not(.active):not(.active-one):hover {
         background: transparent !important;
         box-shadow: none !important;
         color: var(--name-color) !important;
-        opacity: 0.3 !important; /* Keep it dim */
+        opacity: 0.3 !important;
         transform: scale(1.1);
         text-shadow: none !important;
     }
 
-    /* Active Loop Button Hover - Normal Glow */
     .loop-btn.active:hover, 
     .loop-btn.active-one:hover {
         opacity: 1 !important;
@@ -328,11 +417,33 @@
         box-shadow: none !important;
     }
 
+    .download-btn:hover {
+        opacity: 1 !important;
+        color: var(--name-color) !important;
+        background: transparent !important;
+        transform: scale(1.1);
+        box-shadow: none !important;
+    }
+
     .playlist-item:hover {
         background: rgba(255, 255, 255, 0.05) !important;
         color: #fff !important;
         padding-left: 20px;
         transition: all 0.2s ease;
+    }
+    
+    .playlist-item:hover .track-selector {
+        opacity: 1;
+    }
+    
+    .track-selector:hover {
+        transform: scale(1.15);
+    }
+
+    /* Reveal soft sun on hover */
+    .track-selector:hover .glass-eye::before {
+        opacity: 0.6;
+        transform: translate(-50%, -50%) scale(0.6);
     }
 
     .voice-btn:hover {
@@ -357,7 +468,8 @@
 
 .tools-toggle:active, .tools-toggle.active-state,
 .tool-btn:active, .tool-btn.active-state,
-.ctrl-btn:active, .ctrl-btn.active-state,
+.ctrl-btn:not(.loop-btn):not(.download-btn):active, 
+.ctrl-btn:not(.loop-btn):not(.download-btn).active-state,
 .playlist-item:active, .playlist-item.active-state {
     background-color: rgba(152, 0, 235, 0.3) !important;
     color: #ffffff !important;
@@ -366,7 +478,15 @@
     transition: none !important;
 }
 
-/* FIX: Disabled Loop Button Press - STRICTLY DIM */
+/* Ignite sun burst on press */
+.track-selector:active .glass-eye::before,
+.track-selector.active-state .glass-eye::before {
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) scale(1.1) !important;
+    box-shadow: 0 0 15px #ffd700, 0 0 25px #ff8c00 !important;
+    transition: all 0.1s ease !important; /* Snappy ignite */
+}
+
 .loop-btn:not(.active):not(.active-one):active,
 .loop-btn:not(.active):not(.active-one).active-state {
     background: transparent !important;
@@ -374,10 +494,9 @@
     border: none !important;
     color: var(--name-color) !important; 
     transform: scale(0.95);
-    opacity: 0.3 !important; /* Keep it dim */
+    opacity: 0.3 !important;
 }
 
-/* Active Loop Button Press */
 .loop-btn.active:active, 
 .loop-btn.active.active-state,
 .loop-btn.active-one:active, 
@@ -388,6 +507,13 @@
     color: var(--name-color) !important; 
     transform: scale(0.95);
     opacity: 1 !important;
+}
+
+.download-btn:active, .download-btn.active-state {
+    opacity: 1 !important;
+    color: var(--name-color) !important;
+    transform: scale(0.95);
+    background: transparent !important;
 }
 
 .playlist-item:active,
@@ -402,6 +528,6 @@
     .voice-btn { order: -1 !important; margin-top: 0 !important; margin-bottom: 0 !important; }
     .album-art-wrapper { order: 2 !important; }
     .buttons { justify-content: flex-start !important; margin-top: 30px !important; margin-bottom: 20px !important; }
-    .loop-btn { margin-left: auto !important; }
+    .utility-btns { margin-left: auto !important; }
     .playlist-container { max-height: 220px; }
 }

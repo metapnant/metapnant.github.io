@@ -25,6 +25,7 @@ const playlistList = document.getElementById('playlist-list');
 const iconPlay = document.getElementById('icon-play');
 const iconPause = document.getElementById('icon-pause');
 const btnLoop = document.getElementById('btn-loop');
+const btnAudioDownload = document.getElementById('btn-audio-download');
 const iconLoopAll = document.getElementById('icon-loop-all');
 const iconLoopOne = document.getElementById('icon-loop-one');
 const infinityBtn = document.getElementById('infinity-symbol');
@@ -81,6 +82,9 @@ let isSeeking = false;
 let wasPlayingBeforeDrag = false; 
 let resumeOnSeek = false; 
 
+// MULTI-SELECT STATE
+let selectedTracks =[];
+
 // -- ANIMATION STATE --
 let voiceScrambleInterval = null; 
 let bufferDebounceTimer = null; 
@@ -96,7 +100,7 @@ let turboMode = false;
 let isMuted = false;
 let logSpeedMultiplier = 1;
 
-const defaultState = { unlockedTabs: ['crash'], finishedLogs: [], musicUnlocked: false, terminalFound: false };
+const defaultState = { unlockedTabs:['crash'], finishedLogs:[], musicUnlocked: false, terminalFound: false };
 function loadState() { const saved = localStorage.getItem('metapnant_state'); return saved ? JSON.parse(saved) : defaultState; }
 let appState = loadState();
 let logState = { crash: { index: 0, finished: false }, echo: { index: 0, finished: false }, wake: { index: 0, finished: false }, bloom: { index: 0, finished: false }, gardener: { index: 0, finished: false } };
@@ -321,7 +325,6 @@ const ScrambleEngine = {
     clear: function() { this.reset(); }
 };
 
-// Legacy support for "Show Voice" button
 function startLoadingScramble(element) {
     if (element === btnShowVoice) { if (voiceScrambleInterval) clearInterval(voiceScrambleInterval); }
     const glyphs = "∞⋈⏣⌬⎔⌭⏦⌇∿≋꩜ᚙᚘ⸎۞۝!<>-_\\/[]{}—=+*^?#";
@@ -358,9 +361,8 @@ function resolveLoadingScramble(element, finalText) {
     }
 }
 
-// FIX: Instant Touch Feedback with enforced duration (Advanced Version)
 function addTactileListener(target) {
-    let els = [];
+    let els =[];
     if (typeof target === 'string') {
         els = document.querySelectorAll(target);
     } else if (target instanceof Element) {
