@@ -9,7 +9,7 @@ const albumTracks = [
     { title: "First Step", src: "music/01 - First Step.mp3" },
     { title: "hidden", src: "music/02 - hidden.mp3" }, 
     { title: "Tether", src: "music/03 - Tether.mp3" },
-    { title: "Lens -of-", src: "music/04 - Lens -of-.mp3" },
+    { title: "It's True!", src: "music/04 - It's True!.mp3" },
     { title: "Innerworld", src: "music/05 - Innerworld.mp3" },
     { title: "Disordered Fairness", src: "music/06 - Disordered Fairness.mp3" }, 
     { title: "Limerent Object", src: "music/07 - Limerent Object.mp3" },
