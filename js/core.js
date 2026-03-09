@@ -100,9 +100,10 @@ let turboMode = false;
 let isMuted = false;
 let logSpeedMultiplier = 1;
 
-const defaultState = { unlockedTabs:['crash'], finishedLogs:[], musicUnlocked: false, terminalFound: false };
+const defaultState = { unlockedTabs:['crash'], finishedLogs:[], musicUnlocked: false, terminalFound: false, terminalVolumePercent: 65 };
 function loadState() { const saved = localStorage.getItem('metapnant_state'); return saved ? JSON.parse(saved) : defaultState; }
 let appState = loadState();
+if (appState.terminalVolumePercent === undefined) appState.terminalVolumePercent = 65;
 let logState = { crash: { index: 0, finished: false }, echo: { index: 0, finished: false }, wake: { index: 0, finished: false }, bloom: { index: 0, finished: false }, gardener: { index: 0, finished: false } };
 
 // -- SOUND ENGINE --
@@ -124,27 +125,35 @@ const SimpleSynth = {
     },
     playTone: function (cssClass) {
         if (isMuted) return;
+        
+        // Boosts the audio multiplier. Max scale allows terminal lines to slice through the music
+        const vm = (appState.terminalVolumePercent !== undefined ? appState.terminalVolumePercent : 65) / 100 * 3.5;
+        if (vm === 0) return;
+        
         if (!this.ctx) this.init();
         if (this.ctx.state === 'suspended') this.ctx.resume();
         const t = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.connect(gain); gain.connect(this.ctx.destination);
-        if (cssClass.includes('operator-text')) { osc.type = 'triangle'; osc.frequency.setValueAtTime(500, t); osc.frequency.linearRampToValueAtTime(450, t + 0.08); gain.gain.setValueAtTime(0.04, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08); }
-        else if (cssClass.includes('alert-text')) { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); gain.gain.setValueAtTime(0.06, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1); }
-        else if (cssClass.includes('comment-text')) { osc.type = 'sine'; osc.frequency.setValueAtTime(3000, t); gain.gain.setValueAtTime(0.015, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01); }
-        else if (cssClass.includes('golden-text') || cssClass.includes('white-text') || cssClass.includes('magenta-text')) { osc.type = 'sine'; osc.frequency.setValueAtTime(880, t); gain.gain.setValueAtTime(0.08, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); }
-        else if (cssClass.includes('system-success')) { osc.type = 'square'; osc.frequency.setValueAtTime(1200, t); osc.frequency.linearRampToValueAtTime(2000, t + 0.05); gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05); }
-        else { osc.type = 'square'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(100, t + 0.04); gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04); }
+        if (cssClass.includes('operator-text')) { osc.type = 'triangle'; osc.frequency.setValueAtTime(500, t); osc.frequency.linearRampToValueAtTime(450, t + 0.08); gain.gain.setValueAtTime(0.04 * vm, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08); }
+        else if (cssClass.includes('alert-text')) { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); gain.gain.setValueAtTime(0.06 * vm, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1); }
+        else if (cssClass.includes('comment-text')) { osc.type = 'sine'; osc.frequency.setValueAtTime(3000, t); gain.gain.setValueAtTime(0.015 * vm, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01); }
+        else if (cssClass.includes('golden-text') || cssClass.includes('white-text') || cssClass.includes('magenta-text')) { osc.type = 'sine'; osc.frequency.setValueAtTime(880, t); gain.gain.setValueAtTime(0.08 * vm, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); }
+        else if (cssClass.includes('system-success')) { osc.type = 'square'; osc.frequency.setValueAtTime(1200, t); osc.frequency.linearRampToValueAtTime(2000, t + 0.05); gain.gain.setValueAtTime(0.03 * vm, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05); }
+        else { osc.type = 'square'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(100, t + 0.04); gain.gain.setValueAtTime(0.03 * vm, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04); }
         osc.start(); osc.stop(t + 0.2);
     },
     playUnlock: function () {
         if (isMuted) return;
+        const vm = (appState.terminalVolumePercent !== undefined ? appState.terminalVolumePercent : 65) / 100 * 3.5;
+        if (vm === 0) return;
+        
         if (!this.ctx) this.init();
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.connect(gain); gain.connect(this.ctx.destination);
-        osc.type = 'sine'; osc.frequency.setValueAtTime(200, this.ctx.currentTime); osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.3); gain.gain.setValueAtTime(0.05, this.ctx.currentTime); gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3); osc.start(); osc.stop(this.ctx.currentTime + 0.3);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(200, this.ctx.currentTime); osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.3); gain.gain.setValueAtTime(0.05 * vm, this.ctx.currentTime); gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3); osc.start(); osc.stop(this.ctx.currentTime + 0.3);
     }
 };
 

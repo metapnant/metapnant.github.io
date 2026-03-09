@@ -73,20 +73,25 @@ function updateSidebarUI() {
         }
     });
 
+    const volContainer = document.getElementById('vol-slider-container');
+
     if (appState.unlockedTabs.length > 1 || appState.finishedLogs.length > 0) {
         btnReset.classList.add('visible'); 
         btnTurbo.classList.add('visible'); 
         btnMute.classList.add('visible');
+        if (volContainer) volContainer.classList.add('visible');
     } else {
         btnReset.classList.remove('visible'); 
         btnTurbo.classList.remove('visible'); 
         btnMute.classList.remove('visible');
+        if (volContainer) volContainer.classList.remove('visible');
     }
 }
 
 function initTerminalState() {
     checkStateIntegrity(); 
     updateSidebarUI();
+    initVolumeSlider();
     
     if (btnTurbo) {
         btnTurbo.innerText = turboMode ? "[>>]\nTURBO: ON" : "[>>]\nTURBO: OFF";
@@ -170,6 +175,10 @@ function toggleTurbo() {
 function toggleMute() { 
     isMuted = !isMuted; 
     btnMute.innerText = isMuted ? "[VOL: OFF]" : "[VOL: ON]"; 
+    
+    const volContainer = document.getElementById('vol-slider-container');
+    if (volContainer) volContainer.style.opacity = isMuted ? '0.3' : '1';
+    
     if (!isMuted) btnMute.classList.add('active');
     else btnMute.classList.remove('active'); 
 }
@@ -300,4 +309,73 @@ function revealPlayer() {
         ScrambleEngine.snap(domTrackTitle, albumTracks[0].title);
     }
     setTimeout(() => { musicSection.scrollIntoView({ behavior: 'smooth' }); }, 100); 
+}
+
+// Place this at the end of terminal.js
+let isDraggingVol = false;
+
+function initVolumeSlider() {
+    const volContainer = document.getElementById('vol-slider-container');
+    const volFill = document.getElementById('vol-slider-fill');
+    if(!volContainer || !volFill) return;
+
+    let pct = appState.terminalVolumePercent !== undefined ? appState.terminalVolumePercent : 65;
+    volFill.style.width = `${pct}%`;
+    volContainer.style.opacity = isMuted ? '0.3' : '1';
+
+    const getPct = (e) => {
+        const rect = volContainer.getBoundingClientRect();
+        let clientX;
+        if (e.type.includes('touch')) {
+            clientX = (e.touches[0] || e.changedTouches[0]).clientX;
+        } else {
+            clientX = e.clientX;
+        }
+        return Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+    };
+
+    const setVol = (e) => {
+        const newPct = getPct(e);
+        volFill.style.width = `${newPct}%`;
+        appState.terminalVolumePercent = newPct;
+        saveState();
+        
+        // Auto-unmute if manually dragged upward
+        if (newPct > 0 && isMuted) {
+            toggleMute();
+        }
+    };
+
+    volContainer.addEventListener('mousedown', (e) => {
+        isDraggingVol = true;
+        setVol(e);
+        if (typeof SimpleSynth !== 'undefined' && !isMuted) SimpleSynth.playTone('system-text');
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if(!isDraggingVol) return;
+        setVol(e);
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDraggingVol = false;
+    });
+
+    // Touch controls locked to passive: false so we don't accidentally scroll the sidebar
+    volContainer.addEventListener('touchstart', (e) => {
+        if (e.cancelable) e.preventDefault();
+        isDraggingVol = true;
+        setVol(e);
+        if (typeof SimpleSynth !== 'undefined' && !isMuted) SimpleSynth.playTone('system-text');
+    }, {passive: false});
+
+    volContainer.addEventListener('touchmove', (e) => {
+        if(!isDraggingVol) return;
+        if (e.cancelable) e.preventDefault();
+        setVol(e);
+    }, {passive: false});
+
+    volContainer.addEventListener('touchend', () => {
+        isDraggingVol = false;
+    });
 }

@@ -108,21 +108,24 @@
   <div id="secret-overlay">
     <div class="terminal-sidebar">
       <div class="cycles-wrapper">
-          <div class="sidebar-header">CYCLES</div>
-          <button class="cycle-btn theme-crash" id="btn-cycle-00" onclick="switchTab('crash')">[ -1 ] EARTH_PRIME</button>
-          <button class="cycle-btn theme-echo" id="btn-cycle-echo" onclick="switchTab('echo')">[ ≈ ] THE_ECHO</button>
-          <button class="cycle-btn theme-wake" id="btn-cycle-01" onclick="switchTab('wake')">[ +1 ] PHOENIX_NEST</button>
-          <button class="cycle-btn theme-bloom" id="btn-cycle-bloom" onclick="switchTab('bloom')">[ * ] THE_BLOOM</button>
-          <button class="cycle-btn theme-gardener" id="btn-cycle-02" onclick="switchTab('gardener')">[ 0 ] THE_GARDENER</button>
-      </div>
-      <div class="controls-wrapper">
-          <div class="control-row-split">
-              <button class="cycle-btn" id="btn-turbo" onclick="toggleTurbo()">[>>]<br>TURBO: OFF</button>
-              <button class="cycle-btn" id="btn-mute" onclick="toggleMute()">[VOL: ON]</button>
-          </div>
-          <button class="cycle-btn" id="btn-reset" onclick="hardReset()">[ ! ] SYSTEM_RESET</button>
-      </div>
+        <div class="sidebar-header">CYCLES</div>
+        <button class="cycle-btn theme-crash" id="btn-cycle-00" onclick="switchTab('crash')">[ -1 ] EARTH_PRIME</button>
+        <button class="cycle-btn theme-echo" id="btn-cycle-echo" onclick="switchTab('echo')">[ ≈ ] THE_ECHO</button>
+        <button class="cycle-btn theme-wake" id="btn-cycle-01" onclick="switchTab('wake')">[ +1 ] PHOENIX_NEST</button>
+        <button class="cycle-btn theme-bloom" id="btn-cycle-bloom" onclick="switchTab('bloom')">[ * ] THE_BLOOM</button>
+        <button class="cycle-btn theme-gardener" id="btn-cycle-02" onclick="switchTab('gardener')">[ 0 ] THE_GARDENER</button>
     </div>
+    <div class="controls-wrapper">
+        <div class="vol-slider-container" id="vol-slider-container">
+            <div class="vol-slider-fill" id="vol-slider-fill"></div>
+        </div>
+        <div class="control-row-split">
+            <button class="cycle-btn" id="btn-turbo" onclick="toggleTurbo()">[>>]<br>TURBO: OFF</button>
+            <button class="cycle-btn" id="btn-mute" onclick="toggleMute()">[VOL: ON]</button>
+        </div>
+        <button class="cycle-btn" id="btn-reset" onclick="hardReset()">[ ! ] SYSTEM_RESET</button>
+    </div>
+  </div>
 
     <div class="terminal-wrapper">
       <button class="close-terminal" onclick="closeTerminal()">[ _ ] MINIMIZE</button>

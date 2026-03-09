@@ -38,12 +38,16 @@
 @keyframes spinReplay { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
 
 /* --- TERMINAL CONTROLS --- */
-.controls-wrapper { display: flex; flex-direction: column; margin-top: auto; width: 100%; gap: 10px; padding-top: 20px; padding-bottom: 0; border-top: 1px solid var(--terminal-border); }
+.controls-wrapper { display: flex; flex-direction: column; margin-top: auto; width: 100%; gap: 10px; padding-top: 15px; padding-bottom: 0; }
 .control-row-split { display: flex; gap: 10px; width: 100%; }
 
+.vol-slider-container { width: 100%; height: 2px; background: rgba(0, 255, 255, 0.15); position: relative; cursor: pointer; margin-bottom: 8px; display: none; border-radius: 1px; overflow: visible; transition: opacity 0.2s ease; }
+.vol-slider-container::before { content: ''; position: absolute; top: -15px; bottom: -15px; left: 0; right: 0; z-index: 1; }
+.vol-slider-container.visible { display: block; }
+.vol-slider-fill { height: 100%; width: 65%; background: var(--terminal-cyan); box-shadow: 0 0 8px var(--terminal-cyan); border-radius: 1px; position: relative; z-index: 2; pointer-events: none; transition: background-color 0.2s, box-shadow 0.2s; }
+.vol-slider-container:active .vol-slider-fill { box-shadow: 0 0 15px var(--terminal-cyan), 0 0 5px #fff; background: #fff; }
+
 #btn-turbo, #btn-mute { flex: 1; background: transparent; border: 1px solid rgba(0, 255, 255, 0.3); color: rgba(0, 255, 255, 0.5); font-family: 'Space Mono', monospace; font-size: 0.75em; height: 44px; cursor: pointer; display: none; justify-content: center; align-items: center; text-align: center; transition: all 0.2s ease; white-space: nowrap !important; }
-#btn-turbo { white-space: pre-wrap !important; line-height: 1.1; }
-#btn-mute { white-space: nowrap !important; }
 
 #btn-reset { width: 100%; background: transparent; border: 1px solid rgba(255, 51, 51, 0.2); color: rgba(255, 51, 51, 0.5); height: 60px; font-family: 'Space Mono', monospace; font-size: 0.75em; font-weight: bold; cursor: pointer; display: none; justify-content: center; align-items: center; transition: all 0.2s ease; white-space: nowrap; }
 #btn-turbo.visible, #btn-mute.visible, #btn-reset.visible { display: flex; }
@@ -136,7 +140,7 @@
     .sidebar-header { display: none; }
     .cycle-btn { white-space: nowrap; flex-shrink: 0; padding: 10px 15px; width: auto; min-height: 44px; }
     .replay-icon { margin-left: 15px; font-size: 1.5em; }
-    .controls-wrapper { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--terminal-sidebar); border-top: 1px solid var(--terminal-border); padding: 8px 10px 0 10px !important; margin-top: 0; z-index: 50; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 8px !important; }
+    .controls-wrapper { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--terminal-sidebar); border-top: none; padding: 15px 10px 0 10px !important; margin-top: 0; z-index: 50; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 8px !important; }
     #btn-turbo, #btn-mute, #btn-reset { display: none; }
     #btn-turbo.visible, #btn-mute.visible, #btn-reset.visible { display: flex; }
     #btn-reset { height: 44px !important; font-size: 0.7em !important; }
