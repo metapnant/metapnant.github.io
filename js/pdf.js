@@ -1,5 +1,5 @@
 // ==========================================
-// PDF ENGINE (VIRTUALIZED)
+// PDF ENGINE (VIRTUALIZED & OVERSAMPLED)
 // ==========================================
 
 let renderQueue =[];
@@ -26,15 +26,22 @@ function getOptimalScale(page) {
     // Fallback to window width if container has no width yet
     const containerWidth = pdfWrapper.clientWidth > 0 ? pdfWrapper.clientWidth : Math.min(window.innerWidth, 900);
     
-    // Cap devicePixelRatio at 2.5 to avoid memory crashes on high-density mobile displays
-    const dpr = Math.min(window.devicePixelRatio || 1, 2.5); 
-    const targetWidth = containerWidth * dpr;
+    // THE "ULTRA GRAPHICS" OVERSAMPLER
+    // Because we virtualized the DOM, we have massive VRAM headroom.
+    // We artificially multiply the Device Pixel Ratio so the texture has 
+    // enough raw pixel density to remain razor-sharp when pinch-zoomed.
+    const oversampleMultiplier = isMobileDevice ? 2.5 : 1.5;
+    const dpr = (window.devicePixelRatio || 1) * oversampleMultiplier; 
     
+    const targetWidth = containerWidth * dpr;
     const unscaledViewport = page.getViewport({ scale: 1 });
+    
     let scale = targetWidth / unscaledViewport.width;
     
-    // Hard cap canvas width to 2400 pixels to prevent GPU scattering artifacts
-    const MAX_CANVAS_WIDTH = 2400; 
+    // Crank the hard cap up to 4096 pixels (True 4K). 
+    // 1 or 2 4K canvases is effortless for modern mobile GPUs. 
+    // (If we hadn't built the unloader, 41 of these would crash the phone instantly).
+    const MAX_CANVAS_WIDTH = 4096; 
     if (unscaledViewport.width * scale > MAX_CANVAS_WIDTH) {
         scale = MAX_CANVAS_WIDTH / unscaledViewport.width;
     }

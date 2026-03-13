@@ -46,9 +46,9 @@
   font-family: "Zilla Slab", serif; margin: 0; padding: 20px; padding-bottom: 160px;
   min-height: 100dvh; display: flex; flex-direction: column;
   color: var(--primary-text-color); background-color: var(--background-main);
-  /* FIX: Darkened the maximum brightness points of the gradient for a consistent, deep flux */
   background: linear-gradient(135deg, #080017, #100021, #0a001a, #140029, #080017);
-  background-size: 600vw 600vh; 
+  /* FIX: Using % with background-attachment: fixed maps perfectly to the screen WITHOUT the scrollbar width */
+  background-size: 600% 600%; 
   background-attachment: fixed; 
   animation: darkShift 30s ease infinite; overflow-x: hidden;
   }
@@ -261,8 +261,12 @@
       .tools-toggle svg { width: 24px; height: 24px; }
       .tool-btn { font-size: 0.95em; }
   
-      /* Slightly tighter internal padding to maximize canvas footprint while retaining border/tear geometry */
+      /* Remove the container background & padding completely on mobile to maximize page real estate */
       .pdf-container {
-          padding: 10px 6px; 
+          padding: 0; 
+          gap: 15px;
+      }
+      .pdf-container.ready {
+          background-color: transparent !important;
       }
   }
