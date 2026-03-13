@@ -531,11 +531,48 @@
     .voice-btn { order: -1 !important; margin-top: 0 !important; margin-bottom: 0 !important; }
     .album-art-wrapper { order: 2 !important; }
     
-    /* FIX: Tighter player controls spacing for mobile */
-    .progress-area { margin-bottom: 5px; }
-    .time-marker { margin-top: 0px; margin-bottom: 5px; }
-    .buttons { justify-content: flex-start !important; margin-top: 5px !important; margin-bottom: 20px !important; }
+    /* Spacing refinements */
+    .track-details h3 { margin-bottom: 8px !important; }
+    .progress-area { padding: 4px 0 !important; margin-bottom: 0px !important; min-height: 20px !important; }
+    .time-marker { margin-top: -4px !important; margin-bottom: 5px !important; }
+
+/* UNIFIED ROW with Responsive Wrapping */
+    .buttons { 
+        display: flex !important;
+        justify-content: flex-start !important; 
+        align-items: center !important;
+        /* Spacing between buttons on one row */
+        column-gap: 15px !important; 
+        /* Spacing between rows when they wrap */
+        row-gap: 12px !important; 
+        margin-top: 0px !important; 
+        margin-bottom: 15px !important;
+        /* FIX: Enable wrapping when zoomed or narrow */
+        flex-wrap: wrap !important; 
+        width: 100%;
+    }
+
+    .utility-btns { 
+        display: flex !important;
+        gap: 15px !important; 
+        margin-left: auto !important;
+    }
+
+    /* Original sizes preserved while fitting in one row */
+    .play-btn { 
+        width: 60px !important; 
+        height: 60px !important; 
+    }
     
-    .utility-btns { margin-left: auto !important; }
+    .ctrl-btn:not(.play-btn):not(.download-btn):not(.loop-btn) { 
+        width: 44px !important; 
+        height: 44px !important; 
+    }
+
+    .download-btn, .loop-btn {
+        width: 35px !important;
+        height: 35px !important;
+    }
+    
     .playlist-container { max-height: 220px; }
 }
