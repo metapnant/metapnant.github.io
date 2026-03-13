@@ -37,7 +37,24 @@
 }
 .pdf-page-wrapper { box-shadow: none; }
 .pdf-page-wrapper::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 70%); background-size: 200% 200%; pointer-events: none; z-index: 10; mix-blend-mode: overlay; }
-.pdf-page-canvas { width: 100% !important; height: auto !important; display: block; background-color: var(--background-main); clip-path: inset(0 3px 2px 0); object-fit: contain; }
+/* Update this in main.css */
+.pdf-page-canvas { 
+    width: 100% !important; 
+    height: auto !important; 
+    display: block; 
+    background-color: var(--background-main); 
+    clip-path: inset(0 3px 2px 0); 
+    object-fit: contain; 
+    
+    /* New: Smooth fade-in for lazy-loaded lazy-rendered textures */
+    opacity: 0; 
+    transition: opacity 0.4s ease; 
+}
+
+/* Ensure the canvas becomes visible once rendered */
+.pdf-page-wrapper.rendered .pdf-page-canvas { 
+    opacity: 1; 
+}
 
 /* --- HUD (ARROWS) --- */
 .nav-controls {
