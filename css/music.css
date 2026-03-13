@@ -106,7 +106,8 @@
 .track-details h3 { 
     font-family: 'Zilla Slab', serif;
     color: var(--secondary-text-color);
-    margin: 0 0 20px 0;
+    /* REDUCED SPACING: Decreased margin-bottom to bring progress bar closer */
+    margin: 0 0 12px 0; 
     font-weight: 400;
     font-style: italic;
     white-space: normal;
@@ -115,12 +116,13 @@
 
 .progress-area { 
     width: 100%;
-    margin-bottom: 25px;
+    /* REDUCED SPACING: Decreased margin and vertical padding */
+    margin-bottom: 12px;
     cursor: pointer;
-    padding: 12px 0;
+    padding: 8px 0;
     touch-action: none; 
     position: relative; 
-    min-height: 40px; 
+    min-height: 30px; 
     display: flex;
     align-items: center;
 }
@@ -168,8 +170,9 @@
     font-family: 'Space Mono', monospace;
     font-size: 0.75em;
     color: #888;
-    margin-top: -5px;
-    margin-bottom: 15px;
+    /* REDUCED SPACING: Pulled markers up tighter to the bar */
+    margin-top: -8px;
+    margin-bottom: 10px;
     pointer-events: none;
 }
 

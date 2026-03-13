@@ -127,6 +127,9 @@ async function loadDocument(index) {
     if (isLoading) return;
     isLoading = true; renderSession++; const currentSession = renderSession;
     
+    // FIX: Reset the loaded state so arrows and container can fade in again
+    document.body.classList.remove("loaded"); 
+    
     // Enforce transparency on the container and lock scrolling safely
     pdfWrapper.classList.remove('ready'); 
     if (!waitingForLyrics) {
@@ -181,9 +184,9 @@ async function loadDocument(index) {
       
       if (currentSession === renderSession) {
           if (!waitingForLyrics && loadingOverlay) loadingOverlay.style.display = 'none';
-          document.body.classList.add("loaded");
           
-          // Re-introduce the background and unlock scroll
+          // Re-introduce the background, HUD fade, and unlock scroll
+          document.body.classList.add("loaded");
           pdfWrapper.classList.add('ready'); 
           document.body.classList.remove('loading-lock');
   

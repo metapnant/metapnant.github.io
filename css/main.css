@@ -40,17 +40,18 @@
     overscroll-behavior-y: none; 
     -webkit-text-size-adjust: 100%; 
     text-size-adjust: 100%;
+    overflow-x: hidden; 
   }
   
   body {
-  font-family: "Zilla Slab", serif; margin: 0; padding: 20px; padding-bottom: 160px;
+  font-family: "Zilla Slab", serif; margin: 0; padding: 20px; padding-bottom: 50px;
   min-height: 100dvh; display: flex; flex-direction: column;
   color: var(--primary-text-color); background-color: var(--background-main);
   background: linear-gradient(135deg, #080017, #100021, #0a001a, #140029, #080017);
-  /* FIX: Using % with background-attachment: fixed maps perfectly to the screen WITHOUT the scrollbar width */
   background-size: 600% 600%; 
   background-attachment: fixed; 
-  animation: darkShift 30s ease infinite; overflow-x: hidden;
+  animation: darkShift 30s ease infinite; 
+  /* FIX: Removed overflow-x: hidden from body to destroy the nested scrollbar trap */
   }
   
   body.no-scroll { overflow: hidden !important; width: 100%; position: fixed; }
@@ -98,7 +99,8 @@
   #loading-overlay { 
       display: flex; align-items: center; justify-content: center; 
       position: fixed; 
-      top: 0; left: 0; width: 100vw; height: 100vh; 
+      /* FIX: Replaced width/height with top/bottom anchors to prevent 1px viewport leaks */
+      top: 0; left: 0; right: 0; bottom: 0; 
       z-index: 50; background-color: transparent; 
       pointer-events: none;
   }
@@ -147,15 +149,20 @@
   /* --- HUD (ARROWS) --- */
   .nav-controls {
     position: fixed; z-index: 3000; pointer-events: none; 
-    top: 0; left: 0; right: 0; width: 100%; height: 100lvh;
+    top: 0; left: 0; right: 0; bottom: 0;
     display: flex; justify-content: space-between; align-items: center; 
     max-width: 1050px; margin: 0 auto; padding: 0 10px; 
+    /* Default state: Visible and ready to fade */
+    opacity: 1;
+    transition: opacity 1.2s ease; 
   }
   
-  /* ANTI-FLASH SHIELD: Hide arrows completely until JS finishes its 150ms boot delay */
+  /* ANTI-FLASH SHIELD: Hide arrows completely until document is ready */
   body:not(.loaded) .nav-controls {
       opacity: 0 !important;
       pointer-events: none !important;
+      /* Snap out instantly when a new load starts */
+      transition: none !important; 
   }
   
   .nav-arrow {
@@ -210,7 +217,7 @@
   }
   
   /* --- FOOTER & LINKS --- */
-  .footer { text-align: center; padding: 20px 0 10px 0; font-size: 0.85em; color: var(--secondary-text-color); border-top: 1px solid rgba(255, 255, 255, 0.08); margin-top: 40px; }
+  .footer { text-align: center; padding: 20px 0 10px 0; font-size: 0.85em; color: var(--secondary-text-color); border-top: 1px solid rgba(255, 255, 255, 0.08); margin-top: 20px; }
   #infinity-symbol { display: inline-block; transition: text-shadow 0.3s, color 0.3s; padding: 0 5px; font-weight: bold; cursor: default; pointer-events: none; }
   #infinity-symbol.active { cursor: pointer; pointer-events: auto; }
   #infinity-symbol.active:hover { color: #fff; text-shadow: 0 0 15px var(--name-color); }
@@ -230,7 +237,7 @@
       transition: none !important;
   }
   
-  #song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 10px; }
+  #song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 0px; }
   #song-link { color: var(--name-color); text-decoration: underline; text-decoration-color: var(--name-color); text-underline-offset: 2px; font-weight: 600; transition: color 0.1s; }
   
   /* Radiant Link */
@@ -249,24 +256,32 @@
   }
   
   @media (max-width: 900px) {
-      /* Natural relaxation of global padding on mobile to hug edges closely without breaking flow */
-      body {
-          padding: 20px 8px; 
-          padding-bottom: 160px;
-      }
-  
-      .pdf-tools { bottom: 20px; height: 56px; max-width: 56px; }
-      .pdf-tools.active { max-width: 220px; }
-      .tools-toggle { width: 56px; min-width: 56px; }
-      .tools-toggle svg { width: 24px; height: 24px; }
-      .tool-btn { font-size: 0.95em; }
-  
-      /* Remove the container background & padding completely on mobile to maximize page real estate */
-      .pdf-container {
-          padding: 0; 
-          gap: 15px;
-      }
-      .pdf-container.ready {
-          background-color: transparent !important;
-      }
-  }
+    body {
+        padding: 20px 8px; 
+        padding-bottom: 50px;
+    }
+
+    /* FIX: Tighten the container, remove the frame, and kill any nested scrollbars */
+    .explore-container, .pdf-container {
+        overflow: visible !important;
+    }
+
+    .pdf-container {
+        padding: 0; 
+        gap: 15px;
+        background-color: transparent !important;
+    }
+
+    .pdf-tools { bottom: 20px; height: 56px; max-width: 56px; }
+    .pdf-tools.active { max-width: 220px; }
+    .tools-toggle { width: 56px; min-width: 56px; }
+    .tools-toggle svg { width: 24px; height: 24px; }
+    .tool-btn { font-size: 0.95em; }
+
+    /* Music Player spacing refinements */
+    .progress-area { margin-bottom: 5px; }
+    .time-marker { margin-top: 0px; margin-bottom: 5px; }
+    .buttons { justify-content: flex-start !important; margin-top: 5px; margin-bottom: 20px; }
+    .utility-btns { margin-left: auto !important; }
+    .playlist-container { max-height: 220px; }
+}
