@@ -1,8 +1,10 @@
 // ==========================================
-// AUDIO LOGIC
+// AUDIO LOGIC (OPTIMIZED ENGINE)
 // ==========================================
 
 let domBufferBar = null;
+let fadeInterval = null; // Used for smooth play/pause transitions
+const preloader = new Audio(); // Background worker for gapless playback
 
 function initPlaylist() {
     if (!playlistList) return;
@@ -90,10 +92,55 @@ function updateTrackUI(index, isSelected) {
     }
 }
 
+function updateMediaSession(track) {
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: track.title,
+            artist: 'Tef Riin',
+            album: 'Chrysalis',
+            artwork:[
+                { src: 'music/cover.jpg', sizes: '512x512', type: 'image/jpeg' }
+            ]
+        });
+
+        navigator.mediaSession.setActionHandler('play', () => { if (!isPlaying) smoothPlay(); });
+        navigator.mediaSession.setActionHandler('pause', () => { if (isPlaying) smoothPause(); });
+        navigator.mediaSession.setActionHandler('previoustrack', () => prevTrack());
+        navigator.mediaSession.setActionHandler('nexttrack', () => nextTrack(false));
+    }
+}
+
+function preloadNextTrack() {
+    if (typeof albumTracks === 'undefined' || !albumTracks) return;
+    
+    let nextIdx;
+    if (selectedTracks && selectedTracks.length > 0) {
+        const selIdx = selectedTracks.indexOf(currentTrackIdx);
+        if (selIdx === -1) {
+            nextIdx = selectedTracks[0];
+        } else {
+            nextIdx = selectedTracks[(selIdx + 1) % selectedTracks.length];
+        }
+    } else {
+        nextIdx = currentTrackIdx + 1;
+        if (nextIdx >= albumTracks.length) nextIdx = 0;
+    }
+    
+    // Background cache the next track for gapless switching
+    if (albumTracks[nextIdx] && albumTracks[nextIdx].src) {
+        preloader.src = albumTracks[nextIdx].src;
+        preloader.preload = "auto";
+    }
+}
+
 function loadTrack(index, autoPlay = true) {
     if (!domTrackTitle || typeof albumTracks === 'undefined' || !albumTracks[index]) return;
 
     currentAudioOpId++;
+    
+    // Reset volume instantly if we were fading
+    if (fadeInterval) clearInterval(fadeInterval);
+    audioPlayer.volume = 1;
     
     if (typeof ScrambleEngine !== 'undefined') ScrambleEngine.reset();
     isSwitchingTrack = true; 
@@ -117,6 +164,9 @@ function loadTrack(index, autoPlay = true) {
 
     audioPlayer.src = track.src;
     audioPlayer.load();
+    
+    updateMediaSession(track);
+    preloadNextTrack();
 
     document.querySelectorAll('.playlist-item').forEach((item, i) => {
         if (i === index) {
@@ -154,6 +204,49 @@ function loadTrack(index, autoPlay = true) {
 
 function playTrack(index) { loadTrack(index, true); }
 
+function smoothPlay() {
+    if (fadeInterval) clearInterval(fadeInterval);
+    audioPlayer.volume = 0;
+    isPlaying = true;
+    updatePlayBtn();
+    
+    audioPlayer.play().then(() => {
+        let v = 0;
+        fadeInterval = setInterval(() => {
+            v += 0.1;
+            if (v >= 1) { 
+                audioPlayer.volume = 1; 
+                clearInterval(fadeInterval); 
+            } else { 
+                audioPlayer.volume = v; 
+            }
+        }, 15);
+    }).catch(e => {
+        console.warn("Play failed", e);
+        isPlaying = false;
+        updatePlayBtn();
+    });
+}
+
+function smoothPause() {
+    if (fadeInterval) clearInterval(fadeInterval);
+    let v = audioPlayer.volume;
+    
+    fadeInterval = setInterval(() => {
+        v -= 0.1;
+        if (v <= 0) { 
+            audioPlayer.volume = 0; 
+            audioPlayer.pause(); 
+            audioPlayer.volume = 1; // Reset to 1 so the next track doesn't start muted
+            isPlaying = false; 
+            updatePlayBtn(); 
+            clearInterval(fadeInterval); 
+        } else { 
+            audioPlayer.volume = v; 
+        }
+    }, 15);
+}
+
 function togglePlay() {
     if (!audioPlayer.src) { loadTrack(currentTrackIdx, true); return; }
 
@@ -165,17 +258,10 @@ function togglePlay() {
     }
 
     if (isPlaying) { 
-        audioPlayer.pause(); 
-        isPlaying = false;
+        smoothPause();
     } else { 
-        isPlaying = true;
-        audioPlayer.play().catch(e => {
-            console.warn("Play failed", e);
-            isPlaying = false;
-            updatePlayBtn();
-        });
+        smoothPlay();
     }
-    updatePlayBtn();
 }
 
 function updatePlayBtn() {
@@ -294,6 +380,10 @@ let dragRafId = null;
 const startDrag = (e) => {
     if (e.cancelable) e.preventDefault(); 
     wasPlayingBeforeDrag = isPlaying;
+    
+    // Clear any fading logic instantly
+    if (fadeInterval) clearInterval(fadeInterval);
+    audioPlayer.volume = 1;
     audioPlayer.pause(); 
     
     isDragging = true;
