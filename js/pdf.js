@@ -120,6 +120,12 @@ async function loadDocument(index) {
     if (isLoading) return;
     isLoading = true; renderSession++; const currentSession = renderSession;
     
+    // Enforce transparency on the container and lock scrolling safely
+    pdfWrapper.classList.remove('ready'); 
+    if (!waitingForLyrics) {
+        document.body.classList.add('loading-lock'); 
+    }
+    
     // Visual Reset
     if (prevArrow) prevArrow.classList.remove('active-state');
     if (nextArrow) nextArrow.classList.remove('active-state');
@@ -169,6 +175,10 @@ async function loadDocument(index) {
       if (currentSession === renderSession) {
           if (!waitingForLyrics && loadingOverlay) loadingOverlay.style.display = 'none';
           document.body.classList.add("loaded");
+          
+          // Re-introduce the background and unlock scroll
+          pdfWrapper.classList.add('ready'); 
+          document.body.classList.remove('loading-lock');
   
           if (currentDoc.songUrl && songLink && songContainer) {
               songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
@@ -191,6 +201,8 @@ async function loadDocument(index) {
     } catch (err) {
       console.error("Archive Load Error:", err);
       pdfWrapper.style.minHeight = '';
+      if (loadingOverlay) loadingOverlay.style.display = 'none';
+      document.body.classList.remove('loading-lock');
       isLoading = false;
       waitingForLyrics = false;
       if (typeof resolveLoadingScramble === 'function' && typeof voiceScrambleInterval !== 'undefined' && voiceScrambleInterval) {

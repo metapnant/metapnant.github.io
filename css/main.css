@@ -1,163 +1,268 @@
-/* --- LAYOUT --- */
-.explore-container { 
-    width: 100%; max-width: 900px; margin: 0 auto; flex-grow: 1; 
-    transition: opacity 1.2s ease; display: flex; flex-direction: column; overflow-x: hidden;
-}
-
-.explore-header { text-align: center; margin-bottom: 30px; }
-.explore-header h1 { 
-    color: var(--name-color); 
-    font-size: clamp(1.2rem, 6vw, 3.5rem); 
-    font-style: italic; font-weight: 700; margin-bottom: 10px; 
-    letter-spacing: 1px; line-height: 1.2; padding: 0 15px;
-    overflow-wrap: break-word; word-break: break-word;
-}
-
-/* --- PDF ENGINE --- */
-.pdf-container { 
-    position: relative; background-color: rgba(255, 255, 255, 0.03); 
-    display: flex; flex-direction: column; align-items: center; 
-    min-height: 60vh; padding: 10px; gap: 15px; border-radius: 4px; width: 100%;
-}
-#loading-overlay { display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 50; background-color: var(--background-main); }
-.loading-spinner { width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: var(--name-color); border-radius: 50%; animation: spin 1s infinite linear; }
-
-.pdf-page-wrapper { 
-    width: 100%; max-width: 100%; height: auto; position: relative; margin: 0 auto; 
-    border-radius: 4px; overflow: visible; 
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 2px, black calc(100% - 2px), transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0%, black 2px, black calc(100% - 2px), transparent 100%);
-    margin-bottom: 0; 
-    background: linear-gradient(to bottom, transparent 99%, var(--background-main) 99.5%); 
-    line-height: 0; flex-shrink: 0; opacity: 0; animation: fadeContentIn 0.8s ease forwards; 
-}
-.pdf-page-wrapper::before {
-    content: ""; position: absolute; z-index: -1; bottom: 5px; left: 4px; right: 4px; height: 20px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.7); border-radius: 50%;
-}
-.pdf-page-wrapper { box-shadow: none; }
-.pdf-page-wrapper::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 70%); background-size: 200% 200%; pointer-events: none; z-index: 10; mix-blend-mode: overlay; }
-/* Update this in main.css */
-.pdf-page-canvas { 
-    width: 100% !important; 
-    height: auto !important; 
-    display: block; 
+:root {
+    --name-color: #9800eb; 
+    --title-color: #ded4eb; 
+    --background-main: #0d0022;
+    --primary-text-color: #f0f0f0; 
+    --secondary-text-color: #a09cb8; 
+    --arrow-color: rgba(222, 212, 235, 0.4);
+    --terminal-bg: #05000a; 
+    --terminal-sidebar: #0a0014; 
+    --terminal-text: #00ff9d; 
+    --terminal-dim: #005f3d; 
+    --terminal-alert: #ffcc00; 
+    --terminal-error: #ff3333; 
+    --terminal-gold: #ffd700; 
+    --terminal-white: #ffffff; 
+    --terminal-magenta: #ff00ff; 
+    --terminal-cyan: #00ffff; 
+    --terminal-border: #333; 
+    --operator-color: #d4aaff;
+  }
+  
+  /* FIX: Removes yellow outline when clicking/focusing elements */
+  :focus-visible { outline: none !important; }
+  
+  * { 
+    -webkit-tap-highlight-color: transparent; 
+    -webkit-touch-callout: none; 
+    user-select: none; 
+    box-sizing: border-box; 
+  }
+  
+  /* FIX: Disable double-tap-to-zoom delay on interactive elements */
+  a, button, input, .playlist-item, .voice-btn, .ctrl-btn, .cycle-btn, #infinity-symbol, .nav-arrow {
+    touch-action: manipulation;
+  }
+  
+  html { 
     background-color: var(--background-main); 
-    clip-path: inset(0 3px 2px 0); 
-    object-fit: contain; 
-    
-    /* New: Smooth fade-in for lazy-loaded lazy-rendered textures */
-    opacity: 0; 
-    transition: opacity 0.4s ease; 
-}
-
-/* Ensure the canvas becomes visible once rendered */
-.pdf-page-wrapper.rendered .pdf-page-canvas { 
-    opacity: 1; 
-}
-
-/* --- HUD (ARROWS) --- */
-.nav-controls {
-  position: fixed; z-index: 3000; pointer-events: none; 
-  top: 0; left: 0; right: 0; width: 100%; height: 100lvh;
-  display: flex; justify-content: space-between; align-items: center; 
-  max-width: 1050px; margin: 0 auto; padding: 0 10px; 
-}
-
-.nav-arrow {
-  pointer-events: auto; background: none; border: none; 
-  color: var(--arrow-color); 
-  font-size: clamp(4rem, 12vw, 7rem); 
-  font-weight: 100; 
-  width: auto; height: auto; line-height: 0.8; padding: 20px; margin: 0;
-  cursor: pointer; transition: none !important; animation: faintFlash 5s infinite ease-in-out;
-  opacity: 0.6; display: flex; justify-content: center; align-items: center;
-  text-shadow: 0 0 30px rgba(0,0,0,0.8); transform: none; 
-}
-.nav-arrow.disabled { opacity: 0 !important; pointer-events: none !important; visibility: hidden; }
-
-@media (hover: hover) {
-  .nav-arrow:hover { color: var(--name-color); transform: scale(1.2); animation: none; opacity: 1; filter: drop-shadow(0 0 20px var(--name-color)); }
-}
-.nav-arrow:not(.disabled):active, .nav-arrow:not(.disabled).active-state { transform: scale(0.8) !important; color: var(--name-color) !important; opacity: 1 !important; animation: none !important; }
-
-/* --- VOID MECHANIC (PDF BUTTON) --- */
-.pdf-tools {
-    position: fixed; right: 20px; bottom: 20px; z-index: 2500; height: 50px; 
-    display: flex; align-items: center;
-    background-color: transparent; border: 1px solid var(--arrow-color); border-radius: 0; color: var(--arrow-color);
-    animation: faintFlash 5s infinite ease-in-out; opacity: 0.8; 
-    max-width: 50px; overflow: hidden; 
-    transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.2s, border-color 0.2s, opacity 0.2s;
-    backdrop-filter: blur(2px);
-    -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
-    mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
-    pointer-events: none;
-}
-.pdf-tools.active { max-width: 200px; opacity: 1; animation: none; border-color: rgba(152, 0, 235, 0.3); background-color: rgba(13, 0, 34, 0.9); }
-.tools-toggle {
-    pointer-events: auto; width: 50px; min-width: 50px; height: 100%;
-    display: flex; justify-content: center; align-items: center; cursor: pointer;
-    background: rgba(13, 0, 34, 0.9); border-right: 1px solid transparent; 
-    transition: background-color 0.2s, color 0.2s, border-right-color 0.2s;
-}
-.pdf-tools.active .tools-toggle { border-right-color: rgba(152, 0, 235, 0.3); }
-.tools-toggle svg { width: 20px; height: 20px; fill: currentColor; transform: rotate(180deg); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.pdf-tools.active .tools-toggle svg { transform: rotate(0deg); }
-.tool-content { min-width: 120px; height: 100%; display: flex; opacity: 0; transition: opacity 0.3s ease 0.1s; pointer-events: auto; }
-.pdf-tools.active .tool-content { opacity: 1; }
-.tool-btn {
-    flex-grow: 1; height: 100%; display: flex; align-items: center; justify-content: center; 
-    padding-right: 20px; text-decoration: none; color: inherit; 
-    font-family: "Space Mono", monospace; font-weight: 600; 
-    font-size: clamp(0.7em, 2vw, 0.85em); 
-    letter-spacing: 1px;
-    white-space: nowrap; background: rgba(13, 0, 34, 0.9); transition: background-color 0.2s, color 0.2s;
-}
-
-/* --- FOOTER & LINKS --- */
-.footer { text-align: center; padding: 20px 0 10px 0; font-size: 0.85em; color: var(--secondary-text-color); border-top: 1px solid rgba(255, 255, 255, 0.08); margin-top: 40px; }
-#infinity-symbol { display: inline-block; transition: text-shadow 0.3s, color 0.3s; padding: 0 5px; font-weight: bold; cursor: default; pointer-events: none; }
-#infinity-symbol.active { cursor: pointer; pointer-events: auto; }
-#infinity-symbol.active:hover { color: #fff; text-shadow: 0 0 15px var(--name-color); }
-
-/* UNLOCKED STATE (White Flash) */
-#infinity-symbol.active:active, 
-#infinity-symbol.active.active-state { 
-    color: #ffffff !important; 
-    text-shadow: 0 0 15px #ffffff, 0 0 30px var(--name-color) !important;
-    transition: none !important;
-}
-
-/* LOCKED STATE (Red Flash) */
-#infinity-symbol.active-state-red {
-    color: #ff3333 !important;
-    text-shadow: 0 0 15px #ff0000, 0 0 30px #ff0000 !important;
-    transition: none !important;
-}
-
-#song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 10px; }
-#song-link { color: var(--name-color); text-decoration: underline; text-decoration-color: var(--name-color); text-underline-offset: 2px; font-weight: 600; transition: color 0.1s; }
-
-/* Radiant Link */
-body #song-link.active-state, body #song-link:active {
-    background: transparent !important; border: none !important; box-shadow: none !important;
-    color: #ffd700 !important; text-shadow: 0 0 8px #ffd700, 0 0 15px rgba(255, 215, 0, 0.7) !important;
-    text-decoration: underline !important; text-decoration-color: var(--name-color) !important; 
-    text-underline-offset: 4px; animation: none !important; transition: none !important; filter: brightness(1.2) !important;
-}
-
-@media (hover: hover) {
-    .pdf-tools:hover { opacity: 1; animation: none; border-color: var(--name-color); }
-    .tools-toggle:hover { background-color: rgba(152, 0, 235, 0.15); color: #fff; }
-    .tool-btn:hover { background-color: rgba(152, 0, 235, 0.15); color: #fff; text-shadow: 0 0 10px var(--name-color); }
-    #song-link:hover { animation: strobe 1s infinite; }
-}
-
-@media (max-width: 700px) {
-    .pdf-tools { bottom: 20px; height: 56px; max-width: 56px; }
-    .pdf-tools.active { max-width: 220px; }
-    .tools-toggle { width: 56px; min-width: 56px; }
-    .tools-toggle svg { width: 24px; height: 24px; }
-    .tool-btn { font-size: 0.95em; }
-}
+    height: 100%; 
+    overscroll-behavior-y: none; 
+    -webkit-text-size-adjust: 100%; 
+    text-size-adjust: 100%;
+  }
+  
+  body {
+  font-family: "Zilla Slab", serif; margin: 0; padding: 20px; padding-bottom: 160px;
+  min-height: 100dvh; display: flex; flex-direction: column;
+  color: var(--primary-text-color); background-color: var(--background-main);
+  /* FIX: Darkened the maximum brightness points of the gradient for a consistent, deep flux */
+  background: linear-gradient(135deg, #080017, #100021, #0a001a, #140029, #080017);
+  background-size: 600vw 600vh; 
+  background-attachment: fixed; 
+  animation: darkShift 30s ease infinite; overflow-x: hidden;
+  }
+  
+  body.no-scroll { overflow: hidden !important; width: 100%; position: fixed; }
+  body.loading-lock { overflow: hidden !important; touch-action: none; }
+  
+  /* --- ANIMATIONS --- */
+  @keyframes darkShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes strobe { 0%, 100% { color: var(--name-color); text-decoration-color: var(--name-color); } 50% { color: #ffffff; text-decoration-color: #ffffff; } }
+  @keyframes faintFlash { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
+  @keyframes glitch-shake { 0% { transform: translate(0, 0); } 25% { transform: translate(1px, 0); } 50% { transform: translate(-1px, 0); } 75% { transform: translate(0, 1px); } 100% { transform: translate(0, -1px); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  
+  /* --- LAYOUT --- */
+  .explore-container { 
+      width: 100%; max-width: 900px; margin: 0 auto; flex-grow: 1; 
+      transition: opacity 1.2s ease; display: flex; flex-direction: column; overflow-x: hidden;
+      animation: fadeIn 1s ease forwards;
+  }
+  
+  .explore-header { text-align: center; margin-bottom: 30px; }
+  .explore-header h1 { 
+      color: var(--name-color); 
+      font-size: clamp(1.2rem, 6vw, 3.5rem); 
+      font-style: italic; font-weight: 700; margin-bottom: 10px; 
+      letter-spacing: 1px; line-height: 1.2; padding: 0 15px;
+      overflow-wrap: break-word; word-break: break-word;
+  }
+  
+  /* --- PDF ENGINE --- */
+  .pdf-container { 
+      position: relative; 
+      background-color: transparent !important; 
+      display: flex; flex-direction: column; align-items: stretch; 
+      min-height: 80vh; 
+      padding: 10px; gap: 15px; border-radius: 4px; width: 100%;
+      transition: background-color 0s; 
+  }
+  
+  .pdf-container.ready {
+      background-color: rgba(255, 255, 255, 0.03) !important; 
+      transition: background-color 0.8s ease; 
+  }
+  
+  #loading-overlay { 
+      display: flex; align-items: center; justify-content: center; 
+      position: fixed; 
+      top: 0; left: 0; width: 100vw; height: 100vh; 
+      z-index: 50; background-color: transparent; 
+      pointer-events: none;
+  }
+  .loading-spinner { width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: var(--name-color); border-radius: 50%; animation: spin 1s infinite linear; }
+  
+  .pdf-page-wrapper { 
+      width: 100%; max-width: 100%; height: auto; position: relative; margin: 0 auto; 
+      border-radius: 4px; overflow: visible; 
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 2px, black calc(100% - 2px), transparent 100%);
+      mask-image: linear-gradient(to right, transparent 0%, black 2px, black calc(100% - 2px), transparent 100%);
+      margin-bottom: 0; 
+      
+      background: transparent; 
+      line-height: 0; flex-shrink: 0; box-shadow: none;
+      
+      opacity: 0; 
+      transform: translateY(10px);
+      transition: opacity 0.8s ease, transform 0.8s ease; 
+  }
+  
+  .pdf-page-wrapper.rendered {
+      opacity: 1;
+      transform: translateY(0);
+  }
+  
+  .pdf-page-wrapper::before {
+      content: ""; position: absolute; z-index: -1; bottom: 5px; left: 4px; right: 4px; height: 20px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.7); border-radius: 50%;
+  }
+  
+  .pdf-page-wrapper::after { 
+      content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
+      background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 70%); 
+      background-size: 200% 200%; pointer-events: none; z-index: 10; mix-blend-mode: overlay; 
+      opacity: 0; transition: opacity 0.4s ease; 
+  }
+  .pdf-page-wrapper.rendered::after { opacity: 1; }
+  
+  .pdf-page-canvas { 
+      width: 100% !important; height: auto !important; display: block; 
+      background-color: var(--background-main); clip-path: inset(0 3px 2px 0); object-fit: contain; 
+      opacity: 0; transition: opacity 0.4s ease; 
+  }
+  .pdf-page-wrapper.rendered .pdf-page-canvas { opacity: 1; }
+  
+  /* --- HUD (ARROWS) --- */
+  .nav-controls {
+    position: fixed; z-index: 3000; pointer-events: none; 
+    top: 0; left: 0; right: 0; width: 100%; height: 100lvh;
+    display: flex; justify-content: space-between; align-items: center; 
+    max-width: 1050px; margin: 0 auto; padding: 0 10px; 
+  }
+  
+  /* ANTI-FLASH SHIELD: Hide arrows completely until JS finishes its 150ms boot delay */
+  body:not(.loaded) .nav-controls {
+      opacity: 0 !important;
+      pointer-events: none !important;
+  }
+  
+  .nav-arrow {
+    pointer-events: auto; background: none; border: none; 
+    color: var(--arrow-color); 
+    font-size: clamp(4rem, 12vw, 7rem); 
+    font-weight: 100; 
+    width: auto; height: auto; line-height: 0.8; padding: 20px; margin: 0;
+    cursor: pointer; transition: none !important; animation: faintFlash 5s infinite ease-in-out;
+    opacity: 0.6; display: flex; justify-content: center; align-items: center;
+    text-shadow: 0 0 30px rgba(0,0,0,0.8); transform: none; 
+  }
+  .nav-arrow.disabled { opacity: 0 !important; pointer-events: none !important; visibility: hidden; }
+  
+  @media (hover: hover) {
+    .nav-arrow:hover { color: var(--name-color); transform: scale(1.2); animation: none; opacity: 1; filter: drop-shadow(0 0 20px var(--name-color)); }
+  }
+  .nav-arrow:not(.disabled):active, .nav-arrow:not(.disabled).active-state { transform: scale(0.8) !important; color: var(--name-color) !important; opacity: 1 !important; animation: none !important; }
+  
+  /* --- VOID MECHANIC (PDF BUTTON) --- */
+  .pdf-tools {
+      position: fixed; right: 20px; bottom: 20px; z-index: 2500; height: 50px; 
+      display: flex; align-items: center;
+      background-color: transparent; border: 1px solid var(--arrow-color); border-radius: 0; color: var(--arrow-color);
+      animation: faintFlash 5s infinite ease-in-out; opacity: 0.8; 
+      max-width: 50px; overflow: hidden; 
+      transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.2s, border-color 0.2s, opacity 0.2s;
+      backdrop-filter: blur(2px);
+      -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+      mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+      pointer-events: none;
+  }
+  .pdf-tools.active { max-width: 200px; opacity: 1; animation: none; border-color: rgba(152, 0, 235, 0.3); background-color: rgba(13, 0, 34, 0.9); }
+  .tools-toggle {
+      pointer-events: auto; width: 50px; min-width: 50px; height: 100%;
+      display: flex; justify-content: center; align-items: center; cursor: pointer;
+      background: rgba(13, 0, 34, 0.9); border-right: 1px solid transparent; 
+      transition: background-color 0.2s, color 0.2s, border-right-color 0.2s;
+  }
+  .pdf-tools.active .tools-toggle { border-right-color: rgba(152, 0, 235, 0.3); }
+  .tools-toggle svg { width: 20px; height: 20px; fill: currentColor; transform: rotate(180deg); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .pdf-tools.active .tools-toggle svg { transform: rotate(0deg); }
+  .tool-content { min-width: 120px; height: 100%; display: flex; opacity: 0; transition: opacity 0.3s ease 0.1s; pointer-events: auto; }
+  .pdf-tools.active .tool-content { opacity: 1; }
+  .tool-btn {
+      flex-grow: 1; height: 100%; display: flex; align-items: center; justify-content: center; 
+      padding-right: 20px; text-decoration: none; color: inherit; 
+      font-family: "Space Mono", monospace; font-weight: 600; 
+      font-size: clamp(0.7em, 2vw, 0.85em); 
+      letter-spacing: 1px;
+      white-space: nowrap; background: rgba(13, 0, 34, 0.9); transition: background-color 0.2s, color 0.2s;
+  }
+  
+  /* --- FOOTER & LINKS --- */
+  .footer { text-align: center; padding: 20px 0 10px 0; font-size: 0.85em; color: var(--secondary-text-color); border-top: 1px solid rgba(255, 255, 255, 0.08); margin-top: 40px; }
+  #infinity-symbol { display: inline-block; transition: text-shadow 0.3s, color 0.3s; padding: 0 5px; font-weight: bold; cursor: default; pointer-events: none; }
+  #infinity-symbol.active { cursor: pointer; pointer-events: auto; }
+  #infinity-symbol.active:hover { color: #fff; text-shadow: 0 0 15px var(--name-color); }
+  
+  /* UNLOCKED STATE (White Flash) */
+  #infinity-symbol.active:active, 
+  #infinity-symbol.active.active-state { 
+      color: #ffffff !important; 
+      text-shadow: 0 0 15px #ffffff, 0 0 30px var(--name-color) !important;
+      transition: none !important;
+  }
+  
+  /* LOCKED STATE (Red Flash) */
+  #infinity-symbol.active-state-red {
+      color: #ff3333 !important;
+      text-shadow: 0 0 15px #ff0000, 0 0 30px #ff0000 !important;
+      transition: none !important;
+  }
+  
+  #song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 10px; }
+  #song-link { color: var(--name-color); text-decoration: underline; text-decoration-color: var(--name-color); text-underline-offset: 2px; font-weight: 600; transition: color 0.1s; }
+  
+  /* Radiant Link */
+  body #song-link.active-state, body #song-link:active {
+      background: transparent !important; border: none !important; box-shadow: none !important;
+      color: #ffd700 !important; text-shadow: 0 0 8px #ffd700, 0 0 15px rgba(255, 215, 0, 0.7) !important;
+      text-decoration: underline !important; text-decoration-color: var(--name-color) !important; 
+      text-underline-offset: 4px; animation: none !important; transition: none !important; filter: brightness(1.2) !important;
+  }
+  
+  @media (hover: hover) {
+      .pdf-tools:hover { opacity: 1; animation: none; border-color: var(--name-color); }
+      .tools-toggle:hover { background-color: rgba(152, 0, 235, 0.15); color: #fff; }
+      .tool-btn:hover { background-color: rgba(152, 0, 235, 0.15); color: #fff; text-shadow: 0 0 10px var(--name-color); }
+      #song-link:hover { animation: strobe 1s infinite; }
+  }
+  
+  @media (max-width: 900px) {
+      /* Natural relaxation of global padding on mobile to hug edges closely without breaking flow */
+      body {
+          padding: 20px 8px; 
+          padding-bottom: 160px;
+      }
+  
+      .pdf-tools { bottom: 20px; height: 56px; max-width: 56px; }
+      .pdf-tools.active { max-width: 220px; }
+      .tools-toggle { width: 56px; min-width: 56px; }
+      .tools-toggle svg { width: 24px; height: 24px; }
+      .tool-btn { font-size: 0.95em; }
+  
+      /* Slightly tighter internal padding to maximize canvas footprint while retaining border/tear geometry */
+      .pdf-container {
+          padding: 10px 6px; 
+      }
+  }
