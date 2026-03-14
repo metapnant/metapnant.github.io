@@ -312,7 +312,7 @@
 
     /* FIX: Generous vertical target, minimal horizontal margin, distinctly thicker arrow (600) */
     .nav-arrow {
-        padding: 15px 5px !important; 
+        padding: 15px 25px !important; 
         font-weight: 600 !important; 
     }
 
