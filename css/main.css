@@ -170,17 +170,43 @@
     color: var(--arrow-color); 
     font-size: clamp(4rem, 12vw, 7rem); 
     font-weight: 100; 
-    width: auto; height: auto; line-height: 0.8; padding: 20px; margin: 0;
+    width: auto; height: auto; 
+    /* FIX: Crush the line-height to trim the top void */
+    line-height: 0.5; 
+    /* FIX: Restored horizontal padding to 20px and margin to 0. 
+       This puts the arrows exactly back in their original horizontal spots. 
+       Vertical padding is kept tight at 5px. */
+    padding: 5px 20px; 
+    margin: 0;
     cursor: pointer; transition: none !important; animation: faintFlash 5s infinite ease-in-out;
     opacity: 0.6; display: flex; justify-content: center; align-items: center;
     text-shadow: 0 0 30px rgba(0,0,0,0.8); transform: none; 
   }
   .nav-arrow.disabled { opacity: 0 !important; pointer-events: none !important; visibility: hidden; }
   
-  @media (hover: hover) {
-    .nav-arrow:hover { color: var(--name-color); transform: scale(1.2); animation: none; opacity: 1; filter: drop-shadow(0 0 20px var(--name-color)); }
+  .arrow-glyph {
+    display: inline-block;
+    transition: transform 0.2s ease;
+    pointer-events: none;
+    /* FIX: Nudge the visual arrow slightly UP to dead-center it inside the new, tight bounding box */
+    position: relative;
+    bottom: 0.06em;
   }
-  .nav-arrow:not(.disabled):active, .nav-arrow:not(.disabled).active-state { transform: scale(0.8) !important; color: var(--name-color) !important; opacity: 1 !important; animation: none !important; }
+
+  @media (hover: hover) {
+    .nav-arrow:hover { color: var(--name-color); animation: none; opacity: 1; filter: drop-shadow(0 0 20px var(--name-color)); }
+    .nav-arrow:hover .arrow-glyph { transform: scale(1.2); }
+  }
+  
+  .nav-arrow:not(.disabled):active, 
+  .nav-arrow:not(.disabled).active-state { 
+      color: var(--name-color) !important; opacity: 1 !important; animation: none !important; 
+  }
+  
+  .nav-arrow:not(.disabled):active .arrow-glyph, 
+  .nav-arrow:not(.disabled).active-state .arrow-glyph { 
+      transform: scale(0.8) !important; 
+  }
   
   /* --- VOID MECHANIC (PDF BUTTON) --- */
   .pdf-tools {
