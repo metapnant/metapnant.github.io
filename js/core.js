@@ -89,8 +89,6 @@ let selectedTracks =[];
 let voiceScrambleInterval = null; 
 let bufferDebounceTimer = null; 
 let scrollAnimationId = null;
-// --- SCROLL MOMENTUM TRACKING ---
-let scrollDebounceTimeout = null;
 
 // -- TERMINAL STATE --
 let secretClicks = 0;
