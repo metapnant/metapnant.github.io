@@ -1,3 +1,4 @@
+/* --- CSS VARIABLES --- */
 :root {
     --name-color: #9800eb; 
     --title-color: #ded4eb; 
@@ -5,6 +6,7 @@
     --primary-text-color: #f0f0f0; 
     --secondary-text-color: #a09cb8; 
     --arrow-color: rgba(222, 212, 235, 0.4);
+    
     --terminal-bg: #05000a; 
     --terminal-sidebar: #0a0014; 
     --terminal-text: #00ff9d; 
@@ -19,7 +21,7 @@
     --operator-color: #d4aaff;
   }
   
-  /* FIX: Removes yellow outline when clicking/focusing elements */
+  /* --- RESET & ACCESSIBILITY --- */
   :focus-visible { outline: none !important; }
   
   * { 
@@ -29,11 +31,11 @@
     box-sizing: border-box; 
   }
   
-  /* FIX: Disable double-tap-to-zoom delay on interactive elements */
   a, button, input, .playlist-item, .voice-btn, .ctrl-btn, .cycle-btn, #infinity-symbol, .nav-arrow {
     touch-action: manipulation;
   }
   
+  /* --- BASE LAYOUT --- */
   html { 
     background-color: var(--background-main); 
     height: 100%; 
@@ -44,28 +46,44 @@
   }
   
   body {
-  font-family: "Zilla Slab", serif; margin: 0; padding: 20px; padding-bottom: 50px;
-  min-height: 100dvh; display: flex; flex-direction: column;
-  color: var(--primary-text-color); background-color: var(--background-main);
-  background: linear-gradient(135deg, #080017, #100021, #0a001a, #140029, #080017);
-  background-size: 600% 600%; 
-  background-attachment: fixed; 
-  animation: darkShift 30s ease infinite; 
-  /* FIX: Removed overflow-x: hidden from body to destroy the nested scrollbar trap */
+    font-family: "Zilla Slab", serif; margin: 0; padding: 20px; padding-bottom: 50px;
+    min-height: 100dvh; 
+    display: flex; flex-direction: column; 
+    color: var(--primary-text-color); background-color: var(--background-main);
+    background: linear-gradient(135deg, #080017, #100021, #0a001a, #140029, #080017);
+    background-size: 600% 600%; 
+    background-attachment: fixed; 
+    animation: darkShift 30s ease infinite; 
   }
   
   body.no-scroll { overflow: hidden !important; width: 100%; position: fixed; }
   body.loading-lock { overflow: hidden !important; touch-action: none; }
   
   /* --- ANIMATIONS --- */
-  @keyframes darkShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+  @keyframes darkShift { 
+    0% { background-position: 0% 50%; } 
+    50% { background-position: 100% 50%; } 
+    100% { background-position: 0% 50%; } 
+  }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes strobe { 0%, 100% { color: var(--name-color); text-decoration-color: var(--name-color); } 50% { color: #ffffff; text-decoration-color: #ffffff; } }
-  @keyframes faintFlash { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
-  @keyframes glitch-shake { 0% { transform: translate(0, 0); } 25% { transform: translate(1px, 0); } 50% { transform: translate(-1px, 0); } 75% { transform: translate(0, 1px); } 100% { transform: translate(0, -1px); } }
+  @keyframes strobe { 
+    0%, 100% { color: var(--name-color); text-decoration-color: var(--name-color); } 
+    50% { color: #ffffff; text-decoration-color: #ffffff; } 
+  }
+  @keyframes faintFlash { 
+    0%, 100% { opacity: 0.3; } 
+    50% { opacity: 0.8; } 
+  }
+  @keyframes glitch-shake { 
+    0% { transform: translate(0, 0); } 
+    25% { transform: translate(1px, 0); } 
+    50% { transform: translate(-1px, 0); } 
+    75% { transform: translate(0, 1px); } 
+    100% { transform: translate(0, -1px); } 
+  }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   
-  /* --- LAYOUT --- */
+  /* --- EXPLORE CONTAINER --- */
   .explore-container { 
       width: 100%; max-width: 900px; margin: 0 auto; flex-grow: 1; 
       transition: opacity 1.2s ease; display: flex; flex-direction: column; overflow-x: hidden;
@@ -99,12 +117,15 @@
   #loading-overlay { 
       display: flex; align-items: center; justify-content: center; 
       position: fixed; 
-      /* FIX: Replaced width/height with top/bottom anchors to prevent 1px viewport leaks */
       top: 0; left: 0; right: 0; bottom: 0; 
       z-index: 50; background-color: transparent; 
       pointer-events: none;
   }
-  .loading-spinner { width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: var(--name-color); border-radius: 50%; animation: spin 1s infinite linear; }
+  .loading-spinner { 
+      width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); 
+      border-top-color: var(--name-color); border-radius: 50%; 
+      animation: spin 1s infinite linear; 
+  }
   
   .pdf-page-wrapper { 
       width: 100%; max-width: 100%; height: auto; position: relative; margin: 0 auto; 
@@ -112,10 +133,8 @@
       -webkit-mask-image: linear-gradient(to right, transparent 0%, black 2px, black calc(100% - 2px), transparent 100%);
       mask-image: linear-gradient(to right, transparent 0%, black 2px, black calc(100% - 2px), transparent 100%);
       margin-bottom: 0; 
-      
       background: transparent; 
       line-height: 0; flex-shrink: 0; box-shadow: none;
-      
       opacity: 0; 
       transform: translateY(10px);
       transition: opacity 0.8s ease, transform 0.8s ease; 
@@ -146,67 +165,65 @@
   }
   .pdf-page-wrapper.rendered .pdf-page-canvas { opacity: 1; }
   
-  /* --- HUD (ARROWS) --- */
+  /* --- NAVIGATION HUD --- */
   .nav-controls {
     position: fixed; z-index: 3000; pointer-events: none; 
     top: 0; left: 0; right: 0; bottom: 0;
     display: flex; justify-content: space-between; align-items: center; 
-    max-width: 1050px; margin: 0 auto; padding: 0 10px; 
-    /* Default state: Visible and ready to fade */
+    max-width: 1050px; margin: 0 auto; 
+    padding: 0 5px; 
     opacity: 1;
     transition: opacity 1.2s ease; 
   }
   
-  /* ANTI-FLASH SHIELD: Hide arrows completely until document is ready */
   body:not(.loaded) .nav-controls,
   body:not(.loaded) .nav-arrow {
       opacity: 0 !important;
       pointer-events: none !important;
-      /* Snap out instantly when a new load starts */
       transition: none !important; 
   }
   
-  /* FIX: The parent arrow is now a completely static container. 
-     It has NO hover or active states that can cancel animations and break webkit */
+  /* Static hit-box parent. Determines clickable area and screen proximity. */
   .nav-arrow {
     pointer-events: auto; background: none; border: none; 
     color: var(--arrow-color); 
     font-size: clamp(4rem, 12vw, 7rem); 
     font-weight: 100; 
     width: auto; height: auto; 
-    line-height: 0.5; 
-    padding: 5px 20px; 
-    margin: 0;
+    line-height: 0.6; 
+    margin: 0 15px; 
+    padding: 5px 5px; 
     cursor: pointer; 
     display: flex; justify-content: center; align-items: center;
     text-shadow: 0 0 30px rgba(0,0,0,0.8); 
   }
   .nav-arrow.disabled { opacity: 0 !important; pointer-events: none !important; visibility: hidden; }
   
-  /* FIX: Exact 80% lock rule. It mathematically guarantees 0-19% is locked and 20% unlocks */
+  /* 20% Click Lock */
   @keyframes lockClicks {
       0%, 19% { pointer-events: none; }
-      20% { pointer-events: auto; }
+      20%, 100% { pointer-events: auto; }
   }
   
-  /* The click lock runs completely uninterrupted on the parent wrapper */
   body.loaded .nav-arrow:not(.disabled) {
       animation: lockClicks 1s forwards;
   }
   
-  /* FIX: The visual breathing, scaling, and color changes are completely delegated to the child.
-     Since the child does not handle the pointer-events, canceling its animation on hover/click 
-     cannot interfere with the parent's click events or cause the desktop restart bug! */
+  /* Animated visual child. Handles hover/active states without interrupting hit-box events. */
   .arrow-glyph {
-    display: inline-block;
+    display: flex; justify-content: center; align-items: center;
     transition: transform 0.2s ease, opacity 0.2s ease, color 0.2s ease;
     pointer-events: none;
     position: relative;
-    bottom: 0.06em;
+    bottom: 0.05em; 
     animation: faintFlash 5s infinite ease-in-out;
     opacity: 0.6;
   }
-
+  
+  /* Optical centering for Zilla Slab's asymmetrical text boundaries. */
+  #prev-doc .arrow-glyph { left: 0.04em; }
+  #next-doc .arrow-glyph { right: 0.04em; }
+  
   @media (hover: hover) {
     .nav-arrow:hover .arrow-glyph { 
         color: var(--name-color); 
@@ -217,7 +234,6 @@
     }
   }
   
-  /* Active states apply cleanly to the glyph child. No more WebKit tap-cancel bugs! */
   .nav-arrow:not(.disabled):active .arrow-glyph, 
   .nav-arrow:not(.disabled).active-state .arrow-glyph { 
       color: var(--name-color) !important; 
@@ -226,7 +242,7 @@
       transform: scale(0.8) !important; 
   }
   
-  /* --- VOID MECHANIC (PDF BUTTON) --- */
+  /* --- VOID MECHANIC --- */
   .pdf-tools {
       position: fixed; right: 20px; bottom: 20px; z-index: 2500; height: 50px; 
       display: flex; align-items: center;
@@ -266,7 +282,6 @@
   #infinity-symbol.active { cursor: pointer; pointer-events: auto; }
   #infinity-symbol.active:hover { color: #fff; text-shadow: 0 0 15px var(--name-color); }
   
-  /* UNLOCKED STATE (White Flash) */
   #infinity-symbol.active:active, 
   #infinity-symbol.active.active-state { 
       color: #ffffff !important; 
@@ -274,7 +289,6 @@
       transition: none !important;
   }
   
-  /* LOCKED STATE (Red Flash) */
   #infinity-symbol.active-state-red {
       color: #ff3333 !important;
       text-shadow: 0 0 15px #ff0000, 0 0 30px #ff0000 !important;
@@ -284,7 +298,6 @@
   #song-link-container { transition: opacity 0.8s ease, visibility 0.8s; display: inline-block; margin-top: 0px; }
   #song-link { color: var(--name-color); text-decoration: underline; text-decoration-color: var(--name-color); text-underline-offset: 2px; font-weight: 600; transition: color 0.1s; }
   
-  /* Radiant Link */
   body #song-link.active-state, body #song-link:active {
       background: transparent !important; border: none !important; box-shadow: none !important;
       color: #ffd700 !important; text-shadow: 0 0 8px #ffd700, 0 0 15px rgba(255, 215, 0, 0.7) !important;
@@ -299,44 +312,38 @@
       #song-link:hover { animation: strobe 1s infinite; }
   }
   
+  /* --- MOBILE RESPONSIVENESS --- */
   @media (max-width: 900px) {
-    body {
-        padding: 20px 8px; 
-        padding-bottom: 50px;
-    }
-
-    /* FIX: Zero out container padding to pull arrows absolute flush to screen edges */
-    .nav-controls {
-        padding: 0 !important;
-    }
-
-    /* FIX: Generous vertical target, minimal horizontal margin, distinctly thicker arrow (600) */
-    .nav-arrow {
-        padding: 15px 25px !important; 
-        font-weight: 600 !important; 
-    }
-
-    /* FIX: Tighten the container, remove the frame, and kill any nested scrollbars */
-    .explore-container, .pdf-container {
-        overflow: visible !important;
-    }
-
-    .pdf-container {
-        padding: 0; 
-        gap: 15px;
-        background-color: transparent !important;
-    }
-
-    .pdf-tools { bottom: 20px; height: 56px; max-width: 56px; }
-    .pdf-tools.active { max-width: 220px; }
-    .tools-toggle { width: 56px; min-width: 56px; }
-    .tools-toggle svg { width: 24px; height: 24px; }
-    .tool-btn { font-size: 0.95em; }
-
-    /* Music Player spacing refinements */
-    .progress-area { margin-bottom: 5px; }
-    .time-marker { margin-top: 0px; margin-bottom: 5px; }
-    .buttons { justify-content: flex-start !important; margin-top: 5px; margin-bottom: 20px; }
-    .utility-btns { margin-left: auto !important; }
-    .playlist-container { max-height: 220px; }
-}
+      body {
+          padding: 20px 8px; 
+          padding-bottom: 50px;
+      }
+  
+      .nav-arrow {
+          margin: 0 10px;
+          font-weight: 600 !important; 
+          padding: 5px 5px !important; 
+      }
+  
+      .explore-container, .pdf-container {
+          overflow: visible !important;
+      }
+  
+      .pdf-container {
+          padding: 0; 
+          gap: 15px;
+          background-color: transparent !important;
+      }
+  
+      .pdf-tools { bottom: 20px; height: 56px; max-width: 56px; }
+      .pdf-tools.active { max-width: 220px; }
+      .tools-toggle { width: 56px; min-width: 56px; }
+      .tools-toggle svg { width: 24px; height: 24px; }
+      .tool-btn { font-size: 0.95em; }
+  
+      .progress-area { margin-bottom: 5px; }
+      .time-marker { margin-top: 0px; margin-bottom: 5px; }
+      .buttons { justify-content: flex-start !important; margin-top: 5px; margin-bottom: 20px; }
+      .utility-btns { margin-left: auto !important; }
+      .playlist-container { max-height: 220px; }
+  }
