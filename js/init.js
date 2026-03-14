@@ -27,6 +27,16 @@ window.addEventListener('resize', () => {
     }
 });
 
+// Detects if the page is currently in a momentum scroll
+window.addEventListener('scroll', () => {
+    isScrolling = true;
+    clearTimeout(scrollDebounceTimeout);
+    // After 150ms of no scroll events, we consider the scroll stopped
+    scrollDebounceTimeout = setTimeout(() => {
+        isScrolling = false;
+    }, 150);
+}, { passive: true });
+
 // UI Buttons
 if (nextArrow) nextArrow.addEventListener('click', () => { 
     if(!isLoading && typeof library !== 'undefined' && currentIndex < library.length - 1) {
@@ -44,8 +54,16 @@ if (prevArrow) prevArrow.addEventListener('click', () => {
 
 [nextArrow, prevArrow].forEach(arrow => {
     if (arrow) {
-        arrow.addEventListener('touchstart', function() { this.classList.add('active-state'); }, {passive: true});
-        arrow.addEventListener('touchend', function() { this.classList.remove('active-state'); }, {passive: true});
+        arrow.addEventListener('touchstart', function() { 
+            // Only highlight if the user isn't stopping a momentum scroll
+            if (!isScrolling) {
+                this.classList.add('active-state'); 
+            }
+        }, {passive: true});
+        
+        arrow.addEventListener('touchend', function() { 
+            this.classList.remove('active-state'); 
+        }, {passive: true});
     }
 });
 

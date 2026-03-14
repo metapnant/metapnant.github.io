@@ -5,7 +5,8 @@
     margin: 40px auto 20px auto; 
     animation: fadeIn 2s ease forwards; 
     position: relative; 
-    z-index: 2100; /* Lower than nav arrows */
+    /* Higher than nav-controls (3000) to ensure overlap priority */
+    z-index: 4000; 
 }
 
 .music-container { 
