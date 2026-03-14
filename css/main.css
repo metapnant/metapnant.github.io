@@ -158,64 +158,71 @@
   }
   
   /* ANTI-FLASH SHIELD: Hide arrows completely until document is ready */
-  body:not(.loaded) .nav-controls {
+  body:not(.loaded) .nav-controls,
+  body:not(.loaded) .nav-arrow {
       opacity: 0 !important;
       pointer-events: none !important;
       /* Snap out instantly when a new load starts */
       transition: none !important; 
   }
   
+  /* FIX: The parent arrow is now a completely static container. 
+     It has NO hover or active states that can cancel animations and break webkit */
   .nav-arrow {
     pointer-events: auto; background: none; border: none; 
     color: var(--arrow-color); 
     font-size: clamp(4rem, 12vw, 7rem); 
     font-weight: 100; 
     width: auto; height: auto; 
-    /* FIX: Crush the line-height to trim the top void */
     line-height: 0.5; 
-    /* FIX: Restored horizontal padding to 20px and margin to 0. 
-       This puts the arrows exactly back in their original horizontal spots. 
-       Vertical padding is kept tight at 5px. */
     padding: 5px 20px; 
     margin: 0;
-    cursor: pointer; transition: none !important; animation: faintFlash 5s infinite ease-in-out;
-    opacity: 0.6; display: flex; justify-content: center; align-items: center;
-    text-shadow: 0 0 30px rgba(0,0,0,0.8); transform: none; 
+    cursor: pointer; 
+    display: flex; justify-content: center; align-items: center;
+    text-shadow: 0 0 30px rgba(0,0,0,0.8); 
   }
   .nav-arrow.disabled { opacity: 0 !important; pointer-events: none !important; visibility: hidden; }
-
-  /* FIX: Locks clicks for 1 second while the HUD fades in */
+  
+  /* FIX: Exact 80% lock rule. It mathematically guarantees 0-19% is locked and 20% unlocks */
   @keyframes lockClicks {
-      0%, 80% { pointer-events: none; }
-      80% { pointer-events: auto; }
+      0%, 19% { pointer-events: none; }
+      20% { pointer-events: auto; }
   }
   
+  /* The click lock runs completely uninterrupted on the parent wrapper */
   body.loaded .nav-arrow:not(.disabled) {
-      /* Triggers the 1s lock, and gracefully restarts the 5s breathing flash */
-      animation: lockClicks 1s forwards, faintFlash 5s infinite ease-in-out;
+      animation: lockClicks 1s forwards;
   }
   
+  /* FIX: The visual breathing, scaling, and color changes are completely delegated to the child.
+     Since the child does not handle the pointer-events, canceling its animation on hover/click 
+     cannot interfere with the parent's click events or cause the desktop restart bug! */
   .arrow-glyph {
     display: inline-block;
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease, color 0.2s ease;
     pointer-events: none;
-    /* FIX: Nudge the visual arrow slightly UP to dead-center it inside the new, tight bounding box */
     position: relative;
     bottom: 0.06em;
+    animation: faintFlash 5s infinite ease-in-out;
+    opacity: 0.6;
   }
 
   @media (hover: hover) {
-    .nav-arrow:hover { color: var(--name-color); animation: none; opacity: 1; filter: drop-shadow(0 0 20px var(--name-color)); }
-    .nav-arrow:hover .arrow-glyph { transform: scale(1.2); }
+    .nav-arrow:hover .arrow-glyph { 
+        color: var(--name-color); 
+        animation: none; 
+        opacity: 1; 
+        filter: drop-shadow(0 0 20px var(--name-color)); 
+        transform: scale(1.2); 
+    }
   }
   
-  .nav-arrow:not(.disabled):active, 
-  .nav-arrow:not(.disabled).active-state { 
-      color: var(--name-color) !important; opacity: 1 !important; animation: none !important; 
-  }
-  
+  /* Active states apply cleanly to the glyph child. No more WebKit tap-cancel bugs! */
   .nav-arrow:not(.disabled):active .arrow-glyph, 
   .nav-arrow:not(.disabled).active-state .arrow-glyph { 
+      color: var(--name-color) !important; 
+      opacity: 1 !important; 
+      animation: none !important; 
       transform: scale(0.8) !important; 
   }
   
@@ -298,15 +305,15 @@
         padding-bottom: 50px;
     }
 
-    /* FIX: Pull arrows closer to the edges on mobile */
+    /* FIX: Zero out container padding to pull arrows absolute flush to screen edges */
     .nav-controls {
-        padding: 0 5px !important;
+        padding: 0 !important;
     }
 
-    /* FIX: Reduce the inward padding gap and thicken the arrow stroke */
+    /* FIX: Generous vertical target, minimal horizontal margin, distinctly thicker arrow (600) */
     .nav-arrow {
-        padding: 10px 20px !important; 
-        font-weight: 400 !important; 
+        padding: 15px 5px !important; 
+        font-weight: 600 !important; 
     }
 
     /* FIX: Tighten the container, remove the frame, and kill any nested scrollbars */
