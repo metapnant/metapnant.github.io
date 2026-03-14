@@ -183,6 +183,17 @@
     text-shadow: 0 0 30px rgba(0,0,0,0.8); transform: none; 
   }
   .nav-arrow.disabled { opacity: 0 !important; pointer-events: none !important; visibility: hidden; }
+
+  /* FIX: Locks clicks for 1 second while the HUD fades in */
+  @keyframes lockClicks {
+      0%, 80% { pointer-events: none; }
+      80% { pointer-events: auto; }
+  }
+  
+  body.loaded .nav-arrow:not(.disabled) {
+      /* Triggers the 1s lock, and gracefully restarts the 5s breathing flash */
+      animation: lockClicks 1s forwards, faintFlash 5s infinite ease-in-out;
+  }
   
   .arrow-glyph {
     display: inline-block;
@@ -285,6 +296,17 @@
     body {
         padding: 20px 8px; 
         padding-bottom: 50px;
+    }
+
+    /* FIX: Pull arrows closer to the edges on mobile */
+    .nav-controls {
+        padding: 0 5px !important;
+    }
+
+    /* FIX: Reduce the inward padding gap and thicken the arrow stroke */
+    .nav-arrow {
+        padding: 10px 20px !important; 
+        font-weight: 400 !important; 
     }
 
     /* FIX: Tighten the container, remove the frame, and kill any nested scrollbars */
