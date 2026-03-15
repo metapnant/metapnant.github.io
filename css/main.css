@@ -339,10 +339,11 @@
       }
   
       .nav-arrow {
-          margin: 0 10px;
-          font-weight: 600 !important; 
-          padding: 5px 5px !important; 
-      }
+        margin: 0 2px; /* Pull the box closer to the edge of the screen */
+        font-weight: 600 !important; 
+        /* Massive touch target: 60px extra height, 40px extra width */
+        padding: 30px 20px !important; 
+    }
   
       .explore-container, .pdf-container {
           overflow: visible !important;
@@ -390,10 +391,14 @@ body.loading-lock *::-webkit-scrollbar {
 }
 
 body.loading-lock .footer,
-body.loading-lock #music-section {
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
+body.loading-lock .footer *,
+body.loading-lock #music-section,
+body.loading-lock #music-section * {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: none !important; 
+    animation: none !important;
 }
 
 .nav-arrow.out-of-bounds,
