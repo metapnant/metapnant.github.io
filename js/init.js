@@ -8,38 +8,70 @@ document.addEventListener('keydown', unlockAudioEngine);
 document.addEventListener('touchstart', unlockAudioEngine);
 document.addEventListener('touchend', unlockAudioEngine);
 
-// --- DYNAMIC ARROW BOUNDS ---
+// --- NUCLEAR SCROLL LOCK ---
+const enforceScrollLock = (e) => {
+    if (document.body.classList.contains('loading-lock') || document.documentElement.classList.contains('loading-lock')) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    }
+};
+
+// Block all scroll mechanisms (Wheel, Touch, Keyboard)
+window.addEventListener('wheel', enforceScrollLock, { passive: false });
+window.addEventListener('touchmove', enforceScrollLock, { passive: false });
+window.addEventListener('keydown', (e) => {
+    if ((document.body.classList.contains('loading-lock') || document.documentElement.classList.contains('loading-lock')) &&['ArrowUp', 'ArrowDown', 'Space', 'PageUp', 'PageDown', 'Home', 'End'].includes(e.code)) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+
+// --- DYNAMIC COLLISION DETECTION ---
 let isCheckingBounds = false;
 const checkArrowsBounds = () => {
     if (!isCheckingBounds) {
         window.requestAnimationFrame(() => {
-            const navControls = document.querySelector('.nav-controls');
+            const musicSection = document.getElementById('music-section');
+            const prevArrow = document.getElementById('prev-doc');
+            const nextArrow = document.getElementById('next-doc');
             const pdfTools = document.getElementById('pdf-tools');
-            if (!pdfWrapper) {
-                isCheckingBounds = false;
-                return;
-            }
             
-            const rect = pdfWrapper.getBoundingClientRect();
-            
-            // THRESHOLD 1: Arrows (Middle of the screen)
-            const arrowY = window.innerHeight / 2; 
-            if (navControls) {
-                if (rect.bottom < arrowY) {
-                    navControls.classList.add('out-of-bounds');
-                } else {
-                    navControls.classList.remove('out-of-bounds');
-                }
+            // Check if music player exists and is visible
+            const musicVisible = musicSection && window.getComputedStyle(musicSection).display !== 'none';
+            let musicRect = null;
+            if (musicVisible) {
+                musicRect = musicSection.getBoundingClientRect();
             }
 
-            // THRESHOLD 2: PDF Button (Bottom of the screen ~ 70px up)
-            const toolsY = window.innerHeight - 70;
+            // AABB Collision function (Returns true if element overlaps with the music player)
+            const checkIntersection = (el) => {
+                if (!el || !musicVisible) return false;
+                const elRect = el.getBoundingClientRect();
+                return !(
+                    elRect.right < musicRect.left || 
+                    elRect.left > musicRect.right || 
+                    elRect.bottom < musicRect.top || 
+                    elRect.top > musicRect.bottom
+                );
+            };
+
+            // Process Prev Arrow
+            if (prevArrow) {
+                if (checkIntersection(prevArrow)) prevArrow.classList.add('out-of-bounds');
+                else prevArrow.classList.remove('out-of-bounds');
+            }
+
+            // Process Next Arrow
+            if (nextArrow) {
+                if (checkIntersection(nextArrow)) nextArrow.classList.add('out-of-bounds');
+                else nextArrow.classList.remove('out-of-bounds');
+            }
+
+            // Process PDF Tools Button
             if (pdfTools) {
-                if (rect.bottom < toolsY) {
-                    pdfTools.classList.add('out-of-bounds');
-                } else {
-                    pdfTools.classList.remove('out-of-bounds');
-                }
+                if (checkIntersection(pdfTools)) pdfTools.classList.add('out-of-bounds');
+                else pdfTools.classList.remove('out-of-bounds');
             }
 
             isCheckingBounds = false;

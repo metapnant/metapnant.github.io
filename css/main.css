@@ -190,7 +190,6 @@
       transition: none !important; 
   }
   
-  /* Static hit-box parent. Determines clickable area and screen proximity. */
   .nav-arrow {
     pointer-events: auto; background: none; border: none; 
     color: var(--arrow-color); 
@@ -203,6 +202,12 @@
     cursor: pointer; 
     display: flex; justify-content: center; align-items: center;
     text-shadow: 0 0 30px rgba(0,0,0,0.8); 
+    
+    /* NEW FADE PROPERTIES */
+    filter: opacity(1);
+    visibility: visible;
+    transition: filter 0.15s ease, visibility 0.15s ease, color 0.2s ease;
+    will-change: filter, visibility;
   }
   .nav-arrow.disabled { opacity: 0 !important; pointer-events: none !important; visibility: hidden; }
   
@@ -252,8 +257,7 @@
   filter: opacity(1); /* INDEPENDENT FADE LAYER */
   transform: translateZ(0); /* Hardware acceleration */
   
-  /* Transition filter and visibility natively */
-  transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.2s, border-color 0.2s, filter 0.3s ease, visibility 0.3s ease;
+  transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.2s, border-color 0.2s, filter 0.15s ease, visibility 0.15s ease;
   backdrop-filter: blur(2px);
   -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
   mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
@@ -392,20 +396,9 @@ body.loading-lock #music-section {
   pointer-events: none !important;
 }
 
-/* --- OUT OF BOUNDS LOGIC --- */
-.nav-controls.out-of-bounds {
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-
+.nav-arrow.out-of-bounds,
 .pdf-tools.out-of-bounds {
-  filter: opacity(0) !important; /* Fades the whole layer without breaking the animation */
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-
-/* Instantly drops cursor interactions at the very start of the fade */
-.nav-controls.out-of-bounds .nav-arrow {
-  pointer-events: none !important;
+    filter: opacity(0) !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
 }
