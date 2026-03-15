@@ -337,13 +337,16 @@
           padding: 20px 8px; 
           padding-bottom: 50px;
       }
+
+      .nav-controls {
+        padding: 0 !important; /* Removes the 5px container bumper */
+      }
   
       .nav-arrow {
-        margin: 0 2px; /* Pull the box closer to the edge of the screen */
+        margin: 0 !important;
         font-weight: 600 !important; 
-        /* Massive touch target: 60px extra height, 40px extra width */
         padding: 30px 20px !important; 
-    }
+      }
   
       .explore-container, .pdf-container {
           overflow: visible !important;
@@ -393,7 +396,9 @@ body.loading-lock *::-webkit-scrollbar {
 body.loading-lock .footer,
 body.loading-lock .footer *,
 body.loading-lock #music-section,
-body.loading-lock #music-section * {
+body.loading-lock #music-section *,
+body.loading-lock #pdf-tools,
+body.loading-lock #pdf-tools * {
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
