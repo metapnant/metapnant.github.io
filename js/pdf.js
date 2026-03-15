@@ -133,7 +133,9 @@ async function loadDocument(index) {
     // Enforce transparency on the container and lock scrolling safely
     pdfWrapper.classList.remove('ready'); 
     if (!waitingForLyrics) {
+        document.documentElement.classList.add('loading-lock');
         document.body.classList.add('loading-lock'); 
+        window.scrollTo({ top: 0, behavior: 'instant' });
     }
     
     // Visual Reset
@@ -150,7 +152,7 @@ async function loadDocument(index) {
         if (btnShowVoice) btnShowVoice.scrollIntoView({ block: 'center', behavior: 'instant' });
     } else {
         pdfWrapper.style.minHeight = '';
-        window.scrollTo({ top: 0, behavior: 'auto' });
+        window.scrollTo({ top: 0, behavior: 'instant' });
     }
   
     // Clear old canvases and unobserve them
@@ -188,6 +190,7 @@ async function loadDocument(index) {
           // Re-introduce the background, HUD fade, and unlock scroll
           document.body.classList.add("loaded");
           pdfWrapper.classList.add('ready'); 
+          document.documentElement.classList.remove('loading-lock');
           document.body.classList.remove('loading-lock');
   
           if (currentDoc.songUrl && songLink && songContainer) {
@@ -212,6 +215,7 @@ async function loadDocument(index) {
       console.error("Archive Load Error:", err);
       pdfWrapper.style.minHeight = '';
       if (loadingOverlay) loadingOverlay.style.display = 'none';
+      document.documentElement.classList.remove('loading-lock');
       document.body.classList.remove('loading-lock');
       isLoading = false;
       waitingForLyrics = false;

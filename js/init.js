@@ -8,6 +8,49 @@ document.addEventListener('keydown', unlockAudioEngine);
 document.addEventListener('touchstart', unlockAudioEngine);
 document.addEventListener('touchend', unlockAudioEngine);
 
+// --- DYNAMIC ARROW BOUNDS ---
+let isCheckingBounds = false;
+const checkArrowsBounds = () => {
+    if (!isCheckingBounds) {
+        window.requestAnimationFrame(() => {
+            const navControls = document.querySelector('.nav-controls');
+            const pdfTools = document.getElementById('pdf-tools');
+            if (!pdfWrapper) {
+                isCheckingBounds = false;
+                return;
+            }
+            
+            const rect = pdfWrapper.getBoundingClientRect();
+            
+            // THRESHOLD 1: Arrows (Middle of the screen)
+            const arrowY = window.innerHeight / 2; 
+            if (navControls) {
+                if (rect.bottom < arrowY) {
+                    navControls.classList.add('out-of-bounds');
+                } else {
+                    navControls.classList.remove('out-of-bounds');
+                }
+            }
+
+            // THRESHOLD 2: PDF Button (Bottom of the screen ~ 70px up)
+            const toolsY = window.innerHeight - 70;
+            if (pdfTools) {
+                if (rect.bottom < toolsY) {
+                    pdfTools.classList.add('out-of-bounds');
+                } else {
+                    pdfTools.classList.remove('out-of-bounds');
+                }
+            }
+
+            isCheckingBounds = false;
+        });
+        isCheckingBounds = true;
+    }
+};
+
+window.addEventListener('scroll', checkArrowsBounds, { passive: true });
+window.addEventListener('resize', checkArrowsBounds, { passive: true });
+
 // Window Resize
 window.addEventListener('resize', () => {
     if (isMobileDevice) {

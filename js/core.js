@@ -184,7 +184,9 @@ function killScrollAnimation() {
 
 function performNavReset() {
     killScrollAnimation();
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    document.documentElement.classList.add('loading-lock'); // Locks HTML
+    document.body.classList.add('loading-lock');            // Locks Body
+    window.scrollTo({ top: 0, behavior: 'instant' });
     waitingForLyrics = false;
     if (voiceScrambleInterval) {
         clearInterval(voiceScrambleInterval);

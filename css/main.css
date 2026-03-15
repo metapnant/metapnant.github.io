@@ -172,16 +172,16 @@
   }
   .pdf-page-wrapper.rendered .pdf-page-canvas { opacity: 1; }
   
-  /* --- NAVIGATION HUD --- */
-  .nav-controls {
-    position: fixed; z-index: 3000; pointer-events: none; 
-    top: 0; left: 0; right: 0; bottom: 0;
-    display: flex; justify-content: space-between; align-items: center; 
-    max-width: 1050px; margin: 0 auto; 
-    padding: 0 5px; 
-    opacity: 1;
-    transition: opacity 1.2s ease; 
-  }
+/* --- NAVIGATION HUD --- */
+.nav-controls {
+  position: fixed; z-index: 3000; pointer-events: none; 
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex; justify-content: space-between; align-items: center; 
+  max-width: 1050px; margin: 0 auto; 
+  padding: 0 5px; 
+  opacity: 1;
+  transition: opacity 0.3s ease; 
+}
   
   body:not(.loaded) .nav-controls,
   body:not(.loaded) .nav-arrow {
@@ -205,16 +205,6 @@
     text-shadow: 0 0 30px rgba(0,0,0,0.8); 
   }
   .nav-arrow.disabled { opacity: 0 !important; pointer-events: none !important; visibility: hidden; }
-  
-  /* 20% Click Lock */
-  @keyframes lockClicks {
-      0%, 19% { pointer-events: none; }
-      20%, 100% { pointer-events: auto; }
-  }
-  
-  body.loaded .nav-arrow:not(.disabled) {
-      animation: lockClicks 1s forwards;
-  }
   
   /* Animated visual child. Handles hover/active states without interrupting hit-box events. */
   .arrow-glyph {
@@ -249,20 +239,34 @@
       transform: scale(0.8) !important; 
   }
   
-  /* --- VOID MECHANIC --- */
-  .pdf-tools {
-      position: fixed; right: 20px; bottom: 20px; z-index: 2500; height: 50px; 
-      display: flex; align-items: center;
-      background-color: transparent; border: 1px solid var(--arrow-color); border-radius: 0; color: var(--arrow-color);
-      animation: faintFlash 5s infinite ease-in-out; opacity: 0.8; 
-      max-width: 50px; overflow: hidden; 
-      transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.2s, border-color 0.2s, opacity 0.2s;
-      backdrop-filter: blur(2px);
-      -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
-      mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
-      pointer-events: none;
-  }
-  .pdf-tools.active { max-width: 200px; opacity: 1; animation: none; border-color: rgba(152, 0, 235, 0.3); background-color: rgba(13, 0, 34, 0.9); }
+/* --- VOID MECHANIC (PDF Tools) --- */
+.pdf-tools {
+  position: fixed; right: 20px; bottom: 20px; z-index: 2500; height: 50px; 
+  display: flex; align-items: center;
+  background-color: transparent; border: 1px solid var(--arrow-color); border-radius: 0; color: var(--arrow-color);
+  animation: faintFlash 5s infinite ease-in-out; 
+  opacity: 0.8; 
+  max-width: 50px; overflow: hidden; 
+  
+  visibility: visible;
+  filter: opacity(1); /* INDEPENDENT FADE LAYER */
+  transform: translateZ(0); /* Hardware acceleration */
+  
+  /* Transition filter and visibility natively */
+  transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.2s, border-color 0.2s, filter 0.3s ease, visibility 0.3s ease;
+  backdrop-filter: blur(2px);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+  mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+  pointer-events: none;
+}
+
+.pdf-tools.active { 
+  max-width: 200px; 
+  opacity: 1 !important; 
+  animation: none !important; 
+  border-color: rgba(152, 0, 235, 0.3); 
+  background-color: rgba(13, 0, 34, 0.9); 
+}
   .tools-toggle {
       pointer-events: auto; width: 50px; min-width: 50px; height: 100%;
       display: flex; justify-content: center; align-items: center; cursor: pointer;
@@ -313,7 +317,11 @@
   }
   
   @media (hover: hover) {
-      .pdf-tools:hover { opacity: 1; animation: none; border-color: var(--name-color); }
+    .pdf-tools:hover { 
+        opacity: 1 !important; 
+        animation: none !important; 
+        border-color: var(--name-color); 
+    }
       .tools-toggle:hover { background-color: rgba(152, 0, 235, 0.15); color: #fff; }
       .tool-btn:hover { background-color: rgba(152, 0, 235, 0.15); color: #fff; text-shadow: 0 0 10px var(--name-color); }
       #song-link:hover { animation: strobe 1s infinite; }
@@ -354,3 +362,50 @@
       .utility-btns { margin-left: auto !important; }
       .playlist-container { max-height: 220px; }
   }
+
+/* --- BULLETPROOF SCROLL LOCK --- */
+html.loading-lock, body.loading-lock {
+  overflow: hidden !important;
+  height: 100dvh !important;
+  position: fixed !important;
+  top: 0; left: 0; width: 100%;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+}
+
+/* Kills the weird Windows scrollbar thumb box on ALL elements */
+html.loading-lock::-webkit-scrollbar, 
+body.loading-lock::-webkit-scrollbar,
+html.loading-lock *::-webkit-scrollbar, 
+body.loading-lock *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  -webkit-appearance: none !important;
+  background: transparent !important;
+}
+
+body.loading-lock .footer,
+body.loading-lock #music-section {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* --- OUT OF BOUNDS LOGIC --- */
+.nav-controls.out-of-bounds {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.pdf-tools.out-of-bounds {
+  filter: opacity(0) !important; /* Fades the whole layer without breaking the animation */
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Instantly drops cursor interactions at the very start of the fade */
+.nav-controls.out-of-bounds .nav-arrow {
+  pointer-events: none !important;
+}
