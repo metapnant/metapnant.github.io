@@ -31,9 +31,16 @@ function initPlaylist() {
             li.classList.add('selected-track');
         }
         
+        let prefix = index < 10 ? '0' + index : index;
+
+        // Special override for track 4
+        if (index === 4) {
+            prefix = '04.2';
+        }
+
         let displayTitle = index === albumTracks.length - 1 
             ? track.title 
-            : `${index < 10 ? '0' + index : index} - ${track.title}`;
+            : `${prefix} - ${track.title}`;
         
         // Ethereal Glass Puppet Eye
         li.innerHTML = `
