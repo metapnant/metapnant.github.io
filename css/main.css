@@ -328,7 +328,7 @@
     }
       .tools-toggle:hover { background-color: rgba(152, 0, 235, 0.15); color: #fff; }
       .tool-btn:hover { background-color: rgba(152, 0, 235, 0.15); color: #fff; text-shadow: 0 0 10px var(--name-color); }
-      #song-link:hover { animation: strobe 1s infinite; }
+      #song-link:hover { animation: strobe var(--bpm-duration, 1s) infinite; }
   }
   
   /* --- MOBILE RESPONSIVENESS --- */

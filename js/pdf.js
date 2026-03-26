@@ -194,9 +194,17 @@ async function loadDocument(index) {
           document.body.classList.remove('loading-lock');
   
           if (currentDoc.songUrl && songLink && songContainer) {
-              songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
-              songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
-          }
+            songLink.href = currentDoc.songUrl; songLink.textContent = currentDoc.songTitle;
+            songContainer.style.opacity = "1"; songContainer.style.visibility = "visible";
+            
+            // Calculate BPM duration (60 seconds / BPM = seconds per beat)
+            if (currentDoc.bpm) {
+                const beatDuration = 60 / currentDoc.bpm;
+                songLink.style.setProperty('--bpm-duration', `${beatDuration}s`);
+            } else {
+                songLink.style.setProperty('--bpm-duration', `1s`); // Fallback
+            }
+        }
           
           isLoading = false;
           if (prevArrow) prevArrow.classList.remove('disabled'); 

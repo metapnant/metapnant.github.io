@@ -1,7 +1,7 @@
 const library = [
-    { title: "METAPNANT", url: "A%20Story%20of%20Mirthful%20Reflection.pdf", songUrl: "https://soundcloud.com/metapnant/06-disordered-fairness", songTitle: "In Love With", bpm: 130 },
-    { title: "THE REMINDER", url: "The%20Reminder.pdf", songUrl: "https://soundcloud.com/metapnant/04-2-reborn", songTitle: "Breathe Again ∞ Timelines", bpm: 120 },
-    { title: "THE PHOENIX NEST", url: "The%20Phoenix%20Nest.pdf", songUrl: "https://soundcloud.com/metapnant/nowhere", songTitle: "Starflower", bpm: 94.54 }
+    { title: "METAPNANT", url: "A%20Story%20of%20Mirthful%20Reflection.pdf", songUrl: "https://soundcloud.com/tefriin/06-disordered-fairness", songTitle: "In Love With", bpm: 130 },
+    { title: "THE REMINDER", url: "The%20Reminder.pdf", songUrl: "https://soundcloud.com/tefriin/04-2-reborn", songTitle: "Starflower Soul", bpm: 94.54 },
+    { title: "THE PHOENIX NEST", url: "The%20Phoenix%20Nest.pdf", songUrl: "https://soundcloud.com/tefriin/nowhere", songTitle: "Timelines ∞ Breathe Again", bpm: 116 }
 ];
 
 const albumTracks = [
@@ -23,8 +23,8 @@ const albumTracks = [
     { title: "Branches", src: "music/15 - Branches.mp3" },
     { title: "In Love With", src: "music/16 - In Love With.mp3" },
     { title: "Starflower Soul", src: "music/17 - Starflower Soul.mp3" },
-    { title: "Breathe Again", src: "music/18 - Breathe Again.mp3" },
-    { title: "Timelines", src: "music/19 - Timelines.mp3" },
+    { title: "Timelines", src: "music/18 - Timelines.mp3" },
+    { title: "Breathe Again", src: "music/19 - Breathe Again.mp3" },
     { title: "River of Sorrows", src: "music/20 - River of Sorrows.mp3" },
     { title: "Nowhere", src: "music/Nowhere.mp3" }
 ];
