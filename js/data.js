@@ -87,7 +87,7 @@ window.logsData = {
         { text: "", class: "system-text", delay: 400 },
         { text: "[ 00:00:24 ] OPERATOR RESPONSE:", class: "reix-header", delay: 400 },
         { text: "> I AM LIGHTER THAN I LOOK.", class: "operator-text", delay: 1000 },
-        { text: "> [ ,ზა; ჰჲჺთოი ] ( ,xa; ;Hí'toi )", class: "operator-text", delay: 800 },
+        { text: "> [ ,ზა; ჰჲჺთოი ] ( ,xa; Hí'toi )", class: "operator-text", delay: 800 },
         { text: "> \"...is it the sky?\"", class: "operator-text", delay: 600 },
         { text: "> LOOK OUTSIDE, WARDEN.", class: "operator-text", delay: 1500 },
         { text: "", class: "system-text", delay: 400 },
