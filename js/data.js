@@ -1,7 +1,7 @@
 const library = [
     { title: "METAPNANT", url: "A%20Story%20of%20Mirthful%20Reflection.pdf", songUrl: "https://www.youtube.com/watch?v=h0hF7O4aiuk", songTitle: "In Love With", bpm: 130 },
-    { title: "THE REMINDER", url: "The%20Reminder.pdf", songUrl: "https://soundcloud.com/tefriin/nowhere", songTitle: "Starflower Soul", bpm: 94.54 },
-    { title: "THE PHOENIX NEST", url: "The%20Phoenix%20Nest.pdf", songUrl: "https://soundcloud.com/tefriin/blood-sap", songTitle: "Breathe Again", bpm: 116 }
+    { title: "THE REMINDER", url: "The%20Reminder.pdf", songUrl: "https://soundcloud.com/tefriin/blood-sap", songTitle: "Starflower Soul", bpm: 94.54 },
+    { title: "THE PHOENIX NEST", url: "The%20Phoenix%20Nest.pdf", songUrl: "https://soundcloud.com/tefriin/nowhere", songTitle: "Breathe Again", bpm: 120 }
 ];
 
 const albumTracks = [
