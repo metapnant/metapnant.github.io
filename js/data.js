@@ -82,7 +82,7 @@ window.logsData = {
         { text: "[00:00:21] BIOMETRIC SCAN:", class: "reix-header", delay: 400 },
         { text: "> SUBJECT: TEF RIIN", class: "system-text", delay: 200 },
         { text: "> HEART RATE: STEADY [TON]", class: "system-text", delay: 200 },
-        { text: "> BREATH:[,!გრა] {,!gra}", class: "operator-text", delay: 1000 },
+        { text: "> BREATH:[,გრა] {,gra}", class: "operator-text", delay: 1000 },
         { text: "> DIAGNOSIS: GRIEF. MASS EXCEEDS LIFT CAPACITY.", class: "alert-text", delay: 1500 },
         { text: "", class: "system-text", delay: 400 },
         { text: "[00:00:24] OPERATOR RESPONSE:", class: "reix-header", delay: 400 },
