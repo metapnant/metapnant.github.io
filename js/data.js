@@ -157,7 +157,7 @@ window.logsData = {
         { text: "> I SEE THE CRACKS.", class: "system-text", delay: 1200 },
         { text: "> THEY ARE ERRORS.", class: "system-text", delay: 1200 },
         { text: "", class: "system-text", delay: 400 },
-        { text: "[ OPERATOR ]:", class: "reix-header", delay: 400 },
+        { text: "[OPERATOR]:", class: "reix-header", delay: 400 },
         { text: "> [,მო ვიშჺეი; ,პორ]", class: "operator-text", delay: 1000 },
         { text: "> {,mo vıs'eı; ,por}", class: "operator-text", delay: 600 },
         { text: "> \"I absolutely refuse to see them as heavy doors\"", class: "operator-text", delay: 1500 },
