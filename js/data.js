@@ -286,9 +286,9 @@ window.logsData = {
         { text: "> GRIME CONTENT: 0%.", class: "system-text", delay: 600 },
         { text: "> STARFLOWER STATUS: BLOOMING.", class: "system-success", delay: 1000 },
         { text: "-----------------------------------------------------------------------------", class: "system-text", delay: 200 },
-        { text: "[ 00:00:00 ] SYSTEM {PHOENIX_OS}:", class: "reix-header", delay: 400 },
+        { text: "[00:00:00] SYSTEM {PHOENIX_OS}:", class: "reix-header", delay: 400 },
         { text: "> THE WAR IS OVER.", class: "system-text", delay: 1000 },
-        { text: ">[,მო ვრახ- .რიინ მნიჺღინ]", class: "operator-text", delay: 1000 },
+        { text: "> [,მო ვრახ- .რიინ მნიჺღინ]", class: "operator-text", delay: 1000 },
         { text: "> {,mo vraq- .rıın mnı'lın}", class: "operator-text", delay: 600 },
         { text: "> \"Absolutely refusing the war, we exhale structural empathy.\"", class: "operator-text", delay: 1500 },
         { text: "", class: "system-text", delay: 400 },
@@ -316,7 +316,7 @@ window.logsData = {
         { text: "> THE LIBRARY IS OPEN.", class: "system-success", delay: 2500 },
         { text: "", class: "system-text", delay: 2500 },
         { text: "> END OF LINE.", class: "system-text", delay: 2500 },
-        { text: ">[SYSTEM INTEGRATION: COMPLETE. LOOP STABLE.]", class: "system-success", delay: 1000 },
-        { text: "<span class='secret-link'>[ENTER THE CHRYSALIS]</span>", class: "system-success", delay: 0 }
+        { text: "> [SYSTEM INTEGRATION: COMPLETE. LOOP STABLE.]", class: "system-success", delay: 1000 },
+        { text: "<span class='secret-link'> [ENTER THE CHRYSALIS]</span>", class: "system-success", delay: 0 }
     ]
 };
