@@ -37,6 +37,10 @@ function initPlaylist() {
         if (index === 4) {
             prefix = '04.2';
         }
+        // and 16
+        if (index === 16) {
+            prefix = '16.2';
+        }
 
         let displayTitle = index === albumTracks.length - 1 
             ? track.title 

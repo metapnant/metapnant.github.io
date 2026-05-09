@@ -21,7 +21,7 @@ const albumTracks = [
     { title: "Sun; Rise", src: "music/13 - Sun; Rise.mp3" },
     { title: "Hæy", src: "music/14 - Hæy.mp3" },
     { title: "Branches", src: "music/15 - Branches.mp3" },
-    { title: "In Love With", src: "music/16 - In Love With.mp3" },
+    { title: "Entranced in", src: "music/16.2 - Entranced in.mp3" },
     { title: "Starflower Soul", src: "music/17 - Starflower Soul.mp3" },
     { title: "Timelines", src: "music/18 - Timelines.mp3" },
     { title: "Breathe Again", src: "music/19 - Breathe Again.mp3" },
