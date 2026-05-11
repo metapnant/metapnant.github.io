@@ -1,5 +1,5 @@
 const library = [
-    { title: "METAPNANT", url: "A%20Story%20of%20Mirthful%20Reflection.pdf", songUrl: "https://soundcloud.com/tefriin/blood-sap", songTitle: "In Love With", bpm: 130 },
+    { title: "METAPNANT", url: "A%20Story%20of%20Mirthful%20Reflection.pdf", songUrl: "https://soundcloud.com/tefriin/blood-sap", songTitle: "Entranced in", bpm: 144 },
     { title: "THE REMINDER", url: "The%20Reminder.pdf", songUrl: "https://soundcloud.com/tefriin/reborn", songTitle: "Starflower Soul", bpm: 94.54 },
     { title: "THE PHOENIX NEST", url: "The%20Phoenix%20Nest.pdf", songUrl: "https://soundcloud.com/tefriin/nowhere", songTitle: "Timelines", bpm: 116 }
 ];
