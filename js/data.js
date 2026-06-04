@@ -1,7 +1,7 @@
 const library = [
     { title: "METAPNANT", url: "A%20Story%20of%20Mirthful%20Reflection.pdf"},
     { title: "THE REMINDER", url: "The%20Reminder.pdf"},
-    { title: "THE PHOENIX NEST", url: "The%20Phoenix%20Nest.pdf", songUrl: "https://soundcloud.com/tefriin/nowhere", songTitle: "Timelines", bpm: 116 }
+    { title: "THE PHOENIX NEST", url: "The%20Phoenix%20Nest.pdf", songUrl: "https://soundcloud.com/metapnant/nowhere", songTitle: "Timelines", bpm: 116 }
 ];
 
 const albumTracks = [
