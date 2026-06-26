@@ -19,7 +19,7 @@ const albumTracks = [
     { title: "My Way", src: "music/11 - My Way.mp3" },
     { title: "Distant", src: "music/12 - Distant.mp3" },
     { title: "Sun; Rise", src: "music/13 - Sun; Rise.mp3" },
-    { title: "Hæy", src: "music/14 - Hæy.mp3" },
+    { title: "諍", src: "music/14 - 諍.mp3" },
     { title: "Branches", src: "music/15 - Branches.mp3" },
     { title: "Entranced in", src: "music/16.2 - Entranced in.mp3" },
     { title: "Starflower Soul", src: "music/17 - Starflower Soul.mp3" },
