@@ -31,22 +31,17 @@ function initPlaylist() {
             li.classList.add('selected-track');
         }
         
-        let prefix = index < 10 ? '0' + index : index;
-
-        // Special override for track 4
-        if (index === 4) {
-            prefix = '04.2';
+        // --- AUTO-PARSING NUMBERING ENGINE ---
+        let displayTitle = track.title;
+        if (track.src) {
+            const filename = track.src.split('/').pop(); // Gets '06 - Reborn.mp3' or 'Nowhere.mp3'
+            if (filename.includes(' - ')) {
+                const prefix = filename.split(' - ')[0]; // Extracts '06'
+                displayTitle = `${prefix} - ${track.title}`;
+            }
         }
-        // and 16
-        if (index === 16) {
-            prefix = '16.2';
-        }
-
-        let displayTitle = index === albumTracks.length - 1 
-            ? track.title 
-            : `${prefix} - ${track.title}`;
         
-        // Ethereal Glass Puppet Eye
+        // Ethereal glass puppet eye
         li.innerHTML = `
             <span class="track-label">${displayTitle}</span>
             <span class="track-selector" aria-label="Select Track">
