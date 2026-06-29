@@ -6,7 +6,7 @@ const library = [
 
 const albumTracks = [
     { title: "Blood-Sap", src: "music/00 - Blood-Sap.mp3" },
-    { title: "First step", src: "music/01 - First step.mp3" },
+    { title: "First step", src: "music/01 - First steps.mp3" },
     { title: "hidden", src: "music/02 - hidden.mp3" }, 
     { title: "Tether", src: "music/03 - Tether.mp3" },
     { title: "Innerworld", src: "music/04 - Innerworld.mp3" },
