@@ -24,55 +24,85 @@
             transition: background-color 0.5s ease;
         }
 
-        /* DYNAMIC ASTROLABE */
+        /* CRISP, LUMINOUS ASTROLABE */
         #astrolabe-bg {
             position: fixed; top: 48%; left: 50%; transform: translate(-50%, -50%) scale(1);
             width: 85vw; height: 85vw; max-width: 340px; max-height: 340px;
-            border: 2px dashed rgba(255,255,255,0.06); border-radius: 50%;
+            border: 1.5px solid rgba(255,255,255,0.18); border-radius: 50%;
             display: flex; justify-content: center; align-items: center; z-index: 0;
+            background: radial-gradient(circle, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0.5) 100%);
+            box-shadow: 0 0 35px rgba(0,0,0,0.7), inset 0 0 25px rgba(255,255,255,0.02);
             transition: box-shadow 1s ease;
-            will-change: transform;
+            will-change: transform, top;
         }
-        
+        /* Cardinal Tick Marks */
+        #astrolabe-bg::before {
+            content: ''; position: absolute; width: calc(100% + 10px); height: 1px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.3) 0%, transparent 15%, transparent 85%, rgba(255,255,255,0.3) 100%);
+        }
+        #astrolabe-bg::after {
+            content: ''; position: absolute; height: calc(100% + 10px); width: 1px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 15%, transparent 85%, rgba(255,255,255,0.3) 100%);
+        }
+
         #target-marker { position: absolute; width: 100%; height: 100%; border-radius: 50%; transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1); }
-        #target-marker::before { content: '▼'; position: absolute; top: -15px; left: calc(50% - 6px); color: rgba(255,255,255,0.3); font-size: 12px; text-shadow: 0 0 5px white; }
-        #astrolabe-center { width: 16px; height: 16px; background: var(--bg-dark); border: 2px solid var(--accent); border-radius: 50%; box-shadow: 0 0 15px var(--accent); z-index: 2; transition: all 1s ease; }
+        #target-marker::before { content: '▼'; position: absolute; top: -14px; left: calc(50% - 6px); color: #fff; font-size: 12px; text-shadow: 0 0 8px #fff; }
+        #astrolabe-center { width: 14px; height: 14px; background: var(--bg-dark); border: 2px solid var(--accent); border-radius: 50%; box-shadow: 0 0 15px var(--accent); z-index: 2; transition: all 1s ease; }
         #astrolabe-needle { position: absolute; bottom: 50%; width: 4px; height: 48%; background: linear-gradient(to top, transparent, var(--accent)); transform-origin: bottom center; border-radius: 2px; transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), background 1s ease, box-shadow 1s ease; box-shadow: 0 0 8px var(--accent); }
 
         /* TOP UI LAYER */
         #ui-top {
-            position: absolute; top: 0; left: 0; width: 100%; z-index: 1;
-            padding: 20px 20px 10px 20px; background: linear-gradient(180deg, rgba(5,0,10,0.95) 0%, rgba(5,0,10,0.6) 80%, transparent 100%);
+            position: absolute; top: 0; left: 0; width: 100%; z-index: 2;
+            padding: 16px 20px 8px 20px; background: linear-gradient(180deg, rgba(5,0,10,0.96) 0%, rgba(5,0,10,0.6) 80%, transparent 100%);
             pointer-events: auto;
         }
 
-        h1 { font-size: 1.1rem; text-align: center; letter-spacing: 4px; color: var(--accent); margin-bottom: 18px; text-shadow: 0 0 5px var(--accent); transition: color 0.5s ease; }
-        
-        .horizon-box { background: transparent; padding-bottom: 5px; }
-        .horizon-box label { font-size: 0.65rem; color: #888; letter-spacing: 1px; display: block; margin-bottom: 5px;}
-        .north-input-group { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--accent); padding-bottom: 5px;}
-        #current-goal { color: white; font-size: 0.95rem; flex-grow: 1; text-transform: uppercase; }
-        #set-horizon-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 4px; padding: 6px 12px; font-size: 0.7rem; font-weight: bold; transition: background 0.2s; }
-        #set-horizon-btn:active { background: rgba(0,255,157,0.2); }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        h1 { font-size: 1rem; letter-spacing: 3px; color: var(--accent); text-shadow: 0 0 5px var(--accent); transition: color 0.5s ease; }
+        #sky-toggle-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px; padding: 4px 10px; font-size: 0.75rem; font-weight: bold; }
+        #sky-toggle-btn:active { background: var(--accent); color: #000; }
 
-        /* WAKE DRAWER (52vh max height keeps ample room) */
+        .horizon-box { background: transparent; padding-bottom: 4px; }
+        .horizon-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+        .horizon-header label { font-size: 0.65rem; color: #888; letter-spacing: 1px; }
+        #resonance-tag { font-size: 0.65rem; color: var(--sil); opacity: 0; transition: opacity 0.5s; letter-spacing: 1px; }
+        #resonance-tag.visible { opacity: 1; }
+
+        .north-input-group { display: flex; justify-content: space-between; align-items: center; padding-bottom: 6px;}
+        #current-goal { color: white; font-size: 0.95rem; flex-grow: 1; text-transform: uppercase; }
+        #set-horizon-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 4px; padding: 5px 10px; font-size: 0.7rem; font-weight: bold; transition: background 0.2s; }
+        #set-horizon-btn:active { background: rgba(0,255,157,0.2); }
+        #forge-star-btn { display: none; background: #fff; color: #000; border: none; border-radius: 4px; padding: 5px 10px; font-size: 0.7rem; font-weight: bold; box-shadow: 0 0 10px #fff; }
+
+        /* THE TERNARY THREAD BAR */
+        .thread-bar {
+            width: 100%; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px;
+            display: flex; overflow: hidden; margin-top: 4px;
+        }
+        #thread-ton { height: 100%; background: var(--ton); transition: width 0.4s ease; width: 0%; }
+        #thread-sil { height: 100%; background: var(--sil); transition: width 0.4s ease; width: 0%; }
+        #thread-qina { height: 100%; background: var(--qina); transition: width 0.4s ease; width: 0%; }
+
+        /* WAKE DRAWER */
         #wake-drawer {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 52vh;
-            background: rgba(10,5,15,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); z-index: 5;
-            border-top: 1px solid rgba(255,255,255,0.1); border-radius: 20px 20px 0 0;
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 54vh;
+            background: rgba(10,5,15,0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); z-index: 5;
+            border-top: 1px solid rgba(255,255,255,0.12); border-radius: 20px 20px 0 0;
             display: flex; flex-direction: column; padding: 0 20px 20px 20px;
-            transform: translateY(calc(100% - 85px)); 
+            transform: translateY(calc(100% - 90px)); 
             will-change: transform; pointer-events: auto;
         }
         
-        #drawer-touch-zone { padding-top: 14px; padding-bottom: 16px; cursor: pointer; width: 100%; display: flex; justify-content: center; }
-        .drag-handle { width: 44px; height: 5px; background: rgba(255,255,255,0.3); border-radius: 3px; }
+        #drawer-touch-zone { 
+            padding-top: 14px; padding-bottom: 18px; cursor: pointer; width: 100%; 
+            display: flex; justify-content: center; align-items: center;
+        }
+        .drag-handle { width: 50px; height: 5px; background: rgba(255,255,255,0.3); border-radius: 3px; }
 
         .log-input-group { display: flex; margin-bottom: 12px; flex-shrink: 0;}
         #log-input { flex-grow: 1; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 13px; border-radius: 8px 0 0 8px; outline: none; }
         #log-input:focus { border-color: var(--accent); }
-        #emit-btn { background: var(--accent); color: var(--bg-dark); border: none; font-weight: bold; padding: 0 20px; border-radius: 0 8px 8px 0; transition: filter 0.2s; }
-        #emit-btn:active { filter: brightness(0.8); }
+        #emit-btn { background: var(--accent); color: var(--bg-dark); border: none; font-weight: bold; padding: 0 20px; border-radius: 0 8px 8px 0; }
 
         .log-list { list-style: none; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; overflow-x: hidden; padding-bottom: 10px; flex-grow: 1; }
         
@@ -82,12 +112,34 @@
             backdrop-filter: blur(5px); display: flex; flex-direction: column;
             will-change: transform, opacity, max-height, padding, margin;
             max-height: 100px; overflow: hidden;
-            transition: max-height 0.35s ease, padding 0.35s ease, margin 0.35s ease, opacity 0.35s ease;
+            transition: max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease, opacity 0.3s ease;
         }
         .log-header { font-size: 0.65rem; color: #888; margin-bottom: 4px; display: flex; gap: 10px;}
 
+        /* CONSTELLATION SKY VIEW */
+        #sky-view {
+            opacity: 0; pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #020005; z-index: 10; display: flex; flex-direction: column; padding: 25px 20px;
+            transition: opacity 0.5s ease;
+        }
+        #sky-view.active { opacity: 1; pointer-events: auto; }
+        .sky-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .sky-header h2 { font-size: 1rem; color: #fff; letter-spacing: 2px; }
+        #close-sky-btn { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: #fff; border-radius: 4px; padding: 4px 10px; font-size: 0.75rem; }
+        
+        .constellation-grid {
+            flex-grow: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding-bottom: 20px;
+        }
+        .star-card {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+            padding: 15px; display: flex; flex-direction: column; align-items: center; text-align: center;
+        }
+        .star-glyph { font-size: 2rem; margin-bottom: 8px; filter: drop-shadow(0 0 8px currentColor); }
+        .star-name { font-size: 0.8rem; color: #fff; font-weight: bold; margin-bottom: 4px; }
+        .star-meta { font-size: 0.65rem; color: #777; }
+
         /* MODALS */
-        .modal-overlay { opacity: 0; pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10; display: flex; justify-content: center; align-items: center; transition: opacity 0.3s ease; backdrop-filter: blur(5px); }
+        .modal-overlay { opacity: 0; pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 20; display: flex; justify-content: center; align-items: center; transition: opacity 0.3s ease; backdrop-filter: blur(5px); }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
         .modal-box { background: var(--bg-panel); border: 1px solid var(--accent); padding: 20px; border-radius: 8px; width: 90%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .modal-box p { margin-bottom: 10px; font-size: 0.75rem; color: #aaa; letter-spacing: 1px; font-weight: bold;}
@@ -100,11 +152,11 @@
         .energy-btn.active-sil { background: rgba(0, 255, 157, 0.2); color: var(--sil); border-color: var(--sil); }
         .energy-btn.active-qina { background: rgba(255, 176, 0, 0.2); color: var(--qina); border-color: var(--qina); }
 
-        .modal-btn { display: block; width: 100%; padding: 14px; margin-bottom: 8px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; font-size: 0.95rem; border-radius: 4px; font-weight: bold; transition: all 0.2s;}
+        .modal-btn { display: block; width: 100%; padding: 14px; margin-bottom: 8px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; font-size: 0.95rem; border-radius: 4px; font-weight: bold; }
         .modal-btn:active { background: var(--accent); color: var(--bg-dark); }
         
         .compass-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 15px; }
-        .dir-btn { background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; padding: 12px 0; border-radius: 4px; font-size: 0.85rem; font-weight: bold; transition: all 0.2s;}
+        .dir-btn { background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; padding: 12px 0; border-radius: 4px; font-size: 0.85rem; font-weight: bold; }
         .dir-btn:active { background: var(--accent); color: black;}
         .modal-cancel { background: transparent; border: none; color: #888; margin-top: 10px; font-size: 0.85rem; padding: 10px; width: 100%;}
     </style>
@@ -118,12 +170,25 @@
     </div>
 
     <div id="ui-top">
-        <h1 id="app-title">TERNARY NAVIGATOR</h1>
+        <div class="header-row">
+            <h1 id="app-title">TERNARY NAVIGATOR</h1>
+            <button id="sky-toggle-btn" onclick="toggleSky(true)">★ SKY</button>
+        </div>
         <div class="horizon-box">
-            <label>CURRENT HORIZON</label>
+            <div class="horizon-header">
+                <label>CURRENT HORIZON</label>
+                <span id="resonance-tag">RESONANCE [rél]</span>
+            </div>
             <div class="north-input-group">
                 <div id="current-goal">No Horizon Set</div>
-                <button id="set-horizon-btn" onclick="openHorizonModal()">CHANGE COURSE</button>
+                <button id="set-horizon-btn" onclick="openHorizonModal()">COURSE</button>
+                <button id="forge-star-btn" onclick="forgeStar()">FORGE STAR</button>
+            </div>
+            <!-- Live Thread Balance Bar -->
+            <div class="thread-bar">
+                <div id="thread-ton"></div>
+                <div id="thread-sil"></div>
+                <div id="thread-qina"></div>
             </div>
         </div>
     </div>
@@ -137,6 +202,15 @@
             <button id="emit-btn" onclick="openSextantModal()">EMIT</button>
         </div>
         <ul class="log-list" id="log-list"></ul>
+    </div>
+
+    <!-- CONSTELLATION SKY VIEW -->
+    <div id="sky-view">
+        <div class="sky-header">
+            <h2>CONSTELLATION ARCHIVE</h2>
+            <button id="close-sky-btn" onclick="toggleSky(false)">RETURN</button>
+        </div>
+        <div class="constellation-grid" id="constellation-grid"></div>
     </div>
 
     <!-- HORIZON MODAL -->
@@ -185,24 +259,19 @@
         const colors = { '-1': '#4a5fc1', '0': '#00ff9d', '1': '#ffb000' };
         const root = document.documentElement;
 
-        // --- DRAWER & COMPASS CONTINUOUS 1:1 INTERPOLATION ---
+        // --- PRECISE DRAWER & COMPASS POSITIONING ---
         const drawer = document.getElementById('wake-drawer');
         const touchZone = document.getElementById('drawer-touch-zone');
         const astrolabe = document.getElementById('astrolabe-bg');
         let dStartY = 0, currentY = 0;
         let isDrawerOpen = false;
 
-        function getTravelDistance() {
-            // Distance in px between closed (bottom - 85px) and open (bottom)
-            return (window.innerHeight * 0.52) - 85;
-        }
+        function getTravelDistance() { return (window.innerHeight * 0.54) - 90; }
 
         function setCompassVisual(progress) {
-            // Progress is 0.0 (closed) to 1.0 (open)
-            // Interpolate top from 48% down to 34%
-            let topPos = 48 - (progress * 14); 
-            // Interpolate scale from 1.0 down to 0.38
-            let scaleVal = 1.0 - (progress * 0.62);
+            // Glides from top: 48% up to top: 29% when drawer opens
+            let topPos = 48 - (progress * 19); 
+            let scaleVal = 1.0 - (progress * 0.65); // Scales to 0.35 cleanly
             astrolabe.style.top = topPos + '%';
             astrolabe.style.transform = `translate(-50%, -50%) scale(${scaleVal})`;
         }
@@ -211,7 +280,7 @@
             dStartY = e.touches[0].clientY;
             currentY = dStartY;
             drawer.style.transition = 'none';
-            astrolabe.style.transition = 'box-shadow 1s ease'; // kill scale/top transition while dragging
+            astrolabe.style.transition = 'box-shadow 1s ease';
         }, {passive: true});
 
         touchZone.addEventListener('touchmove', e => {
@@ -221,12 +290,10 @@
 
             let progress = 0;
             if(!isDrawerOpen) {
-                // Dragging up from bottom: diffY is negative
                 let clamped = Math.max(-travel, Math.min(0, diffY));
-                drawer.style.transform = `translateY(calc(100% - 85px + ${clamped}px))`;
+                drawer.style.transform = `translateY(calc(100% - 90px + ${clamped}px))`;
                 progress = Math.abs(clamped) / travel;
             } else {
-                // Dragging down from top: diffY is positive
                 let clamped = Math.min(travel, Math.max(0, diffY));
                 drawer.style.transform = `translateY(${clamped}px)`;
                 progress = 1.0 - (clamped / travel);
@@ -240,36 +307,25 @@
             astrolabe.style.transition = 'top 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 1s ease';
 
             let diffY = currentY - dStartY;
+            if(!isDrawerOpen && diffY < -travel * 0.2) isDrawerOpen = true;
+            else if(isDrawerOpen && diffY > travel * 0.2) isDrawerOpen = false;
 
-            // Threshold: 30% of travel to toggle
-            if(!isDrawerOpen && diffY < -travel * 0.25) {
-                isDrawerOpen = true;
-            } else if(isDrawerOpen && diffY > travel * 0.25) {
-                isDrawerOpen = false;
-            }
-
-            // Snap to final state
             if(isDrawerOpen) {
                 drawer.style.transform = 'translateY(0)';
                 setCompassVisual(1.0);
             } else {
-                drawer.style.transform = 'translateY(calc(100% - 85px))';
+                drawer.style.transform = 'translateY(calc(100% - 90px))';
                 setCompassVisual(0.0);
             }
         });
 
-        // Click toggle fallback
+        // Click toggle fallback on handle
         touchZone.addEventListener('click', () => {
             isDrawerOpen = !isDrawerOpen;
             drawer.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
             astrolabe.style.transition = 'top 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 1s ease';
-            if(isDrawerOpen) {
-                drawer.style.transform = 'translateY(0)';
-                setCompassVisual(1.0);
-            } else {
-                drawer.style.transform = 'translateY(calc(100% - 85px))';
-                setCompassVisual(0.0);
-            }
+            if(isDrawerOpen) { drawer.style.transform = 'translateY(0)'; setCompassVisual(1.0); }
+            else { drawer.style.transform = 'translateY(calc(100% - 90px))'; setCompassVisual(0.0); }
         });
 
         // --- ONLOAD & STATE ---
@@ -280,13 +336,14 @@
             if(localStorage.getItem('globalTide')) globalTide = parseInt(localStorage.getItem('globalTide'));
             
             updateCompassUI(); loadLogs(); updateThemeColors(globalTide);
+            updateThreadBar();
             setCompassVisual(0.0);
         };
 
         function updateThemeColors(state) {
             root.style.setProperty('--accent', colors[state]);
             document.getElementById('astrolabe-center').style.borderColor = colors[state];
-            document.getElementById('astrolabe-bg').style.boxShadow = `0 0 40px ${colors[state]}20`;
+            document.getElementById('astrolabe-bg').style.boxShadow = `0 0 35px ${colors[state]}25`;
         }
 
         function selectEnergy(state) {
@@ -312,6 +369,36 @@
             localStorage.setItem('horizonName', goal);
             localStorage.setItem('targetAngle', targetAngle);
             updateCompassUI(); closeModals(); document.getElementById('goal-input').value = '';
+            updateThreadBar();
+        }
+
+        // --- THREAD WEAVING ENGINE ---
+        function updateThreadBar() {
+            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
+            let counts = { '-1': 0, '0': 0, '1': 0 };
+            logs.forEach(l => { if(counts[l.energy] !== undefined) counts[l.energy]++; });
+            
+            let total = counts['-1'] + counts['0'] + counts['1'];
+            if(total === 0) {
+                document.getElementById('thread-ton').style.width = '0%';
+                document.getElementById('thread-sil').style.width = '0%';
+                document.getElementById('thread-qina').style.width = '0%';
+                document.getElementById('resonance-tag').classList.remove('visible');
+                return;
+            }
+
+            let tonPct = (counts['-1'] / total) * 100;
+            let silPct = (counts['0'] / total) * 100;
+            let qinaPct = (counts['1'] / total) * 100;
+
+            document.getElementById('thread-ton').style.width = tonPct + '%';
+            document.getElementById('thread-sil').style.width = silPct + '%';
+            document.getElementById('thread-qina').style.width = qinaPct + '%';
+
+            // Resonance achieved if all 3 energies are utilized (>15% each)
+            let isResonant = counts['-1'] > 0 && counts['0'] > 0 && counts['1'] > 0 && tonPct > 15 && silPct > 15 && qinaPct > 15;
+            if(isResonant) document.getElementById('resonance-tag').classList.add('visible');
+            else document.getElementById('resonance-tag').classList.remove('visible');
         }
 
         function submitLog(actionType, icon) {
@@ -341,13 +428,19 @@
             localStorage.setItem('needleAngle', needleAngle);
             updateCompassUI();
 
-            const logEntry = { id: Date.now(), text: input.value, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), color: colors[globalTide], tag: icon };
+            const logEntry = { 
+                id: Date.now(), text: input.value, 
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
+                color: colors[globalTide], energy: globalTide.toString(), tag: icon 
+            };
             let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
             logs.unshift(logEntry); 
             if(logs.length > 50) logs.pop(); 
             localStorage.setItem('wakeLogs', JSON.stringify(logs));
 
-            renderLogs(); input.value = '';
+            renderLogs(); 
+            updateThreadBar();
+            input.value = '';
         }
 
         function updateCompassUI() {
@@ -358,45 +451,105 @@
             let targetMod = Math.round(((targetAngle % 360) + 360) % 360);
 
             if(currentMod === targetMod) {
-                document.getElementById('app-title').innerText = "HORIZON REACHED";
-                document.getElementById('astrolabe-center').style.boxShadow = "0 0 30px white";
-                document.getElementById('astrolabe-center').style.backgroundColor = "white";
+                document.getElementById('app-title').innerText = "HORIZON ALIGNED";
+                document.getElementById('astrolabe-center').style.boxShadow = "0 0 30px #fff";
+                document.getElementById('astrolabe-center').style.backgroundColor = "#fff";
+                document.getElementById('set-horizon-btn').style.display = 'none';
+                document.getElementById('forge-star-btn').style.display = 'block';
             } else {
                 document.getElementById('app-title').innerText = "TERNARY NAVIGATOR";
                 document.getElementById('astrolabe-center').style.boxShadow = `0 0 15px ${colors[globalTide]}`;
                 document.getElementById('astrolabe-center').style.backgroundColor = "#05000a";
+                document.getElementById('set-horizon-btn').style.display = 'block';
+                document.getElementById('forge-star-btn').style.display = 'none';
             }
         }
 
-        // --- PROPER SWIPE-TO-DELETE ---
+        // --- CONSTELLATION FORGING ---
+        function forgeStar() {
+            let horizon = localStorage.getItem('horizonName') || "Unknown Voyage";
+            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
+            
+            // Analyze Star Metrics
+            let counts = { '-1': 0, '0': 0, '1': 0 };
+            logs.forEach(l => { if(counts[l.energy] !== undefined) counts[l.energy]++; });
+            let dominant = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+            
+            // 8-point star if balanced, 4-point star if singular
+            let isResonant = counts['-1'] > 0 && counts['0'] > 0 && counts['1'] > 0;
+            let starGlyph = isResonant ? '✦' : '✧';
+
+            let newStar = {
+                id: Date.now(),
+                name: horizon,
+                glyph: starGlyph,
+                color: colors[dominant],
+                date: new Date().toLocaleDateString(),
+                actionsCount: logs.length
+            };
+
+            let stars = JSON.parse(localStorage.getItem('constellationStars') || '[]');
+            stars.unshift(newStar);
+            localStorage.setItem('constellationStars', JSON.stringify(stars));
+
+            // Reset current voyage
+            localStorage.removeItem('horizonName');
+            document.getElementById('current-goal').innerText = "No Horizon Set";
+            updateCompassUI();
+            toggleSky(true);
+        }
+
+        function toggleSky(open) {
+            const sky = document.getElementById('sky-view');
+            if(open) {
+                renderSky();
+                sky.classList.add('active');
+            } else {
+                sky.classList.remove('active');
+            }
+        }
+
+        function renderSky() {
+            const grid = document.getElementById('constellation-grid');
+            let stars = JSON.parse(localStorage.getItem('constellationStars') || '[]');
+            grid.innerHTML = '';
+            
+            if(stars.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #555; margin-top: 50px;">The velvet quiet is waiting.<br>Align a horizon to forge your first star.</div>';
+                return;
+            }
+
+            stars.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 'star-card';
+                card.innerHTML = `
+                    <div class="star-glyph" style="color: ${s.color}">${s.glyph}</div>
+                    <div class="star-name">${s.name}</div>
+                    <div class="star-meta">${s.date} · ${s.actionsCount} Actions</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- SWIPE-TO-DELETE ---
         function attachSwipeToDelete(li, id) {
             let startX = 0, currentX = 0, startY = 0, currentY = 0;
             let isDragging = false, isScrolling = false;
 
             li.addEventListener('touchstart', e => {
-                startX = e.touches[0].clientX;
-                currentX = startX; // Prevents tap from acting as swipe!
-                startY = e.touches[0].clientY;
-                currentY = startY;
-                isDragging = true;
-                isScrolling = false;
-                li.style.transition = 'none';
+                startX = e.touches[0].clientX; currentX = startX;
+                startY = e.touches[0].clientY; currentY = startY;
+                isDragging = true; isScrolling = false; li.style.transition = 'none';
             }, {passive: true});
 
             li.addEventListener('touchmove', e => {
                 if(!isDragging) return;
-                currentX = e.touches[0].clientX;
-                currentY = e.touches[0].clientY;
-                let diffX = currentX - startX;
-                let diffY = currentY - startY;
+                currentX = e.touches[0].clientX; currentY = e.touches[0].clientY;
+                let diffX = currentX - startX; let diffY = currentY - startY;
 
-                // Vertical scrolling check
                 if(Math.abs(diffY) > Math.abs(diffX) + 6) {
-                    isScrolling = true;
-                    li.style.transform = 'translateX(0px)';
-                    return;
+                    isScrolling = true; li.style.transform = 'translateX(0px)'; return;
                 }
-                
                 if(!isScrolling) {
                     if(e.cancelable) e.preventDefault();
                     li.style.transform = `translateX(${diffX}px)`;
@@ -410,7 +563,6 @@
                 let diffX = currentX - startX;
 
                 if(Math.abs(diffX) > window.innerWidth * 0.35) {
-                    // Successful Swipe: slide all the way off
                     li.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out, max-height 0.3s ease 0.15s, padding 0.3s ease 0.15s, margin 0.3s ease 0.15s';
                     li.style.transform = `translateX(${Math.sign(diffX) * window.innerWidth}px)`;
                     li.style.opacity = '0';
@@ -425,9 +577,9 @@
                         logs = logs.filter(log => log.id !== id);
                         localStorage.setItem('wakeLogs', JSON.stringify(logs));
                         li.remove();
+                        updateThreadBar();
                     }, 450);
                 } else {
-                    // Snap back
                     li.style.transition = 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease';
                     li.style.transform = 'translateX(0px)';
                     li.style.opacity = '1';
