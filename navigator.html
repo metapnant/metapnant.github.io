@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#05000a">
-    <title>Kaxim Terminal V5</title>
+    <title>Kaxim Terminal V6</title>
     <style>
         :root {
             --bg-dark: #05000a;
+            --bg-panel: #0a0514;
             --text-main: #e0dced;
             --ton: #4a5fc1; 
             --sil: #00ff9d; 
@@ -23,63 +24,81 @@
             transition: background-color 0.5s ease;
         }
 
-        /* MASSIVE BACKGROUND COMPASS */
+        /* THE TRUE COMPASS BACKGROUND */
         #astrolabe-bg {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 90vw; height: 90vw; max-width: 400px; max-height: 400px;
-            border: 2px dashed rgba(255,255,255,0.1); border-radius: 50%;
+            position: fixed; top: 45%; left: 50%; transform: translate(-50%, -50%);
+            width: 85vw; height: 85vw; max-width: 350px; max-height: 350px;
+            border: 2px dashed rgba(255,255,255,0.05); border-radius: 50%;
             display: flex; justify-content: center; align-items: center; z-index: 0;
-            box-shadow: 0 0 50px rgba(0,255,157,0.05); transition: box-shadow 1s ease;
+            box-shadow: 0 0 40px rgba(0,255,157,0.02); transition: box-shadow 1s ease;
+        }
+        /* Target Indicator on the rim */
+        #target-marker {
+            position: absolute; width: 100%; height: 100%; border-radius: 50%;
+            transition: transform 1.5s ease;
+        }
+        #target-marker::before {
+            content: '▼'; position: absolute; top: -15px; left: calc(50% - 6px);
+            color: rgba(255,255,255,0.3); font-size: 12px; text-shadow: 0 0 5px white;
         }
         #astrolabe-center {
-            width: 20px; height: 20px; background: var(--accent); border-radius: 50%;
-            box-shadow: 0 0 15px var(--accent); transition: background 1s ease, box-shadow 1s ease;
+            width: 16px; height: 16px; background: var(--bg-dark); border: 2px solid var(--accent);
+            border-radius: 50%; box-shadow: 0 0 15px var(--accent); z-index: 2; transition: all 1s ease;
         }
         #astrolabe-needle {
-            position: absolute; bottom: 50%; width: 4px; height: 45%;
+            position: absolute; bottom: 50%; width: 4px; height: 48%;
             background: linear-gradient(to top, transparent, var(--accent));
             transform-origin: bottom center; border-radius: 2px;
             transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1), background 1s ease;
+            box-shadow: 0 0 8px var(--accent);
         }
 
-        /* GLASSMORPHISM UI LAYER */
-        #ui-layer {
-            position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column;
-            background: linear-gradient(180deg, rgba(5,0,10,0.9) 0%, rgba(5,0,10,0.2) 40%, rgba(5,0,10,0.95) 100%);
+        /* TOP UI LAYER */
+        #ui-top {
+            position: absolute; top: 0; left: 0; width: 100%; z-index: 1;
+            padding: 20px; background: linear-gradient(180deg, rgba(5,0,10,0.9) 0%, transparent 100%);
+            pointer-events: auto;
         }
 
-        /* TOP SECTION */
-        .top-panel { padding: 20px; backdrop-filter: blur(2px); }
-        h1 { font-size: 1.2rem; text-align: center; letter-spacing: 4px; color: var(--accent); margin-bottom: 20px; text-shadow: 0 0 8px var(--accent); transition: color 0.5s ease; }
+        h1 { font-size: 1.1rem; text-align: center; letter-spacing: 4px; color: var(--accent); margin-bottom: 20px; text-shadow: 0 0 5px var(--accent); transition: color 0.5s ease; }
         
         .tide-controls { display: flex; gap: 10px; margin-bottom: 20px; }
         .tide-btn {
             flex: 1; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: #666; 
-            padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 8px; transition: all 0.3s ease;
+            padding: 10px; font-size: 0.9rem; font-weight: bold; border-radius: 6px; transition: all 0.3s ease;
         }
         .tide-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(255,255,255,0.05); text-shadow: 0 0 10px var(--accent); }
 
-        .horizon-box { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px; }
-        .horizon-info h2 { font-size: 0.7rem; color: #888; letter-spacing: 2px; margin-bottom: 5px; }
-        .horizon-info #current-goal { font-size: 1.2rem; color: white; }
-        .horizon-stats { text-align: right; }
-        .horizon-stats #degree-display { font-size: 1.5rem; color: var(--accent); font-weight: bold; transition: color 1s ease; }
-        #set-horizon-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 4px; padding: 5px 10px; font-size: 0.8rem; margin-top: 5px; }
+        .horizon-box { background: transparent; padding-bottom: 10px; }
+        .horizon-box label { font-size: 0.65rem; color: #888; letter-spacing: 1px; display: block; margin-bottom: 5px;}
+        .north-input-group { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--accent); padding-bottom: 5px;}
+        #current-goal { color: white; font-size: 1rem; flex-grow: 1; }
+        #set-horizon-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 4px; padding: 5px 10px; font-size: 0.7rem; }
 
-        /* WAKE (BOTTOM SECTION) */
-        .wake-panel { flex-grow: 1; display: flex; flex-direction: column; padding: 20px; justify-content: flex-end; }
-        .log-input-group { display: flex; margin-bottom: 15px; }
-        #log-input { flex-grow: 1; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 15px; border-radius: 8px 0 0 8px; outline: none; backdrop-filter: blur(5px); }
+        /* WAKE DRAWER (SWIPE UP/DOWN) */
+        #wake-drawer {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 110px;
+            background: rgba(10,5,15,0.85); backdrop-filter: blur(10px); z-index: 5;
+            border-top: 1px solid rgba(255,255,255,0.1); border-radius: 20px 20px 0 0;
+            display: flex; flex-direction: column; padding: 0 20px 20px 20px;
+            transition: height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); pointer-events: auto;
+        }
+        #wake-drawer.open { height: 75vh; }
+        .drag-handle { width: 40px; height: 5px; background: rgba(255,255,255,0.2); margin: 10px auto 15px auto; border-radius: 3px; }
+
+        .log-input-group { display: flex; margin-bottom: 15px; flex-shrink: 0;}
+        #log-input { flex-grow: 1; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 15px; border-radius: 8px 0 0 8px; outline: none; }
         #log-input:focus { border-color: var(--accent); }
-        #emit-btn { background: var(--accent); color: var(--bg-dark); border: none; font-weight: bold; padding: 0 20px; border-radius: 0 8px 8px 0; transition: background 0.3s ease; }
+        #emit-btn { background: var(--accent); color: var(--bg-dark); border: none; font-weight: bold; padding: 0 20px; border-radius: 0 8px 8px 0; }
 
-        .log-list { list-style: none; display: flex; flex-direction: column; gap: 8px; max-height: 35vh; overflow-y: auto; padding-bottom: 10px; }
-        .log-entry { background: rgba(0,0,0,0.5); border-left: 3px solid var(--accent); padding: 10px; font-size: 0.85rem; display: flex; justify-content: space-between; backdrop-filter: blur(5px); transition: opacity 0.4s ease; }
+        .log-list { list-style: none; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-bottom: 10px; flex-grow: 1; opacity: 0; transition: opacity 0.3s;}
+        #wake-drawer.open .log-list { opacity: 1; }
+        .log-entry { background: rgba(0,0,0,0.5); border-left: 3px solid var(--accent); padding: 10px; font-size: 0.85rem; display: flex; justify-content: space-between; transition: opacity 0.4s ease; }
         .log-entry.dissolving { opacity: 0; }
         .log-header { font-size: 0.65rem; color: #888; margin-bottom: 4px; }
         .delete-btn { color: #555; background: none; border: none; font-size: 1.2rem; padding-left: 10px; }
 
-        /* MODALS (Fade In) */
+        /* MODALS */
         .modal-overlay { opacity: 0; pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10; display: flex; justify-content: center; align-items: center; transition: opacity 0.3s ease; backdrop-filter: blur(3px); }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
         .modal-box { background: var(--bg-panel); border: 1px solid var(--accent); padding: 25px; border-radius: 8px; width: 90%; max-width: 320px; text-align: center; }
@@ -87,58 +106,66 @@
         .modal-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid #333; color: white; padding: 12px; margin-bottom: 15px; border-radius: 4px; text-align: center; }
         .modal-btn { display: block; width: 100%; padding: 12px; margin-bottom: 8px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; font-size: 0.9rem; border-radius: 4px; }
         .modal-btn:active { background: var(--accent); color: var(--bg-dark); }
+        
+        /* Compass Grid for Selection */
+        .compass-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 15px; }
+        .dir-btn { background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; padding: 10px 0; border-radius: 4px; font-size: 0.8rem; }
+        .dir-btn:active { background: var(--accent); color: black;}
+        .dir-btn.disabled { opacity: 0.2; pointer-events: none; }
+        
         .modal-cancel { background: transparent; border: none; color: #666; margin-top: 10px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-    <!-- MASSIVE BACKGROUND ASTROLABE -->
     <div id="astrolabe-bg">
+        <div id="target-marker"></div>
         <div id="astrolabe-needle"></div>
         <div id="astrolabe-center"></div>
     </div>
 
-    <!-- UI LAYER -->
-    <div id="ui-layer">
-        <div class="top-panel">
-            <h1 id="app-title">KAXIM TERMINAL</h1>
-            
-            <div class="tide-controls">
-                <button class="tide-btn" id="btn-ton" onclick="setTide(-1)">,ton</button>
-                <button class="tide-btn" id="btn-sil" onclick="setTide(0)">.síl</button>
-                <button class="tide-btn" id="btn-qina" onclick="setTide(1)">;qına</button>
-            </div>
-
-            <div class="horizon-box">
-                <div class="horizon-info">
-                    <h2>TRUE NORTH</h2>
-                    <div id="current-goal">No Horizon Set</div>
-                    <button id="set-horizon-btn" onclick="openHorizonModal()">Set Course</button>
-                </div>
-                <div class="horizon-stats">
-                    <h2>DEGREES TO 0°</h2>
-                    <div id="degree-display">180°</div>
-                </div>
+    <div id="ui-top">
+        <h1 id="app-title">KAXIM TERMINAL</h1>
+        <div class="tide-controls">
+            <button class="tide-btn" id="btn-ton" onclick="setTide(-1)">,ton</button>
+            <button class="tide-btn active-sil" id="btn-sil" onclick="setTide(0)">.síl</button>
+            <button class="tide-btn" id="btn-qina" onclick="setTide(1)">;qına</button>
+        </div>
+        <div class="horizon-box">
+            <label>CURRENT HORIZON</label>
+            <div class="north-input-group">
+                <div id="current-goal">No Horizon Set</div>
+                <button id="set-horizon-btn" onclick="openHorizonModal()">Change Course</button>
             </div>
         </div>
+    </div>
 
-        <div class="wake-panel">
-            <div class="log-input-group">
-                <input type="text" id="log-input" placeholder="Record kinetic action...">
-                <button id="emit-btn" onclick="openSextantModal()">EMIT</button>
-            </div>
-            <ul class="log-list" id="log-list"></ul>
+    <div id="wake-drawer">
+        <div class="drag-handle" id="drawer-handle"></div>
+        <div class="log-input-group">
+            <input type="text" id="log-input" placeholder="Record kinetic action...">
+            <button id="emit-btn" onclick="openSextantModal()">EMIT</button>
         </div>
+        <ul class="log-list" id="log-list"></ul>
     </div>
 
     <!-- HORIZON MODAL -->
     <div id="horizon-modal" class="modal-overlay">
         <div class="modal-box">
-            <p>SET TRUE NORTH</p>
+            <p>NAME YOUR HORIZON</p>
             <input type="text" id="goal-input" class="modal-input" placeholder="e.g. Theory Test">
-            <p>ESTIMATE PROGRESS (0 - 100%)</p>
-            <input type="number" id="progress-input" class="modal-input" placeholder="0" min="0" max="100">
-            <button class="modal-btn" onclick="saveHorizon()">LOCK TRAJECTORY</button>
+            <p>CHOOSE DIRECTION</p>
+            <div class="compass-grid">
+                <button class="dir-btn" onclick="setTargetDir(315, this)">NW</button>
+                <button class="dir-btn" onclick="setTargetDir(0, this)">N</button>
+                <button class="dir-btn" onclick="setTargetDir(45, this)">NE</button>
+                <button class="dir-btn" onclick="setTargetDir(270, this)">W</button>
+                <div style="background: transparent;"></div>
+                <button class="dir-btn" onclick="setTargetDir(90, this)">E</button>
+                <button class="dir-btn" onclick="setTargetDir(225, this)">SW</button>
+                <button class="dir-btn" onclick="setTargetDir(180, this)">S</button>
+                <button class="dir-btn" onclick="setTargetDir(135, this)">SE</button>
+            </div>
             <button class="modal-cancel" onclick="closeModals()">Cancel</button>
         </div>
     </div>
@@ -147,35 +174,47 @@
     <div id="sextant-modal" class="modal-overlay">
         <div class="modal-box">
             <p>VECTOR ALIGNMENT</p>
-            <button class="modal-btn" onclick="submitLog('North', '⬆️')">⬆️ North (Advance)</button>
-            <button class="modal-btn" onclick="submitLog('Lateral', '↔️')">↔️ Lateral (Drift)</button>
-            <button class="modal-btn" onclick="submitLog('Anchor', '⚓')">⚓ Anchor (Ground)</button>
+            <button class="modal-btn" onclick="submitLog('Align', '⬆️')">⬆️ Align (Toward Horizon)</button>
+            <button class="modal-btn" onclick="submitLog('Drift', '↔️')">↔️ Drift (Side Quest)</button>
+            <button class="modal-btn" onclick="submitLog('Anchor', '⚓')">⚓ Anchor (Ground/Rest)</button>
             <button class="modal-cancel" onclick="closeModals()">Cancel</button>
         </div>
     </div>
 
     <script>
         let currentTide = 0; 
-        let currentDegrees = 180;
+        let needleAngle = 180; // Needle's actual current bearing
+        let targetAngle = 0; // Where the goal is
         const colors = { '-1': '#4a5fc1', '0': '#00ff9d', '1': '#ffb000' };
+        const root = document.documentElement;
+
+        // Drawer Swipe Logic
+        const drawer = document.getElementById('wake-drawer');
+        let startY;
+        drawer.addEventListener('touchstart', e => startY = e.touches[0].clientY);
+        drawer.addEventListener('touchend', e => {
+            let endY = e.changedTouches[0].clientY;
+            if(startY - endY > 40) drawer.classList.add('open');
+            else if(endY - startY > 40) drawer.classList.remove('open');
+        });
         
         window.onload = () => {
-            if(localStorage.getItem('trueNorth')) document.getElementById('current-goal').innerText = localStorage.getItem('trueNorth');
-            if(localStorage.getItem('currentDegrees')) currentDegrees = parseFloat(localStorage.getItem('currentDegrees'));
-            updateCompass();
-            loadLogs();
-            setTide(0); 
+            if(localStorage.getItem('horizonName')) document.getElementById('current-goal').innerText = localStorage.getItem('horizonName');
+            if(localStorage.getItem('needleAngle')) needleAngle = parseFloat(localStorage.getItem('needleAngle'));
+            if(localStorage.getItem('targetAngle')) targetAngle = parseFloat(localStorage.getItem('targetAngle'));
+            
+            updateCompass(); loadLogs(); setTide(0); 
         };
 
         function setTide(state) {
             currentTide = state;
-            document.documentElement.style.setProperty('--accent', colors[state]);
-            document.getElementById('astrolabe-bg').style.boxShadow = `0 0 50px ${colors[state]}15`;
-            
-            document.querySelectorAll('.tide-btn').forEach(btn => btn.classList.remove('active'));
+            root.style.setProperty('--accent', colors[state]);
+            document.querySelectorAll('.tide-btn').forEach(b => b.classList.remove('active'));
             if(state === -1) document.getElementById('btn-ton').classList.add('active');
             if(state === 0) document.getElementById('btn-sil').classList.add('active');
             if(state === 1) document.getElementById('btn-qina').classList.add('active');
+            document.getElementById('astrolabe-center').style.borderColor = colors[state];
+            document.getElementById('astrolabe-bg').style.boxShadow = `0 0 40px ${colors[state]}15`;
         }
 
         function openHorizonModal() { document.getElementById('horizon-modal').classList.add('show'); }
@@ -185,60 +224,62 @@
         }
         function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show')); }
 
-        function saveHorizon() {
+        function setTargetDir(deg, btn) {
             let goal = document.getElementById('goal-input').value;
-            let prog = parseFloat(document.getElementById('progress-input').value) || 0;
-            if(goal.trim() === '') return;
+            if(goal.trim() === '') goal = "Unknown Horizon";
             
-            // Convert Progress (0-100) to Degrees (180-0)
-            currentDegrees = 180 - (prog * 1.8);
-            
+            targetAngle = deg;
             document.getElementById('current-goal').innerText = goal;
-            localStorage.setItem('trueNorth', goal);
-            localStorage.setItem('currentDegrees', currentDegrees);
             
-            updateCompass();
-            closeModals();
+            localStorage.setItem('horizonName', goal);
+            localStorage.setItem('targetAngle', targetAngle);
+            
+            updateCompass(); closeModals();
         }
 
-        function submitLog(direction, icon) {
+        function submitLog(actionType, icon) {
             closeModals();
             let input = document.getElementById('log-input');
+            let tideMultiplier = currentTide === -1 ? 0.4 : (currentTide === 1 ? 1.8 : 1.0);
             
-            // Physics Math based on Tide
-            let tideMultiplier = currentTide === -1 ? 0.5 : (currentTide === 1 ? 2.0 : 1.0);
+            if(actionType === 'Align') {
+                // Math to find shortest path to target
+                let diff = (targetAngle - needleAngle) % 360;
+                if(diff < -180) diff += 360;
+                if(diff > 180) diff -= 360;
+                
+                let step = 15 * tideMultiplier;
+                if(Math.abs(diff) <= step) needleAngle = targetAngle; // Snap to target
+                else needleAngle += Math.sign(diff) * step;
+                
+            } else if(actionType === 'Drift') {
+                let driftDir = Math.random() > 0.5 ? 1 : -1;
+                needleAngle += (15 * tideMultiplier * driftDir);
+            } 
             
-            if(direction === 'North') {
-                currentDegrees -= (5 * tideMultiplier);
-            } else if(direction === 'Lateral') {
-                currentDegrees += (3 * tideMultiplier); // Drifting away from 0
-            } // Anchor does nothing to degrees
-            
-            // Boundaries
-            if(currentDegrees < 0) currentDegrees = 0;
-            if(currentDegrees > 180) currentDegrees = 180;
-
-            localStorage.setItem('currentDegrees', currentDegrees);
+            // Normalize angle 0-360
+            needleAngle = (needleAngle + 360) % 360;
+            localStorage.setItem('needleAngle', needleAngle);
             updateCompass();
 
-            // Log it
+            // Log
             const logEntry = { id: Date.now(), text: input.value, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), color: colors[currentTide], tag: icon };
             let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
             logs.unshift(logEntry); 
             if(logs.length > 50) logs.pop(); 
             localStorage.setItem('wakeLogs', JSON.stringify(logs));
 
-            renderLogs();
-            input.value = '';
+            renderLogs(); input.value = '';
         }
 
         function updateCompass() {
-            document.getElementById('degree-display').innerText = currentDegrees.toFixed(1) + '°';
-            document.getElementById('astrolabe-needle').style.transform = `rotate(${currentDegrees}deg)`;
+            document.getElementById('astrolabe-needle').style.transform = `rotate(${needleAngle}deg)`;
+            document.getElementById('target-marker').style.transform = `rotate(${targetAngle}deg)`;
             
-            if(currentDegrees === 0) {
-                document.getElementById('app-title').innerText = "TRUE NORTH REACHED";
-                document.getElementById('astrolabe-center').style.boxShadow = "0 0 40px white";
+            // If perfectly aligned
+            if(Math.round(needleAngle) === Math.round(targetAngle)) {
+                document.getElementById('app-title').innerText = "HORIZON REACHED";
+                document.getElementById('astrolabe-center').style.boxShadow = "0 0 30px white";
             } else {
                 document.getElementById('app-title').innerText = "KAXIM TERMINAL";
                 document.getElementById('astrolabe-center').style.boxShadow = `0 0 15px ${colors[currentTide]}`;
@@ -257,12 +298,10 @@
 
         function renderLogs() {
             let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-            let list = document.getElementById('log-list');
-            list.innerHTML = '';
+            let list = document.getElementById('log-list'); list.innerHTML = '';
             logs.forEach(log => {
-                const li = document.createElement('li');
-                li.className = 'log-entry'; li.style.borderLeftColor = log.color;
-                li.innerHTML = `<div class="log-content"><div class="log-header">${log.time} &nbsp; ${log.tag}</div><div>${log.text}</div></div><button class="delete-btn" onclick="deleteLog(${log.id}, this)">×</button>`;
+                const li = document.createElement('li'); li.className = 'log-entry'; li.style.borderLeftColor = log.color;
+                li.innerHTML = `<div class="log-content"><div class="log-header"><span>${log.time}</span> <span>${log.tag}</span></div><div>${log.text}</div></div><button class="delete-btn" onclick="deleteLog(${log.id}, this)">×</button>`;
                 list.appendChild(li);
             });
         }
