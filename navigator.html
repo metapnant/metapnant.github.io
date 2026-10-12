@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#05000a">
-    <title>Kaxim Terminal V8</title>
+    <title>Kaxim Terminal V9</title>
     <style>
         :root {
             --bg-dark: #05000a;
@@ -78,13 +78,13 @@
         #set-horizon-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 4px; padding: 6px 12px; font-size: 0.7rem; font-weight: bold; transition: background 0.2s; }
         #set-horizon-btn:active { background: rgba(0,255,157,0.2); }
 
-        /* WAKE DRAWER (GPU OPTIMIZED TRANSLATION) */
+        /* WAKE DRAWER (GPU OPTIMIZED) */
         #wake-drawer {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 75vh;
             background: rgba(10,5,15,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 5;
             border-top: 1px solid rgba(255,255,255,0.1); border-radius: 20px 20px 0 0;
             display: flex; flex-direction: column; padding: 0 20px 20px 20px;
-            transform: translateY(calc(100% - 110px)); /* Closed state */
+            transform: translateY(calc(100% - 110px)); 
             transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); pointer-events: auto;
             will-change: transform;
         }
@@ -107,7 +107,7 @@
             backdrop-filter: blur(5px); display: flex; justify-content: space-between; align-items: center;
             will-change: transform, opacity;
         }
-        .log-content { flex-grow: 1; pointer-events: none; } /* Prevents child elements from messing up swipe */
+        .log-content { flex-grow: 1; pointer-events: none; } 
         .log-header { font-size: 0.65rem; color: #888; margin-bottom: 4px; display: flex; gap: 10px;}
         .delete-btn { color: #555; background: none; border: none; font-size: 1.5rem; padding: 0 10px; transition: color 0.2s; }
         .delete-btn:active { color: #ff4444; }
@@ -122,6 +122,7 @@
         .modal-btn { display: block; width: 100%; padding: 14px; margin-bottom: 8px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; font-size: 0.95rem; border-radius: 4px; font-weight: bold; transition: all 0.2s;}
         .modal-btn:active { background: var(--accent); color: var(--bg-dark); }
         
+        /* Compass Grid */
         .compass-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 15px; }
         .dir-btn { background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; padding: 12px 0; border-radius: 4px; font-size: 0.85rem; font-weight: bold; transition: all 0.2s;}
         .dir-btn:active { background: var(--accent); color: black;}
@@ -131,252 +132,227 @@
 </head>
 <body>
 
-    <!-- BACKGROUND ASTROLABE -->
     <div id="astrolabe-bg">
         <div id="target-marker"></div>
         <div id="astrolabe-needle"></div>
         <div id="astrolabe-center"></div>
     </div>
 
-    <!-- UI LAYER -->
     <div id="ui-top">
         <h1 id="app-title">KAXIM TERMINAL</h1>
         <div class="tide-controls">
-            <button class="tide-btn" id="btn-ton" onclick="APP.setTide(-1)">,ton</button>
-            <button class="tide-btn" id="btn-sil" onclick="APP.setTide(0)">.síl</button>
-            <button class="tide-btn" id="btn-qina" onclick="APP.setTide(1)">;qına</button>
+            <button class="tide-btn" id="btn-ton" onclick="setTide(-1)">,ton</button>
+            <button class="tide-btn active-sil" id="btn-sil" onclick="setTide(0)">.síl</button>
+            <button class="tide-btn" id="btn-qina" onclick="setTide(1)">;qına</button>
         </div>
         <div class="horizon-box">
             <label>CURRENT HORIZON</label>
             <div class="north-input-group">
                 <div id="current-goal">No Horizon Set</div>
-                <button id="set-horizon-btn" onclick="APP.modals.openHorizon()">CHANGE COURSE</button>
+                <button id="set-horizon-btn" onclick="openHorizonModal()">CHANGE COURSE</button>
             </div>
         </div>
     </div>
 
-    <!-- WAKE DRAWER -->
     <div id="wake-drawer">
         <div id="drawer-touch-zone">
             <div class="drag-handle"></div>
         </div>
         <div class="log-input-group">
             <input type="text" id="log-input" placeholder="Record kinetic action...">
-            <button id="emit-btn" onclick="APP.modals.openSextant()">EMIT</button>
+            <button id="emit-btn" onclick="openSextantModal()">EMIT</button>
         </div>
         <ul class="log-list" id="log-list"></ul>
     </div>
 
-    <!-- HORIZON MODAL -->
     <div id="horizon-modal" class="modal-overlay">
         <div class="modal-box">
             <p>NAME YOUR HORIZON</p>
             <input type="text" id="goal-input" class="modal-input" placeholder="e.g. Theory Test">
             <p>CHOOSE DIRECTION</p>
             <div class="compass-grid">
-                <button class="dir-btn" onclick="APP.setTargetDir(315)">NW</button>
-                <button class="dir-btn" onclick="APP.setTargetDir(0)">N</button>
-                <button class="dir-btn" onclick="APP.setTargetDir(45)">NE</button>
-                <button class="dir-btn" onclick="APP.setTargetDir(270)">W</button>
+                <button class="dir-btn" onclick="setTargetDir(315)">NW</button>
+                <button class="dir-btn" onclick="setTargetDir(0)">N</button>
+                <button class="dir-btn" onclick="setTargetDir(45)">NE</button>
+                <button class="dir-btn" onclick="setTargetDir(270)">W</button>
                 <div style="background: transparent;"></div>
-                <button class="dir-btn" onclick="APP.setTargetDir(90)">E</button>
-                <button class="dir-btn" onclick="APP.setTargetDir(225)">SW</button>
-                <button class="dir-btn" onclick="APP.setTargetDir(180)">S</button>
-                <button class="dir-btn" onclick="APP.setTargetDir(135)">SE</button>
+                <button class="dir-btn" onclick="setTargetDir(90)">E</button>
+                <button class="dir-btn" onclick="setTargetDir(225)">SW</button>
+                <button class="dir-btn" onclick="setTargetDir(180)">S</button>
+                <button class="dir-btn" onclick="setTargetDir(135)">SE</button>
             </div>
-            <button class="modal-cancel" onclick="APP.modals.closeAll()">CANCEL</button>
+            <button class="modal-cancel" onclick="closeModals()">CANCEL</button>
         </div>
     </div>
 
-    <!-- SEXTANT MODAL -->
     <div id="sextant-modal" class="modal-overlay">
         <div class="modal-box">
             <p>VECTOR ALIGNMENT</p>
-            <button class="modal-btn" onclick="APP.submitLog('Align', '⬆️')">⬆️ Align (Toward Horizon)</button>
-            <button class="modal-btn" onclick="APP.submitLog('Drift', '↔️')">↔️ Drift (Side Quest)</button>
-            <button class="modal-btn" onclick="APP.submitLog('Anchor', '⚓')">⚓ Anchor (Ground/Rest)</button>
-            <button class="modal-cancel" onclick="APP.modals.closeAll()">CANCEL</button>
+            <button class="modal-btn" onclick="submitLog('Align', '⬆️')">⬆️ Align (Toward Horizon)</button>
+            <button class="modal-btn" onclick="submitLog('Drift', '↔️')">↔️ Drift (Side Quest)</button>
+            <button class="modal-btn" onclick="submitLog('Anchor', '⚓')">⚓ Anchor (Ground/Rest)</button>
+            <button class="modal-cancel" onclick="closeModals()">CANCEL</button>
         </div>
     </div>
 
     <script>
-        /** 
-         * KAXIM TERMINAL ENGINE
-         * Optimized state management & hardware-accelerated UI
-         */
-        const APP = {
-            state: {
-                tide: 0,
-                needleAngle: 180,
-                targetAngle: 0,
-                goal: "No Horizon Set",
-                logs: []
-            },
-            colors: { '-1': '#4a5fc1', '0': '#00ff9d', '1': '#ffb000' },
-            els: {},
+        let currentTide = 0; 
+        let needleAngle = 180; 
+        let targetAngle = 0; 
+        const colors = { '-1': '#4a5fc1', '0': '#00ff9d', '1': '#ffb000' };
+        const root = document.documentElement;
 
-            init() {
-                // Cache DOM elements
-                this.els.root = document.documentElement;
-                this.els.title = document.getElementById('app-title');
-                this.els.needle = document.getElementById('astrolabe-needle');
-                this.els.marker = document.getElementById('target-marker');
-                this.els.center = document.getElementById('astrolabe-center');
-                this.els.bg = document.getElementById('astrolabe-bg');
-                this.els.goalText = document.getElementById('current-goal');
-                this.els.logInput = document.getElementById('log-input');
-                this.els.logList = document.getElementById('log-list');
-                
-                this.loadState();
-                this.bindDrawer();
-                this.setTide(this.state.tide);
-                this.renderAllLogs();
-                this.updateCompassUI();
-            },
-
-            loadState() {
-                this.state.goal = localStorage.getItem('horizonName') || "No Horizon Set";
-                this.state.needleAngle = parseFloat(localStorage.getItem('needleAngle')) || 180;
-                this.state.targetAngle = parseFloat(localStorage.getItem('targetAngle')) || 0;
-                this.state.logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-                this.els.goalText.innerText = this.state.goal;
-            },
-
-            saveState() {
-                localStorage.setItem('horizonName', this.state.goal);
-                localStorage.setItem('needleAngle', this.state.needleAngle);
-                localStorage.setItem('targetAngle', this.state.targetAngle);
-                localStorage.setItem('wakeLogs', JSON.stringify(this.state.logs));
-            },
-
-            setTide(stateVal) {
-                this.state.tide = stateVal;
-                const color = this.colors[stateVal];
-                this.els.root.style.setProperty('--accent', color);
-                
-                document.querySelectorAll('.tide-btn').forEach(b => b.classList.remove('active'));
-                document.getElementById(stateVal === -1 ? 'btn-ton' : stateVal === 0 ? 'btn-sil' : 'btn-qina').classList.add('active');
-                
-                this.els.center.style.borderColor = color;
-                this.els.bg.style.boxShadow = `0 0 40px ${color}15`;
-            },
-
-            modals: {
-                openHorizon() { document.getElementById('horizon-modal').classList.add('show'); },
-                openSextant() { 
-                    if(APP.els.logInput.value.trim() === '') return;
-                    document.getElementById('sextant-modal').classList.add('show'); 
-                },
-                closeAll() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show')); }
-            },
-
-            setTargetDir(deg) {
-                const inputVal = document.getElementById('goal-input').value.trim();
-                this.state.goal = inputVal === '' ? "Unknown Horizon" : inputVal;
-                this.state.targetAngle = deg;
-                
-                this.els.goalText.innerText = this.state.goal;
-                this.saveState();
-                this.updateCompassUI();
-                this.modals.closeAll();
-                document.getElementById('goal-input').value = '';
-            },
-
-            submitLog(actionType, icon) {
-                this.modals.closeAll();
-                const text = this.els.logInput.value.trim();
-                if(!text) return;
-
-                // Physics Math
-                const tideMultiplier = this.state.tide === -1 ? 0.5 : (this.state.tide === 1 ? 2.5 : 1.2);
-                
-                if(actionType === 'Align') {
-                    let diff = (this.state.targetAngle - this.state.needleAngle + 540) % 360 - 180;
-                    let step = 15 * tideMultiplier;
-                    if(Math.abs(diff) <= step) this.state.needleAngle = this.state.targetAngle; 
-                    else this.state.needleAngle += Math.sign(diff) * step;
-                } else if(actionType === 'Drift') {
-                    let diff = (this.state.needleAngle - this.state.targetAngle + 540) % 360 - 180;
-                    let driftAmount = 20 * tideMultiplier;
-                    if(Math.abs(diff) < 2) {
-                        this.state.needleAngle += (Math.random() > 0.5 ? 1 : -1) * driftAmount;
-                    } else {
-                        this.state.needleAngle += Math.sign(diff) * driftAmount; 
-                    }
-                } 
-                
-                this.state.needleAngle = (this.state.needleAngle + 360) % 360;
-                
-                const newLog = {
-                    id: Date.now(), text: text,
-                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                    color: this.colors[this.state.tide], tag: icon
-                };
-
-                this.state.logs.unshift(newLog);
-                if(this.state.logs.length > 50) this.state.logs.pop();
-                
-                this.saveState();
-                this.updateCompassUI();
-                this.renderSingleLog(newLog, true);
-                this.els.logInput.value = '';
-            },
-
-            deleteLog(id, btnElement) {
-                const li = btnElement.closest('.log-entry');
-                li.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                li.style.opacity = '0';
-                li.style.transform = 'scale(0.95)';
-                
-                setTimeout(() => {
-                    this.state.logs = this.state.logs.filter(log => log.id !== id);
-                    this.saveState();
-                    li.remove();
-                }, 300);
-            },
-
-            updateCompassUI() {
-                this.els.needle.style.transform = `rotate(${this.state.needleAngle}deg)`;
-                this.els.marker.style.transform = `rotate(${this.state.targetAngle}deg)`;
-                
-                if(Math.round(this.state.needleAngle) === Math.round(this.state.targetAngle)) {
-                    this.els.title.innerText = "HORIZON REACHED";
-                    this.els.center.style.boxShadow = "0 0 30px white";
-                } else {
-                    this.els.title.innerText = "KAXIM TERMINAL";
-                    this.els.center.style.boxShadow = `0 0 15px ${this.colors[this.state.tide]}`;
-                }
-            },
-
-            // --- TOUCH PHYSICS & UI RENDER ---
-            
-            bindDrawer() {
-                const drawer = document.getElementById('wake-drawer');
-                const touchZone = document.getElementById('drawer-touch-zone');
-                let startY;
-                
-                touchZone.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, {passive: true});
-                touchZone.addEventListener('touchend', e => {
-                    let endY = e.changedTouches[0].clientY;
-                    if(startY - endY > 30) drawer.classList.add('open');
-                    else if(endY - startY > 30) drawer.classList.remove('open');
-                });
-            },
-
-            attachSwipeToDelete(li, id) {
-                let startX = 0, currentX = 0, startY = 0, currentY = 0;
-                let isDragging = false;
-                let isScrolling = false;
-
-                li.addEventListener('touchstart', e => {
-                    startX = e.touches[0].clientX;
-                    startY = e.touches[0].clientY;
-                    isDragging = true;
-                    isScrolling = false;
-                    li.style.transition = 'none';
-                }, {passive: true});
-
-                li.addEventListener('touchmove', e => {
-                    if(!isDragging) return;
-                    currentX = e.touches[0].clientX;
+        // Drawer Touch Physics
+        const drawer = document.getElementById('wake-drawer');
+        const touchZone = document.getElementById('drawer-touch-zone');
+        let dStartY;
         
+        touchZone.addEventListener('touchstart', e => dStartY = e.touches[0].clientY, {passive: true});
+        touchZone.addEventListener('touchend', e => {
+            let dEndY = e.changedTouches[0].clientY;
+            if(dStartY - dEndY > 30) drawer.classList.add('open');
+            else if(dEndY - dStartY > 30) drawer.classList.remove('open');
+        });
+
+        window.onload = () => {
+            if(localStorage.getItem('horizonName')) document.getElementById('current-goal').innerText = localStorage.getItem('horizonName');
+            if(localStorage.getItem('needleAngle')) needleAngle = parseFloat(localStorage.getItem('needleAngle'));
+            if(localStorage.getItem('targetAngle')) targetAngle = parseFloat(localStorage.getItem('targetAngle'));
+            updateCompass(); loadLogs(); setTide(0); 
+        };
+
+        function setTide(state) {
+            currentTide = state;
+            root.style.setProperty('--accent', colors[state]);
+            document.querySelectorAll('.tide-btn').forEach(b => b.classList.remove('active'));
+            if(state === -1) document.getElementById('btn-ton').classList.add('active');
+            if(state === 0) document.getElementById('btn-sil').classList.add('active');
+            if(state === 1) document.getElementById('btn-qina').classList.add('active');
+            document.getElementById('astrolabe-center').style.borderColor = colors[state];
+            document.getElementById('astrolabe-bg').style.boxShadow = `0 0 40px ${colors[state]}15`;
+        }
+
+        function openHorizonModal() { document.getElementById('horizon-modal').classList.add('show'); }
+        function openSextantModal() { 
+            if(document.getElementById('log-input').value.trim() === '') return;
+            document.getElementById('sextant-modal').classList.add('show'); 
+        }
+        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show')); }
+
+        function setTargetDir(deg) {
+            let goal = document.getElementById('goal-input').value.trim();
+            if(goal === '') goal = "Unknown Horizon";
+            targetAngle = deg;
+            document.getElementById('current-goal').innerText = goal;
+            
+            localStorage.setItem('horizonName', goal);
+            localStorage.setItem('targetAngle', targetAngle);
+            
+            updateCompass(); closeModals(); document.getElementById('goal-input').value = '';
+        }
+
+        function submitLog(actionType, icon) {
+            closeModals();
+            let input = document.getElementById('log-input');
+            let tideMultiplier = currentTide === -1 ? 0.5 : (currentTide === 1 ? 2.5 : 1.2);
+            
+            if(actionType === 'Align') {
+                let diff = (targetAngle - needleAngle + 540) % 360 - 180;
+                let step = 15 * tideMultiplier;
+                if(Math.abs(diff) <= step) needleAngle = targetAngle; 
+                else needleAngle += Math.sign(diff) * step;
+            } else if(actionType === 'Drift') {
+                let diff = (needleAngle - targetAngle + 540) % 360 - 180;
+                let driftAmount = 20 * tideMultiplier;
+                if(Math.abs(diff) < 2) needleAngle += (Math.random() > 0.5 ? 1 : -1) * driftAmount;
+                else needleAngle += Math.sign(diff) * driftAmount; 
+            } 
+            
+            needleAngle = (needleAngle + 360) % 360;
+            localStorage.setItem('needleAngle', needleAngle);
+            updateCompass();
+
+            const logEntry = { id: Date.now(), text: input.value, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), color: colors[currentTide], tag: icon };
+            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
+            logs.unshift(logEntry); 
+            if(logs.length > 50) logs.pop(); 
+            localStorage.setItem('wakeLogs', JSON.stringify(logs));
+
+            renderLogs(); input.value = '';
+        }
+
+        function updateCompass() {
+            document.getElementById('astrolabe-needle').style.transform = `rotate(${needleAngle}deg)`;
+            document.getElementById('target-marker').style.transform = `rotate(${targetAngle}deg)`;
+            
+            if(Math.round(needleAngle) === Math.round(targetAngle)) {
+                document.getElementById('app-title').innerText = "HORIZON REACHED";
+                document.getElementById('astrolabe-center').style.boxShadow = "0 0 30px white";
+            } else {
+                document.getElementById('app-title').innerText = "KAXIM TERMINAL";
+                document.getElementById('astrolabe-center').style.boxShadow = `0 0 15px ${colors[currentTide]}`;
+            }
+        }
+
+        function attachSwipeEvent(li, id) {
+            let startX = 0, currentX = 0, startY = 0, currentY = 0;
+            let isDragging = false;
+            let isScrolling = false;
+
+            li.addEventListener('touchstart', e => {
+                startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+                isDragging = true; isScrolling = false;
+                li.style.transition = 'none';
+            }, {passive: true});
+
+            li.addEventListener('touchmove', e => {
+                if(!isDragging) return;
+                currentX = e.touches[0].clientX; currentY = e.touches[0].clientY;
+                let diffX = currentX - startX; let diffY = currentY - startY;
+
+                if(Math.abs(diffY) > Math.abs(diffX) + 5) {
+                    isScrolling = true; li.style.transform = `translateX(0px)`; return;
+                }
+                if(!isScrolling) {
+                    if(e.cancelable) e.preventDefault();
+                    li.style.transform = `translateX(${diffX}px)`;
+                    li.style.opacity = 1 - (Math.abs(diffX) / window.innerWidth);
+                }
+            }, {passive: false});
+
+            li.addEventListener('touchend', e => {
+                if(!isDragging || isScrolling) return;
+                isDragging = false;
+                let diffX = currentX - startX;
+                
+                li.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease';
+                if(Math.abs(diffX) > window.innerWidth * 0.35) { 
+                    li.style.transform = `translateX(${Math.sign(diffX) * window.innerWidth}px)`;
+                    li.style.opacity = 0;
+                    setTimeout(() => { deleteLogRaw(id); }, 300);
+                } else { 
+                    li.style.transform = `translateX(0px)`; li.style.opacity = 1;
+                }
+            });
+        }
+
+        function deleteLogRaw(id) {
+            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
+            logs = logs.filter(log => log.id !== id);
+            localStorage.setItem('wakeLogs', JSON.stringify(logs));
+            renderLogs();
+        }
+
+        function renderLogs() {
+            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
+            let list = document.getElementById('log-list'); list.innerHTML = '';
+            logs.forEach(log => {
+                const li = document.createElement('li'); li.className = 'log-entry'; li.style.borderLeftColor = log.color;
+                li.innerHTML = `<div class="log-content"><div class="log-header"><span>${log.time}</span> <span>${log.tag}</span></div><div>${log.text}</div></div><button class="delete-btn" onclick="deleteLogRaw(${log.id})">×</button>`;
+                attachSwipeEvent(li, log.id);
+                list.appendChild(li);
+            });
+        }
+    </script>
+</body>
+</html>
