@@ -3,100 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#05000a">
-    <title>Ternary Navigator</title>
+    <title>Kaxim Terminal</title>
     <style>
         :root {
-            --bg-color: #05000a;
+            --bg-dark: #05000a;
+            --bg-panel: #0a0514;
             --text-main: #e0dced;
-            --ton-color: #4a5fc1; 
-            --sil-color: #00ff9d; 
-            --qina-color: #ffb000; 
+            --ton: #4a5fc1; 
+            --sil: #00ff9d; 
+            --qina: #ffb000; 
             --accent: #00ff9d; 
         }
         
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; user-select: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
         
         body, html {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            width: 100%; height: 100%;
-            overflow: hidden; 
-            transition: background-color 1s ease;
+            background-color: var(--bg-dark); color: var(--text-main);
+            width: 100%; height: 100%; overflow: hidden;
+            transition: background-color 0.5s ease;
         }
 
-        #cosmos { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-
         #ui {
-            position: relative; z-index: 1; height: 100%;
-            display: flex; flex-direction: column; padding: 20px;
-            background: linear-gradient(180deg, rgba(5,0,10,0.85) 0%, rgba(5,0,10,0.4) 100%);
+            height: 100%; display: flex; flex-direction: column; padding: 20px;
         }
 
         h1 {
             font-size: 1.2rem; text-align: center; letter-spacing: 2px;
-            color: var(--accent); margin-bottom: 15px;
-            text-shadow: 0 0 10px var(--accent); transition: all 1s ease;
+            color: var(--accent); margin-bottom: 20px; text-shadow: 0 0 5px var(--accent);
+            transition: color 0.5s ease;
         }
 
+        /* TIDE CONTROLS */
         .tide-controls {
-            display: flex; justify-content: space-between; margin-bottom: 20px;
-            background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 5px;
+            display: flex; gap: 10px; margin-bottom: 20px;
         }
         .tide-btn {
-            flex: 1; background: transparent; border: none; color: #555; padding: 10px;
-            font-size: 1rem; font-weight: bold; border-radius: 8px; transition: all 0.3s ease;
+            flex: 1; background: var(--bg-panel); border: 1px solid #222; color: #555; 
+            padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 4px; transition: all 0.3s ease;
         }
-        .tide-btn.active-ton { color: var(--ton-color); text-shadow: 0 0 8px var(--ton-color); background: rgba(74, 95, 193, 0.1); }
-        .tide-btn.active-sil { color: var(--sil-color); text-shadow: 0 0 8px var(--sil-color); background: rgba(0, 255, 157, 0.1); }
-        .tide-btn.active-qina { color: var(--qina-color); text-shadow: 0 0 8px var(--qina-color); background: rgba(255, 176, 0, 0.1); }
+        .tide-btn.active-ton { color: var(--ton); border-color: var(--ton); background: rgba(74, 95, 193, 0.1); }
+        .tide-btn.active-sil { color: var(--sil); border-color: var(--sil); background: rgba(0, 255, 157, 0.1); }
+        .tide-btn.active-qina { color: var(--qina); border-color: var(--qina); background: rgba(255, 176, 0, 0.1); }
 
-        .vector-box { margin-bottom: 20px; display: flex; flex-direction: column;}
-        .vector-header { display: flex; justify-content: space-between; align-items: center; }
-        .vector-header label { font-size: 0.8rem; color: #888; letter-spacing: 1px; }
-        
-        .north-input-group { display: flex; margin-top: 5px; }
+        /* TRUE NORTH */
+        .vector-box { background: var(--bg-panel); padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #222;}
+        .vector-box label { font-size: 0.7rem; color: #888; letter-spacing: 1px; display: block; margin-bottom: 5px;}
+        .north-input-group { display: flex; }
         #true-north {
-            flex-grow: 1; background: transparent; border: none; border-bottom: 1px solid var(--accent);
-            color: white; font-size: 1.2rem; padding: 5px 0; outline: none; transition: all 1s ease;
+            flex-grow: 1; background: transparent; border: none; border-bottom: 1px dashed var(--accent);
+            color: white; font-size: 1.1rem; padding: 5px 0; outline: none;
         }
         #archive-btn {
             background: transparent; border: 1px solid var(--accent); color: var(--accent);
-            border-radius: 5px; padding: 0 15px; margin-left: 10px; font-weight: bold;
+            border-radius: 4px; padding: 0 15px; margin-left: 10px; font-weight: bold;
         }
 
+        /* WAKE LOG */
         .wake-container { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
-        
+        .log-input-group { display: flex; margin-bottom: 15px; }
         #log-input {
-            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);
-            color: white; padding: 12px; border-radius: 5px; outline: none; margin-bottom: 10px;
+            flex-grow: 1; background: var(--bg-panel); border: 1px solid #333; color: white;
+            padding: 15px; border-radius: 4px 0 0 4px; outline: none;
+        }
+        #emit-btn {
+            background: var(--accent); color: var(--bg-dark); border: none; font-weight: bold;
+            padding: 0 20px; border-radius: 0 4px 4px 0; transition: background 0.3s ease;
         }
 
-        /* The Sextant */
-        .sextant-controls { display: flex; gap: 5px; margin-bottom: 15px; }
-        .sextant-btn {
-            flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: none;
-            color: white; border-radius: 5px; font-size: 0.9rem; transition: background 0.3s ease;
-        }
-        .sextant-btn:active { background: var(--accent); color: black; }
-
-        .log-list { list-style: none; display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px;}
+        /* LOG ENTRIES */
+        .log-list { list-style: none; display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px;}
         .log-entry {
-            background: rgba(255,255,255,0.03); border-left: 2px solid var(--accent);
-            padding: 10px; font-size: 0.9rem; transition: opacity 0.8s ease, transform 0.8s ease;
+            background: var(--bg-panel); border-left: 3px solid var(--accent);
+            padding: 12px; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: flex-start;
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
-        .log-entry.dissolving { opacity: 0; transform: translateX(20px); }
-        
-        .log-header { display: flex; justify-content: space-between; font-size: 0.7rem; color: #666; margin-bottom: 3px; }
-        .log-tag { font-size: 0.8rem; }
+        .log-entry.dissolving { opacity: 0; transform: scale(0.95); }
+        .log-content { flex-grow: 1; }
+        .log-header { font-size: 0.7rem; color: #666; margin-bottom: 4px; }
+        .delete-btn { color: #555; background: none; border: none; font-size: 1.2rem; padding-left: 15px; }
+        .delete-btn:active { color: #ff4444; }
+
+        /* SEXTANT MODAL (Popup) */
+        #modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 10; justify-content: center; align-items: center;
+        }
+        .modal-box {
+            background: var(--bg-panel); border: 1px solid var(--accent); padding: 20px;
+            border-radius: 4px; width: 90%; max-width: 350px; text-align: center;
+        }
+        .modal-box p { margin-bottom: 20px; font-size: 0.9rem; color: #aaa; }
+        .modal-btn {
+            display: block; width: 100%; padding: 15px; margin-bottom: 10px;
+            background: rgba(255,255,255,0.05); border: 1px solid #333; color: white;
+            font-size: 1rem; border-radius: 4px;
+        }
+        .modal-btn:active { background: var(--accent); color: var(--bg-dark); }
+        .modal-cancel { background: transparent; border: none; color: #666; margin-top: 10px; font-size: 0.8rem; }
 
     </style>
 </head>
 <body>
-
-    <canvas id="cosmos"></canvas>
 
     <div id="ui">
         <h1 id="app-title">KAXIM TERMINAL</h1>
@@ -108,9 +116,7 @@
         </div>
 
         <div class="vector-box">
-            <div class="vector-header">
-                <label>TRUE NORTH (ACTIVE VECTOR)</label>
-            </div>
+            <label>TRUE NORTH (ACTIVE VECTOR)</label>
             <div class="north-input-group">
                 <input type="text" id="true-north" placeholder="Set your horizon..." onchange="saveNorth()">
                 <button id="archive-btn" onclick="archiveNorth()">✓</button>
@@ -118,75 +124,74 @@
         </div>
 
         <div class="wake-container">
-            <input type="text" id="log-input" placeholder="Record your kinetic action...">
-            <div class="sextant-controls">
-                <button class="sextant-btn" onclick="addLog('North', '⬆️')">⬆️ North</button>
-                <button class="sextant-btn" onclick="addLog('Lateral', '↔️')">↔️ Lateral</button>
-                <button class="sextant-btn" onclick="addLog('Anchor', '⚓')">⚓ Anchor</button>
+            <div class="log-input-group">
+                <input type="text" id="log-input" placeholder="Record kinetic action...">
+                <button id="emit-btn" onclick="openModal()">EMIT</button>
             </div>
             <ul class="log-list" id="log-list"></ul>
         </div>
     </div>
 
+    <!-- SEXTANT POPUP -->
+    <div id="modal-overlay">
+        <div class="modal-box">
+            <p>Coordinate the Wake:</p>
+            <button class="modal-btn" onclick="submitLog('North', '⬆️')">⬆️ North (Mountain)</button>
+            <button class="modal-btn" onclick="submitLog('Lateral', '↔️')">↔️ Lateral (Ocean)</button>
+            <button class="modal-btn" onclick="submitLog('Anchor', '⚓')">⚓ Anchor (Ground)</button>
+            <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
     <script>
-        // --- PHYSICS STATE ---
         let currentTide = 0; 
-        let particleSpeedMult = 1;
-        let gravityX = 0;
-        let gravityY = 0; // Negative is UP, Positive is DOWN
-        
         const colors = { '-1': '#4a5fc1', '0': '#00ff9d', '1': '#ffb000' };
-
-        // --- DOM ELEMENTS ---
         const root = document.documentElement;
-        const btnTon = document.getElementById('btn-ton'), btnSil = document.getElementById('btn-sil'), btnQina = document.getElementById('btn-qina');
-        const northInput = document.getElementById('true-north');
-        const logInput = document.getElementById('log-input');
-        const logList = document.getElementById('log-list');
-
-        // --- INITIALIZATION ---
+        
         window.onload = () => {
-            if(localStorage.getItem('trueNorth')) northInput.value = localStorage.getItem('trueNorth');
+            if(localStorage.getItem('trueNorth')) document.getElementById('true-north').value = localStorage.getItem('trueNorth');
             loadLogs();
             setTide(0); 
         };
 
-        // --- CORE MECHANICS ---
         function setTide(state) {
             currentTide = state;
             root.style.setProperty('--accent', colors[state]);
-            btnTon.className = 'tide-btn'; btnSil.className = 'tide-btn'; btnQina.className = 'tide-btn';
-            
-            if(state === -1) { btnTon.classList.add('active-ton'); particleSpeedMult = 0.3; } 
-            else if(state === 0) { btnSil.classList.add('active-sil'); particleSpeedMult = 1.0; } 
-            else if(state === 1) { btnQina.classList.add('active-qina'); particleSpeedMult = 2.5; }
+            document.getElementById('btn-ton').className = 'tide-btn' + (state === -1 ? ' active-ton' : '');
+            document.getElementById('btn-sil').className = 'tide-btn' + (state === 0 ? ' active-sil' : '');
+            document.getElementById('btn-qina').className = 'tide-btn' + (state === 1 ? ' active-qina' : '');
         }
 
-        function saveNorth() { localStorage.setItem('trueNorth', northInput.value); }
+        function saveNorth() { localStorage.setItem('trueNorth', document.getElementById('true-north').value); }
 
         function archiveNorth() {
-            if(northInput.value.trim() === '') return;
+            let input = document.getElementById('true-north');
+            if(input.value.trim() === '') return;
             let archives = JSON.parse(localStorage.getItem('northArchive') || '[]');
-            archives.push({ goal: northInput.value, date: new Date().toLocaleDateString() });
+            archives.push({ goal: input.value, date: new Date().toLocaleDateString() });
             localStorage.setItem('northArchive', JSON.stringify(archives));
-            northInput.value = '';
-            saveNorth();
-            // Flash effect for accomplishment
-            document.getElementById('app-title').innerText = "CONSTELLATION SAVED";
-            setTimeout(() => { document.getElementById('app-title').innerText = "KAXIM TERMINAL"; }, 2000);
+            input.value = ''; saveNorth();
+            
+            let title = document.getElementById('app-title');
+            title.innerText = "HORIZON CLEARED";
+            setTimeout(() => { title.innerText = "KAXIM TERMINAL"; }, 2000);
         }
 
-        function addLog(direction, icon) {
-            if(logInput.value.trim() === '') return;
-            
-            // Adjust Particle Gravity based on Sextant
-            if(direction === 'North') { gravityX = 0; gravityY = -1.5; } // Drift Up
-            else if(direction === 'Lateral') { gravityX = 1.5; gravityY = 0; } // Drift Sideways
-            else if(direction === 'Anchor') { gravityX = 0; gravityY = 1.5; } // Sink Down
+        function openModal() {
+            if(document.getElementById('log-input').value.trim() === '') return;
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
 
+        function submitLog(direction, icon) {
+            closeModal();
+            let input = document.getElementById('log-input');
             const logEntry = {
                 id: Date.now(),
-                text: logInput.value,
+                text: input.value,
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                 color: colors[currentTide],
                 tag: icon
@@ -198,103 +203,39 @@
             localStorage.setItem('wakeLogs', JSON.stringify(logs));
 
             renderLogs();
-            logInput.value = '';
+            input.value = '';
         }
 
-        // --- The kra'solv Mechanic (Long Press to Dissolve) ---
-        function attachHoldEvent(li, id) {
-            let pressTimer;
-            
-            const startPress = () => {
-                pressTimer = setTimeout(() => {
-                    li.classList.add('dissolving');
-                    setTimeout(() => { deleteLog(id); }, 800);
-                }, 800); // Hold for 0.8 seconds to dissolve
-            };
-            
-            const cancelPress = () => { clearTimeout(pressTimer); };
-
-            li.addEventListener('touchstart', startPress);
-            li.addEventListener('touchend', cancelPress);
-            li.addEventListener('touchmove', cancelPress);
-            li.addEventListener('mousedown', startPress);
-            li.addEventListener('mouseup', cancelPress);
-            li.addEventListener('mouseleave', cancelPress);
-        }
-
-        function deleteLog(id) {
-            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-            logs = logs.filter(log => log.id !== id);
-            localStorage.setItem('wakeLogs', JSON.stringify(logs));
-            renderLogs();
+        function deleteLog(id, btnElement) {
+            let li = btnElement.parentElement;
+            li.classList.add('dissolving');
+            setTimeout(() => {
+                let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
+                logs = logs.filter(log => log.id !== id);
+                localStorage.setItem('wakeLogs', JSON.stringify(logs));
+                renderLogs();
+            }, 400); // Wait for CSS animation to finish
         }
 
         function renderLogs() {
             let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-            logList.innerHTML = '';
+            let list = document.getElementById('log-list');
+            list.innerHTML = '';
             logs.forEach(log => {
                 const li = document.createElement('li');
                 li.className = 'log-entry';
                 li.style.borderLeftColor = log.color;
                 li.innerHTML = `
-                    <div class="log-header">
-                        <span>${log.time}</span>
-                        <span class="log-tag">${log.tag}</span>
+                    <div class="log-content">
+                        <div class="log-header">${log.time} &nbsp; ${log.tag}</div>
+                        <div>${log.text}</div>
                     </div>
-                    <div>${log.text}</div>
+                    <button class="delete-btn" onclick="deleteLog(${log.id}, this)">×</button>
                 `;
-                attachHoldEvent(li, log.id);
-                logList.appendChild(li);
+                list.appendChild(li);
             });
         }
-
         function loadLogs() { renderLogs(); }
-
-        // --- CANVAS PHYSICS (The Compass Environment) ---
-        const canvas = document.getElementById('cosmos');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-
-        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resize);
-        resize();
-
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.vx = (Math.random() - 0.5) * 0.5;
-                this.vy = (Math.random() - 0.5) * 0.5;
-                this.baseRadius = Math.random() * 2 + 0.5;
-            }
-            update() {
-                // Apply Gravity/Wind from Sextant + Base Speed
-                this.x += (this.vx + gravityX) * particleSpeedMult;
-                this.y += (this.vy + gravityY) * particleSpeedMult;
-
-                if(this.x < 0) this.x = canvas.width;
-                if(this.x > canvas.width) this.x = 0;
-                if(this.y < 0) this.y = canvas.height;
-                if(this.y > canvas.height) this.y = 0;
-            }
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.baseRadius, 0, Math.PI * 2);
-                ctx.fillStyle = colors[currentTide];
-                ctx.globalAlpha = 0.6;
-                ctx.fill();
-            }
-        }
-
-        for(let i=0; i<60; i++) particles.push(new Particle());
-
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => { p.update(); p.draw(); });
-            requestAnimationFrame(animate);
-        }
-        animate();
-
     </script>
 </body>
 </html>
