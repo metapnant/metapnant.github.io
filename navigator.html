@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- PWA tags to make it run like a native app without browser bars -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#05000a">
+    <title>Ternary Navigator</title>
+    <style>
+        :root {
+            --bg-color: #05000a;
+            --text-main: #e0dced;
+            --ton-color: #4a5fc1; /* Twilight blue/heavy */
+            --sil-color: #00ff9d; /* Bioluminescent flow */
+            --qina-color: #ffb000; /* Warm gold/fire */
+            --accent: #00ff9d; /* Defaults to sil */
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
+        
+        body, html {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Prevents scrolling so it feels like an app */
+            transition: background-color 1s ease;
+        }
+
+        /* The Canvas for the Wake/Particles */
+        #cosmos {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* The UI Layer */
+        #ui {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background: linear-gradient(180deg, rgba(5,0,10,0.8) 0%, rgba(5,0,10,0.4) 100%);
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px var(--accent);
+            transition: color 1s ease, text-shadow 1s ease;
+        }
+
+        /* The Tide Controls */
+        .tide-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tide-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #888;
+            padding: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .tide-btn.active-ton { color: var(--ton-color); text-shadow: 0 0 8px var(--ton-color); background: rgba(74, 95, 193, 0.1); }
+        .tide-btn.active-sil { color: var(--sil-color); text-shadow: 0 0 8px var(--sil-color); background: rgba(0, 255, 157, 0.1); }
+        .tide-btn.active-qina { color: var(--qina-color); text-shadow: 0 0 8px var(--qina-color); background: rgba(255, 176, 0, 0.1); }
+
+        /* The Active Vector */
+        .vector-box {
+            margin-bottom: 30px;
+        }
+        
+        .vector-box label {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #true-north {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--accent);
+            color: white;
+            font-size: 1.2rem;
+            padding: 5px 0;
+            margin-top: 5px;
+            outline: none;
+            transition: border-color 1s ease;
+        }
+
+        /* The Wake Log */
+        .wake-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .log-input-container {
+            display: flex;
+            margin-bottom: 15px;
+        }
+
+        #log-input {
+            flex-grow: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px;
+            border-radius: 5px 0 0 5px;
+            outline: none;
+        }
+
+        #log-btn {
+            background: var(--accent);
+            color: var(--bg-color);
+            border: none;
+            padding: 10px 15px;
+            font-weight: bold;
+            border-radius: 0 5px 5px 0;
+            transition: background 1s ease;
+        }
+
+        .log-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .log-entry {
+            background: rgba(255,255,255,0.03);
+            border-left: 2px solid var(--accent);
+            padding: 10px;
+            font-size: 0.9rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .log-time {
+            font-size: 0.7rem;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="cosmos"></canvas>
+
+    <div id="ui">
+        <h1 id="app-title">KAXIM TERMINAL</h1>
+
+        <div class="tide-controls">
+            <button class="tide-btn" id="btn-ton" onclick="setTide(-1)">,ton</button>
+            <button class="tide-btn active-sil" id="btn-sil" onclick="setTide(0)">.síl</button>
+            <button class="tide-btn" id="btn-qina" onclick="setTide(1)">;qına</button>
+        </div>
+
+        <div class="vector-box">
+            <label>True North (Active Vector)</label>
+            <input type="text" id="true-north" placeholder="Enter focus..." onchange="saveNorth()">
+        </div>
+
+        <div class="wake-container">
+            <label style="font-size: 0.8rem; color: #888; margin-bottom:5px;">The Wake (Kinetic Actions)</label>
+            <div class="log-input-container">
+                <input type="text" id="log-input" placeholder="Log an action...">
+                <button id="log-btn" onclick="addLog()">Emit</button>
+            </div>
+            <ul class="log-list" id="log-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        // --- STATE MANAGEMENT ---
+        let currentTide = 0; // -1, 0, 1
+        let particleSpeedMult = 1;
+        
+        const colors = {
+            '-1': '#4a5fc1', // ton
+            '0': '#00ff9d',  // sil
+            '1': '#ffb000'   // qina
+        };
+
+        // --- DOM ELEMENTS ---
+        const root = document.documentElement;
+        const btnTon = document.getElementById('btn-ton');
+        const btnSil = document.getElementById('btn-sil');
+        const btnQina = document.getElementById('btn-qina');
+        const northInput = document.getElementById('true-north');
+        const logInput = document.getElementById('log-input');
+        const logList = document.getElementById('log-list');
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            // Load saved data
+            if(localStorage.getItem('trueNorth')) {
+                northInput.value = localStorage.getItem('trueNorth');
+            }
+            loadLogs();
+            setTide(0); // Default to flow
+        };
+
+        // --- CORE MECHANICS ---
+        function setTide(state) {
+            currentTide = state;
+            root.style.setProperty('--accent', colors[state]);
+            
+            // Reset buttons
+            btnTon.className = 'tide-btn';
+            btnSil.className = 'tide-btn';
+            btnQina.className = 'tide-btn';
+
+            if(state === -1) {
+                btnTon.classList.add('active-ton');
+                particleSpeedMult = 0.2; // Stasis
+            } else if(state === 0) {
+                btnSil.classList.add('active-sil');
+                particleSpeedMult = 1.0; // Flow
+            } else if(state === 1) {
+                btnQina.classList.add('active-qina');
+                particleSpeedMult = 3.0; // Fire
+            }
+        }
+
+        function saveNorth() {
+            localStorage.setItem('trueNorth', northInput.value);
+        }
+
+        function addLog() {
+            if(logInput.value.trim() === '') return;
+            
+            const logEntry = {
+                text: logInput.value,
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                color: colors[currentTide]
+            };
+
+            // Save to local storage
+            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
+            logs.unshift(logEntry); // add to top
+            if(logs.length > 50) logs.pop(); // keep last 50
+            localStorage.setItem('wakeLogs', JSON.stringify(logs));
+
+            // Render
+            renderLog(logEntry);
+            logInput.value = '';
+            
+            // Dopamine burst! Speed up particles for a second
+            let oldSpeed = particleSpeedMult;
+            particleSpeedMult = 5.0;
+            setTimeout(() => { particleSpeedMult = oldSpeed; }, 1000);
+        }
+
+        function loadLogs() {
+            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
+            logList.innerHTML = '';
+            logs.forEach(log => renderLog(log));
+        }
+
+        function renderLog(log) {
+            const li = document.createElement('li');
+            li.className = 'log-entry';
+            li.style.borderLeftColor = log.color;
+            li.innerHTML = `<div class="log-time">${log.time}</div><div>${log.text}</div>`;
+            logList.prepend(li);
+        }
+
+        // --- CANVAS PHYSICS (The Ship's Environment) ---
+        const canvas = document.getElementById('cosmos');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.baseRadius = Math.random() * 2 + 0.5;
+            }
+            update() {
+                // Move based on Tide speed multiplier
+                this.x += this.vx * particleSpeedMult;
+                this.y += this.vy * particleSpeedMult;
+
+                // Wrap around edges
+                if(this.x < 0) this.x = canvas.width;
+                if(this.x > canvas.width) this.x = 0;
+                if(this.y < 0) this.y = canvas.height;
+                if(this.y > canvas.height) this.y = 0;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.baseRadius, 0, Math.PI * 2);
+                ctx.fillStyle = colors[currentTide];
+                ctx.globalAlpha = 0.5;
+                ctx.fill();
+            }
+        }
+
+        for(let i=0; i<50; i++) particles.push(new Particle());
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+    </script>
+</body>
+</html>
