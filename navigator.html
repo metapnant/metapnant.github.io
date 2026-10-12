@@ -5,8 +5,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05000a"><title>Ternary Navigator</title>
-<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Ternary%20Navigator%22%2C%22short_name%22%3A%22Navigator%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%2305000a%22%2C%22theme_color%22%3A%22%2305000a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20192%20192'%3E%3Ccircle%20cx%3D'96'%20cy%3D'96'%20r%3D'88'%20fill%3D'%2305000a'%20stroke%3D'%2300ff9d'%20stroke-width%3D'8'%2F%3E%3Cpolygon%20points%3D'96%2C30%20108%2C96%2096%2C84%2084%2C96'%20fill%3D'%2300ff9d'%2F%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<style>
+<link rel="manifest" href="./manifest.json"><style>
 :root{--bg:#05000a;--panel:#0a0514;--ton:#4a5fc1;--sil:#00ff9d;--qina:#ffb000;--accent:#00ff9d}
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Courier New',monospace;user-select:none;-webkit-tap-highlight-color:transparent}
 html,body{background:var(--bg);color:#e0dced;width:100%;height:100%;overflow:hidden}
@@ -525,10 +524,10 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
  }};
 
 // Register PWA Service Worker via Blob to enable installability on HTTPS origins
-if('serviceWorker' in navigator){
- const swCode=`self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>clients.claim());self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))));`;
- const blob=new Blob([swCode],{type:'application/javascript'});
- navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(err => {
+    console.warn('Service worker registration failed:', err);
+  });
 }
 
 addEventListener('DOMContentLoaded',()=>{UI.init();SKY.bind()});
