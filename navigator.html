@@ -9,13 +9,13 @@
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Courier New',monospace;user-select:none;-webkit-tap-highlight-color:transparent}
 html,body{background:var(--bg);color:#e0dced;width:100%;height:100%;overflow:hidden}
 button{cursor:pointer;font-family:inherit}
-#astrolabe{position:fixed;top:48%;left:50%;transform:translate(-50%,-50%);width:84vw;height:84vw;max-width:330px;max-height:330px;background:radial-gradient(circle,rgba(18,10,30,.96),rgba(5,0,10,.99));border:2px solid rgba(255,255,255,.22);border-radius:50%;display:flex;justify-content:center;align-items:center;z-index:1;box-shadow:0 0 35px rgba(0,255,157,.15);will-change:transform,top}
+#astrolabe{position:fixed;top:48%;left:50%;transform:translate(-50%,-50%);width:84vw;height:84vw;background:radial-gradient(circle,rgba(18,10,30,.96),rgba(5,0,10,.99));border:2px solid rgba(255,255,255,.22);border-radius:50%;display:flex;justify-content:center;align-items:center;z-index:1;box-shadow:0 0 35px rgba(0,255,157,.15);will-change:transform,top}
 #astrolabe::before{content:'';position:absolute;width:calc(100% + 14px);height:1px;background:linear-gradient(90deg,rgba(255,255,255,.4),transparent 12%,transparent 88%,rgba(255,255,255,.4))}
 #astrolabe::after{content:'';position:absolute;height:calc(100% + 14px);width:1px;background:linear-gradient(180deg,rgba(255,255,255,.4),transparent 12%,transparent 88%,rgba(255,255,255,.4))}
 #target{position:absolute;width:100%;height:100%;border-radius:50%;transition:transform .8s cubic-bezier(.25,1,.5,1)}
-#target::before{content:'▼';position:absolute;top:-14px;left:calc(50% - 6px);color:#fff;font-size:13px;text-shadow:0 0 8px #fff}
+#target::before{content:'';position:absolute;top:-12px;left:50%;margin-left:-7px;border:7px solid transparent;border-top:11px solid #fff;border-bottom:0;filter:drop-shadow(0 0 5px #fff)}
 #hub{width:14px;height:14px;background:var(--bg);border:2px solid var(--accent);border-radius:50%;box-shadow:0 0 12px var(--accent);z-index:3;transition:all .5s}
-#needle{position:absolute;bottom:50%;width:4px;height:48%;background:linear-gradient(to top,transparent,var(--accent));transform-origin:bottom center;border-radius:2px;transition:transform .6s cubic-bezier(.25,1,.5,1);box-shadow:0 0 8px var(--accent)}
+#needle{position:absolute;bottom:50%;left:50%;margin-left:-2px;width:4px;height:48%;background:linear-gradient(to top,transparent,var(--accent));transform-origin:bottom center;border-radius:2px;transition:transform .6s cubic-bezier(.25,1,.5,1);box-shadow:0 0 8px var(--accent)}
 #ui-top{position:absolute;top:0;left:0;width:100%;z-index:2;padding:calc(18px + env(safe-area-inset-top,0px)) 20px 8px;background:linear-gradient(180deg,rgba(5,0,10,.98),rgba(5,0,10,.7) 80%,transparent)}
 .row{display:flex;justify-content:space-between;align-items:center}
 h1{font-size:1.05rem;letter-spacing:3px;color:var(--accent);text-shadow:0 0 5px var(--accent);margin-bottom:12px}
@@ -28,7 +28,7 @@ h1{font-size:1.05rem;letter-spacing:3px;color:var(--accent);text-shadow:0 0 5px 
 #goal{color:#fff;font-size:.95rem;flex-grow:1;text-transform:uppercase;letter-spacing:1px;padding:4px 0}
 .bar{width:100%;height:4px;background:rgba(255,255,255,.08);border-radius:2px;display:flex;overflow:hidden;margin-top:6px}
 .bar div{height:100%;width:0;transition:width .3s}#b-1{background:var(--ton)}#b0{background:var(--sil)}#b1{background:var(--qina)}
-#drawer{position:absolute;bottom:0;left:0;width:100%;height:55vh;background:rgba(10,5,15,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:5;border-top:1px solid rgba(255,255,255,.15);border-radius:20px 20px 0 0;display:flex;flex-direction:column;padding:0 20px 15px;transform:translateY(calc(100% - 90px));will-change:transform}
+#drawer{position:absolute;bottom:0;left:0;width:100%;height:55vh;background:rgba(10,5,15,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:5;border-top:1px solid rgba(255,255,255,.15);border-radius:20px 20px 0 0;display:flex;flex-direction:column;padding:0 20px 15px;transform:translateY(calc(100% - 114px));will-change:transform}
 #dzone{height:50px;flex-shrink:0;display:flex;justify-content:center;align-items:center;width:100%;touch-action:none}
 .handle{width:52px;height:5px;background:rgba(255,255,255,.4);border-radius:3px}
 .inrow{display:flex;margin-bottom:12px;flex-shrink:0}
@@ -38,8 +38,8 @@ h1{font-size:1.05rem;letter-spacing:3px;color:var(--accent);text-shadow:0 0 5px 
 .log{background:rgba(0,0,0,.5);border-left:3px solid var(--accent);padding:12px;margin-bottom:8px;font-size:.85rem;display:flex;justify-content:space-between;align-items:flex-start;word-break:break-word;white-space:normal;line-height:1.4;overflow:hidden;max-height:2000px}
 .log-c{flex-grow:1;padding-right:10px}.log-h{font-size:.65rem;color:#888;margin-bottom:4px;display:flex;gap:10px}
 .x{background:transparent;border:none;color:#777;font-size:1.3rem;line-height:1;padding:2px 8px}.x:active{color:#f44}
-#sky{opacity:0;pointer-events:none;position:fixed;inset:0;background:radial-gradient(circle,#0c051a,#020005);z-index:10;transition:opacity .4s}
-#sky.on{opacity:1;pointer-events:auto}
+#sky{opacity:0;pointer-events:none;position:fixed;inset:0;background:radial-gradient(circle,#0c051a,#020005);z-index:10;visibility:hidden;transition:opacity .4s,visibility 0s .4s}
+#sky.on{opacity:1;pointer-events:auto;visibility:visible;transition:opacity .4s}
 .sky-h{position:absolute;top:0;width:100%;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 14px 14px;background:linear-gradient(180deg,rgba(0,0,0,.85),transparent);z-index:15}
 .sky-h h2{font-size:.85rem;letter-spacing:2px}.sky-a{display:flex;gap:5px}.sky-a .btn{padding:6px 9px}
 #universe{position:absolute;inset:0;overflow:hidden;z-index:11;touch-action:none}
@@ -62,6 +62,23 @@ h1{font-size:1.05rem;letter-spacing:3px;color:var(--accent);text-shadow:0 0 5px 
 .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:15px}.grid .mb{margin:0;padding:12px 0}
 .cancel{background:transparent;border:none;color:#888;font-size:.8rem;padding:8px;width:100%}
 @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}.core{animation:none!important}}
+.log{touch-action:pan-y}.star{touch-action:none}.star.origin{outline:1px dashed rgba(255,255,255,.55);outline-offset:7px}
+select.in{background:#0a0514;appearance:auto}
+.chips{display:flex;gap:6px}.chip{flex:1;padding:12px 4px;background:rgba(255,255,255,.05);border:1px solid #333;color:#fff;border-radius:6px;font-size:.85rem;font-weight:bold;line-height:1.5}
+#e-1{color:#8fa0f5}#e0{color:var(--sil)}#e1{color:var(--qina)}
+.chip.s-1{border-color:var(--ton);background:rgba(74,95,193,.28)}.chip.s0{border-color:var(--sil);background:rgba(0,255,157,.18)}.chip.s1{border-color:var(--qina);background:rgba(255,176,0,.2)}
+.chip.act:active{background:var(--accent);color:#000}
+.cap{font-size:.68rem;color:#999;margin-top:8px;line-height:1.4;min-height:2.2em}
+#zoomctl{position:absolute;right:14px;bottom:calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;z-index:15}
+#zoomctl .btn{min-width:46px;height:42px;font-size:1rem;padding:0 8px}
+#sky-origin{position:absolute;left:16px;right:78px;bottom:calc(28px + env(safe-area-inset-bottom,0px));font-size:.7rem;color:#888;z-index:15;line-height:1.4}
+.sky-h h2{font-size:.78rem;letter-spacing:2px}
+.sky-h{pointer-events:none}#sky.on .sky-h .btn,#sky.on .sky-h h2{pointer-events:auto}.sky-h h2{cursor:pointer}#sky-origin{pointer-events:none}
+#gfield{position:absolute;width:3000px;height:3000px;top:50%;left:50%;will-change:transform;display:none}
+.gdot{position:absolute;transform:translate(-50%,-50%);border-radius:50%;cursor:pointer;touch-action:none}
+.gdot .gl{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:12px;font-size:.7rem;color:#ccc;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;pointer-events:none;letter-spacing:1px}
+.gdot.cur{outline:1px dashed rgba(255,255,255,.55);outline-offset:8px}
+#ghost{position:absolute;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;display:none;border:2px dashed #0f8;width:50px;height:50px}#ghost.bad{border-color:#f44}
 </style></head><body>
 <div id="astrolabe"><div id="target"></div><div id="needle"></div><div id="hub"></div></div>
 <div id="ui-top">
@@ -76,33 +93,28 @@ h1{font-size:1.05rem;letter-spacing:3px;color:var(--accent);text-shadow:0 0 5px 
  <ul id="loglist"></ul>
 </div>
 <div id="sky">
- <div class="sky-h"><h2>CONSTELLATION</h2><div class="sky-a">
-  <button class="btn ghost" onclick="SKY.zoom(.2)">+</button><button class="btn ghost" onclick="SKY.zoom(-.2)">−</button>
-  <button class="btn ghost" onclick="SKY.fit()">FIT</button><button class="btn ghost" onclick="Store.export()">SAVE</button>
-  <button class="btn ghost" onclick="UI.sky(false)">BACK</button></div></div>
- <div id="universe"><div id="field"><svg id="lines"></svg></div></div>
+ <div class="sky-h"><button class="btn ghost" onclick="UI.sky(false)">← BACK</button><h2 id="sky-title" onclick="SKY.rename()">CONSTELLATION</h2><button class="btn ghost" onclick="UI.close();$('m-data').classList.add('show')">DATA</button></div>
+ <div id="zoomctl"><button id="btn-new" class="btn ghost" style="display:none" onclick="SKY.startPlace()">+ NEW</button><button class="btn ghost" onclick="SKY.zoom(.2)">+</button><button class="btn ghost" onclick="SKY.zoom(-.2)">−</button><button class="btn ghost" onclick="SKY.fit()">FIT</button><button id="btn-mode" class="btn ghost" onclick="SKY.toggleMode()">GALAXY</button></div>
+ <div id="sky-origin"></div>
+ <div id="universe"><div id="field"><svg id="lines"></svg></div><div id="gfield"><div id="ghost"></div></div></div>
 </div>
 <div id="m-course" class="ov"><div class="box">
  <p class="mt">NAME YOUR HORIZON</p><input id="goal-input" class="in" placeholder="e.g. Theory Test">
+ <p id="chart-cap" class="cap" style="margin:-6px 0 10px;min-height:0"></p>
+ <div id="branch-wrap" style="display:none"><p class="mt">BRANCH FROM</p><select id="origin-sel" class="in" onchange="ENGINE.setOrigin(this.value)"></select></div>
  <p class="mt">SET CARDINAL VECTOR</p>
- <div class="grid">
-  <button class="mb" onclick="ENGINE.setTarget(315)">NW</button><button class="mb" onclick="ENGINE.setTarget(0)">N</button><button class="mb" onclick="ENGINE.setTarget(45)">NE</button>
-  <button class="mb" onclick="ENGINE.setTarget(270)">W</button><div></div><button class="mb" onclick="ENGINE.setTarget(90)">E</button>
-  <button class="mb" onclick="ENGINE.setTarget(225)">SW</button><button class="mb" onclick="ENGINE.setTarget(180)">S</button><button class="mb" onclick="ENGINE.setTarget(135)">SE</button>
- </div><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
+ <div class="grid" id="dirgrid"></div><p id="blocked-hint" class="cap" style="display:none;margin:-6px 0 12px">✕ = heading already explored from this star</p><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
 <div id="m-abandon" class="ov"><div class="box">
  <p class="mt" style="color:#f44">ABANDON VOYAGE?</p>
  <p style="font-size:.8rem;line-height:1.5;color:#bbb;margin-bottom:15px">You have an active voyage. Changing heading now dissolves your current wake.</p>
  <button class="mb danger" onclick="ENGINE.abandon()">DISSOLVE &amp; SET NEW</button><button class="cancel" onclick="UI.close()">MAINTAIN COURSE</button></div></div>
 <div id="m-sextant" class="ov"><div class="box">
- <p class="mt">QUALIFY ENERGETIC STATE</p>
- <div class="ecard" id="e-1" onclick="UI.energy(-1)"><div style="color:var(--ton);font-weight:bold">,ton</div><small>Ground: rest, stillness, recovery</small></div>
- <div class="ecard" id="e0" onclick="UI.energy(0)"><div style="color:var(--sil);font-weight:bold">.síl</div><small>Flow: sustained habit, smooth transition</small></div>
- <div class="ecard" id="e1" onclick="UI.energy(1)"><div style="color:var(--qina);font-weight:bold">;qına</div><small>Fire: sprint, deep work</small></div>
- <p class="mt" style="margin-top:10px">VECTOR TRAJECTORY</p>
- <button class="mb" onclick="ENGINE.act('Align','⬆️')">⬆️ ALIGN (toward horizon)</button>
- <button class="mb" onclick="ENGINE.act('Drift','↔️')">↔️ DRIFT (detour / side quest)</button>
- <button class="mb" onclick="ENGINE.act('Anchor','⚓')">⚓ ANCHOR (rest &amp; integrate)</button>
+ <p class="mt">ENERGY</p>
+ <div class="chips"><button class="chip" id="e-1" onclick="UI.energy(-1)">,ton</button><button class="chip" id="e0" onclick="UI.energy(0)">.síl</button><button class="chip" id="e1" onclick="UI.energy(1)">;qına</button></div>
+ <p id="e-cap" class="cap"></p>
+ <p class="mt" style="margin-top:12px">DIRECTION</p>
+ <div class="chips"><button class="chip act" onclick="ENGINE.act('Align','⬆️')">⬆️<br>Align</button><button class="chip act" onclick="ENGINE.act('Drift','↔️')">↔️<br>Drift</button><button class="chip act" onclick="ENGINE.act('Anchor','⚓')">⚓<br>Anchor</button></div>
+ <p class="cap">Align: toward horizon · Drift: detour · Anchor: rest</p>
  <button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
 <div id="m-star" class="ov"><div class="box" style="text-align:left">
  <div class="row" style="margin-bottom:8px"><h2 id="s-title" style="font-size:1.1rem"></h2><div id="s-badge" style="font-size:.7rem;font-weight:bold;padding:2px 8px;border-radius:4px"></div></div>
@@ -110,23 +122,40 @@ h1{font-size:1.05rem;letter-spacing:3px;color:var(--accent);text-shadow:0 0 5px 
  <div id="s-metrics" style="font-size:.75rem;color:#ccc;line-height:1.5;margin-bottom:14px;background:rgba(0,0,0,.4);padding:10px;border-radius:4px"></div>
  <p class="mt" style="margin-bottom:6px">VOYAGE LOG ARCHIVE</p>
  <div id="s-logs" style="overflow-y:auto;max-height:25vh;font-size:.75rem;margin-bottom:12px"></div>
- <button class="mb danger" id="purge">PURGE STAR FROM SKY</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
+ <button class="mb" id="branch"></button><button class="mb danger" id="purge">PURGE STAR FROM SKY</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
+<div id="m-confirm" class="ov" style="z-index:30"><div class="box"><p id="c-msg" style="font-size:.85rem;line-height:1.5;color:#ddd;margin-bottom:16px"></p><button class="mb" id="c-ok">OK</button><button class="cancel" id="c-cancel">CANCEL</button></div></div>
+<div id="m-name" class="ov" style="z-index:30"><div class="box"><p class="mt" id="n-title"></p><input id="n-input" class="in" maxlength="40"><button class="mb" id="n-ok">SAVE</button><button class="cancel" id="n-cancel">CANCEL</button></div></div>
+<div id="m-data" class="ov"><div class="box"><p class="mt">YOUR DATA</p>
+ <p style="font-size:.75rem;line-height:1.5;color:#bbb;margin-bottom:14px;text-align:left">Everything saves automatically on this device, in this browser. Clearing browser data or switching phones loses it. A backup file keeps a copy you can restore later or move to another device.</p>
+ <button class="mb" onclick="Store.export()">⬇ DOWNLOAD BACKUP FILE</button><button class="mb" onclick="$('imp').click()">⬆ RESTORE FROM BACKUP</button>
+ <input id="imp" type="file" accept="application/json,.json" hidden onchange="Store.import(this)"><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
 <script>
 const COLORS={'-1':'#4a5fc1','0':'#00ff9d','1':'#ffb000'}, TOL=2.5, NONE='NO HORIZON SET', ORI=1500;
 const norm=a=>((a%360)+360)%360, shortest=(t,c)=>((norm(t)-norm(c)+540)%360)-180;
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 const $=id=>document.getElementById(id);
-const S={horizon:NONE,target:0,targetDisp:0,needle:180,tide:0,pending:0,toggle:1,wake:[],stars:[],edges:[]};
+const PEEK=114,DIRS=[['NW',315],['N',0],['NE',45],['W',270],null,['E',90],['SW',225],['S',180],['SE',135]],CAP={'-1':'Ground: rest, stillness, recovery','0':'Flow: sustained habit, smooth transition','1':'Fire: sprint, deep work'};
+const S={horizon:NONE,target:0,targetDisp:0,needle:180,tide:0,pending:0,toggle:1,wake:[],charts:[],cur:'',
+ get ch(){let c=this.charts.find(x=>x.id===this.cur);if(!c){c=this.charts[0]||(this.charts[0]={id:'c'+Date.now(),name:'MY CONSTELLATION',gx:0,gy:0,stars:[],edges:[],origin:''});this.cur=c.id}return c},
+ get stars(){return this.ch.stars},set stars(v){this.ch.stars=v},get edges(){return this.ch.edges},set edges(v){this.ch.edges=v},
+ get origin(){return this.ch.origin||''},set origin(v){this.ch.origin=v}};
+const Dlg={ // in-app dialogs (browser confirm/alert can be silently blocked)
+ ask(msg,ok,cb){$('c-msg').textContent=msg;const o=$('c-ok'),c=$('c-cancel'),m=$('m-confirm'),done=()=>m.classList.remove('show');
+  o.textContent=ok||'OK';o.className='mb'+(cb?' danger':'');c.style.display=cb?'block':'none';o.onclick=()=>{done();if(cb)cb()};c.onclick=done;m.classList.add('show')},
+ note(msg){this.ask(msg,'OK',null)},
+ name(title,init,cb){const i=$('n-input'),m=$('m-name'),done=()=>m.classList.remove('show');$('n-title').textContent=title;i.value=init||'';
+  $('n-ok').onclick=()=>{const v=i.value.trim();if(!v)return;done();cb(v)};$('n-cancel').onclick=done;m.classList.add('show');setTimeout(()=>i.focus(),60)}
+};
 
 const Store={
  read(k,fb){try{const v=localStorage.getItem(k);return v==null?fb:JSON.parse(v)}catch(e){return fb}},
- write(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){console.warn('storage failed',k);return false}},
+ write(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){console.warn('storage failed',k);if(!this.warned){this.warned=1;Dlg.note('Could not save: browser storage is full or blocked. Use DATA > Download backup now.')}return false}},
  normStar(s){const m=s.metrics||{};return{id:s.id,voyageName:s.voyageName||s.name||'VOYAGE',completionDate:s.completionDate||s.date||'',
   headingAngle:s.headingAngle||0,x:+s.x||ORI,y:+s.y||ORI,spectralClass:String(s.spectralClass==null?0:s.spectralClass),
   size:s.size||14,glowRadius:s.glowRadius||20,harmonicResonance:!!s.harmonicResonance,
   metrics:{totalActions:m.totalActions||0,alignCount:m.alignCount||0,driftCount:m.driftCount||0,anchorCount:m.anchorCount||0,characterVolume:m.characterVolume||0,
    tideDistribution:m.tideDistribution||m.tideRatio||{ton:0,sil:0,qina:0}},logArchive:s.logArchive||s.logs||[]}},
- normEdge(e){return{fromStarId:e.fromStarId||e.from,toStarId:e.toStarId||e.to,angle:e.angle||e.headingAngle||0}},
+ normEdge(e){return{fromStarId:e.fromStarId||e.from,toStarId:e.toStarId||e.to,angle:e.angle!=null?e.angle:e.headingAngle}},
  init(){
   const old=['nav_horizon','nav_target_angle','nav_needle_deg','nav_active_tide','nav_wake_logs','nav_constellation','constellationStars',
    'ternary_nav_horizon','ternary_nav_target_angle','ternary_nav_needle_deg','ternary_nav_active_tide'];
@@ -142,30 +171,47 @@ const Store={
     needleAngle:parseFloat(g('ternary_nav_needle_deg','nav_needle_deg',180)),lastTide:parseInt(g('ternary_nav_active_tide','nav_active_tide',0))||0,toggle:1};
    if(isNaN(a.needleAngle))a.needleAngle=180;
   }
-  S.horizon=a.horizonName||NONE;S.target=a.targetAngle||0;S.targetDisp=S.target;S.needle=a.needleAngle;S.tide=[-1,0,1].includes(a.lastTide)?a.lastTide:0;S.toggle=a.toggle||1;
-  const w=this.read('ternary_nav_wake',null)??this.read('nav_wake_logs',[]);S.wake=Array.isArray(w)?w:[];
-  const c=this.read('ternary_nav_constellation',null)??this.read('nav_constellation',null)??{};
-  S.stars=(c.stars||[]).filter(s=>s&&s.id).map(s=>this.normStar(s));
-  S.edges=(c.edges||[]).map(e=>this.normEdge(e)).filter(e=>S.stars.some(s=>s.id===e.fromStarId)&&S.stars.some(s=>s.id===e.toStarId));
+  const w=this.read('ternary_nav_wake',null)??this.read('nav_wake_logs',[]);
+  const c=this.read('ternary_nav_galaxy',null)??this.read('ternary_nav_constellation',null)??this.read('nav_constellation',null)??{};
+  this.apply(a,w,c);
   this.write('ternary_nav_schema',3);try{localStorage.setItem('ternary_nav_schema','3')}catch(e){}
   this.saveActive();this.saveSky();
  },
- saveActive(){this.write('ternary_nav_active',{horizonName:S.horizon,targetAngle:S.target,needleAngle:S.needle,lastTide:S.tide,toggle:S.toggle});this.write('ternary_nav_wake',S.wake)},
- saveSky(){this.write('ternary_nav_constellation',{stars:S.stars,edges:S.edges})},
- export(){const blob=new Blob([JSON.stringify({active:{horizonName:S.horizon,targetAngle:S.target,needleAngle:S.needle},wake:S.wake,constellation:{stars:S.stars,edges:S.edges}},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ternary-navigator-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+ normChart(c,i){
+  const stars=(c.stars||[]).filter(x=>x&&x.id).map(x=>this.normStar(x)),ids=new Set(stars.map(x=>x.id));
+  const edges=(c.edges||[]).map(e=>this.normEdge(e)).filter(e=>ids.has(e.fromStarId)&&ids.has(e.toStarId));
+  edges.forEach(e=>{if(typeof e.angle!=='number'){const A=stars.find(x=>x.id===e.fromStarId),B=stars.find(x=>x.id===e.toStarId);e.angle=norm(Math.round(Math.atan2(B.x-A.x,-(B.y-A.y))*180/Math.PI/45)*45)}});
+  return{id:c.id||('c'+i+'_'+Date.now()),name:String(c.name||'MY CONSTELLATION').slice(0,40),gx:+c.gx||0,gy:+c.gy||0,stars,edges,origin:c.origin||''}},
+ apply(a,w,g){
+  g=g||{};S.horizon=a.horizonName||NONE;S.target=a.targetAngle||0;S.targetDisp=S.target;S.needle=isNaN(a.needleAngle)?180:a.needleAngle;S.tide=[-1,0,1].includes(a.lastTide)?a.lastTide:0;S.toggle=a.toggle||1;
+  S.wake=Array.isArray(w)?w:[];
+  const list=Array.isArray(g.charts)?g.charts:[{name:'MY CONSTELLATION',stars:g.stars,edges:g.edges,origin:a.origin}];
+  S.charts=list.map((c,i)=>this.normChart(c,i));S.cur=S.charts.some(c=>c.id===g.cur)?g.cur:(S.charts[0]?S.charts[0].id:'');S.ch;
+ },
+ saveActive(){this.write('ternary_nav_active',{horizonName:S.horizon,targetAngle:S.target,needleAngle:S.needle,lastTide:S.tide,toggle:S.toggle,origin:S.origin});this.write('ternary_nav_wake',S.wake)},
+ saveSky(){this.write('ternary_nav_galaxy',{cur:S.cur,charts:S.charts})},
+ export(){const blob=new Blob([JSON.stringify({app:'ternary-navigator',active:{horizonName:S.horizon,targetAngle:S.target,needleAngle:S.needle,lastTide:S.tide,origin:S.origin},wake:S.wake,galaxy:{cur:S.cur,charts:S.charts}},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ternary-navigator-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)},
+ import(inp){const f=inp.files[0];inp.value='';if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const j=JSON.parse(r.result),g=j.galaxy||j.constellation;if(!g||!(Array.isArray(g.charts)||Array.isArray(g.stars)))throw 0;
+   const n=Array.isArray(g.charts)?g.charts.reduce((t,c)=>t+(c.stars||[]).length,0):g.stars.length;
+   Dlg.ask(`Replace current data with this backup (${n} stars)?`,'REPLACE',()=>{this.apply(j.active||{},j.wake,g);this.saveActive();this.saveSky();UI.refresh();SKY.setMode('chart');SKY.render();UI.close();Dlg.note('Backup restored.')})}
+   catch(e){Dlg.note('That file is not a valid Ternary Navigator backup.')}};r.readAsText(f)}
 };
 
+const originId=()=>S.stars.some(s=>s.id===S.origin)?S.origin:(S.stars.length?S.stars[S.stars.length-1].id:'');
+function blocked(id){const b=new Set();if(id)S.edges.forEach(e=>{if(e.fromStarId===id)b.add(norm(e.angle));if(e.toStarId===id)b.add(norm(e.angle+180))});return b}
 function counts(){const c={'-1':0,'0':0,'1':0,Align:0,Drift:0,Anchor:0};S.wake.forEach(l=>{if(c[l.energy]!==undefined)c[l.energy]++;if(c[l.actionType]!==undefined)c[l.actionType]++});return c}
 function resonant(c){const n=S.wake.length;return n>0&&[-1,0,1].every(k=>c[k]>0&&c[k]/n>.15)}
 
 const ENGINE={
  setDisp(deg){S.targetDisp+=shortest(deg,S.targetDisp)},
- setTarget(deg){S.horizon=$('goal-input').value.trim()||'PRIMARY VOYAGE';S.target=deg;this.setDisp(deg);Store.saveActive();$('goal-input').value='';UI.close();UI.header();UI.compass()},
+ setTarget(deg){if(blocked(originId()).has(norm(deg)))return;S.horizon=$('goal-input').value.trim()||'PRIMARY VOYAGE';S.target=deg;this.setDisp(deg);Store.saveActive();$('goal-input').value='';UI.close();UI.header();UI.compass()},
+ setOrigin(id){S.origin=id;Store.saveSky();UI.fillCourse();SKY.markOrigin()},
  resetNeedle(){ // nearest equivalent of 180 so the reset never spins multiple turns
   const base=S.needle-norm(S.needle);let c=base+180;if(c-S.needle>180)c-=360;if(S.needle-c>180)c+=360;S.needle=c},
  resetVoyage(){S.wake=[];S.horizon=NONE;S.target=0;this.setDisp(0);this.resetNeedle()},
- abandon(){this.resetVoyage();Store.saveActive();UI.refresh();UI.close();$('m-course').classList.add('show')},
+ abandon(){this.resetVoyage();Store.saveActive();UI.refresh();UI.close();UI.fillCourse();$('m-course').classList.add('show')},
  act(type,icon){
   UI.close();const inp=$('log-input'),text=inp.value.trim();if(!text)return;
   S.tide=S.pending;UI.theme();
@@ -177,19 +223,20 @@ const ENGINE={
    if(Math.abs(d)<=TOL+4){S.needle+=d-S.toggle*4.5;S.toggle*=-1} // lands on the alternating side of the antipode
    else S.needle+=Math.sign(d)*Math.min(Math.abs(d),20*mult);
   }
+  {const r=shortest(S.target,S.needle);if(S.horizon!==NONE&&Math.abs(r)<=TOL)S.needle+=r}
   S.wake.unshift({id:Date.now(),text,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),energy:String(S.tide),actionType:type,tag:icon,color:COLORS[S.tide]});
   Store.saveActive();inp.value='';UI.refresh();
  }
 };
 
 const UI={
- init(){Store.init();this.drawer();this.theme();this.refresh();this.dock(0)},
+ init(){Store.init();this.drawer();this.theme();this.refresh();this.layout(0,false);addEventListener('load',()=>UI.layout(UI.p||0,false))},
  refresh(){this.header();this.compass();this.logs();this.balance()},
  theme(){const c=COLORS[S.tide];document.documentElement.style.setProperty('--accent',c);$('astrolabe').style.boxShadow=`0 0 35px ${c}25`},
  header(){$('goal').textContent=S.horizon},
  canForge(){return Math.abs(shortest(S.target,S.needle))<=TOL&&S.horizon!==NONE&&S.wake.some(l=>l.actionType==='Align')},
  compass(){
-  $('needle').style.transform=`rotate(${S.needle}deg)`;$('target').style.transform=`rotate(${S.targetDisp}deg)`;
+  $('needle').style.transform=`rotate(${S.needle}deg)`;$('target').style.transform=`rotate(${S.targetDisp}deg)`;$('target').style.opacity=S.horizon===NONE?0:1;
   const on=this.canForge(),hub=$('hub');
   $('title').textContent=on?'HORIZON ALIGNED':'TERNARY NAVIGATOR';
   hub.style.boxShadow=on?'0 0 25px #fff':`0 0 12px ${COLORS[S.tide]}`;hub.style.backgroundColor=on?'#fff':'var(--bg)';
@@ -200,25 +247,36 @@ const UI={
   [-1,0,1].forEach(k=>$('b'+k).style.width=(n?c[k]/n*100:0)+'%');
   $('res').classList.toggle('on',resonant(c));
  },
- dock(p){const a=$('astrolabe');a.style.top=(48-p*18)+'%';a.style.transform=`translate(-50%,-50%) scale(${1-p*.58})`},
+ layout(p,anim){
+  this.p=p;const a=$('astrolabe'),top=$('ui-top').offsetHeight,H=innerHeight,cl=H-PEEK,dTop=cl+(H*.45-cl)*p,avail=dTop-top,gap=Math.max(10,Math.min(22,avail*.06));
+  const D=Math.max(110,Math.min(avail-2*gap,innerWidth-40,420)),e='.35s cubic-bezier(.2,.8,.2,1)';
+  a.style.transition=anim?`top ${e},width ${e},height ${e}`:'none';a.style.width=a.style.height=D+'px';a.style.top=(top+avail/2)+'px'},
  drawer(){
-  const d=$('drawer'),z=$('dzone'),a=$('astrolabe');let y0=0,y1=0,open=false,moved=false;
-  const max=()=>innerHeight*.55-90, closed='translateY(calc(100% - 90px))';
-  const settle=()=>{d.style.transition='transform .35s cubic-bezier(.2,.8,.2,1)';a.style.transition='top .35s cubic-bezier(.2,.8,.2,1),transform .35s cubic-bezier(.2,.8,.2,1)';
-   d.style.transform=open?'translateY(0)':closed;UI.dock(open?1:0)};
-  z.addEventListener('touchstart',e=>{y0=y1=e.touches[0].clientY;moved=false;d.style.transition='none';a.style.transition='none'},{passive:true});
-  z.addEventListener('touchmove',e=>{y1=e.touches[0].clientY;const dy=y1-y0;if(Math.abs(dy)>4)moved=true;let p;
-   if(!open){const c=Math.max(-max(),Math.min(0,dy));d.style.transform=`translateY(calc(100% - 90px + ${c}px))`;p=-c/max()}
+  const d=$('drawer'),z=$('dzone');let y0=0,dy=0,open=false,moved=false,act=false;
+  const max=()=>innerHeight*.55-PEEK,closed=`translateY(calc(100% - ${PEEK}px))`;
+  const settle=()=>{d.style.transition='transform .35s cubic-bezier(.2,.8,.2,1)';d.style.transform=open?'translateY(0)':closed;UI.layout(open?1:0,true)};
+  z.addEventListener('pointerdown',e=>{act=true;moved=false;y0=e.clientY;dy=0;z.setPointerCapture(e.pointerId);d.style.transition='none'});
+  z.addEventListener('pointermove',e=>{if(!act)return;dy=e.clientY-y0;if(Math.abs(dy)>4)moved=true;let p;
+   if(!open){const c=Math.max(-max(),Math.min(0,dy));d.style.transform=`translateY(calc(100% - ${PEEK}px + ${c}px))`;p=-c/max()}
    else{const c=Math.min(max(),Math.max(0,dy));d.style.transform=`translateY(${c}px)`;p=1-c/max()}
-   UI.dock(p)},{passive:true});
-  z.addEventListener('touchend',e=>{const dy=y1-y0,t=max()*.22;if(!open&&dy<-t)open=true;else if(open&&dy>t)open=false;else if(!moved)open=!open;settle();e.preventDefault()});
-  z.addEventListener('click',()=>{open=!open;settle()});
+   UI.layout(p,false)});
+  z.addEventListener('pointerup',()=>{if(!act)return;act=false;const t=max()*.22;if(!open&&dy<-t)open=true;else if(open&&dy>t)open=false;else if(!moved)open=!open;settle()});
+  z.addEventListener('pointercancel',()=>{act=false;settle()});
+  addEventListener('resize',()=>{if(document.activeElement!==$('log-input'))UI.layout(UI.p||0,false)});
  },
- course(){$(S.wake.length&&S.horizon!==NONE?'m-abandon':'m-course').classList.add('show')},
- sextant(){if(!$('log-input').value.trim())return;S.pending=S.tide;this.energy(S.tide);$('m-sextant').classList.add('show')},
- energy(t){S.pending=t;[-1,0,1].forEach(k=>$('e'+k).className='ecard'+(k===t?' s'+k:''))},
+ course(){if(S.wake.length&&S.horizon!==NONE)return $('m-abandon').classList.add('show');this.fillCourse();$('m-course').classList.add('show')},
+ fillCourse(){
+  const g=$('dirgrid'),oid=originId(),bl=blocked(oid),sel=$('origin-sel');
+  $('branch-wrap').style.display=S.stars.length?'block':'none';$('chart-cap').textContent='In constellation: '+S.ch.name;sel.innerHTML='';
+  S.stars.forEach((st,i)=>{const o=document.createElement('option');o.value=st.id;o.textContent=(i+1)+'. '+st.voyageName+(i===S.stars.length-1?' (latest)':'');sel.appendChild(o)});sel.value=oid;
+  g.innerHTML='';DIRS.forEach(d=>{if(!d){g.appendChild(document.createElement('div'));return}
+   const b=document.createElement('button');b.className='mb';const x=bl.has(d[1]);b.textContent=d[0]+(x?' ✕':'');
+   if(x){b.disabled=true;b.style.opacity=.3}else b.onclick=()=>ENGINE.setTarget(d[1]);g.appendChild(b)});
+  $('blocked-hint').style.display=bl.size?'block':'none'},
+ sextant(){if(!$('log-input').value.trim())return;if(S.horizon===NONE){this.fillCourse();$('m-course').classList.add('show');return}S.pending=S.tide;this.energy(S.tide);$('m-sextant').classList.add('show')},
+ energy(t){S.pending=t;[-1,0,1].forEach(k=>$('e'+k).className='chip'+(k===t?' s'+k:''));$('e-cap').textContent=CAP[t]},
  close(){document.querySelectorAll('.ov').forEach(m=>m.classList.remove('show'))},
- sky(on,fit){if(on){SKY.render();if(fit)SKY.fit();$('sky').classList.add('on')}else $('sky').classList.remove('on')},
+ sky(on,fit){if(on){SKY.show(fit);$('sky').classList.add('on')}else $('sky').classList.remove('on')},
  collapse(li,slide,done){
   li.style.maxHeight=li.scrollHeight+'px';li.style.transition='none';void li.offsetHeight;
   li.style.transition='transform .2s ease-out,opacity .2s ease-out,max-height .3s ease '+(slide?'.15s':'0s')+',padding .3s ease '+(slide?'.15s':'0s')+',margin .3s ease '+(slide?'.15s':'0s');
@@ -227,14 +285,15 @@ const UI={
   setTimeout(done,slide?480:330)},
  remove(li,id,slide){this.collapse(li,slide,()=>{S.wake=S.wake.filter(l=>l.id!==id);Store.saveActive();li.remove();this.balance();this.compass()})},
  swipe(li,id){
-  let x0=0,x=0,y0=0,drag=false,scrolling=false;
-  li.addEventListener('touchstart',e=>{x0=x=e.touches[0].clientX;y0=e.touches[0].clientY;drag=true;scrolling=false;li.style.transition='none'},{passive:true});
-  li.addEventListener('touchmove',e=>{if(!drag)return;x=e.touches[0].clientX;const dx=x-x0,dy=e.touches[0].clientY-y0;
-   if(Math.abs(dy)>Math.abs(dx)+10){scrolling=true;li.style.transform='none';return}
-   if(!scrolling){if(e.cancelable)e.preventDefault();li.style.transform=`translateX(${dx}px)`;li.style.opacity=Math.max(.1,1-Math.abs(dx)/(innerWidth*.65))}},{passive:false});
-  li.addEventListener('touchend',()=>{if(!drag||scrolling)return;drag=false;const dx=x-x0;
-   if(Math.abs(dx)>innerWidth*.35)UI.remove(li,id,Math.sign(dx));
-   else{li.style.transition='transform .2s cubic-bezier(.2,.8,.2,1),opacity .2s';li.style.transform='none';li.style.opacity='1'}});
+  let x0=0,y0=0,dx=0,down=false,sw=false;
+  li.addEventListener('pointerdown',e=>{if(e.target.closest('.x'))return;down=true;sw=false;x0=e.clientX;y0=e.clientY;dx=0});
+  li.addEventListener('pointermove',e=>{if(!down)return;dx=e.clientX-x0;const dy=e.clientY-y0;
+   if(!sw){if(Math.abs(dx)>10&&Math.abs(dx)>Math.abs(dy)+4){sw=true;li.setPointerCapture(e.pointerId);li.style.transition='none'}else return}
+   li.style.transform=`translateX(${dx}px)`;li.style.opacity=Math.max(.1,1-Math.abs(dx)/(innerWidth*.65))});
+  const end=()=>{if(!down)return;down=false;if(!sw)return;sw=false;
+   if(Math.abs(dx)>Math.min(innerWidth,520)*.35)UI.remove(li,id,Math.sign(dx));
+   else{li.style.transition='transform .2s cubic-bezier(.2,.8,.2,1),opacity .2s';li.style.transform='none';li.style.opacity='1'}};
+  li.addEventListener('pointerup',end);li.addEventListener('pointercancel',end);
  },
  logs(){
   const ul=$('loglist');ul.innerHTML='';
@@ -244,11 +303,12 @@ const UI={
  },
  forge(){
   if(!this.canForge())return;
+  if(blocked(originId()).has(norm(S.target))){Dlg.note('That heading is already explored from the branch star. Choose a different course.');return}
   const c=counts(),n=S.wake.length,id='star_'+Date.now();
   const dom=['-1','0','1'].reduce((a,b)=>c[b]>c[a]?b:a);
   let x=ORI,y=ORI;
   if(S.stars.length){
-   const last=S.stars[S.stars.length-1],r=S.target*Math.PI/180,D=Math.min(260,Math.max(120,80+n*6));
+   const last=S.stars.find(x=>x.id===originId())||S.stars[S.stars.length-1],r=S.target*Math.PI/180,D=Math.min(260,Math.max(120,80+n*6));
    x=last.x+D*Math.sin(r);y=last.y-D*Math.cos(r);
    for(let i=0;i<12;i++)S.stars.forEach(s=>{let dx=x-s.x,dy=y-s.y,d=Math.hypot(dx,dy);
     if(d<60){if(d<.001){dx=Math.sin(r);dy=-Math.cos(r);d=1}x+=dx/d*(60-d);y+=dy/d*(60-d)}});
@@ -258,43 +318,110 @@ const UI={
    size:Math.min(28,Math.max(10,8+Math.sqrt(n)*3.5)),glowRadius:Math.min(38,12+n*1.5),harmonicResonance:resonant(c),
    metrics:{totalActions:n,alignCount:c.Align,driftCount:c.Drift,anchorCount:c.Anchor,characterVolume:S.wake.reduce((a,l)=>a+l.text.length,0),
     tideDistribution:{ton:c['-1'],sil:c['0'],qina:c['1']}},logArchive:[...S.wake]});
-  Store.saveSky();ENGINE.resetVoyage();Store.saveActive();this.refresh();this.sky(true,true);
+  S.origin=id;Store.saveSky();ENGINE.resetVoyage();Store.saveActive();this.refresh();this.sky(true,true);
  }
 };
 
-const SKY={panX:0,panY:0,scale:1,bound:false,
+const MINZ=.4,MAXZ=2.2;
+const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,panY:0,scale:1,bound:false,lines:[],placing:false,sw:false,
+ layer(){return $(this.mode==='galaxy'?'gfield':'field')},
+ setMode(m){
+  const v=this.view[this.mode];v.x=this.panX;v.y=this.panY;v.s=this.scale;
+  this.mode=m;const n=this.view[m];this.panX=n.x;this.panY=n.y;this.scale=n.s;this.placing=false;$('ghost').style.display='none';
+  $('field').style.display=m==='chart'?'block':'none';$('gfield').style.display=m==='galaxy'?'block':'none';
+  $('btn-new').style.display=m==='galaxy'?'block':'none';$('btn-mode').textContent=m==='galaxy'?'CHART':'GALAXY';
+  $('sky-title').textContent=m==='galaxy'?'GALAXY':S.ch.name+' ✎';this.apply(0);
+  const L=this.layer();if(L.animate)L.animate([{opacity:0},{opacity:1}],{duration:350})},
+ show(fit){if(this.mode!=='chart')this.setMode('chart');this.render();if(fit)this.fit()},
+ toggleMode(){if(this.mode==='chart'){this.setMode('galaxy');this.renderGalaxy();this.fit()}else this.enter(S.cur)},
+ enter(id){
+  if(id!==S.cur){if(S.wake.length&&S.horizon!==NONE)return Dlg.note('Finish or abandon your current voyage before switching constellations.');
+   S.cur=id;Store.saveSky();UI.refresh()}
+  this.setMode('chart');this.render();this.fit()},
+ rename(){if(this.mode!=='chart')return;Dlg.name('NAME YOUR CONSTELLATION',S.ch.name,n=>{S.ch.name=n.slice(0,40);Store.saveSky();$('sky-title').textContent=S.ch.name+' ✎'})},
  render(){
-  const field=$('field'),svg=$('lines');field.querySelectorAll('.star').forEach(s=>s.remove());svg.innerHTML='';
-  S.edges.forEach(e=>{const a=S.stars.find(s=>s.id===e.fromStarId),b=S.stars.find(s=>s.id===e.toStarId);if(!a||!b)return;
+  const field=$('field'),svg=$('lines');field.querySelectorAll('.star').forEach(x=>x.remove());svg.innerHTML='';this.lines=[];
+  if(this.mode==='chart')$('sky-title').textContent=S.ch.name+' ✎';
+  S.edges.forEach(e=>{const a=S.stars.find(x=>x.id===e.fromStarId),b=S.stars.find(x=>x.id===e.toStarId);if(!a||!b)return;
    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
-   [['x1',a.x],['y1',a.y],['x2',b.x],['y2',b.y],['stroke','rgba(0,255,157,.35)'],['stroke-width',1.5],['stroke-dasharray','5,5']].forEach(([k,v])=>l.setAttribute(k,v));svg.appendChild(l)});
+   [['x1',a.x],['y1',a.y],['x2',b.x],['y2',b.y],['stroke','rgba(0,255,157,.35)'],['stroke-width',1.5],['stroke-dasharray','5,5']].forEach(([k,v])=>l.setAttribute(k,v));
+   svg.appendChild(l);this.lines.push({el:l,f:a.id,t:b.id})});
   S.stars.forEach(star=>{
-   const col=COLORS[star.spectralClass]||COLORS['0'],o=document.createElement('div');o.className='star';
-   o.style.cssText=`left:${star.x}px;top:${star.y}px;width:${star.size*2}px;height:${star.size*2}px;transition:transform .4s cubic-bezier(.25,1.4,.5,1)`;
+   const col=COLORS[star.spectralClass]||COLORS['0'],o=document.createElement('div');o.className='star';o.dataset.id=star.id;
+   o.style.cssText=`left:${star.x}px;top:${star.y}px;width:${star.size*2}px;height:${star.size*2}px`;
    o.innerHTML=`<div class="core${star.harmonicResonance?' r':''}" style="background:radial-gradient(circle,#fff 25%,${col} 75%);box-shadow:0 0 ${star.glowRadius}px ${col},0 0 ${star.glowRadius*1.8}px ${col}66"></div>`+
     (star.harmonicResonance?`<div class="flare" style="box-shadow:0 0 6px ${col}"></div><div class="flare v" style="box-shadow:0 0 6px ${col}"></div>`:'');
-   let sx=0,sy=0,drag=false,moved=false;
-   o.addEventListener('touchstart',e=>{if(e.touches.length>1)return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;drag=true;moved=false;o.style.transition='none'},{passive:true});
-   o.addEventListener('touchmove',e=>{if(!drag)return;const dx=(e.touches[0].clientX-sx)/SKY.scale,dy=(e.touches[0].clientY-sy)/SKY.scale;
-    if(Math.hypot(dx,dy)>6)moved=true;o.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(1.15)`},{passive:true});
-   o.addEventListener('touchend',()=>{if(!drag)return;drag=false;o.style.transition='transform .4s cubic-bezier(.25,1.4,.5,1)';o.style.transform='translate(-50%,-50%)';if(!moved)SKY.inspect(star)});
-   o.addEventListener('click',e=>{if(!('ontouchstart' in window))SKY.inspect(star)});
+   let sx=0,sy=0,cx=0,cy=0,down=false,moved=false;
+   o.addEventListener('pointerdown',e=>{e.stopPropagation();o._sp=(o._sp||0)+1;down=true;moved=false;sx=e.clientX;sy=e.clientY;cx=cy=0;o.setPointerCapture(e.pointerId)});
+   o.addEventListener('pointermove',e=>{if(!down)return;const dx=(e.clientX-sx)/SKY.scale,dy=(e.clientY-sy)/SKY.scale;
+    if(!moved&&Math.hypot(dx,dy)*SKY.scale<6)return;moved=true;cx=dx;cy=dy;SKY.place(star,o,dx,dy,1.15)});
+   o.addEventListener('pointerup',()=>{if(!down)return;down=false;if(moved)SKY.spring(star,o,cx,cy);else SKY.inspect(star)});
+   o.addEventListener('pointercancel',()=>{if(down){down=false;if(moved)SKY.spring(star,o,cx,cy)}});
    field.appendChild(o)});
-  if(S.stars.length<=1)this.fit();
+  this.markOrigin();if(S.stars.length<=1)this.fit();
  },
+ renderGalaxy(){
+  const g=$('gfield');g.querySelectorAll('.gdot').forEach(x=>x.remove());
+  S.charts.forEach(c=>{const n=c.stars.length,t=[0,0,0];c.stars.forEach(st=>{t[(+st.spectralClass||0)+1]++});
+   const col=COLORS[n?['-1','0','1'][t.indexOf(Math.max(...t))]:'0'],sz=Math.min(46,16+Math.sqrt(n)*6),d=document.createElement('div');
+   d.className='gdot'+(c.id===S.cur?' cur':'');d.dataset.id=c.id;
+   d.style.cssText=`left:${ORI+c.gx}px;top:${ORI+c.gy}px;width:${sz}px;height:${sz}px;background:radial-gradient(circle,#fff 20%,${col} 75%);box-shadow:0 0 ${sz}px ${col},0 0 ${sz*2}px ${col}55;opacity:${n?1:.7}`;
+   const l=document.createElement('div');l.className='gl';l.textContent=c.name+(n?` · ${n}★`:'');d.appendChild(l);
+   d.addEventListener('click',()=>{if(!SKY.placing)SKY.enter(c.id)});g.appendChild(d)});
+  this.markOrigin()},
+ startPlace(){this.placing=!this.placing;if(!this.placing)$('ghost').style.display='none';this.markOrigin()},
+ toGal(sx,sy){const r=$('universe').getBoundingClientRect();return{x:(sx-r.left-r.width/2-this.panX)/this.scale,y:(sy-r.top-r.height/2-this.panY)/this.scale}},
+ free(p){return Math.abs(p.x)<1350&&Math.abs(p.y)<1350&&S.charts.every(c=>Math.hypot(p.x-c.gx,p.y-c.gy)>=130)},
+ ghostAt(sx,sy){const p=this.toGal(sx,sy),g=$('ghost');g.style.display='block';g.style.left=(ORI+p.x)+'px';g.style.top=(ORI+p.y)+'px';g.classList.toggle('bad',!this.free(p));return p},
+ tryPlace(sx,sy){
+  const p=this.ghostAt(sx,sy);if(!this.free(p))return Dlg.note('Too close to another constellation, or off the edge. Pick an empty spot.');
+  Dlg.name('NAME YOUR NEW CONSTELLATION','',n=>{
+   const c={id:'c'+Date.now(),name:n,gx:Math.round(p.x),gy:Math.round(p.y),stars:[],edges:[],origin:''};
+   S.charts.push(c);this.placing=false;$('ghost').style.display='none';Store.saveSky();
+   if(S.wake.length&&S.horizon!==NONE){this.renderGalaxy();Dlg.note('Created. Finish or abandon your current voyage to open it.')}else this.enter(c.id)})},
+ place(star,o,dx,dy,sc){
+  o.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(${sc})`;
+  this.lines.forEach(L=>{if(L.f===star.id){L.el.setAttribute('x1',star.x+dx);L.el.setAttribute('y1',star.y+dy)}if(L.t===star.id){L.el.setAttribute('x2',star.x+dx);L.el.setAttribute('y2',star.y+dy)}})},
+ spring(star,o,dx,dy){
+  let x=dx,y=dy,vx=0,vy=0,t0=performance.now();const id=o._sp;
+  const step=t=>{if(o._sp!==id)return;const dt=Math.min(.032,(t-t0)/1000);t0=t;
+   vx+=(-170*x-14*vx)*dt;vy+=(-170*y-14*vy)*dt;x+=vx*dt;y+=vy*dt;
+   const done=Math.abs(x)+Math.abs(y)+Math.abs(vx)+Math.abs(vy)<.6;
+   SKY.place(star,o,done?0:x,done?0:y,done?1:1+.15*Math.min(1,Math.hypot(x,y)/20));if(!done)requestAnimationFrame(step)};
+  requestAnimationFrame(step)},
+ markOrigin(){
+  if(this.mode==='galaxy'){$('sky-origin').textContent=this.placing?'Tap an empty spot to place your new constellation.':'Tap a constellation to open it. Zoom in fully to go back.';return}
+  const oid=originId();document.querySelectorAll('.star').forEach(o=>o.classList.toggle('origin',o.dataset.id===oid));
+  const st=S.stars.find(x=>x.id===oid);$('sky-origin').textContent=st?`Next voyage branches from: ${st.voyageName}. Tap another star to change.`:'Forge your first star to begin this constellation.'},
  bind(){
-  if(this.bound)return;this.bound=true;const u=$('universe');let px=0,py=0,pan=false,d0=0,s0=1;
-  const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
-  u.addEventListener('touchstart',e=>{if(e.touches.length===2){pan=false;d0=dist(e.touches);s0=SKY.scale}
-   else if(e.touches.length===1&&!e.target.closest('.star')){px=e.touches[0].clientX-SKY.panX;py=e.touches[0].clientY-SKY.panY;pan=true}},{passive:true});
-  u.addEventListener('touchmove',e=>{if(e.touches.length===1&&pan){SKY.panX=e.touches[0].clientX-px;SKY.panY=e.touches[0].clientY-py;SKY.apply()}
-   else if(e.touches.length===2&&d0>0){SKY.scale=Math.min(2.2,Math.max(.4,s0*dist(e.touches)/d0));SKY.apply()}},{passive:true});
-  u.addEventListener('touchend',()=>{pan=false});
-  u.addEventListener('wheel',e=>{e.preventDefault();SKY.zoom(e.deltaY<0?.1:-.1)},{passive:false});
+  if(this.bound)return;this.bound=true;const u=$('universe'),P=new Map();let d0=0,s0=1,px=0,py=0,tap=null;
+  const dist=()=>{const [a,b]=[...P.values()];return Math.hypot(a.x-b.x,a.y-b.y)};
+  u.addEventListener('pointerdown',e=>{if(e.target.closest('.star,.gdot'))return;u.setPointerCapture(e.pointerId);P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   if(P.size===1){px=e.clientX-SKY.panX;py=e.clientY-SKY.panY;tap=SKY.placing?{x:e.clientX,y:e.clientY,m:false}:null;if(tap)SKY.ghostAt(e.clientX,e.clientY)}
+   else if(P.size===2){tap=null;d0=dist();s0=SKY.scale}});
+  u.addEventListener('pointermove',e=>{
+   if(SKY.placing&&SKY.mode==='galaxy'&&!P.size)SKY.ghostAt(e.clientX,e.clientY);
+   if(!P.has(e.pointerId))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   if(P.size===1){if(tap&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>6)tap.m=true;SKY.panX=e.clientX-px;SKY.panY=e.clientY-py;SKY.apply()}
+   else if(P.size===2&&d0>0){SKY.setScale(s0*dist()/d0);if(SKY.sw)d0=0}});
+  const up=e=>{const t=tap;tap=null;P.delete(e.pointerId);
+   if(t&&!t.m&&e.type==='pointerup'&&SKY.placing)SKY.tryPlace(t.x,t.y);
+   if(P.size===1){const p=[...P.values()][0];px=p.x-SKY.panX;py=p.y-SKY.panY}};
+  u.addEventListener('pointerup',up);u.addEventListener('pointercancel',up);
+  u.addEventListener('wheel',e=>{e.preventDefault();SKY.setScale(SKY.scale*(e.deltaY<0?1.1:.91),120)},{passive:false});
  },
- zoom(d){this.scale=Math.min(2.2,Math.max(.4,this.scale+d));this.apply()},
- apply(){$('field').style.transform=`translate(calc(-1500px + ${this.panX}px),calc(-1500px + ${this.panY}px)) scale(${this.scale})`},
- fit(){const l=S.stars[S.stars.length-1];this.panX=l?-(l.x-ORI)*1:0;this.panY=l?-(l.y-ORI)*1:0;this.scale=1;this.apply()},
+ setScale(z,ms){ // zooming past the limit switches between constellation and galaxy view
+  if(z<MINZ*.85&&this.mode==='chart'&&this.scale<=MINZ+.02){if(!this.sw){this.sw=true;setTimeout(()=>this.sw=false,700);this.toggleMode()}return}
+  if(z>MAXZ*1.15&&this.mode==='galaxy'&&this.scale>=MAXZ-.02){if(!this.sw){this.sw=true;setTimeout(()=>this.sw=false,700);this.enter(S.cur)}return}
+  const n=Math.min(MAXZ,Math.max(MINZ,z)),r=n/this.scale;this.panX*=r;this.panY*=r;this.scale=n;this.apply(ms||0)},
+ zoom(d){this.setScale(this.scale*(1+d),350)},
+ apply(ms){const f=this.layer();f.style.transition=ms?`transform ${ms}ms cubic-bezier(.2,.8,.2,1)`:'none';f.style.transform=`translate(${-1500+this.panX}px,${-1500+this.panY}px) scale(${this.scale})`},
+ fit(){
+  const pts=this.mode==='galaxy'?S.charts.map(c=>({x:ORI+c.gx,y:ORI+c.gy})):S.stars;
+  if(!pts.length){this.panX=this.panY=0;this.scale=1;return this.apply(350)}
+  const xs=pts.map(t=>t.x),ys=pts.map(t=>t.y),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  const sc=Math.min(1.4,Math.max(MINZ,Math.min((innerWidth-120)/(x1-x0+120),(innerHeight-260)/(y1-y0+120))));
+  this.scale=sc;this.panX=-((x0+x1)/2-ORI)*sc;this.panY=-((y0+y1)/2-ORI)*sc;this.apply(350)},
  inspect(star){
   const m=star.metrics,t=m.tideDistribution;
   $('s-title').textContent=star.voyageName;$('s-meta').textContent=`${star.completionDate} · Heading ${star.headingAngle}° · ${m.totalActions} actions`;
@@ -304,11 +431,14 @@ const SKY={panX:0,panY:0,scale:1,bound:false,
   const box=$('s-logs');box.innerHTML='';
   star.logArchive.forEach(l=>{const d=document.createElement('div');d.style.cssText=`border-left:2px solid ${/^#[0-9a-f]{6}$/i.test(l.color)?l.color:'#888'};padding:5px 8px;margin-bottom:6px;background:rgba(255,255,255,.03)`;
    d.innerHTML=`<span style="color:#777;font-size:.6rem">${esc(l.time)} ${esc(l.tag)}</span><br>${esc(l.text)}`;box.appendChild(d)});
-  $('purge').onclick=()=>{if(!confirm(`Purge "${star.voyageName}"?`))return;
-   const inc=S.edges.find(e=>e.toStarId===star.id),out=S.edges.find(e=>e.fromStarId===star.id);
+  const br=$('branch'),busy=S.wake.length>0&&S.horizon!==NONE;br.disabled=busy;br.style.opacity=busy?.4:1;
+  br.textContent=busy?'FINISH CURRENT VOYAGE TO BRANCH':'↳ BRANCH NEW VOYAGE FROM HERE';
+  br.onclick=()=>{if(busy)return;ENGINE.setOrigin(star.id);UI.close();UI.sky(false);UI.course()};
+  $('purge').onclick=()=>Dlg.ask(`Purge "${star.voyageName}" from the sky?`,'PURGE',()=>{
+   const inc=S.edges.find(e=>e.toStarId===star.id),outs=S.edges.filter(e=>e.fromStarId===star.id);
    S.edges=S.edges.filter(e=>e.fromStarId!==star.id&&e.toStarId!==star.id);
-   if(inc&&out)S.edges.push({fromStarId:inc.fromStarId,toStarId:out.toStarId,angle:out.angle});
-   S.stars=S.stars.filter(s=>s.id!==star.id);Store.saveSky();UI.close();SKY.render()};
+   if(inc)outs.forEach(o=>S.edges.push({fromStarId:inc.fromStarId,toStarId:o.toStarId,angle:o.angle}));
+   S.stars=S.stars.filter(x=>x.id!==star.id);Store.saveSky();UI.close();SKY.render()});
   $('m-star').classList.add('show');
  }};
 addEventListener('DOMContentLoaded',()=>{UI.init();SKY.bind()});
