@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#05000a">
-    <title>Ternary Navigator V12</title>
+    <title>Ternary Navigator</title>
     <style>
         :root {
             --bg-dark: #05000a;
@@ -26,16 +26,12 @@
 
         /* DYNAMIC ASTROLABE */
         #astrolabe-bg {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1);
-            width: 85vw; height: 85vw; max-width: 350px; max-height: 350px;
-            border: 2px dashed rgba(255,255,255,0.05); border-radius: 50%;
+            position: fixed; top: 48%; left: 50%; transform: translate(-50%, -50%) scale(1);
+            width: 85vw; height: 85vw; max-width: 340px; max-height: 340px;
+            border: 2px dashed rgba(255,255,255,0.06); border-radius: 50%;
             display: flex; justify-content: center; align-items: center; z-index: 0;
-            transition: top 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 1s ease;
-            will-change: transform, top, box-shadow;
-        }
-        body.drawer-open #astrolabe-bg {
-            top: 25%; /* Pushes it way up into the clear space */
-            transform: translate(-50%, -50%) scale(0.5); /* Shrinks it */
+            transition: box-shadow 1s ease;
+            will-change: transform;
         }
         
         #target-marker { position: absolute; width: 100%; height: 100%; border-radius: 50%; transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1); }
@@ -46,48 +42,47 @@
         /* TOP UI LAYER */
         #ui-top {
             position: absolute; top: 0; left: 0; width: 100%; z-index: 1;
-            padding: 20px; background: linear-gradient(180deg, rgba(5,0,10,0.95) 0%, rgba(5,0,10,0.5) 70%, transparent 100%);
+            padding: 20px 20px 10px 20px; background: linear-gradient(180deg, rgba(5,0,10,0.95) 0%, rgba(5,0,10,0.6) 80%, transparent 100%);
             pointer-events: auto;
         }
 
-        h1 { font-size: 1.1rem; text-align: center; letter-spacing: 4px; color: var(--accent); margin-bottom: 20px; text-shadow: 0 0 5px var(--accent); transition: color 0.5s ease; }
+        h1 { font-size: 1.1rem; text-align: center; letter-spacing: 4px; color: var(--accent); margin-bottom: 18px; text-shadow: 0 0 5px var(--accent); transition: color 0.5s ease; }
         
         .horizon-box { background: transparent; padding-bottom: 5px; }
         .horizon-box label { font-size: 0.65rem; color: #888; letter-spacing: 1px; display: block; margin-bottom: 5px;}
         .north-input-group { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--accent); padding-bottom: 5px;}
-        #current-goal { color: white; font-size: 1rem; flex-grow: 1; text-transform: uppercase; }
+        #current-goal { color: white; font-size: 0.95rem; flex-grow: 1; text-transform: uppercase; }
         #set-horizon-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 4px; padding: 6px 12px; font-size: 0.7rem; font-weight: bold; transition: background 0.2s; }
         #set-horizon-btn:active { background: rgba(0,255,157,0.2); }
 
-        /* WAKE DRAWER (Perfect Height) */
+        /* WAKE DRAWER (52vh max height keeps ample room) */
         #wake-drawer {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 55vh;
-            background: rgba(10,5,15,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 5;
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 52vh;
+            background: rgba(10,5,15,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); z-index: 5;
             border-top: 1px solid rgba(255,255,255,0.1); border-radius: 20px 20px 0 0;
             display: flex; flex-direction: column; padding: 0 20px 20px 20px;
-            transform: translateY(calc(100% - 90px)); 
+            transform: translateY(calc(100% - 85px)); 
             will-change: transform; pointer-events: auto;
         }
-        body.drawer-open #wake-drawer { transform: translateY(0); }
-        body.drawer-transition #wake-drawer { transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
         
-        #drawer-touch-zone { padding-top: 15px; padding-bottom: 20px; cursor: pointer; width: 100%; display: flex; justify-content: center; }
-        .drag-handle { width: 50px; height: 5px; background: rgba(255,255,255,0.3); border-radius: 3px; }
+        #drawer-touch-zone { padding-top: 14px; padding-bottom: 16px; cursor: pointer; width: 100%; display: flex; justify-content: center; }
+        .drag-handle { width: 44px; height: 5px; background: rgba(255,255,255,0.3); border-radius: 3px; }
 
-        .log-input-group { display: flex; margin-bottom: 15px; flex-shrink: 0;}
-        #log-input { flex-grow: 1; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 15px; border-radius: 8px 0 0 8px; outline: none; }
+        .log-input-group { display: flex; margin-bottom: 12px; flex-shrink: 0;}
+        #log-input { flex-grow: 1; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 13px; border-radius: 8px 0 0 8px; outline: none; }
         #log-input:focus { border-color: var(--accent); }
-        #emit-btn { background: var(--accent); color: var(--bg-dark); border: none; font-weight: bold; padding: 0 20px; border-radius: 0 8px 8px 0; }
+        #emit-btn { background: var(--accent); color: var(--bg-dark); border: none; font-weight: bold; padding: 0 20px; border-radius: 0 8px 8px 0; transition: filter 0.2s; }
+        #emit-btn:active { filter: brightness(0.8); }
 
-        .log-list { list-style: none; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; overflow-x: hidden; padding-bottom: 10px; flex-grow: 1; opacity: 0; transition: opacity 0.3s;}
-        body.drawer-open .log-list { opacity: 1; }
+        .log-list { list-style: none; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; overflow-x: hidden; padding-bottom: 10px; flex-grow: 1; }
         
         /* LOG ENTRIES */
         .log-entry { 
             background: rgba(0,0,0,0.5); border-left: 3px solid var(--accent); padding: 12px; font-size: 0.85rem; 
             backdrop-filter: blur(5px); display: flex; flex-direction: column;
-            will-change: transform, opacity, max-height, padding;
+            will-change: transform, opacity, max-height, padding, margin;
             max-height: 100px; overflow: hidden;
+            transition: max-height 0.35s ease, padding 0.35s ease, margin 0.35s ease, opacity 0.35s ease;
         }
         .log-header { font-size: 0.65rem; color: #888; margin-bottom: 4px; display: flex; gap: 10px;}
 
@@ -109,12 +104,12 @@
         .modal-btn:active { background: var(--accent); color: var(--bg-dark); }
         
         .compass-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 15px; }
-        .dir-btn { background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; padding: 12px 0; border-radius: 4px; font-size: 0.85rem; font-weight: bold;}
+        .dir-btn { background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; padding: 12px 0; border-radius: 4px; font-size: 0.85rem; font-weight: bold; transition: all 0.2s;}
         .dir-btn:active { background: var(--accent); color: black;}
         .modal-cancel { background: transparent; border: none; color: #888; margin-top: 10px; font-size: 0.85rem; padding: 10px; width: 100%;}
     </style>
 </head>
-<body class="drawer-transition">
+<body>
 
     <div id="astrolabe-bg">
         <div id="target-marker"></div>
@@ -134,7 +129,7 @@
     </div>
 
     <div id="wake-drawer">
-        <div id="drawer-touch-zone" onclick="document.body.classList.toggle('drawer-open')">
+        <div id="drawer-touch-zone">
             <div class="drag-handle"></div>
         </div>
         <div class="log-input-group">
@@ -190,47 +185,108 @@
         const colors = { '-1': '#4a5fc1', '0': '#00ff9d', '1': '#ffb000' };
         const root = document.documentElement;
 
-        // Drawer 1:1 Physics
+        // --- DRAWER & COMPASS CONTINUOUS 1:1 INTERPOLATION ---
         const drawer = document.getElementById('wake-drawer');
         const touchZone = document.getElementById('drawer-touch-zone');
-        let dStartY, currentY;
-        
+        const astrolabe = document.getElementById('astrolabe-bg');
+        let dStartY = 0, currentY = 0;
+        let isDrawerOpen = false;
+
+        function getTravelDistance() {
+            // Distance in px between closed (bottom - 85px) and open (bottom)
+            return (window.innerHeight * 0.52) - 85;
+        }
+
+        function setCompassVisual(progress) {
+            // Progress is 0.0 (closed) to 1.0 (open)
+            // Interpolate top from 48% down to 34%
+            let topPos = 48 - (progress * 14); 
+            // Interpolate scale from 1.0 down to 0.38
+            let scaleVal = 1.0 - (progress * 0.62);
+            astrolabe.style.top = topPos + '%';
+            astrolabe.style.transform = `translate(-50%, -50%) scale(${scaleVal})`;
+        }
+
         touchZone.addEventListener('touchstart', e => {
             dStartY = e.touches[0].clientY;
-            document.body.classList.remove('drawer-transition'); 
+            currentY = dStartY;
+            drawer.style.transition = 'none';
+            astrolabe.style.transition = 'box-shadow 1s ease'; // kill scale/top transition while dragging
         }, {passive: true});
 
         touchZone.addEventListener('touchmove', e => {
             currentY = e.touches[0].clientY;
             let diffY = currentY - dStartY;
-            let isOpen = document.body.classList.contains('drawer-open');
-            if(!isOpen && diffY < 0) drawer.style.transform = `translateY(calc(100% - 90px + ${diffY}px))`;
-            else if(isOpen && diffY > 0) drawer.style.transform = `translateY(${diffY}px)`;
+            let travel = getTravelDistance();
+
+            let progress = 0;
+            if(!isDrawerOpen) {
+                // Dragging up from bottom: diffY is negative
+                let clamped = Math.max(-travel, Math.min(0, diffY));
+                drawer.style.transform = `translateY(calc(100% - 85px + ${clamped}px))`;
+                progress = Math.abs(clamped) / travel;
+            } else {
+                // Dragging down from top: diffY is positive
+                let clamped = Math.min(travel, Math.max(0, diffY));
+                drawer.style.transform = `translateY(${clamped}px)`;
+                progress = 1.0 - (clamped / travel);
+            }
+            setCompassVisual(progress);
         }, {passive: true});
 
         touchZone.addEventListener('touchend', e => {
-            document.body.classList.add('drawer-transition'); 
-            drawer.style.transform = ''; 
-            if(!currentY) return;
+            let travel = getTravelDistance();
+            drawer.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            astrolabe.style.transition = 'top 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 1s ease';
+
             let diffY = currentY - dStartY;
-            let isOpen = document.body.classList.contains('drawer-open');
-            if(!isOpen && diffY < -30) document.body.classList.add('drawer-open');
-            else if(isOpen && diffY > 30) document.body.classList.remove('drawer-open');
-            currentY = null;
+
+            // Threshold: 30% of travel to toggle
+            if(!isDrawerOpen && diffY < -travel * 0.25) {
+                isDrawerOpen = true;
+            } else if(isDrawerOpen && diffY > travel * 0.25) {
+                isDrawerOpen = false;
+            }
+
+            // Snap to final state
+            if(isDrawerOpen) {
+                drawer.style.transform = 'translateY(0)';
+                setCompassVisual(1.0);
+            } else {
+                drawer.style.transform = 'translateY(calc(100% - 85px))';
+                setCompassVisual(0.0);
+            }
         });
 
+        // Click toggle fallback
+        touchZone.addEventListener('click', () => {
+            isDrawerOpen = !isDrawerOpen;
+            drawer.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            astrolabe.style.transition = 'top 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 1s ease';
+            if(isDrawerOpen) {
+                drawer.style.transform = 'translateY(0)';
+                setCompassVisual(1.0);
+            } else {
+                drawer.style.transform = 'translateY(calc(100% - 85px))';
+                setCompassVisual(0.0);
+            }
+        });
+
+        // --- ONLOAD & STATE ---
         window.onload = () => {
             if(localStorage.getItem('horizonName')) document.getElementById('current-goal').innerText = localStorage.getItem('horizonName');
             if(localStorage.getItem('needleAngle')) needleAngle = parseFloat(localStorage.getItem('needleAngle'));
             if(localStorage.getItem('targetAngle')) targetAngle = parseFloat(localStorage.getItem('targetAngle'));
             if(localStorage.getItem('globalTide')) globalTide = parseInt(localStorage.getItem('globalTide'));
+            
             updateCompassUI(); loadLogs(); updateThemeColors(globalTide);
+            setCompassVisual(0.0);
         };
 
         function updateThemeColors(state) {
             root.style.setProperty('--accent', colors[state]);
             document.getElementById('astrolabe-center').style.borderColor = colors[state];
-            document.getElementById('astrolabe-bg').style.boxShadow = `0 0 40px ${colors[state]}30`;
+            document.getElementById('astrolabe-bg').style.boxShadow = `0 0 40px ${colors[state]}20`;
         }
 
         function selectEnergy(state) {
@@ -282,17 +338,16 @@
                 else needleAngle += Math.sign(diffToSouth) * step;
             } 
             
-            needleAngle = (needleAngle + 360) % 360;
             localStorage.setItem('needleAngle', needleAngle);
             updateCompassUI();
 
             const logEntry = { id: Date.now(), text: input.value, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), color: colors[globalTide], tag: icon };
             let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
             logs.unshift(logEntry); 
+            if(logs.length > 50) logs.pop(); 
             localStorage.setItem('wakeLogs', JSON.stringify(logs));
 
-            renderSingleLog(logEntry, true); 
-            input.value = '';
+            renderLogs(); input.value = '';
         }
 
         function updateCompassUI() {
@@ -313,60 +368,88 @@
             }
         }
 
-        // SMOOTH SWIPE DELETE WITH MATH FIX
+        // --- PROPER SWIPE-TO-DELETE ---
         function attachSwipeToDelete(li, id) {
             let startX = 0, currentX = 0, startY = 0, currentY = 0;
             let isDragging = false, isScrolling = false;
 
             li.addEventListener('touchstart', e => {
-                startX = e.touches[0].clientX; currentX = startX; // FIX: Initialize currentX so taps = 0 diff
-                startY = e.touches[0].clientY; currentY = startY;
-                isDragging = true; isScrolling = false; li.style.transition = 'none';
+                startX = e.touches[0].clientX;
+                currentX = startX; // Prevents tap from acting as swipe!
+                startY = e.touches[0].clientY;
+                currentY = startY;
+                isDragging = true;
+                isScrolling = false;
+                li.style.transition = 'none';
             }, {passive: true});
 
             li.addEventListener('touchmove', e => {
                 if(!isDragging) return;
-                currentX = e.touches[0].clientX; currentY = e.touches[0].clientY;
-                if(Math.abs(currentY - startY) > Math.abs(currentX - startX) + 5) {
-                    isScrolling = true; li.style.transform = `translateX(0px)`; return;
+                currentX = e.touches[0].clientX;
+                currentY = e.touches[0].clientY;
+                let diffX = currentX - startX;
+                let diffY = currentY - startY;
+
+                // Vertical scrolling check
+                if(Math.abs(diffY) > Math.abs(diffX) + 6) {
+                    isScrolling = true;
+                    li.style.transform = 'translateX(0px)';
+                    return;
                 }
-                if(!isScrolling) { li.style.transform = `translateX(${currentX - startX}px)`; li.style.opacity = 1 - (Math.abs(currentX - startX) / window.innerWidth); }
-            }, {passive: true});
+                
+                if(!isScrolling) {
+                    if(e.cancelable) e.preventDefault();
+                    li.style.transform = `translateX(${diffX}px)`;
+                    li.style.opacity = Math.max(0.1, 1 - (Math.abs(diffX) / (window.innerWidth * 0.7)));
+                }
+            }, {passive: false});
 
             li.addEventListener('touchend', e => {
                 if(!isDragging || isScrolling) return;
                 isDragging = false;
                 let diffX = currentX - startX;
-                
-                li.style.transition = 'transform 0.3s ease, opacity 0.3s ease, max-height 0.4s ease, padding 0.4s ease, margin 0.4s ease';
-                if(Math.abs(diffX) > window.innerWidth * 0.4) { 
-                    li.style.transform = `translateX(${Math.sign(diffX) * window.innerWidth}px)`; li.style.opacity = 0;
+
+                if(Math.abs(diffX) > window.innerWidth * 0.35) {
+                    // Successful Swipe: slide all the way off
+                    li.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out, max-height 0.3s ease 0.15s, padding 0.3s ease 0.15s, margin 0.3s ease 0.15s';
+                    li.style.transform = `translateX(${Math.sign(diffX) * window.innerWidth}px)`;
+                    li.style.opacity = '0';
+                    li.style.maxHeight = '0px';
+                    li.style.paddingTop = '0px';
+                    li.style.paddingBottom = '0px';
+                    li.style.marginTop = '0px';
+                    li.style.marginBottom = '0px';
+
                     setTimeout(() => {
-                        li.style.maxHeight = '0px'; li.style.paddingTop = '0px'; li.style.paddingBottom = '0px'; li.style.marginTop = '0px'; li.style.marginBottom = '0px'; li.style.border = 'none';
-                    }, 300);
-                    setTimeout(() => { deleteLogRaw(id); li.remove(); }, 700);
-                } else { li.style.transform = `translateX(0px)`; li.style.opacity = 1; }
+                        let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
+                        logs = logs.filter(log => log.id !== id);
+                        localStorage.setItem('wakeLogs', JSON.stringify(logs));
+                        li.remove();
+                    }, 450);
+                } else {
+                    // Snap back
+                    li.style.transition = 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease';
+                    li.style.transform = 'translateX(0px)';
+                    li.style.opacity = '1';
+                }
             });
         }
 
-        function deleteLogRaw(id) {
+        function renderLogs() {
             let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-            logs = logs.filter(log => log.id !== id);
-            localStorage.setItem('wakeLogs', JSON.stringify(logs));
-        }
-
-        function renderSingleLog(log, prepend = false) {
-            const li = document.createElement('li'); li.className = 'log-entry'; li.style.borderLeftColor = log.color;
-            li.innerHTML = `<div class="log-content"><div class="log-header"><span>${log.time}</span> <span>${log.tag}</span></div><div>${log.text}</div></div>`;
-            attachSwipeToDelete(li, log.id);
-            if(prepend) document.getElementById('log-list').prepend(li);
-            else document.getElementById('log-list').appendChild(li);
-        }
-
-        function loadLogs() {
-            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-            document.getElementById('log-list').innerHTML = '';
-            logs.forEach(log => renderSingleLog(log));
+            let list = document.getElementById('log-list');
+            list.innerHTML = '';
+            logs.forEach(log => {
+                const li = document.createElement('li');
+                li.className = 'log-entry';
+                li.style.borderLeftColor = log.color;
+                li.innerHTML = `
+                    <div class="log-header"><span>${log.time}</span> <span>${log.tag}</span></div>
+                    <div>${log.text}</div>
+                `;
+                attachSwipeToDelete(li, log.id);
+                list.appendChild(li);
+            });
         }
     </script>
 </body>
