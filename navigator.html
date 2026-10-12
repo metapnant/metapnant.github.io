@@ -1,504 +1,315 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#05000a">
-    <title>Ternary Navigator</title>
-    <style>
-        :root {
-            --bg-dark: #05000a;
-            --bg-panel: #0a0514;
-            --text-main: #e0dced;
-            --ton: #4a5fc1; 
-            --sil: #00ff9d; 
-            --qina: #ffb000; 
-            --accent: #00ff9d; 
-        }
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; user-select: none; -webkit-tap-highlight-color: transparent; }
-        
-        body, html {
-            background-color: var(--bg-dark); color: var(--text-main);
-            width: 100%; height: 100%; overflow: hidden;
-            transition: background-color 0.5s ease;
-        }
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#05000a"><title>Ternary Navigator</title>
+<style>
+:root{--bg:#05000a;--panel:#0a0514;--ton:#4a5fc1;--sil:#00ff9d;--qina:#ffb000;--accent:#00ff9d}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Courier New',monospace;user-select:none;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:#e0dced;width:100%;height:100%;overflow:hidden}
+button{cursor:pointer;font-family:inherit}
+#astrolabe{position:fixed;top:48%;left:50%;transform:translate(-50%,-50%);width:84vw;height:84vw;max-width:330px;max-height:330px;background:radial-gradient(circle,rgba(18,10,30,.96),rgba(5,0,10,.99));border:2px solid rgba(255,255,255,.22);border-radius:50%;display:flex;justify-content:center;align-items:center;z-index:1;box-shadow:0 0 35px rgba(0,255,157,.15);will-change:transform,top}
+#astrolabe::before{content:'';position:absolute;width:calc(100% + 14px);height:1px;background:linear-gradient(90deg,rgba(255,255,255,.4),transparent 12%,transparent 88%,rgba(255,255,255,.4))}
+#astrolabe::after{content:'';position:absolute;height:calc(100% + 14px);width:1px;background:linear-gradient(180deg,rgba(255,255,255,.4),transparent 12%,transparent 88%,rgba(255,255,255,.4))}
+#target{position:absolute;width:100%;height:100%;border-radius:50%;transition:transform .8s cubic-bezier(.25,1,.5,1)}
+#target::before{content:'▼';position:absolute;top:-14px;left:calc(50% - 6px);color:#fff;font-size:13px;text-shadow:0 0 8px #fff}
+#hub{width:14px;height:14px;background:var(--bg);border:2px solid var(--accent);border-radius:50%;box-shadow:0 0 12px var(--accent);z-index:3;transition:all .5s}
+#needle{position:absolute;bottom:50%;width:4px;height:48%;background:linear-gradient(to top,transparent,var(--accent));transform-origin:bottom center;border-radius:2px;transition:transform .6s cubic-bezier(.25,1,.5,1);box-shadow:0 0 8px var(--accent)}
+#ui-top{position:absolute;top:0;left:0;width:100%;z-index:2;padding:calc(18px + env(safe-area-inset-top,0px)) 20px 8px;background:linear-gradient(180deg,rgba(5,0,10,.98),rgba(5,0,10,.7) 80%,transparent)}
+.row{display:flex;justify-content:space-between;align-items:center}
+h1{font-size:1.05rem;letter-spacing:3px;color:var(--accent);text-shadow:0 0 5px var(--accent);margin-bottom:12px}
+.btn{background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:6px 12px;font-size:.72rem;font-weight:bold}
+.btn:active{background:var(--accent);color:#000}
+.ghost{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.25);color:#fff}
+#forge{display:none;background:#fff;color:#000;border:none;box-shadow:0 0 12px #fff}
+.lbl{font-size:.65rem;color:#888;letter-spacing:1px}
+#res{font-size:.65rem;color:var(--sil);opacity:0;transition:opacity .4s;font-weight:bold}#res.on{opacity:1}
+#goal{color:#fff;font-size:.95rem;flex-grow:1;text-transform:uppercase;letter-spacing:1px;padding:4px 0}
+.bar{width:100%;height:4px;background:rgba(255,255,255,.08);border-radius:2px;display:flex;overflow:hidden;margin-top:6px}
+.bar div{height:100%;width:0;transition:width .3s}#b-1{background:var(--ton)}#b0{background:var(--sil)}#b1{background:var(--qina)}
+#drawer{position:absolute;bottom:0;left:0;width:100%;height:55vh;background:rgba(10,5,15,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:5;border-top:1px solid rgba(255,255,255,.15);border-radius:20px 20px 0 0;display:flex;flex-direction:column;padding:0 20px 15px;transform:translateY(calc(100% - 90px));will-change:transform}
+#dzone{height:50px;flex-shrink:0;display:flex;justify-content:center;align-items:center;width:100%;touch-action:none}
+.handle{width:52px;height:5px;background:rgba(255,255,255,.4);border-radius:3px}
+.inrow{display:flex;margin-bottom:12px;flex-shrink:0}
+#log-input{flex-grow:1;min-width:0;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);color:#fff;padding:13px;border-radius:8px 0 0 8px;outline:none;user-select:text}
+#emit{background:var(--accent);color:var(--bg);border:none;font-weight:bold;padding:0 20px;border-radius:0 8px 8px 0}
+#loglist{list-style:none;overflow-y:auto;overflow-x:hidden;flex-grow:1;padding-bottom:15px}
+.log{background:rgba(0,0,0,.5);border-left:3px solid var(--accent);padding:12px;margin-bottom:8px;font-size:.85rem;display:flex;justify-content:space-between;align-items:flex-start;word-break:break-word;white-space:normal;line-height:1.4;overflow:hidden;max-height:2000px}
+.log-c{flex-grow:1;padding-right:10px}.log-h{font-size:.65rem;color:#888;margin-bottom:4px;display:flex;gap:10px}
+.x{background:transparent;border:none;color:#777;font-size:1.3rem;line-height:1;padding:2px 8px}.x:active{color:#f44}
+#sky{opacity:0;pointer-events:none;position:fixed;inset:0;background:radial-gradient(circle,#0c051a,#020005);z-index:10;transition:opacity .4s}
+#sky.on{opacity:1;pointer-events:auto}
+.sky-h{position:absolute;top:0;width:100%;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 14px 14px;background:linear-gradient(180deg,rgba(0,0,0,.85),transparent);z-index:15}
+.sky-h h2{font-size:.85rem;letter-spacing:2px}.sky-a{display:flex;gap:5px}.sky-a .btn{padding:6px 9px}
+#universe{position:absolute;inset:0;overflow:hidden;z-index:11;touch-action:none}
+#field{position:absolute;width:3000px;height:3000px;top:50%;left:50%;will-change:transform}
+#lines{position:absolute;top:0;left:0;width:3000px;height:3000px;overflow:visible;pointer-events:none}
+.star{position:absolute;transform:translate(-50%,-50%);border-radius:50%;cursor:pointer}
+.core{width:100%;height:100%;border-radius:50%;animation:breathe 4s infinite ease-in-out}.core.r{animation-duration:2.5s}
+.flare{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:280%;height:1px;background:rgba(255,255,255,.85);pointer-events:none}.flare.v{width:1px;height:280%}
+@keyframes breathe{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
+.ov{opacity:0;pointer-events:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:25;display:flex;justify-content:center;align-items:center;transition:opacity .3s;backdrop-filter:blur(5px)}
+.ov.show{opacity:1;pointer-events:auto}
+.box{background:var(--panel);border:1px solid var(--accent);padding:20px;border-radius:8px;width:90%;max-width:330px;text-align:center;max-height:85vh;display:flex;flex-direction:column;overflow-y:auto}
+.mt{margin-bottom:12px;font-size:.8rem;color:#aaa;letter-spacing:1px;font-weight:bold}
+.in{width:100%;background:rgba(0,0,0,.5);border:1px solid #333;color:#fff;padding:12px;margin-bottom:15px;border-radius:4px;text-align:center;outline:none;font-size:.95rem;user-select:text}
+.ecard{background:rgba(255,255,255,.03);border:1px solid #333;padding:8px 12px;border-radius:6px;display:flex;justify-content:space-between;text-align:left;margin-bottom:6px;gap:8px}
+.ecard small{font-size:.65rem;color:#999}
+.ecard.s-1{border-color:var(--ton);background:rgba(74,95,193,.2)}.ecard.s0{border-color:var(--sil);background:rgba(0,255,157,.2)}.ecard.s1{border-color:var(--qina);background:rgba(255,176,0,.2)}
+.mb{width:100%;padding:12px;margin-bottom:6px;background:rgba(255,255,255,.05);border:1px solid #333;color:#fff;font-size:.85rem;border-radius:4px;font-weight:bold}
+.mb:active{background:var(--accent);color:var(--bg)}.mb.danger{border-color:#f44;color:#f44;margin-top:8px}.mb.danger:active{background:#f44;color:#000}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:15px}.grid .mb{margin:0;padding:12px 0}
+.cancel{background:transparent;border:none;color:#888;font-size:.8rem;padding:8px;width:100%}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}.core{animation:none!important}}
+</style></head><body>
+<div id="astrolabe"><div id="target"></div><div id="needle"></div><div id="hub"></div></div>
+<div id="ui-top">
+ <div class="row"><h1 id="title">TERNARY NAVIGATOR</h1><button class="btn ghost" style="margin-bottom:12px" onclick="UI.sky(true)">★ SKY</button></div>
+ <div class="row"><span class="lbl">CURRENT HORIZON</span><span id="res">RESONANCE [rél]</span></div>
+ <div class="row"><div id="goal">NO HORIZON SET</div><button id="course" class="btn" onclick="UI.course()">COURSE</button><button id="forge" class="btn" onclick="UI.forge()">FORGE STAR</button></div>
+ <div class="bar"><div id="b-1"></div><div id="b0"></div><div id="b1"></div></div>
+</div>
+<div id="drawer">
+ <div id="dzone"><div class="handle"></div></div>
+ <div class="inrow"><input id="log-input" placeholder="Record kinetic action..."><button id="emit" onclick="UI.sextant()">EMIT</button></div>
+ <ul id="loglist"></ul>
+</div>
+<div id="sky">
+ <div class="sky-h"><h2>CONSTELLATION</h2><div class="sky-a">
+  <button class="btn ghost" onclick="SKY.zoom(.2)">+</button><button class="btn ghost" onclick="SKY.zoom(-.2)">−</button>
+  <button class="btn ghost" onclick="SKY.fit()">FIT</button><button class="btn ghost" onclick="Store.export()">SAVE</button>
+  <button class="btn ghost" onclick="UI.sky(false)">BACK</button></div></div>
+ <div id="universe"><div id="field"><svg id="lines"></svg></div></div>
+</div>
+<div id="m-course" class="ov"><div class="box">
+ <p class="mt">NAME YOUR HORIZON</p><input id="goal-input" class="in" placeholder="e.g. Theory Test">
+ <p class="mt">SET CARDINAL VECTOR</p>
+ <div class="grid">
+  <button class="mb" onclick="ENGINE.setTarget(315)">NW</button><button class="mb" onclick="ENGINE.setTarget(0)">N</button><button class="mb" onclick="ENGINE.setTarget(45)">NE</button>
+  <button class="mb" onclick="ENGINE.setTarget(270)">W</button><div></div><button class="mb" onclick="ENGINE.setTarget(90)">E</button>
+  <button class="mb" onclick="ENGINE.setTarget(225)">SW</button><button class="mb" onclick="ENGINE.setTarget(180)">S</button><button class="mb" onclick="ENGINE.setTarget(135)">SE</button>
+ </div><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
+<div id="m-abandon" class="ov"><div class="box">
+ <p class="mt" style="color:#f44">ABANDON VOYAGE?</p>
+ <p style="font-size:.8rem;line-height:1.5;color:#bbb;margin-bottom:15px">You have an active voyage. Changing heading now dissolves your current wake.</p>
+ <button class="mb danger" onclick="ENGINE.abandon()">DISSOLVE &amp; SET NEW</button><button class="cancel" onclick="UI.close()">MAINTAIN COURSE</button></div></div>
+<div id="m-sextant" class="ov"><div class="box">
+ <p class="mt">QUALIFY ENERGETIC STATE</p>
+ <div class="ecard" id="e-1" onclick="UI.energy(-1)"><div style="color:var(--ton);font-weight:bold">,ton</div><small>Ground: rest, stillness, recovery</small></div>
+ <div class="ecard" id="e0" onclick="UI.energy(0)"><div style="color:var(--sil);font-weight:bold">.síl</div><small>Flow: sustained habit, smooth transition</small></div>
+ <div class="ecard" id="e1" onclick="UI.energy(1)"><div style="color:var(--qina);font-weight:bold">;qına</div><small>Fire: sprint, deep work</small></div>
+ <p class="mt" style="margin-top:10px">VECTOR TRAJECTORY</p>
+ <button class="mb" onclick="ENGINE.act('Align','⬆️')">⬆️ ALIGN (toward horizon)</button>
+ <button class="mb" onclick="ENGINE.act('Drift','↔️')">↔️ DRIFT (detour / side quest)</button>
+ <button class="mb" onclick="ENGINE.act('Anchor','⚓')">⚓ ANCHOR (rest &amp; integrate)</button>
+ <button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
+<div id="m-star" class="ov"><div class="box" style="text-align:left">
+ <div class="row" style="margin-bottom:8px"><h2 id="s-title" style="font-size:1.1rem"></h2><div id="s-badge" style="font-size:.7rem;font-weight:bold;padding:2px 8px;border-radius:4px"></div></div>
+ <p id="s-meta" class="lbl" style="margin-bottom:12px"></p>
+ <div id="s-metrics" style="font-size:.75rem;color:#ccc;line-height:1.5;margin-bottom:14px;background:rgba(0,0,0,.4);padding:10px;border-radius:4px"></div>
+ <p class="mt" style="margin-bottom:6px">VOYAGE LOG ARCHIVE</p>
+ <div id="s-logs" style="overflow-y:auto;max-height:25vh;font-size:.75rem;margin-bottom:12px"></div>
+ <button class="mb danger" id="purge">PURGE STAR FROM SKY</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
+<script>
+const COLORS={'-1':'#4a5fc1','0':'#00ff9d','1':'#ffb000'}, TOL=2.5, NONE='NO HORIZON SET', ORI=1500;
+const norm=a=>((a%360)+360)%360, shortest=(t,c)=>((norm(t)-norm(c)+540)%360)-180;
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+const $=id=>document.getElementById(id);
+const S={horizon:NONE,target:0,targetDisp:0,needle:180,tide:0,pending:0,toggle:1,wake:[],stars:[],edges:[]};
 
-        /* CRISP, SOLID ASTROLABE */
-        #astrolabe-bg {
-            position: fixed; top: 48%; left: 50%; transform: translate(-50%, -50%) scale(1);
-            width: 85vw; height: 85vw; max-width: 340px; max-height: 340px;
-            background: radial-gradient(circle, rgba(15,10,25,0.9) 0%, rgba(5,0,10,1) 100%);
-            border: 2px solid rgba(255,255,255,0.15); border-radius: 50%;
-            display: flex; justify-content: center; align-items: center; z-index: 0;
-            box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.05);
-            transition: top 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 1s ease;
-            will-change: transform, top, box-shadow;
-        }
-        body.drawer-open #astrolabe-bg {
-            top: 28%; transform: translate(-50%, -50%) scale(0.55);
-        }
-        
-        #astrolabe-bg::before { content: ''; position: absolute; width: calc(100% + 15px); height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.4) 0%, transparent 10%, transparent 90%, rgba(255,255,255,0.4) 100%); }
-        #astrolabe-bg::after { content: ''; position: absolute; height: calc(100% + 15px); width: 1px; background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, transparent 10%, transparent 90%, rgba(255,255,255,0.4) 100%); }
+const Store={
+ read(k,fb){try{const v=localStorage.getItem(k);return v==null?fb:JSON.parse(v)}catch(e){return fb}},
+ write(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){console.warn('storage failed',k);return false}},
+ normStar(s){const m=s.metrics||{};return{id:s.id,voyageName:s.voyageName||s.name||'VOYAGE',completionDate:s.completionDate||s.date||'',
+  headingAngle:s.headingAngle||0,x:+s.x||ORI,y:+s.y||ORI,spectralClass:String(s.spectralClass==null?0:s.spectralClass),
+  size:s.size||14,glowRadius:s.glowRadius||20,harmonicResonance:!!s.harmonicResonance,
+  metrics:{totalActions:m.totalActions||0,alignCount:m.alignCount||0,driftCount:m.driftCount||0,anchorCount:m.anchorCount||0,characterVolume:m.characterVolume||0,
+   tideDistribution:m.tideDistribution||m.tideRatio||{ton:0,sil:0,qina:0}},logArchive:s.logArchive||s.logs||[]}},
+ normEdge(e){return{fromStarId:e.fromStarId||e.from,toStarId:e.toStarId||e.to,angle:e.angle||e.headingAngle||0}},
+ init(){
+  const old=['nav_horizon','nav_target_angle','nav_needle_deg','nav_active_tide','nav_wake_logs','nav_constellation','constellationStars',
+   'ternary_nav_horizon','ternary_nav_target_angle','ternary_nav_needle_deg','ternary_nav_active_tide'];
+  if(localStorage.getItem('ternary_nav_schema')!=='3'){
+   const bk={};old.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)bk[k]=v});
+   if(Object.keys(bk).length&&!localStorage.getItem('ternary_nav_migration_backup'))
+    try{localStorage.setItem('ternary_nav_migration_backup',JSON.stringify(bk))}catch(e){}
+  }
+  let a=this.read('ternary_nav_active',null);
+  if(!a){ // pull from previous builds' separate keys
+   const g=(k,k2,d)=>{const v=localStorage.getItem(k)??localStorage.getItem(k2);return v==null?d:v};
+   a={horizonName:g('ternary_nav_horizon','nav_horizon',NONE).replace(/^"|"$/g,''),targetAngle:parseFloat(g('ternary_nav_target_angle','nav_target_angle',0))||0,
+    needleAngle:parseFloat(g('ternary_nav_needle_deg','nav_needle_deg',180)),lastTide:parseInt(g('ternary_nav_active_tide','nav_active_tide',0))||0,toggle:1};
+   if(isNaN(a.needleAngle))a.needleAngle=180;
+  }
+  S.horizon=a.horizonName||NONE;S.target=a.targetAngle||0;S.targetDisp=S.target;S.needle=a.needleAngle;S.tide=[-1,0,1].includes(a.lastTide)?a.lastTide:0;S.toggle=a.toggle||1;
+  const w=this.read('ternary_nav_wake',null)??this.read('nav_wake_logs',[]);S.wake=Array.isArray(w)?w:[];
+  const c=this.read('ternary_nav_constellation',null)??this.read('nav_constellation',null)??{};
+  S.stars=(c.stars||[]).filter(s=>s&&s.id).map(s=>this.normStar(s));
+  S.edges=(c.edges||[]).map(e=>this.normEdge(e)).filter(e=>S.stars.some(s=>s.id===e.fromStarId)&&S.stars.some(s=>s.id===e.toStarId));
+  this.write('ternary_nav_schema',3);try{localStorage.setItem('ternary_nav_schema','3')}catch(e){}
+  this.saveActive();this.saveSky();
+ },
+ saveActive(){this.write('ternary_nav_active',{horizonName:S.horizon,targetAngle:S.target,needleAngle:S.needle,lastTide:S.tide,toggle:S.toggle});this.write('ternary_nav_wake',S.wake)},
+ saveSky(){this.write('ternary_nav_constellation',{stars:S.stars,edges:S.edges})},
+ export(){const blob=new Blob([JSON.stringify({active:{horizonName:S.horizon,targetAngle:S.target,needleAngle:S.needle},wake:S.wake,constellation:{stars:S.stars,edges:S.edges}},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ternary-navigator-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+};
 
-        #target-marker { position: absolute; width: 100%; height: 100%; border-radius: 50%; transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1); }
-        #target-marker::before { content: '▼'; position: absolute; top: -14px; left: calc(50% - 6px); color: #fff; font-size: 14px; text-shadow: 0 0 8px #fff; }
-        #astrolabe-center { width: 16px; height: 16px; background: var(--bg-dark); border: 2px solid var(--accent); border-radius: 50%; box-shadow: 0 0 15px var(--accent); z-index: 2; transition: all 1s ease; }
-        #astrolabe-needle { position: absolute; bottom: 50%; width: 4px; height: 48%; background: linear-gradient(to top, transparent, var(--accent)); transform-origin: bottom center; border-radius: 2px; transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), background 1s ease, box-shadow 1s ease; box-shadow: 0 0 8px var(--accent); }
+function counts(){const c={'-1':0,'0':0,'1':0,Align:0,Drift:0,Anchor:0};S.wake.forEach(l=>{if(c[l.energy]!==undefined)c[l.energy]++;if(c[l.actionType]!==undefined)c[l.actionType]++});return c}
+function resonant(c){const n=S.wake.length;return n>0&&[-1,0,1].every(k=>c[k]>0&&c[k]/n>.15)}
 
-        /* TOP UI LAYER */
-        #ui-top {
-            position: absolute; top: 0; left: 0; width: 100%; z-index: 2;
-            padding: 16px 20px 8px 20px; background: linear-gradient(180deg, rgba(5,0,10,0.98) 0%, rgba(5,0,10,0.8) 70%, transparent 100%);
-            pointer-events: auto;
-        }
+const ENGINE={
+ setDisp(deg){S.targetDisp+=shortest(deg,S.targetDisp)},
+ setTarget(deg){S.horizon=$('goal-input').value.trim()||'PRIMARY VOYAGE';S.target=deg;this.setDisp(deg);Store.saveActive();$('goal-input').value='';UI.close();UI.header();UI.compass()},
+ resetNeedle(){ // nearest equivalent of 180 so the reset never spins multiple turns
+  const base=S.needle-norm(S.needle);let c=base+180;if(c-S.needle>180)c-=360;if(S.needle-c>180)c+=360;S.needle=c},
+ resetVoyage(){S.wake=[];S.horizon=NONE;S.target=0;this.setDisp(0);this.resetNeedle()},
+ abandon(){this.resetVoyage();Store.saveActive();UI.refresh();UI.close();$('m-course').classList.add('show')},
+ act(type,icon){
+  UI.close();const inp=$('log-input'),text=inp.value.trim();if(!text)return;
+  S.tide=S.pending;UI.theme();
+  const mult=S.tide===-1?.5:S.tide===1?2.2:1.1, diff=shortest(S.target,S.needle);
+  if(type==='Align'){
+   if(Math.abs(diff)<=TOL)S.needle+=diff;else S.needle+=Math.sign(diff)*Math.min(Math.abs(diff),16*mult);
+  }else if(type==='Drift'){
+   const anti=(norm(S.target)+180)%360, d=shortest(anti,S.needle);
+   if(Math.abs(d)<=TOL+4){S.needle+=d-S.toggle*4.5;S.toggle*=-1} // lands on the alternating side of the antipode
+   else S.needle+=Math.sign(d)*Math.min(Math.abs(d),20*mult);
+  }
+  S.wake.unshift({id:Date.now(),text,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),energy:String(S.tide),actionType:type,tag:icon,color:COLORS[S.tide]});
+  Store.saveActive();inp.value='';UI.refresh();
+ }
+};
 
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        h1 { font-size: 1.1rem; letter-spacing: 3px; color: var(--accent); text-shadow: 0 0 5px var(--accent); transition: color 0.5s ease; }
-        #sky-toggle-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px; padding: 6px 12px; font-size: 0.75rem; font-weight: bold; transition: background 0.2s;}
-        #sky-toggle-btn:active { background: var(--accent); color: #000; }
+const UI={
+ init(){Store.init();this.drawer();this.theme();this.refresh();this.dock(0)},
+ refresh(){this.header();this.compass();this.logs();this.balance()},
+ theme(){const c=COLORS[S.tide];document.documentElement.style.setProperty('--accent',c);$('astrolabe').style.boxShadow=`0 0 35px ${c}25`},
+ header(){$('goal').textContent=S.horizon},
+ canForge(){return Math.abs(shortest(S.target,S.needle))<=TOL&&S.horizon!==NONE&&S.wake.some(l=>l.actionType==='Align')},
+ compass(){
+  $('needle').style.transform=`rotate(${S.needle}deg)`;$('target').style.transform=`rotate(${S.targetDisp}deg)`;
+  const on=this.canForge(),hub=$('hub');
+  $('title').textContent=on?'HORIZON ALIGNED':'TERNARY NAVIGATOR';
+  hub.style.boxShadow=on?'0 0 25px #fff':`0 0 12px ${COLORS[S.tide]}`;hub.style.backgroundColor=on?'#fff':'var(--bg)';
+  $('course').style.display=on?'none':'block';$('forge').style.display=on?'block':'none';
+ },
+ balance(){
+  const c=counts(),n=S.wake.length;
+  [-1,0,1].forEach(k=>$('b'+k).style.width=(n?c[k]/n*100:0)+'%');
+  $('res').classList.toggle('on',resonant(c));
+ },
+ dock(p){const a=$('astrolabe');a.style.top=(48-p*18)+'%';a.style.transform=`translate(-50%,-50%) scale(${1-p*.58})`},
+ drawer(){
+  const d=$('drawer'),z=$('dzone'),a=$('astrolabe');let y0=0,y1=0,open=false,moved=false;
+  const max=()=>innerHeight*.55-90, closed='translateY(calc(100% - 90px))';
+  const settle=()=>{d.style.transition='transform .35s cubic-bezier(.2,.8,.2,1)';a.style.transition='top .35s cubic-bezier(.2,.8,.2,1),transform .35s cubic-bezier(.2,.8,.2,1)';
+   d.style.transform=open?'translateY(0)':closed;UI.dock(open?1:0)};
+  z.addEventListener('touchstart',e=>{y0=y1=e.touches[0].clientY;moved=false;d.style.transition='none';a.style.transition='none'},{passive:true});
+  z.addEventListener('touchmove',e=>{y1=e.touches[0].clientY;const dy=y1-y0;if(Math.abs(dy)>4)moved=true;let p;
+   if(!open){const c=Math.max(-max(),Math.min(0,dy));d.style.transform=`translateY(calc(100% - 90px + ${c}px))`;p=-c/max()}
+   else{const c=Math.min(max(),Math.max(0,dy));d.style.transform=`translateY(${c}px)`;p=1-c/max()}
+   UI.dock(p)},{passive:true});
+  z.addEventListener('touchend',e=>{const dy=y1-y0,t=max()*.22;if(!open&&dy<-t)open=true;else if(open&&dy>t)open=false;else if(!moved)open=!open;settle();e.preventDefault()});
+  z.addEventListener('click',()=>{open=!open;settle()});
+ },
+ course(){$(S.wake.length&&S.horizon!==NONE?'m-abandon':'m-course').classList.add('show')},
+ sextant(){if(!$('log-input').value.trim())return;S.pending=S.tide;this.energy(S.tide);$('m-sextant').classList.add('show')},
+ energy(t){S.pending=t;[-1,0,1].forEach(k=>$('e'+k).className='ecard'+(k===t?' s'+k:''))},
+ close(){document.querySelectorAll('.ov').forEach(m=>m.classList.remove('show'))},
+ sky(on,fit){if(on){SKY.render();if(fit)SKY.fit();$('sky').classList.add('on')}else $('sky').classList.remove('on')},
+ collapse(li,slide,done){
+  li.style.maxHeight=li.scrollHeight+'px';li.style.transition='none';void li.offsetHeight;
+  li.style.transition='transform .2s ease-out,opacity .2s ease-out,max-height .3s ease '+(slide?'.15s':'0s')+',padding .3s ease '+(slide?'.15s':'0s')+',margin .3s ease '+(slide?'.15s':'0s');
+  if(slide)li.style.transform=`translateX(${slide*innerWidth}px)`;
+  li.style.opacity='0';li.style.maxHeight='0px';li.style.paddingTop=li.style.paddingBottom=li.style.marginBottom='0px';
+  setTimeout(done,slide?480:330)},
+ remove(li,id,slide){this.collapse(li,slide,()=>{S.wake=S.wake.filter(l=>l.id!==id);Store.saveActive();li.remove();this.balance();this.compass()})},
+ swipe(li,id){
+  let x0=0,x=0,y0=0,drag=false,scrolling=false;
+  li.addEventListener('touchstart',e=>{x0=x=e.touches[0].clientX;y0=e.touches[0].clientY;drag=true;scrolling=false;li.style.transition='none'},{passive:true});
+  li.addEventListener('touchmove',e=>{if(!drag)return;x=e.touches[0].clientX;const dx=x-x0,dy=e.touches[0].clientY-y0;
+   if(Math.abs(dy)>Math.abs(dx)+10){scrolling=true;li.style.transform='none';return}
+   if(!scrolling){if(e.cancelable)e.preventDefault();li.style.transform=`translateX(${dx}px)`;li.style.opacity=Math.max(.1,1-Math.abs(dx)/(innerWidth*.65))}},{passive:false});
+  li.addEventListener('touchend',()=>{if(!drag||scrolling)return;drag=false;const dx=x-x0;
+   if(Math.abs(dx)>innerWidth*.35)UI.remove(li,id,Math.sign(dx));
+   else{li.style.transition='transform .2s cubic-bezier(.2,.8,.2,1),opacity .2s';li.style.transform='none';li.style.opacity='1'}});
+ },
+ logs(){
+  const ul=$('loglist');ul.innerHTML='';
+  S.wake.forEach(e=>{const li=document.createElement('li');li.className='log';li.style.borderLeftColor=e.color;
+   li.innerHTML=`<div class="log-c"><div class="log-h"><span>${esc(e.time)}</span><span>${esc(e.tag)}</span></div><div>${esc(e.text)}</div></div><button class="x" aria-label="Delete entry">×</button>`;
+   li.querySelector('.x').onclick=()=>UI.remove(li,e.id,0);this.swipe(li,e.id);ul.appendChild(li)});
+ },
+ forge(){
+  if(!this.canForge())return;
+  const c=counts(),n=S.wake.length,id='star_'+Date.now();
+  const dom=['-1','0','1'].reduce((a,b)=>c[b]>c[a]?b:a);
+  let x=ORI,y=ORI;
+  if(S.stars.length){
+   const last=S.stars[S.stars.length-1],r=S.target*Math.PI/180,D=Math.min(260,Math.max(120,80+n*6));
+   x=last.x+D*Math.sin(r);y=last.y-D*Math.cos(r);
+   for(let i=0;i<12;i++)S.stars.forEach(s=>{let dx=x-s.x,dy=y-s.y,d=Math.hypot(dx,dy);
+    if(d<60){if(d<.001){dx=Math.sin(r);dy=-Math.cos(r);d=1}x+=dx/d*(60-d);y+=dy/d*(60-d)}});
+   S.edges.push({fromStarId:last.id,toStarId:id,angle:S.target});
+  }
+  S.stars.push({id,voyageName:S.horizon,completionDate:new Date().toLocaleDateString(),headingAngle:S.target,x,y,spectralClass:dom,
+   size:Math.min(28,Math.max(10,8+Math.sqrt(n)*3.5)),glowRadius:Math.min(38,12+n*1.5),harmonicResonance:resonant(c),
+   metrics:{totalActions:n,alignCount:c.Align,driftCount:c.Drift,anchorCount:c.Anchor,characterVolume:S.wake.reduce((a,l)=>a+l.text.length,0),
+    tideDistribution:{ton:c['-1'],sil:c['0'],qina:c['1']}},logArchive:[...S.wake]});
+  Store.saveSky();ENGINE.resetVoyage();Store.saveActive();this.refresh();this.sky(true,true);
+ }
+};
 
-        .horizon-box { background: transparent; padding-bottom: 4px; }
-        .horizon-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-        .horizon-header label { font-size: 0.65rem; color: #888; letter-spacing: 1px; }
-        #resonance-tag { font-size: 0.65rem; color: var(--sil); opacity: 0; transition: opacity 0.5s; letter-spacing: 1px; }
-        #resonance-tag.visible { opacity: 1; }
-
-        .north-input-group { display: flex; justify-content: space-between; align-items: center; padding-bottom: 6px;}
-        #current-goal { color: white; font-size: 0.95rem; flex-grow: 1; text-transform: uppercase; }
-        #set-horizon-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 4px; padding: 6px 10px; font-size: 0.7rem; font-weight: bold; transition: background 0.2s; }
-        #set-horizon-btn:active { background: rgba(0,255,157,0.2); }
-        #forge-star-btn { display: none; background: #fff; color: #000; border: none; border-radius: 4px; padding: 6px 10px; font-size: 0.7rem; font-weight: bold; box-shadow: 0 0 10px #fff; }
-
-        .thread-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; display: flex; overflow: hidden; margin-top: 4px; }
-        #thread-ton, #thread-sil, #thread-qina { height: 100%; transition: width 0.4s ease; width: 0%; }
-        #thread-ton { background: var(--ton); } #thread-sil { background: var(--sil); } #thread-qina { background: var(--qina); }
-
-        /* WAKE DRAWER */
-        #wake-drawer {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 54vh;
-            background: rgba(10,5,15,0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); z-index: 5;
-            border-top: 1px solid rgba(255,255,255,0.15); border-radius: 20px 20px 0 0;
-            display: flex; flex-direction: column; padding: 0 20px 20px 20px;
-            transform: translateY(calc(100% - 90px)); 
-            will-change: transform; pointer-events: auto;
-        }
-        body.drawer-open #wake-drawer { transform: translateY(0); }
-        body.drawer-transition #wake-drawer { transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        
-        #drawer-touch-zone { padding-top: 14px; padding-bottom: 18px; cursor: pointer; width: 100%; display: flex; justify-content: center; align-items: center; }
-        .drag-handle { width: 50px; height: 5px; background: rgba(255,255,255,0.4); border-radius: 3px; }
-
-        .log-input-group { display: flex; margin-bottom: 12px; flex-shrink: 0;}
-        #log-input { flex-grow: 1; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 13px; border-radius: 8px 0 0 8px; outline: none; }
-        #log-input:focus { border-color: var(--accent); }
-        #emit-btn { background: var(--accent); color: var(--bg-dark); border: none; font-weight: bold; padding: 0 20px; border-radius: 0 8px 8px 0; }
-
-        .log-list { list-style: none; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; overflow-x: hidden; padding-bottom: 10px; flex-grow: 1; }
-        
-        .log-entry { 
-            background: rgba(0,0,0,0.5); border-left: 3px solid var(--accent); padding: 12px; font-size: 0.85rem; 
-            backdrop-filter: blur(5px); display: flex; flex-direction: column; word-break: break-word; white-space: pre-wrap;
-            will-change: transform, opacity, max-height, padding, margin; max-height: 200px; overflow: hidden;
-            transition: max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease, opacity 0.3s ease;
-        }
-        .log-header { font-size: 0.65rem; color: #888; margin-bottom: 4px; display: flex; gap: 10px;}
-
-        /* CONSTELLATION SKY VIEW */
-        #sky-view {
-            opacity: 0; pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, #0a0515 0%, #000 100%); z-index: 10; display: flex; flex-direction: column;
-            transition: opacity 0.5s ease;
-        }
-        #sky-view.active { opacity: 1; pointer-events: auto; }
-        .sky-header { position: absolute; top: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 20px; background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%); z-index: 12;}
-        .sky-header h2 { font-size: 1rem; color: #fff; letter-spacing: 3px; }
-        #close-sky-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff; border-radius: 4px; padding: 6px 12px; font-size: 0.75rem; font-weight: bold;}
-        
-        /* Star Physics Layer */
-        #star-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 11; }
-        .star-node {
-            position: absolute; display: flex; justify-content: center; align-items: center;
-            color: white; transform: translate(-50%, -50%); transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-            text-shadow: 0 0 10px currentColor; cursor: pointer;
-        }
-
-        /* MODALS */
-        .modal-overlay { opacity: 0; pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 20; display: flex; justify-content: center; align-items: center; transition: opacity 0.3s ease; backdrop-filter: blur(5px); }
-        .modal-overlay.show { opacity: 1; pointer-events: auto; }
-        .modal-box { background: var(--bg-panel); border: 1px solid var(--accent); padding: 20px; border-radius: 8px; width: 90%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .modal-box p { margin-bottom: 15px; font-size: 0.8rem; color: #aaa; letter-spacing: 1px; font-weight: bold;}
-        .modal-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid #333; color: white; padding: 12px; margin-bottom: 15px; border-radius: 4px; text-align: center; outline: none;}
-        .modal-input:focus { border-color: var(--accent); }
-        
-        .energy-controls { display: flex; gap: 5px; margin-bottom: 20px; }
-        .energy-btn { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid #333; color: #666; padding: 10px; border-radius: 4px; font-weight: bold; font-size: 0.85rem;}
-        .energy-btn.active-ton { background: rgba(74, 95, 193, 0.2); color: var(--ton); border-color: var(--ton); }
-        .energy-btn.active-sil { background: rgba(0, 255, 157, 0.2); color: var(--sil); border-color: var(--sil); }
-        .energy-btn.active-qina { background: rgba(255, 176, 0, 0.2); color: var(--qina); border-color: var(--qina); }
-
-        .modal-btn { display: block; width: 100%; padding: 14px; margin-bottom: 8px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; font-size: 0.95rem; border-radius: 4px; font-weight: bold; }
-        .modal-btn:active { background: var(--accent); color: var(--bg-dark); }
-        .modal-btn.danger { border-color: #ff4444; color: #ff4444; }
-        .modal-btn.danger:active { background: #ff4444; color: #000; }
-        
-        .compass-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 15px; }
-        .dir-btn { background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; padding: 12px 0; border-radius: 4px; font-size: 0.85rem; font-weight: bold; }
-        .dir-btn:active { background: var(--accent); color: black;}
-        .modal-cancel { background: transparent; border: none; color: #888; margin-top: 10px; font-size: 0.85rem; padding: 10px; width: 100%;}
-    </style>
-</head>
-<body>
-
-    <div id="astrolabe-bg"><div id="target-marker"></div><div id="astrolabe-needle"></div><div id="astrolabe-center"></div></div>
-
-    <div id="ui-top">
-        <div class="header-row">
-            <h1 id="app-title">TERNARY NAVIGATOR</h1>
-            <button id="sky-toggle-btn" onclick="toggleSky(true)">★ SKY</button>
-        </div>
-        <div class="horizon-box">
-            <div class="horizon-header"><label>CURRENT HORIZON</label><span id="resonance-tag">RESONANCE [rél]</span></div>
-            <div class="north-input-group">
-                <div id="current-goal">No Horizon Set</div>
-                <button id="set-horizon-btn" onclick="checkAbandon()">COURSE</button>
-                <button id="forge-star-btn" onclick="forgeStar()">FORGE STAR</button>
-            </div>
-            <div class="thread-bar"><div id="thread-ton"></div><div id="thread-sil"></div><div id="thread-qina"></div></div>
-        </div>
-    </div>
-
-    <div id="wake-drawer">
-        <div id="drawer-touch-zone"><div class="drag-handle"></div></div>
-        <div class="log-input-group">
-            <input type="text" id="log-input" placeholder="Record kinetic action...">
-            <button id="emit-btn" onclick="openSextantModal()">EMIT</button>
-        </div>
-        <ul class="log-list" id="log-list"></ul>
-    </div>
-
-    <!-- CONSTELLATION SKY VIEW -->
-    <div id="sky-view">
-        <div class="sky-header"><h2>CONSTELLATION</h2><button id="close-sky-btn" onclick="toggleSky(false)">RETURN</button></div>
-        <div id="star-canvas"></div>
-    </div>
-
-    <!-- MODALS -->
-    <div id="horizon-modal" class="modal-overlay">
-        <div class="modal-box">
-            <p>NAME YOUR HORIZON</p>
-            <input type="text" id="goal-input" class="modal-input" placeholder="e.g. Theory Test">
-            <p>CHOOSE DIRECTION</p>
-            <div class="compass-grid">
-                <button class="dir-btn" onclick="setTargetDir(315)">NW</button><button class="dir-btn" onclick="setTargetDir(0)">N</button><button class="dir-btn" onclick="setTargetDir(45)">NE</button>
-                <button class="dir-btn" onclick="setTargetDir(270)">W</button><div style="background: transparent;"></div><button class="dir-btn" onclick="setTargetDir(90)">E</button>
-                <button class="dir-btn" onclick="setTargetDir(225)">SW</button><button class="dir-btn" onclick="setTargetDir(180)">S</button><button class="dir-btn" onclick="setTargetDir(135)">SE</button>
-            </div>
-            <button class="modal-cancel" onclick="closeModals()">CANCEL</button>
-        </div>
-    </div>
-
-    <div id="abandon-modal" class="modal-overlay">
-        <div class="modal-box">
-            <p style="color: #ff4444; font-size: 1rem;">ABANDON VOYAGE?</p>
-            <p>You have not reached your horizon. Changing course now will dissolve your current wake and progress.</p>
-            <button class="modal-btn danger" onclick="confirmAbandon()">ABANDON</button>
-            <button class="modal-cancel" onclick="closeModals()">STAY THE COURSE</button>
-        </div>
-    </div>
-
-    <div id="star-detail-modal" class="modal-overlay">
-        <div class="modal-box">
-            <h2 id="star-detail-name" style="color: white; margin-bottom: 5px; font-size: 1.2rem;"></h2>
-            <p id="star-detail-date" style="color: #888; font-size: 0.7rem; margin-bottom: 20px;"></p>
-            <p id="star-detail-stats" style="color: white; font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px;"></p>
-            <button class="modal-btn" onclick="closeModals()">CLOSE</button>
-        </div>
-    </div>
-
-    <div id="sextant-modal" class="modal-overlay">
-        <div class="modal-box">
-            <p>ENERGY LEVEL</p>
-            <div class="energy-controls">
-                <button class="energy-btn" id="mod-ton" onclick="selectEnergy(-1)">,ton</button>
-                <button class="energy-btn active-sil" id="mod-sil" onclick="selectEnergy(0)">.síl</button>
-                <button class="energy-btn" id="mod-qina" onclick="selectEnergy(1)">;qına</button>
-            </div>
-            <p>VECTOR ALIGNMENT</p>
-            <button class="modal-btn" onclick="submitLog('Align', '⬆️')">⬆️ Align (Toward Horizon)</button>
-            <button class="modal-btn" onclick="submitLog('Drift', '↔️')">↔️ Drift (Side Quest)</button>
-            <button class="modal-btn" onclick="submitLog('Anchor', '⚓')">⚓ Anchor (Ground/Rest)</button>
-            <button class="modal-cancel" onclick="closeModals()">CANCEL</button>
-        </div>
-    </div>
-
-    <script>
-        let globalTide = 0; let modalEnergy = 0; let needleAngle = 180; let targetAngle = 0; 
-        const colors = { '-1': '#4a5fc1', '0': '#00ff9d', '1': '#ffb000' };
-        const root = document.documentElement;
-
-        // Drawer Physics
-        const drawer = document.getElementById('wake-drawer');
-        const touchZone = document.getElementById('drawer-touch-zone');
-        const astrolabe = document.getElementById('astrolabe-bg');
-        let dStartY = 0, currentY = 0;
-        
-        touchZone.addEventListener('touchstart', e => { dStartY = e.touches[0].clientY; currentY = dStartY; drawer.style.transition = 'none'; astrolabe.style.transition = 'box-shadow 1s ease'; }, {passive: true});
-        touchZone.addEventListener('touchmove', e => {
-            currentY = e.touches[0].clientY;
-            let diffY = currentY - dStartY;
-            let isOpen = document.body.classList.contains('drawer-open');
-            if(!isOpen && diffY < 0) drawer.style.transform = `translateY(calc(100% - 90px + ${diffY}px))`;
-            else if(isOpen && diffY > 0) drawer.style.transform = `translateY(${diffY}px)`;
-        }, {passive: true});
-        touchZone.addEventListener('touchend', e => {
-            drawer.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            astrolabe.style.transition = 'top 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 1s ease';
-            let diffY = currentY - dStartY;
-            let isOpen = document.body.classList.contains('drawer-open');
-            if(!isOpen && diffY < -30) document.body.classList.add('drawer-open');
-            else if(isOpen && diffY > 30) document.body.classList.remove('drawer-open');
-            
-            if(document.body.classList.contains('drawer-open')) drawer.style.transform = 'translateY(0)';
-            else drawer.style.transform = 'translateY(calc(100% - 90px))';
-        });
-
-        window.onload = () => {
-            if(localStorage.getItem('horizonName')) document.getElementById('current-goal').innerText = localStorage.getItem('horizonName');
-            if(localStorage.getItem('needleAngle')) needleAngle = parseFloat(localStorage.getItem('needleAngle'));
-            if(localStorage.getItem('targetAngle')) targetAngle = parseFloat(localStorage.getItem('targetAngle'));
-            if(localStorage.getItem('globalTide')) globalTide = parseInt(localStorage.getItem('globalTide'));
-            updateCompassUI(); loadLogs(); updateThemeColors(globalTide); updateThreadBar();
-        };
-
-        function updateThemeColors(state) {
-            root.style.setProperty('--accent', colors[state]);
-            document.getElementById('astrolabe-center').style.borderColor = colors[state];
-            document.getElementById('astrolabe-bg').style.boxShadow = `0 0 40px ${colors[state]}30`;
-        }
-
-        function selectEnergy(state) {
-            modalEnergy = state;
-            document.getElementById('mod-ton').className = 'energy-btn' + (state === -1 ? ' active-ton' : '');
-            document.getElementById('mod-sil').className = 'energy-btn' + (state === 0 ? ' active-sil' : '');
-            document.getElementById('mod-qina').className = 'energy-btn' + (state === 1 ? ' active-qina' : '');
-        }
-
-        // State Machine
-        function checkAbandon() {
-            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-            if (logs.length > 0 && Math.round(needleAngle) !== Math.round(targetAngle) && document.getElementById('current-goal').innerText !== "No Horizon Set") {
-                document.getElementById('abandon-modal').classList.add('show');
-            } else {
-                document.getElementById('horizon-modal').classList.add('show');
-            }
-        }
-        function confirmAbandon() {
-            localStorage.setItem('wakeLogs', '[]');
-            needleAngle = 180; targetAngle = 0;
-            localStorage.setItem('needleAngle', needleAngle);
-            loadLogs(); updateThreadBar(); updateCompassUI();
-            closeModals(); document.getElementById('horizon-modal').classList.add('show');
-        }
-
-        function openSextantModal() { if(document.getElementById('log-input').value.trim() === '') return; selectEnergy(globalTide); document.getElementById('sextant-modal').classList.add('show'); }
-        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show')); }
-
-        function setTargetDir(deg) {
-            let goal = document.getElementById('goal-input').value.trim();
-            if(goal === '') goal = "Unknown Horizon";
-            targetAngle = deg; document.getElementById('current-goal').innerText = goal;
-            localStorage.setItem('horizonName', goal); localStorage.setItem('targetAngle', targetAngle);
-            updateCompassUI(); closeModals(); document.getElementById('goal-input').value = ''; updateThreadBar();
-        }
-
-        function updateThreadBar() {
-            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-            let counts = { '-1': 0, '0': 0, '1': 0, 'Align': 0, 'Drift': 0, 'Anchor': 0 };
-            logs.forEach(l => { counts[l.energy]++; counts[l.actionType]++; });
-            
-            let total = logs.length;
-            if(total === 0) {
-                document.getElementById('thread-ton').style.width = '0%'; document.getElementById('thread-sil').style.width = '0%'; document.getElementById('thread-qina').style.width = '0%';
-                document.getElementById('resonance-tag').classList.remove('visible'); return;
-            }
-            let tonPct = (counts['-1'] / total) * 100; let silPct = (counts['0'] / total) * 100; let qinaPct = (counts['1'] / total) * 100;
-            document.getElementById('thread-ton').style.width = tonPct + '%'; document.getElementById('thread-sil').style.width = silPct + '%'; document.getElementById('thread-qina').style.width = qinaPct + '%';
-
-            let isResonant = counts['-1'] > 0 && counts['0'] > 0 && counts['1'] > 0 && tonPct > 15 && silPct > 15 && qinaPct > 15;
-            if(isResonant) document.getElementById('resonance-tag').classList.add('visible');
-            else document.getElementById('resonance-tag').classList.remove('visible');
-        }
-
-        function submitLog(actionType, icon) {
-            closeModals(); let input = document.getElementById('log-input');
-            globalTide = modalEnergy; localStorage.setItem('globalTide', globalTide); updateThemeColors(globalTide);
-            let tideMultiplier = globalTide === -1 ? 0.5 : (globalTide === 1 ? 2.5 : 1.2);
-            let currentMod = ((needleAngle % 360) + 360) % 360; let targetMod = ((targetAngle % 360) + 360) % 360;
-
-            if(actionType === 'Align') {
-                let diff = (targetMod - currentMod + 540) % 360 - 180;
-                let step = 15 * tideMultiplier;
-                if(Math.abs(diff) <= step) needleAngle += diff; else needleAngle += Math.sign(diff) * step;
-            } else if(actionType === 'Drift') {
-                let diffToSouth = ((targetMod + 180 - currentMod) + 540) % 360 - 180;
-                let step = 20 * tideMultiplier;
-                if (Math.abs(diffToSouth) === 180) needleAngle += (Math.random() > 0.5 ? 1 : -1) * step;
-                else if (Math.abs(diffToSouth) <= step) needleAngle += diffToSouth + (Math.sign(diffToSouth || 1) * 3); 
-                else needleAngle += Math.sign(diffToSouth) * step;
-            } 
-            needleAngle = (needleAngle + 360) % 360;
-            localStorage.setItem('needleAngle', needleAngle); updateCompassUI();
-
-            const logEntry = { id: Date.now(), text: input.value, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), color: colors[globalTide], energy: globalTide.toString(), tag: icon, actionType: actionType };
-            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-            logs.unshift(logEntry); localStorage.setItem('wakeLogs', JSON.stringify(logs));
-            renderSingleLog(logEntry, true); updateThreadBar(); input.value = '';
-        }
-
-        function updateCompassUI() {
-            document.getElementById('astrolabe-needle').style.transform = `rotate(${needleAngle}deg)`;
-            document.getElementById('target-marker').style.transform = `rotate(${targetAngle}deg)`;
-            let currentMod = Math.round(((needleAngle % 360) + 360) % 360); let targetMod = Math.round(((targetAngle % 360) + 360) % 360);
-
-            if(currentMod === targetMod && document.getElementById('current-goal').innerText !== "No Horizon Set") {
-                document.getElementById('app-title').innerText = "HORIZON ALIGNED";
-                document.getElementById('astrolabe-center').style.boxShadow = "0 0 30px #fff"; document.getElementById('astrolabe-center').style.backgroundColor = "#fff";
-                document.getElementById('set-horizon-btn').style.display = 'none'; document.getElementById('forge-star-btn').style.display = 'block';
-            } else {
-                document.getElementById('app-title').innerText = "TERNARY NAVIGATOR";
-                document.getElementById('astrolabe-center').style.boxShadow = `0 0 15px ${colors[globalTide]}`; document.getElementById('astrolabe-center').style.backgroundColor = "#05000a";
-                document.getElementById('set-horizon-btn').style.display = 'block'; document.getElementById('forge-star-btn').style.display = 'none';
-            }
-        }
-
-        // --- CONSTELLATION FORGING ---
-        function forgeStar() {
-            let horizon = localStorage.getItem('horizonName') || "Unknown Voyage";
-            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-            
-            let counts = { '-1': 0, '0': 0, '1': 0, 'Align': 0, 'Drift': 0, 'Anchor': 0 };
-            logs.forEach(l => { counts[l.energy]++; counts[l.actionType]++; });
-            
-            let dominantEnergy = Object.keys({'-1': counts['-1'], '0': counts['0'], '1': counts['1']}).reduce((a, b) => counts[a] > counts[b] ? a : b);
-            
-            // Star Shape Logic
-            let isResonant = counts['-1'] > 0 && counts['0'] > 0 && counts['1'] > 0;
-            let starGlyph = '★';
-            if (counts['Anchor'] > counts['Align'] && counts['Anchor'] > counts['Drift']) starGlyph = '✪'; // Stable/Dense
-            else if (counts['Drift'] > counts['Align'] && counts['Drift'] > counts['Anchor']) starGlyph = '✺'; // Chaotic
-            else if (isResonant || counts['Align'] > counts['Drift']) starGlyph = '✦'; // Focused/Resonant
-
-            let newStar = {
-                id: Date.now(), name: horizon, glyph: starGlyph, color: colors[dominantEnergy],
-                date: new Date().toLocaleDateString(), actionsCount: logs.length,
-                stats: `Energy Focus: ${dominantEnergy == -1 ? 'Ground' : dominantEnergy == 0 ? 'Flow' : 'Fire'}<br>Dominant Action: ${counts['Align'] >= counts['Drift'] ? 'Aligned' : 'Drifted'}`
-            };
-
-            let stars = JSON.parse(localStorage.getItem('constellationStars') || '[]');
-            stars.unshift(newStar); localStorage.setItem('constellationStars', JSON.stringify(stars));
-
-            // Reset
-            localStorage.setItem('wakeLogs', '[]'); localStorage.removeItem('horizonName');
-            needleAngle = 180; targetAngle = 0; localStorage.setItem('needleAngle', needleAngle);
-            document.getElementById('current-goal').innerText = "No Horizon Set";
-            loadLogs(); updateThreadBar(); updateCompassUI(); toggleSky(true);
-        }
-
-        function toggleSky(open) {
-            const sky = document.getElementById('sky-view');
-            if(open) { renderSky(); sky.classList.add('active'); } else { sky.classList.remove('active'); }
-        }
-
-        function renderSky() {
-            const canvas = document.getElementById('star-canvas'); canvas.innerHTML = '';
-            let stars = JSON.parse(localStorage.getItem('constellationStars') || '[]');
-            if(stars.length === 0) { canvas.innerHTML = '<div style="color:#555; text-align:center; padding-top: 50vh;">The sky is empty.<br>Align a horizon to forge a star.</div>'; return; }
-
-            stars.forEach(s => {
-                const starEl = document.createElement('div');
-                starEl.className = 'star-node';
-                starEl.style.color = s.color;
-                starEl.innerHTML = s.glyph;
-                // Calculate random position but keep within 10-90% to avoid edges
-                let randX = Math.floor(Math.random() * 80) + 10;
-                let randY = Math.floor(Math.random() * 80) + 10;
-                starEl.style.left = randX + '%'; starEl.style.top = randY + '%';
-                
-                // Size based on logs
-                let size = Math.min(60, 20 + (s.actionsCount * 1.5));
-                starEl.style.fontSize = size + 'px';
-                starEl.style.textShadow = `0 0 ${size/2}px currentColor`;
-
-                // Drag Physics
-                let isDragging = false, startX, startY, origX, origY;
-                starEl.addEventListener('touchstart', e => {
-                    isDragging = true; startX = e.touches[0].clientX; startY = e.touches[0].clientY;
-                    origX = 0; origY = 0; starEl.style.transition = 'none';
-                });
-                starEl.addEventListener('touchmove', e => {
-                    if(!isDragging) return;
-                    let dx = e.touches[0].clientX - startX; let dy = e.touches[0].clientY - startY;
-                    starEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-                });
-                starEl.addEventListener('touchend', e => {
-                    isDragging = false;
-                    // Snap back physics
-                    starEl.style.transition = 'transform 0.5s cubic-bezier(0.25, 1.5, 0.5, 1)';
-                    starEl.style.transform = 'translate(-50%, -50%)';
-                });
-
-                // Tap for details (if not dragged)
-                starEl.addEventListener('click', () => {
-                    document.getElementById('star-detail-name').innerText = s.name;
-                    document.getElementById('star-detail-date').innerText = `${s.date} · ${s.actionsCount} Actions`;
-                    document.getElementById('star-detail-stats').innerHTML = s.stats;
-                    document.getElementById('star-detail-modal').classList.add('show');
-                });
-                canvas.appendChild(starEl);
-            });
-        }
-
-        // --- SWIPE DELETE ---
-        function attachSwipeToDelete(li, id) {
-            let startX = 0, currentX = 0, startY = 0, currentY = 0;
-            let isDragging = false, isScrolling = false;
-
-            li.addEventListener('touchstart', e => {
-                startX = e.touches[0].clientX; currentX = startX; startY = e.touches[0].clientY; currentY = startY;
-                isDragging = true; isScrolling = false; li.style.transition = 'none';
-            }, {passive: true});
-            li.addEventListener('touchmove', e => {
-                if(!isDragging) return;
-                currentX = e.touches[0].clientX; currentY = e.touches[0].clientY;
-                if(Math.abs(currentY - startY) > Math.abs(currentX - startX) + 6) { isScrolling = true; li.style.transform = 'translateX(0px)'; return; }
-                if(!isScrolling) { if(e.cancelable) e.preventDefault(); li.style.transform = `translateX(${currentX - startX}px)`; li.style.opacity = Math.max(0.1, 1 - (Math.abs(currentX - startX) / (window.innerWidth * 0.7))); }
-            }, {passive: false});
-            li.addEventListener('touchend', e => {
-                if(!isDragging || isScrolling) return;
-                isDragging = false; let diffX = currentX - startX;
-                if(Math.abs(diffX) > window.innerWidth * 0.35) {
-                    li.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out, max-height 0.3s ease 0.15s, padding 0.3s ease 0.15s, margin 0.3s ease 0.15s';
-                    li.style.transform = `translateX(${Math.sign(diffX) * window.innerWidth}px)`; li.style.opacity = '0'; li.style.maxHeight = '0px'; li.style.paddingTop = '0px'; li.style.paddingBottom = '0px'; li.style.marginTop = '0px'; li.style.marginBottom = '0px';
-                    setTimeout(() => { let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]'); logs = logs.filter(log => log.id !== id); localStorage.setItem('wakeLogs', JSON.stringify(logs)); li.remove(); updateThreadBar(); }, 450);
-                } else { li.style.transition = 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease'; li.style.transform = 'translateX(0px)'; li.style.opacity = '1'; }
-            });
-        }
-
-        function renderSingleLog(log, prepend = false) {
-            const li = document.createElement('li'); li.className = 'log-entry'; li.style.borderLeftColor = log.color;
-            li.innerHTML = `<div class="log-content"><div class="log-header"><span>${log.time}</span> <span>${log.tag}</span></div><div>${log.text}</div></div>`;
-            attachSwipeToDelete(li, log.id);
-            if(prepend) document.getElementById('log-list').prepend(li);
-            else document.getElementById('log-list').appendChild(li);
-        }
-
-        function loadLogs() {
-            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-            document.getElementById('log-list').innerHTML = '';
-            logs.forEach(log => renderSingleLog(log));
-        }
-    </script>
-</body>
-</html>
+const SKY={panX:0,panY:0,scale:1,bound:false,
+ render(){
+  const field=$('field'),svg=$('lines');field.querySelectorAll('.star').forEach(s=>s.remove());svg.innerHTML='';
+  S.edges.forEach(e=>{const a=S.stars.find(s=>s.id===e.fromStarId),b=S.stars.find(s=>s.id===e.toStarId);if(!a||!b)return;
+   const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+   [['x1',a.x],['y1',a.y],['x2',b.x],['y2',b.y],['stroke','rgba(0,255,157,.35)'],['stroke-width',1.5],['stroke-dasharray','5,5']].forEach(([k,v])=>l.setAttribute(k,v));svg.appendChild(l)});
+  S.stars.forEach(star=>{
+   const col=COLORS[star.spectralClass]||COLORS['0'],o=document.createElement('div');o.className='star';
+   o.style.cssText=`left:${star.x}px;top:${star.y}px;width:${star.size*2}px;height:${star.size*2}px;transition:transform .4s cubic-bezier(.25,1.4,.5,1)`;
+   o.innerHTML=`<div class="core${star.harmonicResonance?' r':''}" style="background:radial-gradient(circle,#fff 25%,${col} 75%);box-shadow:0 0 ${star.glowRadius}px ${col},0 0 ${star.glowRadius*1.8}px ${col}66"></div>`+
+    (star.harmonicResonance?`<div class="flare" style="box-shadow:0 0 6px ${col}"></div><div class="flare v" style="box-shadow:0 0 6px ${col}"></div>`:'');
+   let sx=0,sy=0,drag=false,moved=false;
+   o.addEventListener('touchstart',e=>{if(e.touches.length>1)return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;drag=true;moved=false;o.style.transition='none'},{passive:true});
+   o.addEventListener('touchmove',e=>{if(!drag)return;const dx=(e.touches[0].clientX-sx)/SKY.scale,dy=(e.touches[0].clientY-sy)/SKY.scale;
+    if(Math.hypot(dx,dy)>6)moved=true;o.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(1.15)`},{passive:true});
+   o.addEventListener('touchend',()=>{if(!drag)return;drag=false;o.style.transition='transform .4s cubic-bezier(.25,1.4,.5,1)';o.style.transform='translate(-50%,-50%)';if(!moved)SKY.inspect(star)});
+   o.addEventListener('click',e=>{if(!('ontouchstart' in window))SKY.inspect(star)});
+   field.appendChild(o)});
+  if(S.stars.length<=1)this.fit();
+ },
+ bind(){
+  if(this.bound)return;this.bound=true;const u=$('universe');let px=0,py=0,pan=false,d0=0,s0=1;
+  const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+  u.addEventListener('touchstart',e=>{if(e.touches.length===2){pan=false;d0=dist(e.touches);s0=SKY.scale}
+   else if(e.touches.length===1&&!e.target.closest('.star')){px=e.touches[0].clientX-SKY.panX;py=e.touches[0].clientY-SKY.panY;pan=true}},{passive:true});
+  u.addEventListener('touchmove',e=>{if(e.touches.length===1&&pan){SKY.panX=e.touches[0].clientX-px;SKY.panY=e.touches[0].clientY-py;SKY.apply()}
+   else if(e.touches.length===2&&d0>0){SKY.scale=Math.min(2.2,Math.max(.4,s0*dist(e.touches)/d0));SKY.apply()}},{passive:true});
+  u.addEventListener('touchend',()=>{pan=false});
+  u.addEventListener('wheel',e=>{e.preventDefault();SKY.zoom(e.deltaY<0?.1:-.1)},{passive:false});
+ },
+ zoom(d){this.scale=Math.min(2.2,Math.max(.4,this.scale+d));this.apply()},
+ apply(){$('field').style.transform=`translate(calc(-1500px + ${this.panX}px),calc(-1500px + ${this.panY}px)) scale(${this.scale})`},
+ fit(){const l=S.stars[S.stars.length-1];this.panX=l?-(l.x-ORI)*1:0;this.panY=l?-(l.y-ORI)*1:0;this.scale=1;this.apply()},
+ inspect(star){
+  const m=star.metrics,t=m.tideDistribution;
+  $('s-title').textContent=star.voyageName;$('s-meta').textContent=`${star.completionDate} · Heading ${star.headingAngle}° · ${m.totalActions} actions`;
+  const b=$('s-badge');b.textContent=star.harmonicResonance?'RESONANT ✦':'STANDARD ✧';
+  b.style.background=star.harmonicResonance?'rgba(0,255,157,.2)':'rgba(255,255,255,.1)';b.style.color=star.harmonicResonance?'var(--sil)':'#aaa';
+  $('s-metrics').innerHTML=`<span style="color:var(--ton)">,ton ${+t.ton||0}</span> | <span style="color:var(--sil)">.síl ${+t.sil||0}</span> | <span style="color:var(--qina)">;qına ${+t.qina||0}</span><br>⬆️${+m.alignCount||0} · ↔️${+m.driftCount||0} · ⚓${+m.anchorCount||0}`;
+  const box=$('s-logs');box.innerHTML='';
+  star.logArchive.forEach(l=>{const d=document.createElement('div');d.style.cssText=`border-left:2px solid ${/^#[0-9a-f]{6}$/i.test(l.color)?l.color:'#888'};padding:5px 8px;margin-bottom:6px;background:rgba(255,255,255,.03)`;
+   d.innerHTML=`<span style="color:#777;font-size:.6rem">${esc(l.time)} ${esc(l.tag)}</span><br>${esc(l.text)}`;box.appendChild(d)});
+  $('purge').onclick=()=>{if(!confirm(`Purge "${star.voyageName}"?`))return;
+   const inc=S.edges.find(e=>e.toStarId===star.id),out=S.edges.find(e=>e.fromStarId===star.id);
+   S.edges=S.edges.filter(e=>e.fromStarId!==star.id&&e.toStarId!==star.id);
+   if(inc&&out)S.edges.push({fromStarId:inc.fromStarId,toStarId:out.toStarId,angle:out.angle});
+   S.stars=S.stars.filter(s=>s.id!==star.id);Store.saveSky();UI.close();SKY.render()};
+  $('m-star').classList.add('show');
+ }};
+addEventListener('DOMContentLoaded',()=>{UI.init();SKY.bind()});
+</script></body></html>
