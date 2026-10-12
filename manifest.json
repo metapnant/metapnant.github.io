@@ -1,0 +1,21 @@
+{
+  "name": "Ternary Navigator",
+  "short_name": "Navigator",
+  "start_url": "./navigator.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#05000a",
+  "theme_color": "#05000a",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Ccircle cx='96' cy='96' r='88' fill='%2305000a' stroke='%2300ff9d' stroke-width='8'/%3E%3Cpolygon points='96,30 108,96 96,84 84,96' fill='%2300ff9d'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='230' fill='%2305000a' stroke='%2300ff9d' stroke-width='20'/%3E%3Cpolygon points='256,80 290,256 256,220 222,256' fill='%2300ff9d'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
