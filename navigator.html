@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#05000a">
-    <title>Kaxim Terminal V10</title>
+    <title>Kaxim Terminal V10.1</title>
     <style>
         :root {
             --bg-dark: #05000a;
@@ -119,6 +119,7 @@
         .modal-btn { display: block; width: 100%; padding: 14px; margin-bottom: 8px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; font-size: 0.95rem; border-radius: 4px; font-weight: bold; transition: all 0.2s;}
         .modal-btn:active { background: var(--accent); color: var(--bg-dark); }
         
+        /* Compass Grid */
         .compass-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 15px; }
         .dir-btn { background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; padding: 12px 0; border-radius: 4px; font-size: 0.85rem; font-weight: bold; transition: all 0.2s;}
         .dir-btn:active { background: var(--accent); color: black;}
@@ -202,14 +203,16 @@
         const colors = { '-1': '#4a5fc1', '0': '#00ff9d', '1': '#ffb000' };
         const root = document.documentElement;
 
-        // Drawer Swipe Logic
+        // Drawer Touch Physics
         const drawer = document.getElementById('wake-drawer');
+        const touchZone = document.getElementById('drawer-touch-zone');
         let dStartY;
-        drawer.addEventListener('touchstart', e => dStartY = e.touches[0].clientY, {passive: true});
-        drawer.addEventListener('touchend', e => {
+        
+        touchZone.addEventListener('touchstart', e => dStartY = e.touches[0].clientY, {passive: true});
+        touchZone.addEventListener('touchend', e => {
             let dEndY = e.changedTouches[0].clientY;
-            if(dStartY - dEndY > 40) drawer.classList.add('open');
-            else if(dEndY - dStartY > 40) drawer.classList.remove('open');
+            if(dStartY - dEndY > 30) drawer.classList.add('open');
+            else if(dEndY - dStartY > 30) drawer.classList.remove('open');
         });
 
         window.onload = () => {
@@ -237,7 +240,7 @@
         function openHorizonModal() { document.getElementById('horizon-modal').classList.add('show'); }
         function openSextantModal() { 
             if(document.getElementById('log-input').value.trim() === '') return;
-            selectEnergy(globalTide); // Reset modal to current global state
+            selectEnergy(globalTide); 
             document.getElementById('sextant-modal').classList.add('show'); 
         }
         function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show')); }
@@ -258,31 +261,29 @@
             closeModals();
             let input = document.getElementById('log-input');
             
-            // Set global tide to whatever was selected for this action
             globalTide = modalEnergy;
             localStorage.setItem('globalTide', globalTide);
             updateThemeColors(globalTide);
 
             let tideMultiplier = globalTide === -1 ? 0.5 : (globalTide === 1 ? 2.5 : 1.2);
             
-            // PHYSICS ENGINE (No Unwinding, South Pole Oscillation)
             let currentMod = ((needleAngle % 360) + 360) % 360;
             let targetMod = ((targetAngle % 360) + 360) % 360;
 
             if(actionType === 'Align') {
                 let diff = (targetMod - currentMod + 540) % 360 - 180;
                 let step = 15 * tideMultiplier;
-                if(Math.abs(diff) <= step) needleAngle += diff; // Snap perfectly
+                if(Math.abs(diff) <= step) needleAngle += diff; 
                 else needleAngle += Math.sign(diff) * step;
             } else if(actionType === 'Drift') {
                 let diffToSouth = ((targetMod + 180 - currentMod) + 540) % 360 - 180;
                 let step = 20 * tideMultiplier;
                 
-                if (Math.abs(diffToSouth) === 180) { // Dead on target, drift randomly
+                if (Math.abs(diffToSouth) === 180) { 
                     needleAngle += (Math.random() > 0.5 ? 1 : -1) * step;
-                } else if (Math.abs(diffToSouth) <= step) { // At the South Pole, nudge over line
+                } else if (Math.abs(diffToSouth) <= step) { 
                     needleAngle += diffToSouth + (Math.sign(diffToSouth || 1) * 3); 
-                } else { // Move toward South Pole
+                } else { 
                     needleAngle += Math.sign(diffToSouth) * step;
                 }
             } 
@@ -290,7 +291,6 @@
             localStorage.setItem('needleAngle', needleAngle);
             updateCompassUI();
 
-            // Log entry
             const logEntry = { id: Date.now(), text: input.value, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), color: colors[globalTide], tag: icon };
             let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
             logs.unshift(logEntry); 
@@ -314,7 +314,7 @@
             } else {
                 document.getElementById('app-title').innerText = "KAXIM TERMINAL";
                 document.getElementById('astrolabe-center').style.boxShadow = `0 0 15px ${colors[globalTide]}`;
-                document.getElementById('astrolabe-center').style.backgroundColor = var(--bg-dark);
+                document.getElementById('astrolabe-center').style.backgroundColor = "#05000a";
             }
         }
 
@@ -343,16 +343,31 @@
                 li.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
                 if(Math.abs(diffX) > window.innerWidth * 0.4) { 
                     li.style.transform = `translateX(${Math.sign(diffX) * window.innerWidth}px)`; li.style.opacity = 0;
-                    setTimeout(() => { deleteLogRaw(id); }, 300);
+                    setTimeout(() => { deleteLogRaw(id, li.querySelector('.delete-btn')); }, 300);
                 } else { li.style.transform = `translateX(0px)`; li.style.opacity = 1; }
             });
         }
 
-        function deleteLogRaw(id) {
-            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-            logs = logs.filter(log => log.id !== id);
-            localStorage.setItem('wakeLogs', JSON.stringify(logs)); renderLogs();
+        function deleteLogRaw(id, btnElement) {
+            if(btnElement && btnElement.parentElement) {
+                btnElement.parentElement.classList.add('dissolving');
+            }
+            setTimeout(() => {
+                let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
+                logs = logs.filter(log => log.id !== id);
+                localStorage.setItem('wakeLogs', JSON.stringify(logs)); renderLogs();
+            }, 300);
         }
 
         function renderLogs() {
-            let logs = JSON.pa
+            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
+            let list = document.getElementById('log-list'); list.innerHTML = '';
+            logs.forEach(log => {
+                const li = document.createElement('li'); li.className = 'log-entry'; li.style.borderLeftColor = log.color;
+                li.innerHTML = `<div class="log-content"><div class="log-header"><span>${log.time}</span> <span>${log.tag}</span></div><div>${log.text}</div></div><button class="delete-btn" onclick="deleteLogRaw(${log.id}, this)">×</button>`;
+                attachSwipeToDelete(li, log.id); list.appendChild(li);
+            });
+        }
+    </script>
+</body>
+</html>
