@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#05000a">
-    <title>Kaxim Terminal V10.1</title>
+    <title>Ternary Navigator</title>
     <style>
         :root {
             --bg-dark: #05000a;
@@ -21,36 +21,25 @@
         body, html {
             background-color: var(--bg-dark); color: var(--text-main);
             width: 100%; height: 100%; overflow: hidden;
-            transition: background-color 0.5s ease;
         }
 
-        /* MASSIVE BACKGROUND COMPASS */
+        /* DYNAMIC ASTROLABE */
         #astrolabe-bg {
-            position: fixed; top: 52%; left: 50%; transform: translate(-50%, -50%);
+            position: fixed; top: 48%; left: 50%; transform: translate(-50%, -50%) scale(1);
             width: 85vw; height: 85vw; max-width: 350px; max-height: 350px;
             border: 2px dashed rgba(255,255,255,0.05); border-radius: 50%;
             display: flex; justify-content: center; align-items: center; z-index: 0;
-            box-shadow: 0 0 40px var(--accent); transition: box-shadow 1s ease;
+            transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 1s ease;
+            will-change: transform, box-shadow;
         }
-        #target-marker {
-            position: absolute; width: 100%; height: 100%; border-radius: 50%;
-            transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+        body.drawer-open #astrolabe-bg {
+            transform: translate(-50%, -85%) scale(0.45); /* Shrinks and moves up */
         }
-        #target-marker::before {
-            content: '▼'; position: absolute; top: -15px; left: calc(50% - 6px);
-            color: rgba(255,255,255,0.3); font-size: 12px; text-shadow: 0 0 5px white;
-        }
-        #astrolabe-center {
-            width: 16px; height: 16px; background: var(--bg-dark); border: 2px solid var(--accent);
-            border-radius: 50%; box-shadow: 0 0 15px var(--accent); z-index: 2; transition: all 1s ease;
-        }
-        #astrolabe-needle {
-            position: absolute; bottom: 50%; width: 4px; height: 48%;
-            background: linear-gradient(to top, transparent, var(--accent));
-            transform-origin: bottom center; border-radius: 2px;
-            transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), background 1s ease, box-shadow 1s ease;
-            box-shadow: 0 0 8px var(--accent);
-        }
+        
+        #target-marker { position: absolute; width: 100%; height: 100%; border-radius: 50%; transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1); }
+        #target-marker::before { content: '▼'; position: absolute; top: -15px; left: calc(50% - 6px); color: rgba(255,255,255,0.3); font-size: 12px; text-shadow: 0 0 5px white; }
+        #astrolabe-center { width: 16px; height: 16px; background: var(--bg-dark); border: 2px solid var(--accent); border-radius: 50%; box-shadow: 0 0 15px var(--accent); z-index: 2; transition: all 1s ease; }
+        #astrolabe-needle { position: absolute; bottom: 50%; width: 4px; height: 48%; background: linear-gradient(to top, transparent, var(--accent)); transform-origin: bottom center; border-radius: 2px; transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), background 1s ease, box-shadow 1s ease; box-shadow: 0 0 8px var(--accent); }
 
         /* TOP UI LAYER */
         #ui-top {
@@ -59,7 +48,7 @@
             pointer-events: auto;
         }
 
-        h1 { font-size: 1.1rem; text-align: center; letter-spacing: 4px; color: var(--accent); margin-bottom: 25px; text-shadow: 0 0 5px var(--accent); transition: color 0.5s ease; }
+        h1 { font-size: 1.2rem; text-align: center; letter-spacing: 4px; color: var(--accent); margin-bottom: 25px; text-shadow: 0 0 5px var(--accent); transition: color 0.5s ease; }
         
         .horizon-box { background: transparent; padding-bottom: 5px; }
         .horizon-box label { font-size: 0.65rem; color: #888; letter-spacing: 1px; display: block; margin-bottom: 5px;}
@@ -68,38 +57,40 @@
         #set-horizon-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 4px; padding: 6px 12px; font-size: 0.7rem; font-weight: bold; transition: background 0.2s; }
         #set-horizon-btn:active { background: rgba(0,255,157,0.2); }
 
-        /* WAKE DRAWER */
+        /* WAKE DRAWER (1:1 Tracking) */
         #wake-drawer {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 75vh;
             background: rgba(10,5,15,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 5;
             border-top: 1px solid rgba(255,255,255,0.1); border-radius: 20px 20px 0 0;
             display: flex; flex-direction: column; padding: 0 20px 20px 20px;
-            transform: translateY(calc(100% - 110px)); 
-            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); pointer-events: auto;
+            transform: translateY(calc(100% - 90px)); /* Closed state */
+            will-change: transform; pointer-events: auto;
         }
-        #wake-drawer.open { transform: translateY(0); }
+        /* When class is applied, CSS handles the snap */
+        body.drawer-open #wake-drawer { transform: translateY(0); }
+        body.drawer-transition #wake-drawer { transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
         
-        #drawer-touch-zone { padding-top: 10px; padding-bottom: 15px; cursor: pointer; }
-        .drag-handle { width: 40px; height: 5px; background: rgba(255,255,255,0.2); margin: 0 auto; border-radius: 3px; }
+        #drawer-touch-zone { padding-top: 15px; padding-bottom: 20px; cursor: pointer; width: 100%; display: flex; justify-content: center; }
+        .drag-handle { width: 50px; height: 5px; background: rgba(255,255,255,0.3); border-radius: 3px; }
 
         .log-input-group { display: flex; margin-bottom: 15px; flex-shrink: 0;}
         #log-input { flex-grow: 1; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 15px; border-radius: 8px 0 0 8px; outline: none; }
         #log-input:focus { border-color: var(--accent); }
-        #emit-btn { background: var(--accent); color: var(--bg-dark); border: none; font-weight: bold; padding: 0 20px; border-radius: 0 8px 8px 0; transition: filter 0.2s; }
-        #emit-btn:active { filter: brightness(0.8); }
+        #emit-btn { background: var(--accent); color: var(--bg-dark); border: none; font-weight: bold; padding: 0 20px; border-radius: 0 8px 8px 0; }
 
         .log-list { list-style: none; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px; flex-grow: 1; opacity: 0; transition: opacity 0.3s;}
-        #wake-drawer.open .log-list { opacity: 1; }
+        body.drawer-open .log-list { opacity: 1; }
         
+        /* SMOOTH LOG ENTRY PHYSICS */
         .log-entry { 
             background: rgba(0,0,0,0.5); border-left: 3px solid var(--accent); padding: 12px; font-size: 0.85rem; 
             backdrop-filter: blur(5px); display: flex; justify-content: space-between; align-items: center;
+            will-change: transform, opacity, max-height, padding;
+            max-height: 100px; /* Base open height */
+            overflow: hidden;
         }
-        .log-entry.dissolving { opacity: 0; transform: scale(0.95); transition: all 0.3s ease; }
         .log-content { flex-grow: 1; pointer-events: none; } 
         .log-header { font-size: 0.65rem; color: #888; margin-bottom: 4px; display: flex; gap: 10px;}
-        .delete-btn { color: #555; background: none; border: none; font-size: 1.5rem; padding: 0 10px; transition: color 0.2s; }
-        .delete-btn:active { color: #ff4444; }
 
         /* MODALS */
         .modal-overlay { opacity: 0; pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10; display: flex; justify-content: center; align-items: center; transition: opacity 0.3s ease; backdrop-filter: blur(5px); }
@@ -109,25 +100,23 @@
         .modal-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid #333; color: white; padding: 12px; margin-bottom: 15px; border-radius: 4px; text-align: center; outline: none;}
         .modal-input:focus { border-color: var(--accent); }
         
-        /* ENERGY SELECTOR IN MODAL */
         .energy-controls { display: flex; gap: 5px; margin-bottom: 20px; }
         .energy-btn { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid #333; color: #666; padding: 10px; border-radius: 4px; font-weight: bold; font-size: 0.85rem;}
         .energy-btn.active-ton { background: rgba(74, 95, 193, 0.2); color: var(--ton); border-color: var(--ton); }
         .energy-btn.active-sil { background: rgba(0, 255, 157, 0.2); color: var(--sil); border-color: var(--sil); }
         .energy-btn.active-qina { background: rgba(255, 176, 0, 0.2); color: var(--qina); border-color: var(--qina); }
 
-        .modal-btn { display: block; width: 100%; padding: 14px; margin-bottom: 8px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; font-size: 0.95rem; border-radius: 4px; font-weight: bold; transition: all 0.2s;}
+        .modal-btn { display: block; width: 100%; padding: 14px; margin-bottom: 8px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; font-size: 0.95rem; border-radius: 4px; font-weight: bold;}
         .modal-btn:active { background: var(--accent); color: var(--bg-dark); }
         
-        /* Compass Grid */
         .compass-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 15px; }
-        .dir-btn { background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; padding: 12px 0; border-radius: 4px; font-size: 0.85rem; font-weight: bold; transition: all 0.2s;}
+        .dir-btn { background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; padding: 12px 0; border-radius: 4px; font-size: 0.85rem; font-weight: bold;}
         .dir-btn:active { background: var(--accent); color: black;}
         
         .modal-cancel { background: transparent; border: none; color: #888; margin-top: 10px; font-size: 0.85rem; padding: 10px; width: 100%;}
     </style>
 </head>
-<body>
+<body class="drawer-transition">
 
     <div id="astrolabe-bg">
         <div id="target-marker"></div>
@@ -136,7 +125,7 @@
     </div>
 
     <div id="ui-top">
-        <h1 id="app-title">KAXIM TERMINAL</h1>
+        <h1 id="app-title">TERNARY NAVIGATOR</h1>
         <div class="horizon-box">
             <label>CURRENT HORIZON</label>
             <div class="north-input-group">
@@ -147,7 +136,7 @@
     </div>
 
     <div id="wake-drawer">
-        <div id="drawer-touch-zone" onclick="document.getElementById('wake-drawer').classList.toggle('open')">
+        <div id="drawer-touch-zone">
             <div class="drag-handle"></div>
         </div>
         <div class="log-input-group">
@@ -203,18 +192,55 @@
         const colors = { '-1': '#4a5fc1', '0': '#00ff9d', '1': '#ffb000' };
         const root = document.documentElement;
 
-        // Drawer Touch Physics
+        // --- DRAWER 1:1 PHYSICS ---
         const drawer = document.getElementById('wake-drawer');
         const touchZone = document.getElementById('drawer-touch-zone');
-        let dStartY;
+        let dStartY, currentY;
+        let isDrawerOpen = false;
         
-        touchZone.addEventListener('touchstart', e => dStartY = e.touches[0].clientY, {passive: true});
+        touchZone.addEventListener('touchstart', e => {
+            dStartY = e.touches[0].clientY;
+            document.body.classList.remove('drawer-transition'); // Disable snap animation while dragging
+        }, {passive: true});
+
+        touchZone.addEventListener('touchmove', e => {
+            currentY = e.touches[0].clientY;
+            let diffY = currentY - dStartY;
+            
+            // Move drawer exactly with thumb
+            if(!isDrawerOpen && diffY < 0) {
+                // Pulling up from closed
+                drawer.style.transform = `translateY(calc(100% - 90px + ${diffY}px))`;
+            } else if(isDrawerOpen && diffY > 0) {
+                // Pushing down from open
+                drawer.style.transform = `translateY(${diffY}px)`;
+            }
+        }, {passive: true});
+
         touchZone.addEventListener('touchend', e => {
-            let dEndY = e.changedTouches[0].clientY;
-            if(dStartY - dEndY > 30) drawer.classList.add('open');
-            else if(dEndY - dStartY > 30) drawer.classList.remove('open');
+            document.body.classList.add('drawer-transition'); // Re-enable snap animation
+            drawer.style.transform = ''; // Remove inline styles to let CSS take over
+            
+            if(!currentY) return;
+            let diffY = currentY - dStartY;
+            
+            if(!isDrawerOpen && diffY < -40) {
+                document.body.classList.add('drawer-open');
+                isDrawerOpen = true;
+            } else if(isDrawerOpen && diffY > 40) {
+                document.body.classList.remove('drawer-open');
+                isDrawerOpen = false;
+            }
+            currentY = null;
         });
 
+        // Click to toggle
+        touchZone.addEventListener('click', () => {
+            document.body.classList.toggle('drawer-open');
+            isDrawerOpen = !isDrawerOpen;
+        });
+
+        // --- CORE INITIALIZATION ---
         window.onload = () => {
             if(localStorage.getItem('horizonName')) document.getElementById('current-goal').innerText = localStorage.getItem('horizonName');
             if(localStorage.getItem('needleAngle')) needleAngle = parseFloat(localStorage.getItem('needleAngle'));
@@ -227,7 +253,7 @@
         function updateThemeColors(state) {
             root.style.setProperty('--accent', colors[state]);
             document.getElementById('astrolabe-center').style.borderColor = colors[state];
-            document.getElementById('astrolabe-bg').style.boxShadow = `0 0 40px ${colors[state]}20`;
+            document.getElementById('astrolabe-bg').style.boxShadow = `0 0 40px ${colors[state]}30`;
         }
 
         function selectEnergy(state) {
@@ -266,7 +292,6 @@
             updateThemeColors(globalTide);
 
             let tideMultiplier = globalTide === -1 ? 0.5 : (globalTide === 1 ? 2.5 : 1.2);
-            
             let currentMod = ((needleAngle % 360) + 360) % 360;
             let targetMod = ((targetAngle % 360) + 360) % 360;
 
@@ -278,26 +303,22 @@
             } else if(actionType === 'Drift') {
                 let diffToSouth = ((targetMod + 180 - currentMod) + 540) % 360 - 180;
                 let step = 20 * tideMultiplier;
-                
-                if (Math.abs(diffToSouth) === 180) { 
-                    needleAngle += (Math.random() > 0.5 ? 1 : -1) * step;
-                } else if (Math.abs(diffToSouth) <= step) { 
-                    needleAngle += diffToSouth + (Math.sign(diffToSouth || 1) * 3); 
-                } else { 
-                    needleAngle += Math.sign(diffToSouth) * step;
-                }
+                if (Math.abs(diffToSouth) === 180) needleAngle += (Math.random() > 0.5 ? 1 : -1) * step;
+                else if (Math.abs(diffToSouth) <= step) needleAngle += diffToSouth + (Math.sign(diffToSouth || 1) * 3); 
+                else needleAngle += Math.sign(diffToSouth) * step;
             } 
             
+            needleAngle = (needleAngle + 360) % 360;
             localStorage.setItem('needleAngle', needleAngle);
             updateCompassUI();
 
             const logEntry = { id: Date.now(), text: input.value, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), color: colors[globalTide], tag: icon };
             let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
             logs.unshift(logEntry); 
-            if(logs.length > 50) logs.pop(); 
             localStorage.setItem('wakeLogs', JSON.stringify(logs));
 
-            renderLogs(); input.value = '';
+            renderSingleLog(logEntry, true); 
+            input.value = '';
         }
 
         function updateCompassUI() {
@@ -312,12 +333,13 @@
                 document.getElementById('astrolabe-center').style.boxShadow = "0 0 30px white";
                 document.getElementById('astrolabe-center').style.backgroundColor = "white";
             } else {
-                document.getElementById('app-title').innerText = "KAXIM TERMINAL";
+                document.getElementById('app-title').innerText = "TERNARY NAVIGATOR";
                 document.getElementById('astrolabe-center').style.boxShadow = `0 0 15px ${colors[globalTide]}`;
                 document.getElementById('astrolabe-center').style.backgroundColor = "#05000a";
             }
         }
 
+        // --- SMOOTH SWIPE-TO-DELETE ---
         function attachSwipeToDelete(li, id) {
             let startX = 0, currentX = 0, startY = 0, currentY = 0;
             let isDragging = false, isScrolling = false;
@@ -330,7 +352,7 @@
             li.addEventListener('touchmove', e => {
                 if(!isDragging) return;
                 currentX = e.touches[0].clientX; currentY = e.touches[0].clientY;
-                if(Math.abs(currentY - startY) > Math.abs(currentX - startX)) {
+                if(Math.abs(currentY - startY) > Math.abs(currentX - startX) + 5) {
                     isScrolling = true; li.style.transform = `translateX(0px)`; return;
                 }
                 if(!isScrolling) { li.style.transform = `translateX(${currentX - startX}px)`; li.style.opacity = 1 - (Math.abs(currentX - startX) / window.innerWidth); }
@@ -340,33 +362,50 @@
                 if(!isDragging || isScrolling) return;
                 isDragging = false;
                 let diffX = currentX - startX;
-                li.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                
+                li.style.transition = 'transform 0.3s ease, opacity 0.3s ease, max-height 0.4s ease, padding 0.4s ease, margin 0.4s ease';
+                
                 if(Math.abs(diffX) > window.innerWidth * 0.4) { 
-                    li.style.transform = `translateX(${Math.sign(diffX) * window.innerWidth}px)`; li.style.opacity = 0;
-                    setTimeout(() => { deleteLogRaw(id, li.querySelector('.delete-btn')); }, 300);
-                } else { li.style.transform = `translateX(0px)`; li.style.opacity = 1; }
+                    // Successful Swipe
+                    li.style.transform = `translateX(${Math.sign(diffX) * window.innerWidth}px)`; 
+                    li.style.opacity = 0;
+                    
+                    // The Smooth Collapse
+                    setTimeout(() => {
+                        li.style.maxHeight = '0px';
+                        li.style.paddingTop = '0px';
+                        li.style.paddingBottom = '0px';
+                        li.style.marginTop = '0px';
+                        li.style.marginBottom = '0px';
+                        li.style.border = 'none';
+                    }, 300);
+
+                    // Delete from Memory
+                    setTimeout(() => {
+                        let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
+                        logs = logs.filter(log => log.id !== id);
+                        localStorage.setItem('wakeLogs', JSON.stringify(logs));
+                        li.remove();
+                    }, 700);
+                } else { 
+                    // Snap back
+                    li.style.transform = `translateX(0px)`; li.style.opacity = 1; 
+                }
             });
         }
 
-        function deleteLogRaw(id, btnElement) {
-            if(btnElement && btnElement.parentElement) {
-                btnElement.parentElement.classList.add('dissolving');
-            }
-            setTimeout(() => {
-                let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-                logs = logs.filter(log => log.id !== id);
-                localStorage.setItem('wakeLogs', JSON.stringify(logs)); renderLogs();
-            }, 300);
+        function renderSingleLog(log, prepend = false) {
+            const li = document.createElement('li'); li.className = 'log-entry'; li.style.borderLeftColor = log.color;
+            li.innerHTML = `<div class="log-content"><div class="log-header"><span>${log.time}</span> <span>${log.tag}</span></div><div>${log.text}</div></div>`;
+            attachSwipeToDelete(li, log.id);
+            if(prepend) document.getElementById('log-list').prepend(li);
+            else document.getElementById('log-list').appendChild(li);
         }
 
-        function renderLogs() {
+        function loadLogs() {
             let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-            let list = document.getElementById('log-list'); list.innerHTML = '';
-            logs.forEach(log => {
-                const li = document.createElement('li'); li.className = 'log-entry'; li.style.borderLeftColor = log.color;
-                li.innerHTML = `<div class="log-content"><div class="log-header"><span>${log.time}</span> <span>${log.tag}</span></div><div>${log.text}</div></div><button class="delete-btn" onclick="deleteLogRaw(${log.id}, this)">×</button>`;
-                attachSwipeToDelete(li, log.id); list.appendChild(li);
-            });
+            document.getElementById('log-list').innerHTML = '';
+            logs.forEach(log => renderSingleLog(log));
         }
     </script>
 </body>
