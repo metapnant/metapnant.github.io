@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#05000a">
-    <title>Kaxim Terminal</title>
+    <title>Kaxim Terminal V4</title>
     <style>
         :root {
             --bg-dark: #05000a;
@@ -16,7 +16,7 @@
             --accent: #00ff9d; 
         }
         
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; user-select: none; }
         
         body, html {
             background-color: var(--bg-dark); color: var(--text-main);
@@ -29,34 +29,59 @@
         }
 
         h1 {
-            font-size: 1.2rem; text-align: center; letter-spacing: 2px;
-            color: var(--accent); margin-bottom: 20px; text-shadow: 0 0 5px var(--accent);
+            font-size: 1.1rem; text-align: center; letter-spacing: 3px;
+            color: var(--accent); margin-bottom: 15px; text-shadow: 0 0 5px var(--accent);
             transition: color 0.5s ease;
         }
 
         /* TIDE CONTROLS */
-        .tide-controls {
-            display: flex; gap: 10px; margin-bottom: 20px;
-        }
+        .tide-controls { display: flex; gap: 10px; margin-bottom: 20px; }
         .tide-btn {
             flex: 1; background: var(--bg-panel); border: 1px solid #222; color: #555; 
-            padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 4px; transition: all 0.3s ease;
+            padding: 10px; font-size: 1rem; font-weight: bold; border-radius: 4px; transition: all 0.3s ease;
         }
-        .tide-btn.active-ton { color: var(--ton); border-color: var(--ton); background: rgba(74, 95, 193, 0.1); }
-        .tide-btn.active-sil { color: var(--sil); border-color: var(--sil); background: rgba(0, 255, 157, 0.1); }
-        .tide-btn.active-qina { color: var(--qina); border-color: var(--qina); background: rgba(255, 176, 0, 0.1); }
+        .tide-btn.active-ton { color: var(--ton); border-color: var(--ton); background: rgba(74, 95, 193, 0.15); box-shadow: 0 0 10px rgba(74,95,193,0.2); }
+        .tide-btn.active-sil { color: var(--sil); border-color: var(--sil); background: rgba(0, 255, 157, 0.15); box-shadow: 0 0 10px rgba(0,255,157,0.2); }
+        .tide-btn.active-qina { color: var(--qina); border-color: var(--qina); background: rgba(255, 176, 0, 0.15); box-shadow: 0 0 10px rgba(255,176,0,0.2); }
 
-        /* TRUE NORTH */
-        .vector-box { background: var(--bg-panel); padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #222;}
-        .vector-box label { font-size: 0.7rem; color: #888; letter-spacing: 1px; display: block; margin-bottom: 5px;}
-        .north-input-group { display: flex; }
+        /* THE COMPASS & HORIZON */
+        .dashboard {
+            background: var(--bg-panel); padding: 15px; border-radius: 4px; 
+            margin-bottom: 15px; border: 1px solid #222; display: flex; align-items: center; justify-content: space-between;
+        }
+        .horizon-data { flex-grow: 1; }
+        .horizon-data label { font-size: 0.65rem; color: #888; letter-spacing: 1px; display: block; margin-bottom: 5px;}
+        .north-input-group { display: flex; gap: 10px; margin-bottom: 10px; }
         #true-north {
             flex-grow: 1; background: transparent; border: none; border-bottom: 1px dashed var(--accent);
-            color: white; font-size: 1.1rem; padding: 5px 0; outline: none;
+            color: white; font-size: 1rem; padding: 5px 0; outline: none; width: 60%;
+        }
+        #distance-input {
+            width: 40px; background: transparent; border: none; border-bottom: 1px dashed var(--accent);
+            color: var(--accent); font-size: 1rem; text-align: center; outline: none;
         }
         #archive-btn {
             background: transparent; border: 1px solid var(--accent); color: var(--accent);
-            border-radius: 4px; padding: 0 15px; margin-left: 10px; font-weight: bold;
+            border-radius: 4px; padding: 0 12px; font-weight: bold;
+        }
+        
+        .distance-display { font-size: 0.8rem; color: #aaa; }
+        .distance-display span { color: var(--accent); font-weight: bold; font-size: 1.1rem; }
+
+        /* THE ASTROLABE (Visual Compass) */
+        .compass-container {
+            width: 60px; height: 60px; border: 2px solid #333; border-radius: 50%;
+            position: relative; margin-left: 15px; display: flex; justify-content: center; align-items: center;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .compass-needle {
+            width: 2px; height: 25px; background: var(--accent);
+            position: absolute; bottom: 50%; transform-origin: bottom center;
+            border-radius: 2px; transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1), background 0.5s ease, box-shadow 0.5s ease;
+            box-shadow: 0 0 5px var(--accent);
+        }
+        .compass-center {
+            width: 6px; height: 6px; background: white; border-radius: 50%; z-index: 2;
         }
 
         /* WAKE LOG */
@@ -75,29 +100,32 @@
         .log-list { list-style: none; display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px;}
         .log-entry {
             background: var(--bg-panel); border-left: 3px solid var(--accent);
-            padding: 12px; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: flex-start;
+            padding: 10px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: flex-start;
             transition: opacity 0.4s ease, transform 0.4s ease;
         }
         .log-entry.dissolving { opacity: 0; transform: scale(0.95); }
         .log-content { flex-grow: 1; }
-        .log-header { font-size: 0.7rem; color: #666; margin-bottom: 4px; }
+        .log-header { font-size: 0.65rem; color: #666; margin-bottom: 4px; }
         .delete-btn { color: #555; background: none; border: none; font-size: 1.2rem; padding-left: 15px; }
         .delete-btn:active { color: #ff4444; }
 
-        /* SEXTANT MODAL (Popup) */
+        /* SEXTANT POPUP (Fade In) */
         #modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 10; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 10; display: flex; justify-content: center; align-items: center;
+            transition: opacity 0.3s ease;
         }
+        #modal-overlay.show { opacity: 1; pointer-events: auto; }
         .modal-box {
             background: var(--bg-panel); border: 1px solid var(--accent); padding: 20px;
-            border-radius: 4px; width: 90%; max-width: 350px; text-align: center;
+            border-radius: 4px; width: 90%; max-width: 320px; text-align: center;
         }
-        .modal-box p { margin-bottom: 20px; font-size: 0.9rem; color: #aaa; }
+        .modal-box p { margin-bottom: 15px; font-size: 0.8rem; color: #aaa; letter-spacing: 1px;}
         .modal-btn {
-            display: block; width: 100%; padding: 15px; margin-bottom: 10px;
+            display: block; width: 100%; padding: 12px; margin-bottom: 8px;
             background: rgba(255,255,255,0.05); border: 1px solid #333; color: white;
-            font-size: 1rem; border-radius: 4px;
+            font-size: 0.9rem; border-radius: 4px;
         }
         .modal-btn:active { background: var(--accent); color: var(--bg-dark); }
         .modal-cancel { background: transparent; border: none; color: #666; margin-top: 10px; font-size: 0.8rem; }
@@ -115,11 +143,19 @@
             <button class="tide-btn" id="btn-qina" onclick="setTide(1)">;qına</button>
         </div>
 
-        <div class="vector-box">
-            <label>TRUE NORTH (ACTIVE VECTOR)</label>
-            <div class="north-input-group">
-                <input type="text" id="true-north" placeholder="Set your horizon..." onchange="saveNorth()">
-                <button id="archive-btn" onclick="archiveNorth()">✓</button>
+        <div class="dashboard">
+            <div class="horizon-data">
+                <label>TRUE NORTH & DISTANCE</label>
+                <div class="north-input-group">
+                    <input type="text" id="true-north" placeholder="Horizon..." onchange="saveData()">
+                    <input type="number" id="distance-input" placeholder="100" onchange="saveData()">
+                    <button id="archive-btn" onclick="archiveNorth()">⇡</button>
+                </div>
+                <div class="distance-display">Distance Remaining: <span id="dist-display">0</span></div>
+            </div>
+            <div class="compass-container" id="compass-box">
+                <div class="compass-needle" id="needle"></div>
+                <div class="compass-center"></div>
             </div>
         </div>
 
@@ -135,7 +171,7 @@
     <!-- SEXTANT POPUP -->
     <div id="modal-overlay">
         <div class="modal-box">
-            <p>Coordinate the Wake:</p>
+            <p>SET VECTOR ALIGNMENT</p>
             <button class="modal-btn" onclick="submitLog('North', '⬆️')">⬆️ North (Mountain)</button>
             <button class="modal-btn" onclick="submitLog('Lateral', '↔️')">↔️ Lateral (Ocean)</button>
             <button class="modal-btn" onclick="submitLog('Anchor', '⚓')">⚓ Anchor (Ground)</button>
@@ -146,10 +182,17 @@
     <script>
         let currentTide = 0; 
         const colors = { '-1': '#4a5fc1', '0': '#00ff9d', '1': '#ffb000' };
+        let lateralToggle = 1; // Used to swing compass left or right
+        
         const root = document.documentElement;
+        const distInput = document.getElementById('distance-input');
+        const distDisplay = document.getElementById('dist-display');
+        const needle = document.getElementById('needle');
         
         window.onload = () => {
             if(localStorage.getItem('trueNorth')) document.getElementById('true-north').value = localStorage.getItem('trueNorth');
+            if(localStorage.getItem('northDist')) distInput.value = localStorage.getItem('northDist');
+            updateDisplay();
             loadLogs();
             setTide(0); 
         };
@@ -160,41 +203,84 @@
             document.getElementById('btn-ton').className = 'tide-btn' + (state === -1 ? ' active-ton' : '');
             document.getElementById('btn-sil').className = 'tide-btn' + (state === 0 ? ' active-sil' : '');
             document.getElementById('btn-qina').className = 'tide-btn' + (state === 1 ? ' active-qina' : '');
+            document.getElementById('compass-box').style.borderColor = colors[state];
         }
 
-        function saveNorth() { localStorage.setItem('trueNorth', document.getElementById('true-north').value); }
+        function saveData() { 
+            localStorage.setItem('trueNorth', document.getElementById('true-north').value); 
+            localStorage.setItem('northDist', distInput.value);
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            let d = parseFloat(distInput.value) || 0;
+            distDisplay.innerText = d.toFixed(1);
+        }
 
         function archiveNorth() {
             let input = document.getElementById('true-north');
             if(input.value.trim() === '') return;
             let archives = JSON.parse(localStorage.getItem('northArchive') || '[]');
-            archives.push({ goal: input.value, date: new Date().toLocaleDateString() });
+            archives.push({ goal: input.value, distanceRemaining: distInput.value, date: new Date().toLocaleDateString() });
             localStorage.setItem('northArchive', JSON.stringify(archives));
-            input.value = ''; saveNorth();
+            
+            input.value = ''; distInput.value = ''; saveData();
             
             let title = document.getElementById('app-title');
             title.innerText = "HORIZON CLEARED";
             setTimeout(() => { title.innerText = "KAXIM TERMINAL"; }, 2000);
+            rotateNeedle(0); // reset needle
         }
 
         function openModal() {
             if(document.getElementById('log-input').value.trim() === '') return;
-            document.getElementById('modal-overlay').style.display = 'flex';
+            document.getElementById('modal-overlay').classList.add('show');
         }
         
         function closeModal() {
-            document.getElementById('modal-overlay').style.display = 'none';
+            document.getElementById('modal-overlay').classList.remove('show');
+        }
+
+        function rotateNeedle(degrees) {
+            needle.style.transform = `rotate(${degrees}deg)`;
         }
 
         function submitLog(direction, icon) {
             closeModal();
+            
+            // Physics Math
+            let tideMultiplier = currentTide === -1 ? 0.5 : (currentTide === 1 ? 2.0 : 1.0);
+            let progress = 0;
+            let needleAngle = 0;
+
+            if(direction === 'North') {
+                progress = 5 * tideMultiplier;
+                needleAngle = (Math.random() * 10) - 5; // slight flutter around 0
+            } else if(direction === 'Lateral') {
+                progress = 1 * tideMultiplier;
+                needleAngle = 45 * lateralToggle; // swings left or right
+                lateralToggle *= -1;
+            } else if(direction === 'Anchor') {
+                progress = 0;
+                needleAngle = 180; // points straight down
+            }
+
+            // Update Distance
+            let currentDist = parseFloat(distInput.value) || 0;
+            if(currentDist > 0) {
+                let newDist = Math.max(0, currentDist - progress);
+                distInput.value = newDist.toFixed(1);
+                saveData();
+            }
+
+            rotateNeedle(needleAngle);
+
+            // Log it
             let input = document.getElementById('log-input');
             const logEntry = {
-                id: Date.now(),
-                text: input.value,
+                id: Date.now(), text: input.value,
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                color: colors[currentTide],
-                tag: icon
+                color: colors[currentTide], tag: icon
             };
 
             let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
@@ -214,7 +300,7 @@
                 logs = logs.filter(log => log.id !== id);
                 localStorage.setItem('wakeLogs', JSON.stringify(logs));
                 renderLogs();
-            }, 400); // Wait for CSS animation to finish
+            }, 400); 
         }
 
         function renderLogs() {
@@ -227,7 +313,7 @@
                 li.style.borderLeftColor = log.color;
                 li.innerHTML = `
                     <div class="log-content">
-                        <div class="log-header">${log.time} &nbsp; ${log.tag}</div>
+                        <div class="log-header"><span>${log.time}</span> <span>${log.tag}</span></div>
                         <div>${log.text}</div>
                     </div>
                     <button class="delete-btn" onclick="deleteLog(${log.id}, this)">×</button>
