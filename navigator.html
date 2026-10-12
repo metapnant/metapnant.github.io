@@ -3,7 +3,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05000a"><title>Ternary Navigator</title>
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Ternary%20Navigator%22%2C%22short_name%22%3A%22Navigator%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%2305000a%22%2C%22theme_color%22%3A%22%2305000a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20192%20192'%3E%3Ccircle%20cx%3D'96'%20cy%3D'96'%20r%3D'88'%20fill%3D'%2305000a'%20stroke%3D'%2300ff9d'%20stroke-width%3D'8'%2F%3E%3Cpolygon%20points%3D'96%2C30%20108%2C96%2096%2C84%2084%2C96'%20fill%3D'%2300ff9d'%2F%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 <style>
 :root{--bg:#05000a;--panel:#0a0514;--ton:#4a5fc1;--sil:#00ff9d;--qina:#ffb000;--accent:#00ff9d}
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Courier New',monospace;user-select:none;-webkit-tap-highlight-color:transparent}
@@ -40,8 +42,9 @@ h1{font-size:1.05rem;letter-spacing:3px;color:var(--accent);text-shadow:0 0 5px 
 .x{background:transparent;border:none;color:#777;font-size:1.3rem;line-height:1;padding:2px 8px}.x:active{color:#f44}
 #sky{opacity:0;pointer-events:none;position:fixed;inset:0;background:radial-gradient(circle,#0c051a,#020005);z-index:10;visibility:hidden;transition:opacity .4s,visibility 0s .4s}
 #sky.on{opacity:1;pointer-events:auto;visibility:visible;transition:opacity .4s}
-.sky-h{position:absolute;top:0;width:100%;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 14px 14px;background:linear-gradient(180deg,rgba(0,0,0,.85),transparent);z-index:15}
-.sky-h h2{font-size:.85rem;letter-spacing:2px}.sky-a{display:flex;gap:5px}.sky-a .btn{padding:6px 9px}
+.sky-h{position:absolute;top:0;width:100%;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 14px 14px;background:linear-gradient(180deg,rgba(0,0,0,.85),transparent);z-index:15;pointer-events:none}
+.sky-h h2{font-size:.78rem;letter-spacing:2px;max-width:44vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px;text-align:center}
+.sky-a{display:flex;gap:5px}.sky-a .btn{padding:6px 9px}
 #universe{position:absolute;inset:0;overflow:hidden;z-index:11;touch-action:none}
 #field{position:absolute;width:3000px;height:3000px;top:50%;left:50%;will-change:transform}
 #lines{position:absolute;top:0;left:0;width:3000px;height:3000px;overflow:visible;pointer-events:none}
@@ -69,11 +72,11 @@ select.in{background:#0a0514;appearance:auto}
 .chip.s-1{border-color:var(--ton);background:rgba(74,95,193,.28)}.chip.s0{border-color:var(--sil);background:rgba(0,255,157,.18)}.chip.s1{border-color:var(--qina);background:rgba(255,176,0,.2)}
 .chip.act:active{background:var(--accent);color:#000}
 .cap{font-size:.68rem;color:#999;margin-top:8px;line-height:1.4;min-height:2.2em}
-#zoomctl{position:absolute;right:14px;bottom:calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;z-index:15}
+#zoomctl{position:absolute;right:14px;bottom:calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;z-index:20}
 #zoomctl .btn{min-width:46px;height:42px;font-size:1rem;padding:0 8px}
-#sky-origin{position:absolute;left:16px;right:78px;bottom:calc(28px + env(safe-area-inset-bottom,0px));font-size:.7rem;color:#888;z-index:15;line-height:1.4}
-.sky-h h2{font-size:.78rem;letter-spacing:2px}
-.sky-h{pointer-events:none}#sky.on .sky-h .btn,#sky.on .sky-h h2{pointer-events:auto}.sky-h h2{cursor:pointer}#sky-origin{pointer-events:none}
+#zoomctl #btn-new{font-size:.72rem;letter-spacing:1px;white-space:nowrap;padding:0 6px}
+#sky-origin{position:absolute;left:16px;right:120px;bottom:calc(28px + env(safe-area-inset-bottom,0px));font-size:.7rem;color:#888;z-index:15;line-height:1.4;pointer-events:none}
+.sky-h{pointer-events:none}#sky.on .sky-h .btn,#sky.on .sky-h h2{pointer-events:auto}.sky-h h2{cursor:pointer}
 #gfield{position:absolute;width:3000px;height:3000px;top:50%;left:50%;will-change:transform;display:none}
 .gdot{position:absolute;transform:translate(-50%,-50%);border-radius:50%;cursor:pointer;touch-action:none}
 .gdot .gl{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:12px;font-size:.7rem;color:#ccc;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;pointer-events:none;letter-spacing:1px}
@@ -93,8 +96,8 @@ select.in{background:#0a0514;appearance:auto}
  <ul id="loglist"></ul>
 </div>
 <div id="sky">
- <div class="sky-h"><button class="btn ghost" onclick="UI.sky(false)">← BACK</button><h2 id="sky-title" onclick="SKY.rename()">CONSTELLATION</h2><button class="btn ghost" onclick="UI.close();$('m-data').classList.add('show')">DATA</button></div>
- <div id="zoomctl"><button id="btn-new" class="btn ghost" style="display:none" onclick="SKY.startPlace()">+ NEW</button><button class="btn ghost" onclick="SKY.zoom(.2)">+</button><button class="btn ghost" onclick="SKY.zoom(-.2)">−</button><button class="btn ghost" onclick="SKY.fit()">FIT</button><button id="btn-mode" class="btn ghost" onclick="SKY.toggleMode()">GALAXY</button></div>
+ <div class="sky-h"><button class="btn ghost" onclick="UI.sky(false)">← BACK</button><h2 id="sky-title" onclick="SKY.headerClick()">CONSTELLATION</h2><button class="btn ghost" onclick="UI.close();$('m-data').classList.add('show')">DATA</button></div>
+ <div id="zoomctl"><button id="btn-new" class="btn ghost" onclick="SKY.actionNew()">+ VOYAGE</button><button class="btn ghost" onclick="SKY.zoom(.2)">+</button><button class="btn ghost" onclick="SKY.zoom(-.2)">−</button><button class="btn ghost" onclick="SKY.fit()">FIT</button><button id="btn-mode" class="btn ghost" onclick="SKY.toggleMode()">GALAXY</button></div>
  <div id="sky-origin"></div>
  <div id="universe"><div id="field"><svg id="lines"></svg></div><div id="gfield"><div id="ghost"></div></div></div>
 </div>
@@ -126,9 +129,16 @@ select.in{background:#0a0514;appearance:auto}
 <div id="m-confirm" class="ov" style="z-index:30"><div class="box"><p id="c-msg" style="font-size:.85rem;line-height:1.5;color:#ddd;margin-bottom:16px"></p><button class="mb" id="c-ok">OK</button><button class="cancel" id="c-cancel">CANCEL</button></div></div>
 <div id="m-name" class="ov" style="z-index:30"><div class="box"><p class="mt" id="n-title"></p><input id="n-input" class="in" maxlength="40"><button class="mb" id="n-ok">SAVE</button><button class="cancel" id="n-cancel">CANCEL</button></div></div>
 <div id="m-data" class="ov"><div class="box"><p class="mt">YOUR DATA</p>
- <p style="font-size:.75rem;line-height:1.5;color:#bbb;margin-bottom:14px;text-align:left">Everything saves automatically on this device, in this browser. Clearing browser data or switching phones loses it. A backup file keeps a copy you can restore later or move to another device.</p>
+ <p style="font-size:.75rem;line-height:1.5;color:#bbb;margin-bottom:14px;text-align:left">Everything saves automatically on this device, in this browser. A backup file keeps a copy you can restore later or move to another device.</p>
  <button class="mb" onclick="Store.export()">⬇ DOWNLOAD BACKUP FILE</button><button class="mb" onclick="$('imp').click()">⬆ RESTORE FROM BACKUP</button>
- <input id="imp" type="file" accept="application/json,.json" hidden onchange="Store.import(this)"><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
+ <input id="imp" type="file" accept="application/json,.json" hidden onchange="Store.import(this)">
+ <button class="mb danger" onclick="Store.resetDefault()">⚠ RESET TO DEFAULTS</button>
+ <button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
+<div id="m-cmenu" class="ov" style="z-index:30"><div class="box"><p class="mt" id="cm-title">CONSTELLATION</p>
+ <button class="mb" onclick="SKY.enter(SKY.targetCId);UI.close()">OPEN CHART</button>
+ <button class="mb" onclick="SKY.renameTarget(SKY.targetCId)">RENAME</button>
+ <button class="mb danger" onclick="SKY.deleteTarget(SKY.targetCId)">DELETE CONSTELLATION</button>
+ <button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
 <script>
 const COLORS={'-1':'#4a5fc1','0':'#00ff9d','1':'#ffb000'}, TOL=2.5, NONE='NO HORIZON SET', ORI=1500;
 const norm=a=>((a%360)+360)%360, shortest=(t,c)=>((norm(t)-norm(c)+540)%360)-180;
@@ -139,7 +149,7 @@ const S={horizon:NONE,target:0,targetDisp:0,needle:180,tide:0,pending:0,toggle:1
  get ch(){let c=this.charts.find(x=>x.id===this.cur);if(!c){c=this.charts[0]||(this.charts[0]={id:'c'+Date.now(),name:'MY CONSTELLATION',gx:0,gy:0,stars:[],edges:[],origin:''});this.cur=c.id}return c},
  get stars(){return this.ch.stars},set stars(v){this.ch.stars=v},get edges(){return this.ch.edges},set edges(v){this.ch.edges=v},
  get origin(){return this.ch.origin||''},set origin(v){this.ch.origin=v}};
-const Dlg={ // in-app dialogs (browser confirm/alert can be silently blocked)
+const Dlg={
  ask(msg,ok,cb){$('c-msg').textContent=msg;const o=$('c-ok'),c=$('c-cancel'),m=$('m-confirm'),done=()=>m.classList.remove('show');
   o.textContent=ok||'OK';o.className='mb'+(cb?' danger':'');c.style.display=cb?'block':'none';o.onclick=()=>{done();if(cb)cb()};c.onclick=done;m.classList.add('show')},
  note(msg){this.ask(msg,'OK',null)},
@@ -157,15 +167,8 @@ const Store={
    tideDistribution:m.tideDistribution||m.tideRatio||{ton:0,sil:0,qina:0}},logArchive:s.logArchive||s.logs||[]}},
  normEdge(e){return{fromStarId:e.fromStarId||e.from,toStarId:e.toStarId||e.to,angle:e.angle!=null?e.angle:e.headingAngle}},
  init(){
-  const old=['nav_horizon','nav_target_angle','nav_needle_deg','nav_active_tide','nav_wake_logs','nav_constellation','constellationStars',
-   'ternary_nav_horizon','ternary_nav_target_angle','ternary_nav_needle_deg','ternary_nav_active_tide'];
-  if(localStorage.getItem('ternary_nav_schema')!=='3'){
-   const bk={};old.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)bk[k]=v});
-   if(Object.keys(bk).length&&!localStorage.getItem('ternary_nav_migration_backup'))
-    try{localStorage.setItem('ternary_nav_migration_backup',JSON.stringify(bk))}catch(e){}
-  }
   let a=this.read('ternary_nav_active',null);
-  if(!a){ // pull from previous builds' separate keys
+  if(!a){
    const g=(k,k2,d)=>{const v=localStorage.getItem(k)??localStorage.getItem(k2);return v==null?d:v};
    a={horizonName:g('ternary_nav_horizon','nav_horizon',NONE).replace(/^"|"$/g,''),targetAngle:parseFloat(g('ternary_nav_target_angle','nav_target_angle',0))||0,
     needleAngle:parseFloat(g('ternary_nav_needle_deg','nav_needle_deg',180)),lastTide:parseInt(g('ternary_nav_active_tide','nav_active_tide',0))||0,toggle:1};
@@ -174,7 +177,7 @@ const Store={
   const w=this.read('ternary_nav_wake',null)??this.read('nav_wake_logs',[]);
   const c=this.read('ternary_nav_galaxy',null)??this.read('ternary_nav_constellation',null)??this.read('nav_constellation',null)??{};
   this.apply(a,w,c);
-  this.write('ternary_nav_schema',3);try{localStorage.setItem('ternary_nav_schema','3')}catch(e){}
+  this.write('ternary_nav_schema',3);
   this.saveActive();this.saveSky();
  },
  normChart(c,i){
@@ -185,16 +188,25 @@ const Store={
  apply(a,w,g){
   g=g||{};S.horizon=a.horizonName||NONE;S.target=a.targetAngle||0;S.targetDisp=S.target;S.needle=isNaN(a.needleAngle)?180:a.needleAngle;S.tide=[-1,0,1].includes(a.lastTide)?a.lastTide:0;S.toggle=a.toggle||1;
   S.wake=Array.isArray(w)?w:[];
-  const list=Array.isArray(g.charts)?g.charts:[{name:'MY CONSTELLATION',stars:g.stars,edges:g.edges,origin:a.origin}];
-  S.charts=list.map((c,i)=>this.normChart(c,i));S.cur=S.charts.some(c=>c.id===g.cur)?g.cur:(S.charts[0]?S.charts[0].id:'');S.ch;
+  const list=Array.isArray(g.charts)?g.charts:[{name:'MY CONSTELLATION',stars:g.stars||[],edges:g.edges||[],origin:a.origin||''}];
+  S.charts=list.map((c,i)=>this.normChart(c,i));
+  if(!S.charts.length)S.charts=[{id:'c'+Date.now(),name:'MY CONSTELLATION',gx:0,gy:0,stars:[],edges:[],origin:''}];
+  S.cur=S.charts.some(c=>c.id===g.cur)?g.cur:S.charts[0].id;S.ch;
  },
  saveActive(){this.write('ternary_nav_active',{horizonName:S.horizon,targetAngle:S.target,needleAngle:S.needle,lastTide:S.tide,toggle:S.toggle,origin:S.origin});this.write('ternary_nav_wake',S.wake)},
  saveSky(){this.write('ternary_nav_galaxy',{cur:S.cur,charts:S.charts})},
+ resetDefault(){
+  Dlg.ask('Are you sure you want to reset all constellations, voyages, and data to default? This cannot be undone.','RESET ALL',()=>{
+   localStorage.clear();
+   S.horizon=NONE;S.target=0;S.targetDisp=0;S.needle=180;S.tide=0;S.pending=0;S.toggle=1;S.wake=[];S.charts=[];S.cur='';
+   Store.init();UI.refresh();SKY.setMode('chart');SKY.render();UI.close();Dlg.note('Application data restored to defaults.');
+  });
+ },
  export(){const blob=new Blob([JSON.stringify({app:'ternary-navigator',active:{horizonName:S.horizon,targetAngle:S.target,needleAngle:S.needle,lastTide:S.tide,origin:S.origin},wake:S.wake,galaxy:{cur:S.cur,charts:S.charts}},null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ternary-navigator-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)},
  import(inp){const f=inp.files[0];inp.value='';if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const j=JSON.parse(r.result),g=j.galaxy||j.constellation;if(!g||!(Array.isArray(g.charts)||Array.isArray(g.stars)))throw 0;
-   const n=Array.isArray(g.charts)?g.charts.reduce((t,c)=>t+(c.stars||[]).length,0):g.stars.length;
+   const n=Array.isArray(g.charts)?g.charts.reduce((t,c)=>t+(c.stars||[]).length,0):(g.stars||[]).length;
    Dlg.ask(`Replace current data with this backup (${n} stars)?`,'REPLACE',()=>{this.apply(j.active||{},j.wake,g);this.saveActive();this.saveSky();UI.refresh();SKY.setMode('chart');SKY.render();UI.close();Dlg.note('Backup restored.')})}
    catch(e){Dlg.note('That file is not a valid Ternary Navigator backup.')}};r.readAsText(f)}
 };
@@ -208,7 +220,7 @@ const ENGINE={
  setDisp(deg){S.targetDisp+=shortest(deg,S.targetDisp)},
  setTarget(deg){if(blocked(originId()).has(norm(deg)))return;S.horizon=$('goal-input').value.trim()||'PRIMARY VOYAGE';S.target=deg;this.setDisp(deg);Store.saveActive();$('goal-input').value='';UI.close();UI.header();UI.compass()},
  setOrigin(id){S.origin=id;Store.saveSky();UI.fillCourse();SKY.markOrigin()},
- resetNeedle(){ // nearest equivalent of 180 so the reset never spins multiple turns
+ resetNeedle(){
   const base=S.needle-norm(S.needle);let c=base+180;if(c-S.needle>180)c-=360;if(S.needle-c>180)c+=360;S.needle=c},
  resetVoyage(){S.wake=[];S.horizon=NONE;S.target=0;this.setDisp(0);this.resetNeedle()},
  abandon(){this.resetVoyage();Store.saveActive();UI.refresh();UI.close();UI.fillCourse();$('m-course').classList.add('show')},
@@ -220,7 +232,7 @@ const ENGINE={
    if(Math.abs(diff)<=TOL)S.needle+=diff;else S.needle+=Math.sign(diff)*Math.min(Math.abs(diff),16*mult);
   }else if(type==='Drift'){
    const anti=(norm(S.target)+180)%360, d=shortest(anti,S.needle);
-   if(Math.abs(d)<=TOL+4){S.needle+=d-S.toggle*4.5;S.toggle*=-1} // lands on the alternating side of the antipode
+   if(Math.abs(d)<=TOL+4){S.needle+=d-S.toggle*4.5;S.toggle*=-1}
    else S.needle+=Math.sign(d)*Math.min(Math.abs(d),20*mult);
   }
   {const r=shortest(S.target,S.needle);if(S.horizon!==NONE&&Math.abs(r)<=TOL)S.needle+=r}
@@ -323,22 +335,50 @@ const UI={
 };
 
 const MINZ=.4,MAXZ=2.2;
-const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,panY:0,scale:1,bound:false,lines:[],placing:false,sw:false,
+const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,panY:0,scale:1,bound:false,lines:[],placing:false,sw:false,targetCId:'',
  layer(){return $(this.mode==='galaxy'?'gfield':'field')},
  setMode(m){
   const v=this.view[this.mode];v.x=this.panX;v.y=this.panY;v.s=this.scale;
   this.mode=m;const n=this.view[m];this.panX=n.x;this.panY=n.y;this.scale=n.s;this.placing=false;$('ghost').style.display='none';
   $('field').style.display=m==='chart'?'block':'none';$('gfield').style.display=m==='galaxy'?'block':'none';
-  $('btn-new').style.display=m==='galaxy'?'block':'none';$('btn-mode').textContent=m==='galaxy'?'CHART':'GALAXY';
+  $('btn-new').textContent=m==='galaxy'?(this.placing?'CANCEL':'+ NEW'):'+ VOYAGE';
+  $('btn-mode').textContent=m==='galaxy'?'CHART':'GALAXY';
   $('sky-title').textContent=m==='galaxy'?'GALAXY':S.ch.name+' ✎';this.apply(0);
   const L=this.layer();if(L.animate)L.animate([{opacity:0},{opacity:1}],{duration:350})},
  show(fit){if(this.mode!=='chart')this.setMode('chart');this.render();if(fit)this.fit()},
  toggleMode(){if(this.mode==='chart'){this.setMode('galaxy');this.renderGalaxy();this.fit()}else this.enter(S.cur)},
+ actionNew(){
+  if(this.mode==='chart'){
+   UI.sky(false);UI.course();
+  }else{
+   this.startPlace();
+  }
+ },
  enter(id){
   if(id!==S.cur){if(S.wake.length&&S.horizon!==NONE)return Dlg.note('Finish or abandon your current voyage before switching constellations.');
    S.cur=id;Store.saveSky();UI.refresh()}
   this.setMode('chart');this.render();this.fit()},
- rename(){if(this.mode!=='chart')return;Dlg.name('NAME YOUR CONSTELLATION',S.ch.name,n=>{S.ch.name=n.slice(0,40);Store.saveSky();$('sky-title').textContent=S.ch.name+' ✎'})},
+ headerClick(){
+  if(this.mode==='chart')this.renameTarget(S.cur);
+ },
+ renameTarget(cid){
+  const c=S.charts.find(x=>x.id===cid);if(!c)return;
+  Dlg.name('NAME CONSTELLATION',c.name,n=>{
+   c.name=n.slice(0,40);Store.saveSky();
+   if(this.mode==='chart')$('sky-title').textContent=S.ch.name+' ✎';
+   else this.renderGalaxy();
+  });
+ },
+ deleteTarget(cid){
+  if(S.charts.length<=1)return Dlg.note('You must keep at least one constellation in your galaxy.');
+  const c=S.charts.find(x=>x.id===cid);if(!c)return;
+  if(cid===S.cur&&S.wake.length&&S.horizon!==NONE)return Dlg.note('Finish or abandon your current voyage before deleting this constellation.');
+  Dlg.ask(`Delete constellation "${c.name}" and all of its ${c.stars.length} stars?`,'DELETE',()=>{
+   S.charts=S.charts.filter(x=>x.id!==cid);
+   if(S.cur===cid){S.cur=S.charts[0].id;Store.saveSky();UI.refresh()}else{Store.saveSky()}
+   UI.close();this.renderGalaxy();Dlg.note('Constellation removed.');
+  });
+ },
  render(){
   const field=$('field'),svg=$('lines');field.querySelectorAll('.star').forEach(x=>x.remove());svg.innerHTML='';this.lines=[];
   if(this.mode==='chart')$('sky-title').textContent=S.ch.name+' ✎';
@@ -367,17 +407,59 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
    d.className='gdot'+(c.id===S.cur?' cur':'');d.dataset.id=c.id;
    d.style.cssText=`left:${ORI+c.gx}px;top:${ORI+c.gy}px;width:${sz}px;height:${sz}px;background:radial-gradient(circle,#fff 20%,${col} 75%);box-shadow:0 0 ${sz}px ${col},0 0 ${sz*2}px ${col}55;opacity:${n?1:.7}`;
    const l=document.createElement('div');l.className='gl';l.textContent=c.name+(n?` · ${n}★`:'');d.appendChild(l);
-   d.addEventListener('click',()=>{if(!SKY.placing)SKY.enter(c.id)});g.appendChild(d)});
+   
+   let sx=0,sy=0,down=false,moved=false,pressT=null;
+   d.addEventListener('pointerdown',e=>{
+    if(SKY.placing)return;
+    e.stopPropagation();down=true;moved=false;sx=e.clientX;sy=e.clientY;d.setPointerCapture(e.pointerId);
+    pressT=setTimeout(()=>{if(!moved){pressT=null;SKY.openConstellationMenu(c.id)}},600);
+   });
+   d.addEventListener('pointermove',e=>{
+    if(!down)return;
+    const dx=(e.clientX-sx)/SKY.scale,dy=(e.clientY-sy)/SKY.scale;
+    if(!moved&&Math.hypot(dx,dy)*SKY.scale<7)return;
+    if(pressT){clearTimeout(pressT);pressT=null}
+    moved=true;
+    d.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(1.15)`;
+   });
+   const end=(e)=>{
+    if(!down)return;down=false;if(pressT){clearTimeout(pressT);pressT=null}
+    if(moved){
+     const dx=(e.clientX-sx)/SKY.scale,dy=(e.clientY-sy)/SKY.scale;
+     d.style.transform='translate(-50%,-50%)';
+     const targetX=Math.round(c.gx+dx),targetY=Math.round(c.gy+dy);
+     if(SKY.free({x:targetX,y:targetY},c.id)){
+      c.gx=targetX;c.gy=targetY;Store.saveSky();
+      d.style.left=(ORI+c.gx)+'px';d.style.top=(ORI+c.gy)+'px';
+     }
+    }else if(!SKY.placing){
+     SKY.enter(c.id);
+    }
+   };
+   d.addEventListener('pointerup',end);d.addEventListener('pointercancel',()=>{down=false;d.style.transform='translate(-50%,-50%)'});
+   g.appendChild(d);
+  });
   this.markOrigin()},
- startPlace(){this.placing=!this.placing;if(!this.placing)$('ghost').style.display='none';this.markOrigin()},
+ openConstellationMenu(cid){
+  this.targetCId=cid;const c=S.charts.find(x=>x.id===cid);if(!c)return;
+  $('cm-title').textContent=c.name.toUpperCase();$('m-cmenu').classList.add('show');
+ },
+ startPlace(){
+  this.placing=!this.placing;
+  $('btn-new').textContent=this.placing?'CANCEL':'+ NEW';
+  if(!this.placing)$('ghost').style.display='none';
+  this.markOrigin();
+ },
  toGal(sx,sy){const r=$('universe').getBoundingClientRect();return{x:(sx-r.left-r.width/2-this.panX)/this.scale,y:(sy-r.top-r.height/2-this.panY)/this.scale}},
- free(p){return Math.abs(p.x)<1350&&Math.abs(p.y)<1350&&S.charts.every(c=>Math.hypot(p.x-c.gx,p.y-c.gy)>=130)},
+ free(p,ignoreId=''){
+  return Math.abs(p.x)<1380&&Math.abs(p.y)<1380&&S.charts.every(c=>(c.id===ignoreId)||(Math.hypot(p.x-c.gx,p.y-c.gy)>=88));
+ },
  ghostAt(sx,sy){const p=this.toGal(sx,sy),g=$('ghost');g.style.display='block';g.style.left=(ORI+p.x)+'px';g.style.top=(ORI+p.y)+'px';g.classList.toggle('bad',!this.free(p));return p},
  tryPlace(sx,sy){
-  const p=this.ghostAt(sx,sy);if(!this.free(p))return Dlg.note('Too close to another constellation, or off the edge. Pick an empty spot.');
+  const p=this.ghostAt(sx,sy);if(!this.free(p))return Dlg.note('Too close to another constellation, or off the perimeter. Pick an empty spot.');
   Dlg.name('NAME YOUR NEW CONSTELLATION','',n=>{
    const c={id:'c'+Date.now(),name:n,gx:Math.round(p.x),gy:Math.round(p.y),stars:[],edges:[],origin:''};
-   S.charts.push(c);this.placing=false;$('ghost').style.display='none';Store.saveSky();
+   S.charts.push(c);this.placing=false;$('btn-new').textContent='+ NEW';$('ghost').style.display='none';Store.saveSky();
    if(S.wake.length&&S.horizon!==NONE){this.renderGalaxy();Dlg.note('Created. Finish or abandon your current voyage to open it.')}else this.enter(c.id)})},
  place(star,o,dx,dy,sc){
   o.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(${sc})`;
@@ -390,7 +472,7 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
    SKY.place(star,o,done?0:x,done?0:y,done?1:1+.15*Math.min(1,Math.hypot(x,y)/20));if(!done)requestAnimationFrame(step)};
   requestAnimationFrame(step)},
  markOrigin(){
-  if(this.mode==='galaxy'){$('sky-origin').textContent=this.placing?'Tap an empty spot to place your new constellation.':'Tap a constellation to open it. Zoom in fully to go back.';return}
+  if(this.mode==='galaxy'){$('sky-origin').textContent=this.placing?'Tap an empty spot to create your new constellation.':'Drag to rearrange. Hold to edit/delete. Tap to open.';return}
   const oid=originId();document.querySelectorAll('.star').forEach(o=>o.classList.toggle('origin',o.dataset.id===oid));
   const st=S.stars.find(x=>x.id===oid);$('sky-origin').textContent=st?`Next voyage branches from: ${st.voyageName}. Tap another star to change.`:'Forge your first star to begin this constellation.'},
  bind(){
@@ -410,7 +492,7 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
   u.addEventListener('pointerup',up);u.addEventListener('pointercancel',up);
   u.addEventListener('wheel',e=>{e.preventDefault();SKY.setScale(SKY.scale*(e.deltaY<0?1.1:.91),120)},{passive:false});
  },
- setScale(z,ms){ // zooming past the limit switches between constellation and galaxy view
+ setScale(z,ms){
   if(z<MINZ*.85&&this.mode==='chart'&&this.scale<=MINZ+.02){if(!this.sw){this.sw=true;setTimeout(()=>this.sw=false,700);this.toggleMode()}return}
   if(z>MAXZ*1.15&&this.mode==='galaxy'&&this.scale>=MAXZ-.02){if(!this.sw){this.sw=true;setTimeout(()=>this.sw=false,700);this.enter(S.cur)}return}
   const n=Math.min(MAXZ,Math.max(MINZ,z)),r=n/this.scale;this.panX*=r;this.panY*=r;this.scale=n;this.apply(ms||0)},
@@ -441,5 +523,13 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
    S.stars=S.stars.filter(x=>x.id!==star.id);Store.saveSky();UI.close();SKY.render()});
   $('m-star').classList.add('show');
  }};
+
+// Register PWA Service Worker via Blob to enable installability on HTTPS origins
+if('serviceWorker' in navigator){
+ const swCode=`self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>clients.claim());self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))));`;
+ const blob=new Blob([swCode],{type:'application/javascript'});
+ navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+}
+
 addEventListener('DOMContentLoaded',()=>{UI.init();SKY.bind()});
 </script></body></html>
