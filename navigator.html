@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#05000a">
-    <title>Kaxim Terminal V6</title>
+    <title>Kaxim Terminal V7</title>
     <style>
         :root {
             --bg-dark: #05000a;
@@ -24,18 +24,17 @@
             transition: background-color 0.5s ease;
         }
 
-        /* THE TRUE COMPASS BACKGROUND */
+        /* MASSIVE BACKGROUND COMPASS - CENTERED LOWER */
         #astrolabe-bg {
-            position: fixed; top: 45%; left: 50%; transform: translate(-50%, -50%);
+            position: fixed; top: 56%; left: 50%; transform: translate(-50%, -50%);
             width: 85vw; height: 85vw; max-width: 350px; max-height: 350px;
             border: 2px dashed rgba(255,255,255,0.05); border-radius: 50%;
             display: flex; justify-content: center; align-items: center; z-index: 0;
             box-shadow: 0 0 40px rgba(0,255,157,0.02); transition: box-shadow 1s ease;
         }
-        /* Target Indicator on the rim */
         #target-marker {
             position: absolute; width: 100%; height: 100%; border-radius: 50%;
-            transition: transform 1.5s ease;
+            transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
         #target-marker::before {
             content: '▼'; position: absolute; top: -15px; left: calc(50% - 6px);
@@ -56,7 +55,7 @@
         /* TOP UI LAYER */
         #ui-top {
             position: absolute; top: 0; left: 0; width: 100%; z-index: 1;
-            padding: 20px; background: linear-gradient(180deg, rgba(5,0,10,0.9) 0%, transparent 100%);
+            padding: 20px; background: linear-gradient(180deg, rgba(5,0,10,0.95) 0%, rgba(5,0,10,0.7) 70%, transparent 100%);
             pointer-events: auto;
         }
 
@@ -69,7 +68,7 @@
         }
         .tide-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(255,255,255,0.05); text-shadow: 0 0 10px var(--accent); }
 
-        .horizon-box { background: transparent; padding-bottom: 10px; }
+        .horizon-box { background: transparent; padding-bottom: 5px; }
         .horizon-box label { font-size: 0.65rem; color: #888; letter-spacing: 1px; display: block; margin-bottom: 5px;}
         .north-input-group { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--accent); padding-bottom: 5px;}
         #current-goal { color: white; font-size: 1rem; flex-grow: 1; }
@@ -91,12 +90,14 @@
         #log-input:focus { border-color: var(--accent); }
         #emit-btn { background: var(--accent); color: var(--bg-dark); border: none; font-weight: bold; padding: 0 20px; border-radius: 0 8px 8px 0; }
 
-        .log-list { list-style: none; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-bottom: 10px; flex-grow: 1; opacity: 0; transition: opacity 0.3s;}
+        .log-list { list-style: none; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; overflow-x: hidden; padding-bottom: 10px; flex-grow: 1; opacity: 0; transition: opacity 0.3s;}
         #wake-drawer.open .log-list { opacity: 1; }
-        .log-entry { background: rgba(0,0,0,0.5); border-left: 3px solid var(--accent); padding: 10px; font-size: 0.85rem; display: flex; justify-content: space-between; transition: opacity 0.4s ease; }
-        .log-entry.dissolving { opacity: 0; }
-        .log-header { font-size: 0.65rem; color: #888; margin-bottom: 4px; }
-        .delete-btn { color: #555; background: none; border: none; font-size: 1.2rem; padding-left: 10px; }
+        
+        .log-entry { 
+            background: rgba(0,0,0,0.5); border-left: 3px solid var(--accent); padding: 12px; font-size: 0.85rem; 
+            backdrop-filter: blur(5px); touch-action: pan-y; /* allows vertical scroll but captures horizontal swipe */
+        }
+        .log-header { font-size: 0.65rem; color: #888; margin-bottom: 4px; display: flex; gap: 10px;}
 
         /* MODALS */
         .modal-overlay { opacity: 0; pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10; display: flex; justify-content: center; align-items: center; transition: opacity 0.3s ease; backdrop-filter: blur(3px); }
@@ -107,11 +108,10 @@
         .modal-btn { display: block; width: 100%; padding: 12px; margin-bottom: 8px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; font-size: 0.9rem; border-radius: 4px; }
         .modal-btn:active { background: var(--accent); color: var(--bg-dark); }
         
-        /* Compass Grid for Selection */
+        /* Compass Grid */
         .compass-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 15px; }
         .dir-btn { background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; padding: 10px 0; border-radius: 4px; font-size: 0.8rem; }
         .dir-btn:active { background: var(--accent); color: black;}
-        .dir-btn.disabled { opacity: 0.2; pointer-events: none; }
         
         .modal-cancel { background: transparent; border: none; color: #666; margin-top: 10px; font-size: 0.8rem; }
     </style>
@@ -149,33 +149,31 @@
         <ul class="log-list" id="log-list"></ul>
     </div>
 
-    <!-- HORIZON MODAL -->
     <div id="horizon-modal" class="modal-overlay">
         <div class="modal-box">
             <p>NAME YOUR HORIZON</p>
             <input type="text" id="goal-input" class="modal-input" placeholder="e.g. Theory Test">
             <p>CHOOSE DIRECTION</p>
             <div class="compass-grid">
-                <button class="dir-btn" onclick="setTargetDir(315, this)">NW</button>
-                <button class="dir-btn" onclick="setTargetDir(0, this)">N</button>
-                <button class="dir-btn" onclick="setTargetDir(45, this)">NE</button>
-                <button class="dir-btn" onclick="setTargetDir(270, this)">W</button>
+                <button class="dir-btn" onclick="setTargetDir(315)">NW</button>
+                <button class="dir-btn" onclick="setTargetDir(0)">N</button>
+                <button class="dir-btn" onclick="setTargetDir(45)">NE</button>
+                <button class="dir-btn" onclick="setTargetDir(270)">W</button>
                 <div style="background: transparent;"></div>
-                <button class="dir-btn" onclick="setTargetDir(90, this)">E</button>
-                <button class="dir-btn" onclick="setTargetDir(225, this)">SW</button>
-                <button class="dir-btn" onclick="setTargetDir(180, this)">S</button>
-                <button class="dir-btn" onclick="setTargetDir(135, this)">SE</button>
+                <button class="dir-btn" onclick="setTargetDir(90)">E</button>
+                <button class="dir-btn" onclick="setTargetDir(225)">SW</button>
+                <button class="dir-btn" onclick="setTargetDir(180)">S</button>
+                <button class="dir-btn" onclick="setTargetDir(135)">SE</button>
             </div>
             <button class="modal-cancel" onclick="closeModals()">Cancel</button>
         </div>
     </div>
 
-    <!-- SEXTANT MODAL -->
     <div id="sextant-modal" class="modal-overlay">
         <div class="modal-box">
             <p>VECTOR ALIGNMENT</p>
             <button class="modal-btn" onclick="submitLog('Align', '⬆️')">⬆️ Align (Toward Horizon)</button>
-            <button class="modal-btn" onclick="submitLog('Drift', '↔️')">↔️ Drift (Side Quest)</button>
+            <button class="modal-btn" onclick="submitLog('Drift', '↔️')">↔️ Drift (Veer off course)</button>
             <button class="modal-btn" onclick="submitLog('Anchor', '⚓')">⚓ Anchor (Ground/Rest)</button>
             <button class="modal-cancel" onclick="closeModals()">Cancel</button>
         </div>
@@ -183,19 +181,19 @@
 
     <script>
         let currentTide = 0; 
-        let needleAngle = 180; // Needle's actual current bearing
-        let targetAngle = 0; // Where the goal is
+        let needleAngle = 180; 
+        let targetAngle = 0; 
         const colors = { '-1': '#4a5fc1', '0': '#00ff9d', '1': '#ffb000' };
         const root = document.documentElement;
 
-        // Drawer Swipe Logic
+        // Drawer Logic
         const drawer = document.getElementById('wake-drawer');
-        let startY;
-        drawer.addEventListener('touchstart', e => startY = e.touches[0].clientY);
+        let dStartY;
+        drawer.addEventListener('touchstart', e => dStartY = e.touches[0].clientY, {passive: true});
         drawer.addEventListener('touchend', e => {
-            let endY = e.changedTouches[0].clientY;
-            if(startY - endY > 40) drawer.classList.add('open');
-            else if(endY - startY > 40) drawer.classList.remove('open');
+            let dEndY = e.changedTouches[0].clientY;
+            if(dStartY - dEndY > 40) drawer.classList.add('open');
+            else if(dEndY - dStartY > 40) drawer.classList.remove('open');
         });
         
         window.onload = () => {
@@ -224,7 +222,7 @@
         }
         function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show')); }
 
-        function setTargetDir(deg, btn) {
+        function setTargetDir(deg) {
             let goal = document.getElementById('goal-input').value;
             if(goal.trim() === '') goal = "Unknown Horizon";
             
@@ -240,29 +238,28 @@
         function submitLog(actionType, icon) {
             closeModals();
             let input = document.getElementById('log-input');
-            let tideMultiplier = currentTide === -1 ? 0.4 : (currentTide === 1 ? 1.8 : 1.0);
+            let tideMultiplier = currentTide === -1 ? 0.5 : (currentTide === 1 ? 2.5 : 1.2);
             
             if(actionType === 'Align') {
-                // Math to find shortest path to target
-                let diff = (targetAngle - needleAngle) % 360;
-                if(diff < -180) diff += 360;
-                if(diff > 180) diff -= 360;
-                
+                let diff = (targetAngle - needleAngle + 540) % 360 - 180;
                 let step = 15 * tideMultiplier;
-                if(Math.abs(diff) <= step) needleAngle = targetAngle; // Snap to target
+                if(Math.abs(diff) <= step) needleAngle = targetAngle; 
                 else needleAngle += Math.sign(diff) * step;
-                
             } else if(actionType === 'Drift') {
-                let driftDir = Math.random() > 0.5 ? 1 : -1;
-                needleAngle += (15 * tideMultiplier * driftDir);
+                // Drift pushes you AWAY from the target angle
+                let diff = (needleAngle - targetAngle + 540) % 360 - 180;
+                let driftAmount = 20 * tideMultiplier;
+                if(Math.abs(diff) < 2) {
+                    needleAngle += (Math.random() > 0.5 ? 1 : -1) * driftAmount; // random start
+                } else {
+                    needleAngle += Math.sign(diff) * driftAmount; // push further away
+                }
             } 
             
-            // Normalize angle 0-360
             needleAngle = (needleAngle + 360) % 360;
             localStorage.setItem('needleAngle', needleAngle);
             updateCompass();
 
-            // Log
             const logEntry = { id: Date.now(), text: input.value, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), color: colors[currentTide], tag: icon };
             let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
             logs.unshift(logEntry); 
@@ -276,7 +273,6 @@
             document.getElementById('astrolabe-needle').style.transform = `rotate(${needleAngle}deg)`;
             document.getElementById('target-marker').style.transform = `rotate(${targetAngle}deg)`;
             
-            // If perfectly aligned
             if(Math.round(needleAngle) === Math.round(targetAngle)) {
                 document.getElementById('app-title').innerText = "HORIZON REACHED";
                 document.getElementById('astrolabe-center').style.boxShadow = "0 0 30px white";
@@ -286,14 +282,46 @@
             }
         }
 
-        function deleteLog(id, btnElement) {
-            btnElement.parentElement.classList.add('dissolving');
-            setTimeout(() => {
-                let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
-                logs = logs.filter(log => log.id !== id);
-                localStorage.setItem('wakeLogs', JSON.stringify(logs));
-                renderLogs();
-            }, 400); 
+        // SWIPE TO DELETE LOGIC
+        function attachSwipeEvent(li, id) {
+            let startX = 0; let currentX = 0; let isDragging = false;
+
+            li.addEventListener('touchstart', e => {
+                startX = e.touches[0].clientX;
+                isDragging = true;
+                li.style.transition = 'none';
+            }, {passive: true});
+
+            li.addEventListener('touchmove', e => {
+                if(!isDragging) return;
+                currentX = e.touches[0].clientX;
+                let diff = currentX - startX;
+                li.style.transform = `translateX(${diff}px)`;
+                li.style.opacity = 1 - (Math.abs(diff) / window.innerWidth);
+            }, {passive: true});
+
+            li.addEventListener('touchend', e => {
+                if(!isDragging) return;
+                isDragging = false;
+                let diff = currentX - startX;
+                
+                li.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                if(Math.abs(diff) > window.innerWidth * 0.35) { // Swipe threshold
+                    li.style.transform = `translateX(${Math.sign(diff) * window.innerWidth}px)`;
+                    li.style.opacity = 0;
+                    setTimeout(() => { deleteLogRaw(id); }, 300);
+                } else { // Snap back
+                    li.style.transform = `translateX(0px)`;
+                    li.style.opacity = 1;
+                }
+            });
+        }
+
+        function deleteLogRaw(id) {
+            let logs = JSON.parse(localStorage.getItem('wakeLogs') || '[]');
+            logs = logs.filter(log => log.id !== id);
+            localStorage.setItem('wakeLogs', JSON.stringify(logs));
+            renderLogs();
         }
 
         function renderLogs() {
@@ -301,7 +329,8 @@
             let list = document.getElementById('log-list'); list.innerHTML = '';
             logs.forEach(log => {
                 const li = document.createElement('li'); li.className = 'log-entry'; li.style.borderLeftColor = log.color;
-                li.innerHTML = `<div class="log-content"><div class="log-header"><span>${log.time}</span> <span>${log.tag}</span></div><div>${log.text}</div></div><button class="delete-btn" onclick="deleteLog(${log.id}, this)">×</button>`;
+                li.innerHTML = `<div><div class="log-header"><span>${log.time}</span> <span>${log.tag}</span></div><div>${log.text}</div></div>`;
+                attachSwipeEvent(li, log.id);
                 list.appendChild(li);
             });
         }
