@@ -96,6 +96,10 @@ select.in{background:#0a0514;appearance:auto}
 @media (prefers-reduced-motion:reduce){.gdot .orbit{animation:none!important}}
 .box>*{flex-shrink:0}
 #sky-origin{overflow-wrap:anywhere}
+.star::before{content:'';position:absolute;inset:-8px;border-radius:50%}
+#ghost{width:32px!important;height:32px!important}
+.gdot.linking{filter:brightness(1.7) drop-shadow(0 0 8px #fff)}
+.gdot.linkhover{outline:2px solid #00ff9d;outline-offset:10px}
 </style></head><body>
 <div id="astrolabe"><div id="target"></div><div id="needle"></div><div id="hub"></div></div>
 <div id="ui-top">
@@ -110,7 +114,7 @@ select.in{background:#0a0514;appearance:auto}
  <ul id="loglist"></ul>
 </div>
 <div id="sky">
- <div class="sky-h"><button class="btn ghost" onclick="UI.sky(false)">← BACK</button><h2 id="sky-title" onclick="SKY.headerClick()">CONSTELLATION</h2><button class="btn ghost" onclick="UI.close();$('m-data').classList.add('show')">DATA</button></div>
+ <div class="sky-h"><button class="btn ghost" onclick="SKY.back()">← BACK</button><h2 id="sky-title" onclick="SKY.headerClick()">CONSTELLATION</h2><button class="btn ghost" onclick="UI.close();$('m-data').classList.add('show')">DATA</button></div>
  <div id="zoomctl"><button id="btn-new" class="btn ghost" onclick="SKY.actionNew()">+ VOYAGE</button><button class="btn ghost" onclick="SKY.zoom(.2)">+</button><button class="btn ghost" onclick="SKY.zoom(-.2)">−</button><button class="btn ghost" onclick="SKY.fit()">FIT</button><button id="btn-mode" class="btn ghost" onclick="SKY.toggleMode()">GALAXY</button></div>
  <div id="sky-origin"></div>
  <div id="universe"><div id="field"><svg id="lines"></svg></div><div id="gfield"><svg id="glines"></svg><div id="ghost"></div></div></div>
@@ -151,7 +155,6 @@ select.in{background:#0a0514;appearance:auto}
 <div id="m-cmenu" class="ov" style="z-index:30"><div class="box"><p class="mt" id="cm-title">CONSTELLATION</p>
  <button class="mb" onclick="SKY.enter(SKY.targetCId);UI.close()">OPEN CONSTELLATION</button>
  <button class="mb" onclick="UI.close();SKY.renameTarget(SKY.targetCId)">RENAME</button>
- <button class="mb" onclick="UI.close();SKY.startLink(SKY.targetCId)">LINK / UNLINK TO ANOTHER</button>
  <button class="mb danger" onclick="UI.close();SKY.deleteTarget(SKY.targetCId)">DELETE CONSTELLATION</button>
  <button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
 <script>
@@ -298,12 +301,12 @@ const UI={
   a.style.left='50%';
  },
  drawer(){
-  const d=$('drawer');let y0=0,dy=0,open=false,moved=false,act=false,tapOK=false;
+  const d=$('drawer');let y0=0,dy=0,open=false,moved=false,act=false,tapOK=false,kb=false,was=false,rt=null;
   const max=()=>innerHeight*DH-PEEK,closed=`translateY(calc(100% - ${PEEK}px))`;
   const settle=()=>{d.style.transition='transform .35s cubic-bezier(.2,.8,.2,1)';d.style.transform=open?'translateY(0)':closed;UI.layout(open?1:0,true)};
   
   const startDrag=(e)=>{
-   if(e.target.closest('#loglist,.x'))return;
+   if(kb||e.target.closest('#loglist,.x'))return;
    const a=$('log-input').getBoundingClientRect(),b=$('emit').getBoundingClientRect();
    if(e.clientY>=a.top&&e.clientY<=a.bottom&&e.clientX>=a.left&&e.clientX<=b.right)return; // inside the input row: leave it to the input
    tapOK=!!e.target.closest('#dzone');
@@ -328,6 +331,9 @@ const UI={
   d.addEventListener('pointerup',stopDrag);
   d.addEventListener('pointercancel',()=>{act=false;settle()});
   
+  const inp=$('log-input');
+  inp.addEventListener('focus',()=>{clearTimeout(rt);if(!kb){kb=true;was=open}if(!open){open=true;settle()}});
+  inp.addEventListener('blur',()=>{rt=setTimeout(()=>{if(!kb)return;kb=false;if(!was&&open){open=false;settle()}},300)});
   const onResize=()=>{if(document.activeElement!==$('log-input'))UI.layout(UI.p||0,false)};
   addEventListener('resize',onResize);
   if(window.visualViewport)window.visualViewport.addEventListener('resize',onResize);
@@ -402,6 +408,7 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
   $('sky-title').textContent=m==='galaxy'?'GALAXY':S.ch.name+' ✎';this.apply(0);
   const L=this.layer();if(L.animate)L.animate([{opacity:0},{opacity:1}],{duration:350})},
  show(fit){if(this.mode!=='chart')this.setMode('chart');this.render();if(fit)this.fit()},
+ back(){if(this.mode==='galaxy')this.enter(S.cur);else UI.sky(false)},
  toggleMode(){if(this.mode==='chart'){this.setMode('galaxy');this.renderGalaxy();this.fit()}else this.enter(S.cur)},
  actionNew(){
   if(this.mode==='chart'){UI.sky(false);UI.course()}
@@ -461,33 +468,34 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
    [['x1',ORI+A.gx],['y1',ORI+A.gy],['x2',ORI+B.gx],['y2',ORI+B.gy],['stroke','rgba(255,255,255,.3)'],['stroke-width',1.5],['stroke-dasharray','6,6']].forEach(([k,v])=>l.setAttribute(k,v));
    sv.appendChild(l);this.glines.push({el:l,a:lk.a,b:lk.b})});
   S.charts.forEach(c=>{const n=c.stars.length,t=[0,0,0];c.stars.forEach(st=>{t[(+st.spectralClass||0)+1]++});
-   const col=COLORS[n?['-1','0','1'][t.indexOf(Math.max(...t))]:'0'],sz=Math.min(64,12+Math.sqrt(n)*6.5),d=document.createElement('div');
+   const col=COLORS[n?['-1','0','1'][t.indexOf(Math.max(...t))]:'0'],sz=this.shape(c).sz,d=document.createElement('div');
    d.className='gdot'+(c.id===S.cur?' cur':'');d.dataset.id=c.id;this.dots[c.id]=d;
    d.style.cssText=`left:${ORI+c.gx}px;top:${ORI+c.gy}px;width:${sz}px;height:${sz}px;border:1.5px solid ${col}99;background:radial-gradient(circle,${col}38 0%,${col}1a 60%,transparent 74%),rgba(5,0,10,.6);box-shadow:0 0 ${Math.max(sz*.7,10)}px ${col}44,inset 0 0 ${sz/3}px ${col}33`;
    d.innerHTML=this.emblem(c)+`<div class="orbit" style="border-color:${col}77"></div>`;
    const l=document.createElement('div');l.className='gl';
    const nm=document.createElement('span');nm.className='nm';nm.textContent=c.name;
    const ct=document.createElement('span');ct.className='ct';ct.textContent=n+'★';l.append(nm,ct);d.appendChild(l);
-   let sx=0,sy=0,down=false,moved=false,held=false,pressT=null,ids=null,cdx=0,cdy=0;
+   let sx=0,sy=0,down=false,moved=false,linkMode=false,pressT=null,ids=null,cdx=0,cdy=0;
    const clear=()=>{if(pressT){clearTimeout(pressT);pressT=null}};
    d.addEventListener('pointerdown',e=>{
     if(SKY.placing)return;
-    e.stopPropagation();SKY.stopDrag();down=true;moved=false;held=false;cdx=cdy=0;sx=e.clientX;sy=e.clientY;ids=SKY.group(c.id);d.setPointerCapture(e.pointerId);
-    pressT=setTimeout(()=>{pressT=null;if(!moved){held=true;down=false;SKY.openConstellationMenu(c.id)}},500)});
+    e.stopPropagation();SKY.stopDrag();down=true;moved=false;linkMode=false;cdx=cdy=0;sx=e.clientX;sy=e.clientY;ids=SKY.group(c.id);d.setPointerCapture(e.pointerId);
+    pressT=setTimeout(()=>{pressT=null;if(!moved&&down){linkMode=true;SKY.beginLinkDrag(c.id,sx,sy);if(navigator.vibrate)navigator.vibrate(15)}},380)});
    d.addEventListener('pointermove',e=>{
-    if(!down)return;const dx=(e.clientX-sx)/SKY.scale,dy=(e.clientY-sy)/SKY.scale;
+    if(!down)return;
+    if(linkMode){SKY.updateLinkDrag(e.clientX,e.clientY);return}
+    const dx=(e.clientX-sx)/SKY.scale,dy=(e.clientY-sy)/SKY.scale;
     if(!moved&&Math.hypot(dx,dy)*SKY.scale<14)return;
     clear();if(!moved){moved=true;SKY.beginDrag(c.id)}cdx=dx;cdy=dy;SKY.drag.tx=dx;SKY.drag.ty=dy});
-   d.addEventListener('pointerup',()=>{
-    clear();if(held){held=false;return}
-    if(!down)return;down=false;
+   d.addEventListener('pointerup',e=>{
+    clear();if(!down)return;down=false;
+    if(linkMode){linkMode=false;SKY.endLinkDrag(c.id,e.clientX,e.clientY);return}
     if(moved){ // linked group moves as one rigid shape; visuals trail behind the finger on springs
      const rx=Math.round(cdx),ry=Math.round(cdy);
-     const ok=[...ids].every(id=>{const m=S.charts.find(x=>x.id===id);return SKY.free({x:m.gx+rx,y:m.gy+ry},ids)});
+     const ok=[...ids].every(id=>{const m=S.charts.find(x=>x.id===id);return SKY.free({x:m.gx+rx,y:m.gy+ry},ids,m)});
      SKY.endDrag(ok?{x:rx,y:ry}:null);
-    }else if(SKY.linking)SKY.finishLink(c.id);
-    else SKY.enter(c.id)});
-   d.addEventListener('pointercancel',()=>{clear();held=false;if(down){down=false;if(moved)SKY.endDrag(null)}});
+    }else SKY.openConstellationMenu(c.id)});
+   d.addEventListener('pointercancel',()=>{clear();if(linkMode){linkMode=false;SKY.cancelLinkDrag()}if(down){down=false;if(moved)SKY.endDrag(null)}});
    g.appendChild(d);
   });
   this.markOrigin()},
@@ -503,7 +511,14 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
   this.markOrigin();
  },
  toGal(sx,sy){const r=$('universe').getBoundingClientRect();return{x:(sx-r.left-r.width/2-this.panX)/this.scale,y:(sy-r.top-r.height/2-this.panY)/this.scale}},
- free(p,ignore){const ig=ignore instanceof Set?ignore:new Set(ignore?[ignore]:[]);return Math.abs(p.x)<1380&&Math.abs(p.y)<1380&&S.charts.every(c=>ig.has(c.id)||Math.hypot(p.x-c.gx,p.y-c.gy)>=88)},
+ geom(c,x,y){const sz=this.shape(c).sz,R=sz/2+9,w=Math.min(124,(c.name.length+String(c.stars.length).length+2)*7),t=y+sz/2+12;return{x,y,R,l:x-w/2,r:x+w/2,t,b:t+14}},
+ hit(a,b){
+  if(Math.hypot(a.x-b.x,a.y-b.y)<a.R+b.R+3)return true;
+  const cr=(c,q)=>Math.hypot(c.x-Math.max(q.l,Math.min(c.x,q.r)),c.y-Math.max(q.t,Math.min(c.y,q.b)))<c.R;
+  return cr(a,b)||cr(b,a)||(a.l<b.r&&b.l<a.r&&a.t<b.b&&b.t<a.b)},
+ free(p,ignore,self){const ig=ignore instanceof Set?ignore:new Set(ignore?[ignore]:[]);
+  const me=this.geom(self||{name:'xxxxxxxx',stars:[]},p.x,p.y);
+  return Math.abs(p.x)<1380&&Math.abs(p.y)<1380&&S.charts.every(c=>ig.has(c.id)||(self&&c.id===self.id)||!this.hit(me,this.geom(c,c.gx,c.gy)))},
  group(id){const g=new Set([id]);let ch=true;while(ch){ch=false;S.links.forEach(l=>{if(g.has(l.a)&&!g.has(l.b)){g.add(l.b);ch=true}else if(g.has(l.b)&&!g.has(l.a)){g.add(l.a);ch=true}})}return g},
  tree(id){const par=new Map([[id,null]]),order=[],q=[id];while(q.length){const x=q.shift();order.push(x);S.links.forEach(l=>{const y=l.a===x?l.b:l.b===x?l.a:null;if(y&&!par.has(y)){par.set(y,x);q.push(y)}})}return{par,order}},
  beginDrag(id){const T=this.tree(id);this.drag={lead:id,par:T.par,order:T.order,st:Object.fromEntries(T.order.map(i=>[i,{x:0,y:0,vx:0,vy:0}])),tx:0,ty:0,held:true,sc:1,t0:performance.now(),raf:0};this.drag.raf=requestAnimationFrame(stepDrag)},
@@ -514,13 +529,31 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
   D.order.forEach(i=>{const d=this.dots[i],s=D.st[i];if(d)d.style.transform=`translate(calc(-50% + ${s.x}px),calc(-50% + ${s.y}px)) scale(${D.sc})`});
   this.glines.forEach(L=>{const A=S.charts.find(x=>x.id===L.a),B=S.charts.find(x=>x.id===L.b);if(!A||!B)return;const a=D.st[L.a]||{x:0,y:0},b=D.st[L.b]||{x:0,y:0};
    L.el.setAttribute('x1',ORI+A.gx+a.x);L.el.setAttribute('y1',ORI+A.gy+a.y);L.el.setAttribute('x2',ORI+B.gx+b.x);L.el.setAttribute('y2',ORI+B.gy+b.y)})},
- emblem(c){ // a constellation is drawn as a tiny map of its own stars inside a ring, never as a single glowing orb
-  const T=c.stars;if(!T.length)return'<svg class="emb" viewBox="-50 -50 100 100"><circle r="3.5" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.6"/></svg>';
-  const xs=T.map(t=>t.x),ys=T.map(t=>t.y),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),k=64/Math.max(x1-x0,y1-y0,1),cx=(x0+x1)/2,cy=(y0+y1)/2;
-  const pos=new Map(T.map(t=>[t.id,[((t.x-cx)*k).toFixed(1),((t.y-cy)*k).toFixed(1)]]));
+ shape(c){
+  const T=c.stars;if(!T.length)return{sz:14,k:0,cx:0,cy:0};
+  const xs=T.map(t=>t.x),ys=T.map(t=>t.y),cx=(Math.min(...xs)+Math.max(...xs))/2,cy=(Math.min(...ys)+Math.max(...ys))/2;
+  let r=0;T.forEach(t=>{r=Math.max(r,Math.hypot(t.x-cx,t.y-cy))});let k=.09,rad=r*k+9;if(rad>80){k=71/r;rad=80}
+  return{sz:Math.max(18,rad*2),k,cx,cy}},
+ emblem(c){ // fixed drawing scale: more stars make the shape grow, never shrink
+  const sh=this.shape(c),R=(sh.sz/2).toFixed(1);
+  if(!c.stars.length)return'<svg class="emb" viewBox="-7 -7 14 14"><circle r="2.6" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1"/></svg>';
+  const pos=new Map(c.stars.map(t=>[t.id,[((t.x-sh.cx)*sh.k).toFixed(1),((t.y-sh.cy)*sh.k).toFixed(1)]]));
   const ln=c.edges.map(e=>{const a=pos.get(e.fromStarId),b=pos.get(e.toStarId);return a&&b?`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`:''}).join('');
-  const dt=T.map(t=>{const q=pos.get(t.id);return`<circle cx="${q[0]}" cy="${q[1]}" r="${T.length>25?3:4.5}" fill="${COLORS[t.spectralClass]||'#fff'}"/>`}).join('');
-  return`<svg class="emb" viewBox="-50 -50 100 100"><g stroke="#fff" stroke-opacity=".55" stroke-width="1.6">${ln}</g>${dt}</svg>`},
+  const dt=c.stars.map(t=>{const q=pos.get(t.id);return`<circle cx="${q[0]}" cy="${q[1]}" r="2.5" fill="${COLORS[t.spectralClass]||'#fff'}"/>`}).join('');
+  return`<svg class="emb" viewBox="-${R} -${R} ${sh.sz} ${sh.sz}"><g stroke="#fff" stroke-opacity=".55" stroke-width="1">${ln}</g>${dt}</svg>`},
+ beginLinkDrag(id,sx,sy){
+  const c=S.charts.find(x=>x.id===id);if(!c)return;const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+  [['x1',ORI+c.gx],['y1',ORI+c.gy],['x2',ORI+c.gx],['y2',ORI+c.gy],['stroke','#fff'],['stroke-width',2],['stroke-dasharray','2,5'],['stroke-linecap','round']].forEach(([k,v])=>l.setAttribute(k,v));
+  $('glines').appendChild(l);this.ld={id,el:l,hover:''};this.dots[id].classList.add('linking');this.say('Drag onto another constellation to link or unlink');this.updateLinkDrag(sx,sy)},
+ pick(p,except){let best='',bd=1e9;S.charts.forEach(c=>{if(c.id===except)return;const g=this.geom(c,c.gx,c.gy),d=Math.hypot(p.x-g.x,p.y-g.y);if(d<g.R+12&&d<bd){best=c.id;bd=d}});return best},
+ updateLinkDrag(sx,sy){const L=this.ld;if(!L)return;const p=this.toGal(sx,sy);L.el.setAttribute('x2',ORI+p.x);L.el.setAttribute('y2',ORI+p.y);
+  const t=this.pick(p,L.id);if(t!==L.hover){if(L.hover&&this.dots[L.hover])this.dots[L.hover].classList.remove('linkhover');L.hover=t;if(t&&this.dots[t])this.dots[t].classList.add('linkhover')}},
+ endLinkDrag(id,sx,sy){const L=this.ld;if(!L)return;const t=this.pick(this.toGal(sx,sy),id);this.cancelLinkDrag();if(t)this.toggleLink(id,t);else this.markOrigin()},
+ cancelLinkDrag(){const L=this.ld;if(!L)return;L.el.remove();Object.values(this.dots).forEach(d=>d.classList.remove('linking','linkhover'));this.ld=null},
+ toggleLink(a,b){
+  const i=S.links.findIndex(l=>(l.a===a&&l.b===b)||(l.a===b&&l.b===a)),A=S.charts.find(x=>x.id===a),B=S.charts.find(x=>x.id===b);
+  if(i>=0)S.links.splice(i,1);else S.links.push({a,b});Store.saveSky();this.renderGalaxy();this.say((i>=0?'Unlinked ':'Linked ')+A.name+' ↔ '+B.name)},
+ say(m){const o=$('sky-origin');o.textContent=m;clearTimeout(this._sayT);this._sayT=setTimeout(()=>this.markOrigin(),2600)},
  startLink(cid){if(S.charts.length<2)return Dlg.note('Create a second constellation first, then you can link them.');this.linking=cid;this.placing=false;$('btn-new').textContent='CANCEL';this.markOrigin()},
  finishLink(b){
   const a=this.linking;this.linking='';$('btn-new').textContent='+ NEW';
@@ -546,7 +579,7 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
    SKY.place(star,o,done?0:x,done?0:y,done?1:1+.15*Math.min(1,Math.hypot(x,y)/20));if(!done)requestAnimationFrame(step)};
   requestAnimationFrame(step)},
  markOrigin(){
-  if(this.mode==='galaxy'){const la=S.charts.find(x=>x.id===this.linking);$('sky-origin').textContent=la?`Tap the constellation to link or unlink with ${la.name}.`:this.placing?'Touch & hold an empty spot to preview, release to create.':'Drag to move (linked groups move together). Hold for options. Tap to open.';return}
+  if(this.mode==='galaxy'){const la=S.charts.find(x=>x.id===this.linking);$('sky-origin').textContent=la?`Tap the constellation to link or unlink with ${la.name}.`:this.placing?'Touch & hold an empty spot to preview, release to create.':'Tap a constellation for options. Drag to move it (linked ones follow). Hold, then drag onto another to link or unlink.';return}
   const oid=originId();document.querySelectorAll('.star').forEach(o=>o.classList.toggle('origin',o.dataset.id===oid));
   const st=S.stars.find(x=>x.id===oid);$('sky-origin').textContent=st?`Next voyage branches from: ${st.voyageName}. Tap another star to change.`:'Forge your first star to begin this constellation.'},
  bind(){
