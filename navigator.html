@@ -30,13 +30,13 @@ h1{font-size:1.05rem;letter-spacing:3px;color:var(--accent);text-shadow:0 0 5px 
 #goal{color:#fff;font-size:.95rem;flex-grow:1;text-transform:uppercase;letter-spacing:1px;padding:4px 0}
 .bar{width:100%;height:4px;background:rgba(255,255,255,.08);border-radius:2px;display:flex;overflow:hidden;margin-top:6px}
 .bar div{height:100%;width:0;transition:width .3s}#b-1{background:var(--ton)}#b0{background:var(--sil)}#b1{background:var(--qina)}
-#drawer{position:fixed;bottom:0;left:0;width:100%;height:60dvh;background:rgba(10,5,15,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:5;border-top:1px solid rgba(255,255,255,.15);border-radius:20px 20px 0 0;display:flex;flex-direction:column;padding:0 20px 15px;transform:translateY(calc(100% - 114px));will-change:transform}
+#drawer{touch-action:none;position:fixed;bottom:0;left:0;width:100%;height:60dvh;background:rgba(10,5,15,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:5;border-top:1px solid rgba(255,255,255,.15);border-radius:20px 20px 0 0;display:flex;flex-direction:column;padding:0 20px 15px;transform:translateY(calc(100% - 114px));will-change:transform}
 #dzone{width:100%;padding:20px 0 30px;display:flex;justify-content:center;align-items:center;touch-action:none;cursor:grab}
 .handle{width:52px;height:5px;background:rgba(255,255,255,.4);border-radius:3px}
-.inrow{display:flex;margin-bottom:24px;flex-shrink:0}
-#log-input{flex-grow:1;min-width:0;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);color:#fff;padding:13px;border-radius:8px 0 0 8px;outline:none;user-select:text}
+.inrow{display:flex;height:48px;margin-bottom:24px;flex-shrink:0}
+#log-input{flex-grow:1;min-width:0;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);color:#fff;padding:0 13px;border-radius:8px 0 0 8px;outline:none;user-select:text;touch-action:manipulation}
 #emit{background:var(--accent);color:var(--bg);border:none;font-weight:bold;padding:0 20px;border-radius:0 8px 8px 0}
-#loglist{list-style:none;overflow-y:auto;overflow-x:hidden;flex-grow:1;padding-bottom:15px}
+#loglist{touch-action:pan-y;list-style:none;overflow-y:auto;overflow-x:hidden;flex-grow:1;padding-bottom:15px}
 .log{background:rgba(0,0,0,.5);border-left:3px solid var(--accent);padding:12px;margin-bottom:8px;font-size:.85rem;display:flex;justify-content:space-between;align-items:flex-start;word-break:break-word;white-space:normal;line-height:1.4;overflow:hidden;max-height:2000px}
 .log-c{flex-grow:1;padding-right:10px}.log-h{font-size:.65rem;color:#888;margin-bottom:4px;display:flex;gap:10px;flex-wrap:wrap}.log-h .yr{color:#555;margin-left:-6px}
 .x{background:transparent;border:none;color:#777;font-size:1.3rem;line-height:1;padding:2px 8px}.x:active{color:#f44}
@@ -54,7 +54,7 @@ h1{font-size:1.05rem;letter-spacing:3px;color:var(--accent);text-shadow:0 0 5px 
 @keyframes breathe{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
 .ov{opacity:0;pointer-events:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:25;display:flex;justify-content:center;align-items:center;transition:opacity .3s;backdrop-filter:blur(5px)}
 .ov.show{opacity:1;pointer-events:auto}
-.box{background:var(--panel);border:1px solid var(--accent);padding:20px;border-radius:8px;width:90%;max-width:330px;text-align:center;max-height:85vh;display:flex;flex-direction:column;overflow-y:auto}
+.box{background:var(--panel);border:1px solid var(--accent);padding:20px;border-radius:8px;width:90%;max-width:330px;text-align:center;max-height:calc(100% - 24px);display:flex;flex-direction:column;overflow-y:auto;overflow-wrap:anywhere}
 .mt{margin-bottom:12px;font-size:.8rem;color:#aaa;letter-spacing:1px;font-weight:bold}
 .in{width:100%;background:rgba(0,0,0,.5);border:1px solid #333;color:#fff;padding:12px;margin-bottom:15px;border-radius:4px;text-align:center;outline:none;font-size:.95rem;user-select:text}
 .ecard{background:rgba(255,255,255,.03);border:1px solid #333;padding:8px 12px;border-radius:6px;display:flex;justify-content:space-between;text-align:left;margin-bottom:6px;gap:8px}
@@ -84,6 +84,18 @@ select.in{background:#0a0514;appearance:auto}
 .gdot.cur{outline:1px dashed rgba(255,255,255,.55);outline-offset:8px}
 #ghost{position:absolute;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;display:none;border:2px dashed #0f8;width:52px;height:52px}#ghost.bad{border-color:#f44}
 #m-confirm,#m-name{z-index:40!important}
+#goal{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:10px}
+#course,#forge{flex:none}
+#s-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}#s-badge{flex:none}
+#glines{z-index:0}
+.gdot .emb{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.gdot .orbit{position:absolute;inset:-7px;border:1px dashed;border-radius:50%;pointer-events:none;animation:spin 70s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gdot .gl{display:flex;justify-content:center;gap:5px;width:max-content;max-width:124px;overflow:visible;text-overflow:clip}
+.gdot .gl .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gdot .gl .ct{flex:none;color:#9ab}
+@media (prefers-reduced-motion:reduce){.gdot .orbit{animation:none!important}}
+.box>*{flex-shrink:0}
+#sky-origin{overflow-wrap:anywhere}
 </style></head><body>
 <div id="astrolabe"><div id="target"></div><div id="needle"></div><div id="hub"></div></div>
 <div id="ui-top">
@@ -104,8 +116,8 @@ select.in{background:#0a0514;appearance:auto}
  <div id="universe"><div id="field"><svg id="lines"></svg></div><div id="gfield"><svg id="glines"></svg><div id="ghost"></div></div></div>
 </div>
 <div id="m-course" class="ov"><div class="box">
- <p class="mt">CHART YOUR VOYAGE</p><input id="goal-input" class="in" placeholder="e.g. Theory Test">
- <p id="chart-cap" class="cap" style="margin:-6px 0 10px;min-height:0"></p>
+ <p class="mt">CHART YOUR VOYAGE</p><input id="goal-input" class="in" placeholder="e.g. Theory Test" maxlength="20">
+ <p id="chart-cap" class="cap" style="margin:0 0 12px;min-height:0"></p>
  <div id="branch-wrap" style="display:none"><p class="mt">BRANCH FROM STAR</p><select id="origin-sel" class="in" onchange="ENGINE.setOrigin(this.value)"></select></div>
  <p class="mt">SET CARDINAL VECTOR</p>
  <div class="grid" id="dirgrid"></div><p id="blocked-hint" class="cap" style="display:none;margin:-6px 0 12px">✕ = heading already explored from this star</p><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
@@ -129,7 +141,7 @@ select.in{background:#0a0514;appearance:auto}
  <div id="s-logs" style="overflow-y:auto;max-height:25vh;font-size:.75rem;margin-bottom:12px"></div>
  <button class="mb" id="branch"></button><button class="mb danger" id="purge">PURGE STAR FROM SKY</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
 <div id="m-confirm" class="ov" style="z-index:30"><div class="box"><p id="c-msg" style="font-size:.85rem;line-height:1.5;color:#ddd;margin-bottom:16px"></p><button class="mb" id="c-ok">OK</button><button class="cancel" id="c-cancel">CANCEL</button></div></div>
-<div id="m-name" class="ov" style="z-index:30"><div class="box"><p class="mt" id="n-title"></p><input id="n-input" class="in" maxlength="40"><button class="mb" id="n-ok">SAVE</button><button class="cancel" id="n-cancel">CANCEL</button></div></div>
+<div id="m-name" class="ov" style="z-index:30"><div class="box"><p class="mt" id="n-title"></p><input id="n-input" class="in" maxlength="24"><button class="mb" id="n-ok">SAVE</button><button class="cancel" id="n-cancel">CANCEL</button></div></div>
 <div id="m-data" class="ov"><div class="box"><p class="mt">YOUR DATA</p>
  <p style="font-size:.75rem;line-height:1.5;color:#bbb;margin-bottom:14px;text-align:left">Everything saves automatically on this device, in this browser. A backup file keeps a copy you can restore later or move to another device.</p>
  <button class="mb" onclick="Store.export()">⬇ DOWNLOAD BACKUP FILE</button><button class="mb" onclick="$('imp').click()">⬆ RESTORE FROM BACKUP</button>
@@ -187,7 +199,7 @@ const Store={
   const stars=(c.stars||[]).filter(x=>x&&x.id).map(x=>this.normStar(x)),ids=new Set(stars.map(x=>x.id));
   const edges=(c.edges||[]).map(e=>this.normEdge(e)).filter(e=>ids.has(e.fromStarId)&&ids.has(e.toStarId));
   edges.forEach(e=>{if(typeof e.angle!=='number'){const A=stars.find(x=>x.id===e.fromStarId),B=stars.find(x=>x.id===e.toStarId);e.angle=norm(Math.round(Math.atan2(B.x-A.x,-(B.y-A.y))*180/Math.PI/45)*45)}});
-  return{id:c.id||('c'+i+'_'+Date.now()),name:String(c.name||'MY CONSTELLATION').slice(0,40),gx:+c.gx||0,gy:+c.gy||0,stars,edges,origin:c.origin||''}},
+  return{id:c.id||('c'+i+'_'+Date.now()),name:String(c.name||'MY CONSTELLATION').slice(0,39),gx:+c.gx||0,gy:+c.gy||0,stars,edges,origin:c.origin||''}},
  apply(a,w,g){
   g=g||{};S.horizon=a.horizonName||NONE;S.target=a.targetAngle||0;S.targetDisp=S.target;S.needle=isNaN(a.needleAngle)?180:a.needleAngle;S.tide=[-1,0,1].includes(a.lastTide)?a.lastTide:0;S.toggle=a.toggle||1;
   S.wake=Array.isArray(w)?w:[];
@@ -227,40 +239,43 @@ function resonant(c){const n=S.wake.length;return n>0&&[-1,0,1].every(k=>c[k]>0&
 
 const ENGINE={
  setDisp(deg){S.targetDisp+=shortest(deg,S.targetDisp)},
- setTarget(deg){if(blocked(originId()).has(norm(deg)))return;const go=UI.afterCourse;S.horizon=$('goal-input').value.trim()||'PRIMARY VOYAGE';S.target=deg;this.setDisp(deg);Store.saveActive();$('goal-input').value='';UI.close();UI.header();UI.compass();if(go)UI.sextant()},
+ setTarget(deg){if(blocked(originId()).has(norm(deg)))return;const go=UI.afterCourse;S.horizon=($('goal-input').value.trim()||'PRIMARY VOYAGE').slice(0,20);S.target=deg;this.setDisp(deg);Store.saveActive();$('goal-input').value='';UI.close();UI.header();UI.compass();if(go)UI.sextant()},
  setOrigin(id){S.origin=id;Store.saveSky();UI.fillCourse();SKY.markOrigin()},
  resetNeedle(){const base=S.needle-norm(S.needle);let c=base+180;if(c-S.needle>180)c-=360;if(S.needle-c>180)c+=360;S.needle=c},
  resetVoyage(){S.wake=[];S.horizon=NONE;S.target=0;this.setDisp(0);this.resetNeedle()},
  abandon(){this.resetVoyage();Store.saveActive();UI.refresh();UI.close();UI.fillCourse();$('m-course').classList.add('show')},
+ advance(n,type,tide,tog){
+  const mult=tide===-1?.5:tide===1?2.2:1.1,diff=shortest(S.target,n);
+  if(type==='Align'){n+=Math.abs(diff)<=TOL?diff:Math.sign(diff)*Math.min(Math.abs(diff),16*mult)}
+  else if(type==='Drift'){const anti=(norm(S.target)+180)%360,d=shortest(anti,n);
+   if(Math.abs(d)<=TOL+4){n+=d-tog*4.5;tog*=-1}else n+=Math.sign(d)*Math.min(Math.abs(d),20*mult)}
+  const r=shortest(S.target,n);if(S.horizon!==NONE&&Math.abs(r)<=TOL)n+=r;
+  return{n,tog}},
+ rewind(){ // replay the surviving log from the voyage start so the needle matches what is actually logged
+  let n=180,tog=1;[...S.wake].reverse().forEach(l=>{const o=this.advance(n,l.actionType,+l.energy,tog);n=o.n;tog=o.tog});
+  n+=360*Math.round((S.needle-n)/360);S.needle=n;S.toggle=tog},
  act(type,icon){
   UI.close();const inp=$('log-input'),text=inp.value.trim();if(!text)return;
   S.tide=S.pending;UI.theme();
-  const mult=S.tide===-1?.5:S.tide===1?2.2:1.1, diff=shortest(S.target,S.needle);
-  if(type==='Align'){
-   if(Math.abs(diff)<=TOL)S.needle+=diff;else S.needle+=Math.sign(diff)*Math.min(Math.abs(diff),16*mult);
-  }else if(type==='Drift'){
-   const anti=(norm(S.target)+180)%360, d=shortest(anti,S.needle);
-   if(Math.abs(d)<=TOL+4){S.needle+=d-S.toggle*4.5;S.toggle*=-1}
-   else S.needle+=Math.sign(d)*Math.min(Math.abs(d),20*mult);
-  }
-  {const r=shortest(S.target,S.needle);if(S.horizon!==NONE&&Math.abs(r)<=TOL)S.needle+=r}
+  const o=this.advance(S.needle,type,S.tide,S.toggle);S.needle=o.n;S.toggle=o.tog;
   const now=Date.now();S.wake.unshift({id:now,ts:now,text,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),energy:String(S.tide),actionType:type,tag:icon,color:COLORS[S.tide]});
   Store.saveActive();inp.value='';UI.refresh();
  }
 };
 
 const UI={
- init(){Store.init();this.drawer();this.theme();this.refresh();this.layout(0,false);addEventListener('load',()=>UI.layout(UI.p||0,false))},
+ init(){Store.init();this.drawer();this.theme();this.refresh();this.layout(0,false);addEventListener('resize',()=>UI.fitGoal());addEventListener('load',()=>{UI.layout(UI.p||0,false);UI.fitGoal()})},
  refresh(){this.header();this.compass();this.logs();this.balance()},
  theme(){const c=COLORS[S.tide];document.documentElement.style.setProperty('--accent',c);$('astrolabe').style.boxShadow=`0 0 35px ${c}25`},
- header(){$('goal').textContent=S.horizon},
+ header(){$('goal').textContent=S.horizon;this.fitGoal()},
+ fitGoal(){const g=$('goal');g.style.fontSize='';let f=parseFloat(getComputedStyle(g).fontSize)||15;while(g.scrollWidth>g.clientWidth&&f>10){f-=.5;g.style.fontSize=f+'px'}},
  canForge(){return Math.abs(shortest(S.target,S.needle))<=TOL&&S.horizon!==NONE&&S.wake.some(l=>l.actionType==='Align')},
  compass(){
   $('needle').style.transform=`rotate(${S.needle}deg)`;$('target').style.transform=`rotate(${S.targetDisp}deg)`;$('target').style.opacity=S.horizon===NONE?0:1;
   const on=this.canForge(),hub=$('hub');
   $('title').textContent=on?'HORIZON ALIGNED':'TERNARY NAVIGATOR';
   hub.style.boxShadow=on?'0 0 25px #fff':`0 0 12px ${COLORS[S.tide]}`;hub.style.backgroundColor=on?'#fff':'var(--bg)';
-  $('course').style.display=on?'none':'block';$('forge').style.display=on?'block':'none';
+  $('course').style.display=on?'none':'block';$('forge').style.display=on?'block':'none';this.fitGoal();
  },
  balance(){
   const c=counts(),n=S.wake.length;
@@ -283,12 +298,15 @@ const UI={
   a.style.left='50%';
  },
  drawer(){
-  const d=$('drawer');let y0=0,dy=0,open=false,moved=false,act=false;
+  const d=$('drawer');let y0=0,dy=0,open=false,moved=false,act=false,tapOK=false;
   const max=()=>innerHeight*DH-PEEK,closed=`translateY(calc(100% - ${PEEK}px))`;
   const settle=()=>{d.style.transition='transform .35s cubic-bezier(.2,.8,.2,1)';d.style.transform=open?'translateY(0)':closed;UI.layout(open?1:0,true)};
   
   const startDrag=(e)=>{
-   if(e.target.closest('#log-input, #emit, #loglist, .x'))return;
+   if(e.target.closest('#loglist,.x'))return;
+   const a=$('log-input').getBoundingClientRect(),b=$('emit').getBoundingClientRect();
+   if(e.clientY>=a.top&&e.clientY<=a.bottom&&e.clientX>=a.left&&e.clientX<=b.right)return; // inside the input row: leave it to the input
+   tapOK=!!e.target.closest('#dzone');
    act=true;moved=false;y0=e.clientY;dy=0;
    d.setPointerCapture(e.pointerId);
    d.style.transition='none';
@@ -304,7 +322,7 @@ const UI={
   });
   const stopDrag=()=>{
    if(!act)return;act=false;const t=max()*.22;
-   if(!open&&dy<-t)open=true;else if(open&&dy>t)open=false;else if(!moved)open=!open;
+   if(!open&&dy<-t)open=true;else if(open&&dy>t)open=false;else if(!moved&&tapOK)open=!open;
    settle();
   };
   d.addEventListener('pointerup',stopDrag);
@@ -333,7 +351,7 @@ const UI={
   if(slide)li.style.transform=`translateX(${slide*innerWidth}px)`;
   li.style.opacity='0';li.style.maxHeight='0px';li.style.paddingTop=li.style.paddingBottom=li.style.marginBottom='0px';
   setTimeout(done,slide?480:330)},
- remove(li,id,slide){this.collapse(li,slide,()=>{S.wake=S.wake.filter(l=>l.id!==id);Store.saveActive();li.remove();this.balance();this.compass()})},
+ remove(li,id,slide){this.collapse(li,slide,()=>{S.wake=S.wake.filter(l=>l.id!==id);ENGINE.rewind();Store.saveActive();li.remove();this.balance();this.compass()})},
  swipe(li,id){
   let x0=0,y0=0,dx=0,down=false,sw=false;
   li.addEventListener('pointerdown',e=>{if(e.target.closest('.x'))return;down=true;sw=false;x0=e.clientX;y0=e.clientY;dx=0});
@@ -399,7 +417,7 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
  renameTarget(cid){
   const c=S.charts.find(x=>x.id===cid);if(!c)return;
   Dlg.name('NAME CONSTELLATION',c.name,n=>{
-   c.name=n.slice(0,40);Store.saveSky();
+   c.name=n.slice(0,24);Store.saveSky();
    if(this.mode==='chart')$('sky-title').textContent=S.ch.name+' ✎';
    else this.renderGalaxy();
   });
@@ -436,39 +454,40 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
   this.markOrigin();if(S.stars.length<=1)this.fit();
  },
  renderGalaxy(){
-  const g=$('gfield');g.querySelectorAll('.gdot').forEach(x=>x.remove());this.dots={};this.glines=[];
+  this.stopDrag();const g=$('gfield');g.querySelectorAll('.gdot').forEach(x=>x.remove());this.dots={};this.glines=[];
   const sv=$('glines');sv.innerHTML='';
   S.links.forEach(lk=>{const A=S.charts.find(x=>x.id===lk.a),B=S.charts.find(x=>x.id===lk.b);if(!A||!B)return;
    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
    [['x1',ORI+A.gx],['y1',ORI+A.gy],['x2',ORI+B.gx],['y2',ORI+B.gy],['stroke','rgba(255,255,255,.3)'],['stroke-width',1.5],['stroke-dasharray','6,6']].forEach(([k,v])=>l.setAttribute(k,v));
    sv.appendChild(l);this.glines.push({el:l,a:lk.a,b:lk.b})});
   S.charts.forEach(c=>{const n=c.stars.length,t=[0,0,0];c.stars.forEach(st=>{t[(+st.spectralClass||0)+1]++});
-   const col=COLORS[n?['-1','0','1'][t.indexOf(Math.max(...t))]:'0'],sz=Math.min(64,8+Math.sqrt(n)*7),d=document.createElement('div');
+   const col=COLORS[n?['-1','0','1'][t.indexOf(Math.max(...t))]:'0'],sz=Math.min(64,12+Math.sqrt(n)*6.5),d=document.createElement('div');
    d.className='gdot'+(c.id===S.cur?' cur':'');d.dataset.id=c.id;this.dots[c.id]=d;
-   d.style.cssText=`left:${ORI+c.gx}px;top:${ORI+c.gy}px;width:${sz}px;height:${sz}px;background:radial-gradient(circle,#fff 20%,${col} 75%);box-shadow:0 0 ${Math.max(sz,16)}px ${col},0 0 ${Math.max(sz,16)*2}px ${col}55;opacity:${n?1:.75}`;
-   const l=document.createElement('div');l.className='gl';l.textContent=c.name+(n?` · ${n}★`:'');d.appendChild(l);
-   
+   d.style.cssText=`left:${ORI+c.gx}px;top:${ORI+c.gy}px;width:${sz}px;height:${sz}px;border:1.5px solid ${col}99;background:radial-gradient(circle,${col}38 0%,${col}1a 60%,transparent 74%),rgba(5,0,10,.6);box-shadow:0 0 ${Math.max(sz*.7,10)}px ${col}44,inset 0 0 ${sz/3}px ${col}33`;
+   d.innerHTML=this.emblem(c)+`<div class="orbit" style="border-color:${col}77"></div>`;
+   const l=document.createElement('div');l.className='gl';
+   const nm=document.createElement('span');nm.className='nm';nm.textContent=c.name;
+   const ct=document.createElement('span');ct.className='ct';ct.textContent=n+'★';l.append(nm,ct);d.appendChild(l);
    let sx=0,sy=0,down=false,moved=false,held=false,pressT=null,ids=null,cdx=0,cdy=0;
    const clear=()=>{if(pressT){clearTimeout(pressT);pressT=null}};
    d.addEventListener('pointerdown',e=>{
     if(SKY.placing)return;
-    e.stopPropagation();down=true;moved=false;held=false;cdx=cdy=0;sx=e.clientX;sy=e.clientY;ids=SKY.group(c.id);d.setPointerCapture(e.pointerId);
+    e.stopPropagation();SKY.stopDrag();down=true;moved=false;held=false;cdx=cdy=0;sx=e.clientX;sy=e.clientY;ids=SKY.group(c.id);d.setPointerCapture(e.pointerId);
     pressT=setTimeout(()=>{pressT=null;if(!moved){held=true;down=false;SKY.openConstellationMenu(c.id)}},500)});
    d.addEventListener('pointermove',e=>{
     if(!down)return;const dx=(e.clientX-sx)/SKY.scale,dy=(e.clientY-sy)/SKY.scale;
     if(!moved&&Math.hypot(dx,dy)*SKY.scale<14)return;
-    clear();moved=true;cdx=dx;cdy=dy;SKY.moveGroup(ids,dx,dy,1.08)});
+    clear();if(!moved){moved=true;SKY.beginDrag(c.id)}cdx=dx;cdy=dy;SKY.drag.tx=dx;SKY.drag.ty=dy});
    d.addEventListener('pointerup',()=>{
     clear();if(held){held=false;return}
     if(!down)return;down=false;
-    if(moved){ // a linked group moves as one rigid shape
+    if(moved){ // linked group moves as one rigid shape; visuals trail behind the finger on springs
      const rx=Math.round(cdx),ry=Math.round(cdy);
      const ok=[...ids].every(id=>{const m=S.charts.find(x=>x.id===id);return SKY.free({x:m.gx+rx,y:m.gy+ry},ids)});
-     if(ok){ids.forEach(id=>{const m=S.charts.find(x=>x.id===id);m.gx+=rx;m.gy+=ry});Store.saveSky()}
-     SKY.renderGalaxy();
+     SKY.endDrag(ok?{x:rx,y:ry}:null);
     }else if(SKY.linking)SKY.finishLink(c.id);
     else SKY.enter(c.id)});
-   d.addEventListener('pointercancel',()=>{clear();held=false;if(down){down=false;if(moved)SKY.renderGalaxy()}});
+   d.addEventListener('pointercancel',()=>{clear();held=false;if(down){down=false;if(moved)SKY.endDrag(null)}});
    g.appendChild(d);
   });
   this.markOrigin()},
@@ -486,11 +505,22 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
  toGal(sx,sy){const r=$('universe').getBoundingClientRect();return{x:(sx-r.left-r.width/2-this.panX)/this.scale,y:(sy-r.top-r.height/2-this.panY)/this.scale}},
  free(p,ignore){const ig=ignore instanceof Set?ignore:new Set(ignore?[ignore]:[]);return Math.abs(p.x)<1380&&Math.abs(p.y)<1380&&S.charts.every(c=>ig.has(c.id)||Math.hypot(p.x-c.gx,p.y-c.gy)>=88)},
  group(id){const g=new Set([id]);let ch=true;while(ch){ch=false;S.links.forEach(l=>{if(g.has(l.a)&&!g.has(l.b)){g.add(l.b);ch=true}else if(g.has(l.b)&&!g.has(l.a)){g.add(l.a);ch=true}})}return g},
- moveGroup(ids,dx,dy,sc){
-  ids.forEach(id=>{const d=this.dots[id];if(d)d.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(${sc})`});
-  this.glines.forEach(L=>{const A=S.charts.find(x=>x.id===L.a),B=S.charts.find(x=>x.id===L.b);if(!A||!B)return;
-   const oa=ids.has(L.a)?1:0,ob=ids.has(L.b)?1:0;
-   L.el.setAttribute('x1',ORI+A.gx+oa*dx);L.el.setAttribute('y1',ORI+A.gy+oa*dy);L.el.setAttribute('x2',ORI+B.gx+ob*dx);L.el.setAttribute('y2',ORI+B.gy+ob*dy)})},
+ tree(id){const par=new Map([[id,null]]),order=[],q=[id];while(q.length){const x=q.shift();order.push(x);S.links.forEach(l=>{const y=l.a===x?l.b:l.b===x?l.a:null;if(y&&!par.has(y)){par.set(y,x);q.push(y)}})}return{par,order}},
+ beginDrag(id){const T=this.tree(id);this.drag={lead:id,par:T.par,order:T.order,st:Object.fromEntries(T.order.map(i=>[i,{x:0,y:0,vx:0,vy:0}])),tx:0,ty:0,held:true,sc:1,t0:performance.now(),raf:0};this.drag.raf=requestAnimationFrame(stepDrag)},
+ endDrag(commit){const D=this.drag;if(!D)return;D.held=false;
+  if(commit){D.order.forEach(i=>{const m=S.charts.find(x=>x.id===i),s=D.st[i],d=this.dots[i];m.gx+=commit.x;m.gy+=commit.y;s.x-=commit.x;s.y-=commit.y;if(d){d.style.left=(ORI+m.gx)+'px';d.style.top=(ORI+m.gy)+'px'}});Store.saveSky()}},
+ stopDrag(){const D=this.drag;if(!D)return;cancelAnimationFrame(D.raf);D.order.forEach(i=>{D.st[i].x=D.st[i].y=0});D.sc=1;this.paint(D);this.drag=null},
+ paint(D){
+  D.order.forEach(i=>{const d=this.dots[i],s=D.st[i];if(d)d.style.transform=`translate(calc(-50% + ${s.x}px),calc(-50% + ${s.y}px)) scale(${D.sc})`});
+  this.glines.forEach(L=>{const A=S.charts.find(x=>x.id===L.a),B=S.charts.find(x=>x.id===L.b);if(!A||!B)return;const a=D.st[L.a]||{x:0,y:0},b=D.st[L.b]||{x:0,y:0};
+   L.el.setAttribute('x1',ORI+A.gx+a.x);L.el.setAttribute('y1',ORI+A.gy+a.y);L.el.setAttribute('x2',ORI+B.gx+b.x);L.el.setAttribute('y2',ORI+B.gy+b.y)})},
+ emblem(c){ // a constellation is drawn as a tiny map of its own stars inside a ring, never as a single glowing orb
+  const T=c.stars;if(!T.length)return'<svg class="emb" viewBox="-50 -50 100 100"><circle r="3.5" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.6"/></svg>';
+  const xs=T.map(t=>t.x),ys=T.map(t=>t.y),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),k=64/Math.max(x1-x0,y1-y0,1),cx=(x0+x1)/2,cy=(y0+y1)/2;
+  const pos=new Map(T.map(t=>[t.id,[((t.x-cx)*k).toFixed(1),((t.y-cy)*k).toFixed(1)]]));
+  const ln=c.edges.map(e=>{const a=pos.get(e.fromStarId),b=pos.get(e.toStarId);return a&&b?`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`:''}).join('');
+  const dt=T.map(t=>{const q=pos.get(t.id);return`<circle cx="${q[0]}" cy="${q[1]}" r="${T.length>25?3:4.5}" fill="${COLORS[t.spectralClass]||'#fff'}"/>`}).join('');
+  return`<svg class="emb" viewBox="-50 -50 100 100"><g stroke="#fff" stroke-opacity=".55" stroke-width="1.6">${ln}</g>${dt}</svg>`},
  startLink(cid){if(S.charts.length<2)return Dlg.note('Create a second constellation first, then you can link them.');this.linking=cid;this.placing=false;$('btn-new').textContent='CANCEL';this.markOrigin()},
  finishLink(b){
   const a=this.linking;this.linking='';$('btn-new').textContent='+ NEW';
@@ -583,5 +613,15 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
 
+(function(){const v=window.visualViewport;if(!v)return;const f=()=>document.querySelectorAll('.ov').forEach(o=>{o.style.top=v.offsetTop+'px';o.style.height=v.height+'px';o.style.bottom='auto'});v.addEventListener('resize',f);v.addEventListener('scroll',f);f()})();
+function stepDrag(t){
+ const D=SKY.drag;if(!D)return;const dt=Math.min(.032,Math.max(.001,(t-D.t0)/1000));D.t0=t;let rest=true;
+ D.order.forEach(id=>{const s=D.st[id];let tx=0,ty=0,k=150,c=17;
+  if(D.held){if(id===D.lead){tx=D.tx;ty=D.ty;k=320;c=32}else{const p=D.st[D.par.get(id)];tx=p.x;ty=p.y;k=130;c=15}}
+  s.vx+=(k*(tx-s.x)-c*s.vx)*dt;s.vy+=(k*(ty-s.y)-c*s.vy)*dt;s.x+=s.vx*dt;s.y+=s.vy*dt;
+  if(Math.abs(tx-s.x)+Math.abs(ty-s.y)+Math.abs(s.vx)+Math.abs(s.vy)>.5)rest=false});
+ D.sc+=((D.held?1.08:1)-D.sc)*Math.min(1,dt*12);SKY.paint(D);
+ if(!D.held&&rest&&Math.abs(D.sc-1)<.003){D.order.forEach(id=>{D.st[id].x=D.st[id].y=0});D.sc=1;SKY.paint(D);SKY.drag=null;return}
+ D.raf=requestAnimationFrame(stepDrag)}
 addEventListener('DOMContentLoaded',()=>{UI.init();SKY.bind()});
 </script></body></html>
