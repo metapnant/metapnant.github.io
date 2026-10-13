@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05000a"><title>Ternary Navigator</title>
@@ -301,12 +301,12 @@ const UI={
   a.style.left='50%';
  },
  drawer(){
-  const d=$('drawer');let y0=0,dy=0,open=false,moved=false,act=false,tapOK=false,kb=false,was=false,rt=null;
+  const d=$('drawer');let y0=0,dy=0,open=false,moved=false,act=false,tapOK=false,kbOpened=false,shown=false,lift=0,rt=null;
   const max=()=>innerHeight*DH-PEEK,closed=`translateY(calc(100% - ${PEEK}px))`;
-  const settle=()=>{d.style.transition='transform .35s cubic-bezier(.2,.8,.2,1)';d.style.transform=open?'translateY(0)':closed;UI.layout(open?1:0,true)};
+  const settle=()=>{lift=0;d.style.transition='transform .35s cubic-bezier(.2,.8,.2,1)';d.style.transform=open?'translateY(0)':closed;UI.layout(open?1:0,true)};
   
   const startDrag=(e)=>{
-   if(kb||e.target.closest('#loglist,.x'))return;
+   if(kbVisible()||e.target.closest('#loglist,.x'))return;
    const a=$('log-input').getBoundingClientRect(),b=$('emit').getBoundingClientRect();
    if(e.clientY>=a.top&&e.clientY<=a.bottom&&e.clientX>=a.left&&e.clientX<=b.right)return; // inside the input row: leave it to the input
    tapOK=!!e.target.closest('#dzone');
@@ -331,9 +331,16 @@ const UI={
   d.addEventListener('pointerup',stopDrag);
   d.addEventListener('pointercancel',()=>{act=false;settle()});
   
-  const inp=$('log-input');
-  inp.addEventListener('focus',()=>{clearTimeout(rt);if(!kb){kb=true;was=open}if(!open){open=true;settle()}});
-  inp.addEventListener('blur',()=>{rt=setTimeout(()=>{if(!kb)return;kb=false;if(!was&&open){open=false;settle()}},300)});
+  const inp=$('log-input'),touchDev=()=>!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+  const relift=()=>{ // keep the input above the keyboard if the open drawer would leave it covered
+   if(!open||!kbVisible()){if(lift){lift=0;d.style.transition='transform .25s ease';d.style.transform='translateY(0)'}return}
+   const need=Math.max(0,Math.round(inp.getBoundingClientRect().bottom+lift-visibleH()+14));
+   if(need!==lift){lift=need;d.style.transition='transform .25s ease';d.style.transform=`translateY(${-need}px)`}};
+  inp.addEventListener('focus',()=>{clearTimeout(rt);shown=false;if(touchDev()&&!open){open=true;kbOpened=true;settle()}setTimeout(relift,450)});
+  inp.addEventListener('blur',()=>{shown=false;rt=setTimeout(()=>{if(kbOpened&&open){open=false;settle()}kbOpened=false;relift()},250)});
+  const onKb=()=>{if(kbVisible())shown=true;else if(shown&&document.activeElement===inp){inp.blur();return}relift()};  // keyboard hidden -> release the box
+  if(VK)VK.addEventListener('geometrychange',onKb);
+  if(window.visualViewport)visualViewport.addEventListener('resize',onKb);
   const onResize=()=>{if(document.activeElement!==$('log-input'))UI.layout(UI.p||0,false)};
   addEventListener('resize',onResize);
   if(window.visualViewport)window.visualViewport.addEventListener('resize',onResize);
@@ -646,7 +653,21 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
 
-(function(){const v=window.visualViewport;if(!v)return;const f=()=>document.querySelectorAll('.ov').forEach(o=>{o.style.top=v.offsetTop+'px';o.style.height=v.height+'px';o.style.bottom='auto'});v.addEventListener('resize',f);v.addEventListener('scroll',f);f()})();
+const VK=navigator.virtualKeyboard;if(VK)VK.overlaysContent=true;
+let BASEH=innerHeight;
+const vkH=()=>VK&&VK.boundingRect?VK.boundingRect.height:0;
+const visibleH=()=>(window.visualViewport?visualViewport.height:innerHeight)-vkH();   // area not covered by the keyboard, any mode
+const kbHeight=()=>vkH()>0?vkH():Math.max(0,BASEH-(window.visualViewport?visualViewport.height:innerHeight));
+const kbVisible=()=>kbHeight()>80;
+addEventListener('resize',()=>{if(!/INPUT|TEXTAREA/.test((document.activeElement||{}).tagName||''))BASEH=Math.max(innerHeight,window.visualViewport?visualViewport.height:0)});
+function fitOv(){const v=window.visualViewport,h=visibleH();document.querySelectorAll('.ov').forEach(o=>{o.style.top=(v?v.offsetTop:0)+'px';o.style.height=h+'px';o.style.bottom='auto'})}
+if(window.visualViewport){visualViewport.addEventListener('resize',fitOv);visualViewport.addEventListener('scroll',fitOv)}
+if(VK)VK.addEventListener('geometrychange',fitOv);
+fitOv();
+// A tap that opens a popup is followed by a synthetic click at the same spot, which used to land on the popup's buttons.
+(function(){let t=0;
+ new MutationObserver(ms=>ms.forEach(m=>{if(m.target.classList.contains('show')&&!(m.oldValue||'').includes('show'))t=performance.now()})).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class'],attributeOldValue:true});
+ document.addEventListener('click',e=>{if(performance.now()-t<450&&e.target.closest&&e.target.closest('.ov')){e.stopPropagation();e.preventDefault()}},true)})();
 function stepDrag(t){
  const D=SKY.drag;if(!D)return;const dt=Math.min(.032,Math.max(.001,(t-D.t0)/1000));D.t0=t;let rest=true;
  D.order.forEach(id=>{const s=D.st[id];let tx=0,ty=0,k=150,c=17;
