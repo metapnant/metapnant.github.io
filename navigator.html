@@ -89,23 +89,34 @@ select.in{background:#0a0514;appearance:auto}
 #s-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}#s-badge{flex:none}
 #glines{z-index:0}
 .gdot .emb{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
-.gdot .orbit{position:absolute;inset:-7px;border:1px dashed;border-radius:50%;pointer-events:none;animation:spin 70s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .gdot .gl{display:flex;justify-content:center;gap:5px;width:max-content;max-width:124px;overflow:visible;text-overflow:clip}
 .gdot .gl .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gdot .gl .ct{flex:none;color:#9ab}
-@media (prefers-reduced-motion:reduce){.gdot .orbit{animation:none!important}}
 .box>*{flex-shrink:0}
 #sky-origin{overflow-wrap:anywhere}
 .star::before{content:'';position:absolute;inset:-8px;border-radius:50%}
 #ghost{width:32px!important;height:32px!important}
 .gdot.linking{filter:brightness(1.7) drop-shadow(0 0 8px #fff)}
 .gdot.linkhover{outline:2px solid #00ff9d;outline-offset:10px}
+#goal{cursor:pointer}
+#vlist{max-height:45vh;overflow-y:auto;margin-bottom:6px}
+.vrow{display:flex;align-items:center;margin-bottom:6px;border:1px solid #333;border-radius:6px;background:rgba(255,255,255,.04)}.vrow.f{border-color:var(--accent)}
+.vmain{flex:1;min-width:0;text-align:left;background:none;border:none;color:#fff;padding:10px 12px}
+.vn{display:block;font-weight:bold;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vs{display:block;font-size:.65rem;color:#999;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fstar{position:absolute;transform:translate(-50%,-50%);border-radius:50%;touch-action:none;cursor:pointer;border:1px dashed var(--fc);animation:forming 3.2s ease-in-out infinite}
+.fstar::before{content:'';position:absolute;inset:-8px;border-radius:50%}
+.fstar .fl{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:7px;font-size:.6rem;color:#aaa;white-space:nowrap;max-width:100px;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.fstar.focus{outline:1px solid rgba(255,255,255,.7);outline-offset:6px}.fstar.ready{border-style:solid;border-color:#fff}
+@keyframes forming{0%,100%{opacity:.55}50%{opacity:1}}
+.gdot .gl .fc{flex:none;color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.fstar{animation:none}}
 </style></head><body>
 <div id="astrolabe"><div id="target"></div><div id="needle"></div><div id="hub"></div></div>
 <div id="ui-top">
  <div class="row"><h1 id="title">TERNARY NAVIGATOR</h1><button class="btn ghost" style="margin-bottom:12px" onclick="UI.sky(true)">★ SKY</button></div>
  <div class="row"><span class="lbl">CURRENT HORIZON</span><span id="res">RESONANCE [rél]</span></div>
- <div class="row"><div id="goal">NO HORIZON SET</div><button id="course" class="btn" onclick="UI.course()">VOYAGE</button><button id="forge" class="btn" onclick="UI.forge()">FORGE STAR</button></div>
+ <div class="row"><div id="goal" onclick="UI.course()">NO HORIZON SET</div><button id="course" class="btn" onclick="UI.course()">VOYAGE</button><button id="forge" class="btn" onclick="UI.forge()">FORGE STAR</button></div>
  <div class="bar"><div id="b-1"></div><div id="b0"></div><div id="b1"></div></div>
 </div>
 <div id="drawer">
@@ -115,20 +126,17 @@ select.in{background:#0a0514;appearance:auto}
 </div>
 <div id="sky">
  <div class="sky-h"><button class="btn ghost" onclick="SKY.back()">← BACK</button><h2 id="sky-title" onclick="SKY.headerClick()">CONSTELLATION</h2><button class="btn ghost" onclick="UI.close();$('m-data').classList.add('show')">DATA</button></div>
- <div id="zoomctl"><button id="btn-new" class="btn ghost" onclick="SKY.actionNew()">+ VOYAGE</button><button class="btn ghost" onclick="SKY.zoom(.2)">+</button><button class="btn ghost" onclick="SKY.zoom(-.2)">−</button><button class="btn ghost" onclick="SKY.fit()">FIT</button><button id="btn-mode" class="btn ghost" onclick="SKY.toggleMode()">GALAXY</button></div>
+ <div id="zoomctl"><button id="btn-new" class="btn ghost" onclick="SKY.actionNew()">+ VOYAGE</button><button class="btn ghost" onclick="SKY.zoom(.2)">+</button><button class="btn ghost" onclick="SKY.zoom(-.2)">−</button><button class="btn ghost" onclick="SKY.fit()">FIT</button><button id="btn-focus" class="btn ghost" style="display:none" onclick="SKY.centerFocus()">FOCUS</button><button id="btn-mode" class="btn ghost" onclick="SKY.toggleMode()">GALAXY</button></div>
  <div id="sky-origin"></div>
  <div id="universe"><div id="field"><svg id="lines"></svg></div><div id="gfield"><svg id="glines"></svg><div id="ghost"></div></div></div>
 </div>
 <div id="m-course" class="ov"><div class="box">
  <p class="mt">CHART YOUR VOYAGE</p><input id="goal-input" class="in" placeholder="e.g. Theory Test" maxlength="20">
+ <div id="chart-wrap" style="display:none"><p class="mt">CONSTELLATION</p><select id="chart-sel" class="in" onchange="UI.setCourseChart(this.value)"></select></div>
  <p id="chart-cap" class="cap" style="margin:0 0 12px;min-height:0"></p>
  <div id="branch-wrap" style="display:none"><p class="mt">BRANCH FROM STAR</p><select id="origin-sel" class="in" onchange="ENGINE.setOrigin(this.value)"></select></div>
  <p class="mt">SET CARDINAL VECTOR</p>
  <div class="grid" id="dirgrid"></div><p id="blocked-hint" class="cap" style="display:none;margin:-6px 0 12px">✕ = heading already explored from this star</p><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
-<div id="m-abandon" class="ov"><div class="box">
- <p class="mt" style="color:#f44">ABANDON VOYAGE?</p>
- <p style="font-size:.8rem;line-height:1.5;color:#bbb;margin-bottom:15px">You have an active voyage. Changing course now dissolves your current wake.</p>
- <button class="mb danger" onclick="ENGINE.abandon()">DISSOLVE &amp; CHART NEW</button><button class="cancel" onclick="UI.close()">MAINTAIN VOYAGE</button></div></div>
 <div id="m-sextant" class="ov"><div class="box">
  <p class="mt">ENERGY</p>
  <div class="chips"><button class="chip" id="e-1" onclick="UI.energy(-1)">,ton</button><button class="chip" id="e0" onclick="UI.energy(0)">.síl</button><button class="chip" id="e1" onclick="UI.energy(1)">;qına</button></div>
@@ -146,6 +154,9 @@ select.in{background:#0a0514;appearance:auto}
  <button class="mb" id="branch"></button><button class="mb danger" id="purge">PURGE STAR FROM SKY</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
 <div id="m-confirm" class="ov" style="z-index:30"><div class="box"><p id="c-msg" style="font-size:.85rem;line-height:1.5;color:#ddd;margin-bottom:16px"></p><button class="mb" id="c-ok">OK</button><button class="cancel" id="c-cancel">CANCEL</button></div></div>
 <div id="m-name" class="ov" style="z-index:30"><div class="box"><p class="mt" id="n-title"></p><input id="n-input" class="in" maxlength="24"><button class="mb" id="n-ok">SAVE</button><button class="cancel" id="n-cancel">CANCEL</button></div></div>
+<div id="m-vlist" class="ov"><div class="box"><p class="mt">VOYAGES IN PROGRESS</p><div id="vlist"></div><button class="mb" onclick="UI.newVoyage()">+ NEW VOYAGE</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
+<div id="m-vmenu" class="ov" style="z-index:30"><div class="box"><p class="mt" id="vm-title">VOYAGE</p><p id="vm-info" class="cap" style="min-height:0;margin:0 0 14px"></p>
+ <button class="mb" onclick="SKY.vmFocus()">FOCUS THIS VOYAGE</button><button class="mb danger" onclick="SKY.vmAbandon()">ABANDON VOYAGE</button><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
 <div id="m-data" class="ov"><div class="box"><p class="mt">YOUR DATA</p>
  <p style="font-size:.75rem;line-height:1.5;color:#bbb;margin-bottom:14px;text-align:left">Everything saves automatically on this device, in this browser. A backup file keeps a copy you can restore later or move to another device.</p>
  <button class="mb" onclick="Store.export()">⬇ DOWNLOAD BACKUP FILE</button><button class="mb" onclick="$('imp').click()">⬆ RESTORE FROM BACKUP</button>
@@ -163,7 +174,13 @@ const norm=a=>((a%360)+360)%360, shortest=(t,c)=>((norm(t)-norm(c)+540)%360)-180
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 const $=id=>document.getElementById(id);
 const PEEK=126,DH=.6,DIRS=[['NW',315],['N',0],['NE',45],['W',270],null,['E',90],['SW',225],['S',180],['SE',135]],CAP={'-1':'Ground: rest, stillness, recovery','0':'Flow: sustained habit, smooth transition','1':'Fire: sprint, deep work'};
-const S={horizon:NONE,target:0,targetDisp:0,needle:180,tide:0,pending:0,toggle:1,wake:[],charts:[],cur:'',links:[],
+const S={tide:0,pending:0,charts:[],cur:'',links:[],voyages:[],focus:'',
+ get v(){return this.voyages.find(x=>x.id===this.focus)||null},
+ get horizon(){const v=this.v;return v?v.name:NONE},
+ get target(){const v=this.v;return v?v.target:0},set target(x){const v=this.v;if(v)v.target=x},
+ get needle(){const v=this.v;return v?v.needle:180},set needle(x){const v=this.v;if(v)v.needle=x},
+ get toggle(){const v=this.v;return v?v.toggle:1},set toggle(x){const v=this.v;if(v)v.toggle=x},
+ get wake(){const v=this.v;return v?v.wake:[]},set wake(a){const v=this.v;if(v)v.wake=a},
  get ch(){let c=this.charts.find(x=>x.id===this.cur);if(!c){c=this.charts[0]||(this.charts[0]={id:'c'+Date.now(),name:'MY CONSTELLATION',gx:0,gy:0,stars:[],edges:[],origin:''});this.cur=c.id}return c},
  get stars(){return this.ch.stars},set stars(v){this.ch.stars=v},get edges(){return this.ch.edges},set edges(v){this.ch.edges=v},
  get origin(){return this.ch.origin||''},set origin(v){this.ch.origin=v}};
@@ -194,7 +211,7 @@ const Store={
   }
   const w=this.read('ternary_nav_wake',null)??this.read('nav_wake_logs',[]);
   const c=this.read('ternary_nav_galaxy',null)??this.read('ternary_nav_constellation',null)??this.read('nav_constellation',null)??{};
-  this.apply(a,w,c);
+  this.apply(a,w,c,this.read('ternary_nav_voyages',null));
   this.write('ternary_nav_schema',3);
   this.saveActive();this.saveSky();
  },
@@ -203,30 +220,36 @@ const Store={
   const edges=(c.edges||[]).map(e=>this.normEdge(e)).filter(e=>ids.has(e.fromStarId)&&ids.has(e.toStarId));
   edges.forEach(e=>{if(typeof e.angle!=='number'){const A=stars.find(x=>x.id===e.fromStarId),B=stars.find(x=>x.id===e.toStarId);e.angle=norm(Math.round(Math.atan2(B.x-A.x,-(B.y-A.y))*180/Math.PI/45)*45)}});
   return{id:c.id||('c'+i+'_'+Date.now()),name:String(c.name||'MY CONSTELLATION').slice(0,39),gx:+c.gx||0,gy:+c.gy||0,stars,edges,origin:c.origin||''}},
- apply(a,w,g){
-  g=g||{};S.horizon=a.horizonName||NONE;S.target=a.targetAngle||0;S.targetDisp=S.target;S.needle=isNaN(a.needleAngle)?180:a.needleAngle;S.tide=[-1,0,1].includes(a.lastTide)?a.lastTide:0;S.toggle=a.toggle||1;
-  S.wake=Array.isArray(w)?w:[];
+ apply(a,w,g,vs){
+  g=g||{};S.tide=[-1,0,1].includes(a.lastTide)?a.lastTide:0;
   const list=Array.isArray(g.charts)?g.charts:[{name:'MY CONSTELLATION',stars:g.stars||[],edges:g.edges||[],origin:a.origin||''}];
   S.charts=list.map((c,i)=>this.normChart(c,i));
   if(!S.charts.length)S.charts=[{id:'c'+Date.now(),name:'MY CONSTELLATION',gx:0,gy:0,stars:[],edges:[],origin:''}];
   S.cur=S.charts.some(c=>c.id===g.cur)?g.cur:S.charts[0].id;S.ch;
   const seen=new Set();S.links=(Array.isArray(g.links)?g.links:[]).filter(l=>{if(!l||l.a===l.b||!S.charts.some(c=>c.id===l.a)||!S.charts.some(c=>c.id===l.b))return false;const k=[l.a,l.b].sort().join('|');if(seen.has(k))return false;seen.add(k);return true}).map(l=>({a:l.a,b:l.b}));
+  let vl=[];
+  if(vs&&Array.isArray(vs.voyages))vl=vs.voyages;
+  else if(a.horizonName&&a.horizonName!==NONE)vl=[{name:a.horizonName,chart:S.cur,origin:a.origin||'',target:a.targetAngle,needle:a.needleAngle,toggle:a.toggle,wake:w}]; // single voyage from older saves
+  const now=Date.now();
+  S.voyages=vl.filter(v=>v&&v.name).map((v,i)=>({id:v.id||('v'+now+'_'+i),name:String(v.name).slice(0,39),chart:S.charts.some(c=>c.id===v.chart)?v.chart:S.cur,origin:v.origin||'',
+   target:+v.target||0,needle:isNaN(+v.needle)||v.needle==null?180:+v.needle,toggle:v.toggle||1,wake:Array.isArray(v.wake)?v.wake:[],created:v.created||now,updated:v.updated||now}));
+  S.focus=vs&&S.voyages.some(v=>v.id===vs.focus)?vs.focus:(S.voyages[0]?S.voyages[0].id:'');
  },
- saveActive(){this.write('ternary_nav_active',{horizonName:S.horizon,targetAngle:S.target,needleAngle:S.needle,lastTide:S.tide,toggle:S.toggle,origin:S.origin});this.write('ternary_nav_wake',S.wake)},
+ saveActive(){this.write('ternary_nav_active',{lastTide:S.tide});this.write('ternary_nav_voyages',{focus:S.focus,voyages:S.voyages})},
  saveSky(){this.write('ternary_nav_galaxy',{cur:S.cur,charts:S.charts,links:S.links})},
  resetDefault(){
   Dlg.ask('Are you sure you want to reset all constellations, voyages, and data to default? This cannot be undone.','RESET ALL',()=>{
    localStorage.clear();
-   S.horizon=NONE;S.target=0;S.targetDisp=0;S.needle=180;S.tide=0;S.pending=0;S.toggle=1;S.wake=[];S.charts=[];S.cur='';
+   S.tide=0;S.pending=0;S.voyages=[];S.focus='';S.charts=[];S.cur='';UI.vn=undefined;
    Store.init();UI.refresh();SKY.setMode('chart');SKY.render();UI.close();Dlg.note('Application data restored to defaults.');
   });
  },
- export(){const blob=new Blob([JSON.stringify({app:'ternary-navigator',active:{horizonName:S.horizon,targetAngle:S.target,needleAngle:S.needle,lastTide:S.tide,origin:S.origin},wake:S.wake,galaxy:{cur:S.cur,charts:S.charts,links:S.links}},null,2)],{type:'application/json'});
+ export(){const blob=new Blob([JSON.stringify({app:'ternary-navigator',active:{lastTide:S.tide},voyages:{focus:S.focus,voyages:S.voyages},galaxy:{cur:S.cur,charts:S.charts,links:S.links}},null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ternary-navigator-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)},
  import(inp){const f=inp.files[0];inp.value='';if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const j=JSON.parse(r.result),g=j.galaxy||j.constellation;if(!g||!(Array.isArray(g.charts)||Array.isArray(g.stars)))throw 0;
    const n=Array.isArray(g.charts)?g.charts.reduce((t,c)=>t+(c.stars||[]).length,0):(g.stars||[]).length;
-   Dlg.ask(`Replace current data with this backup (${n} stars)?`,'REPLACE',()=>{this.apply(j.active||{},j.wake,g);this.saveActive();this.saveSky();UI.refresh();SKY.setMode('chart');SKY.render();UI.close();Dlg.note('Backup restored.')})}
+   Dlg.ask(`Replace current data with this backup (${n} stars)?`,'REPLACE',()=>{this.apply(j.active||{},j.wake,g,j.voyages);this.saveActive();this.saveSky();UI.refresh();SKY.setMode('chart');SKY.render();UI.close();Dlg.note('Backup restored.')})}
    catch(e){Dlg.note('That file is not a valid Ternary Navigator backup.')}};r.readAsText(f)}
 };
 
@@ -235,18 +258,26 @@ function stamp(e){
  return{md:ok?String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'):'',yr:ok?d.getFullYear():'',time:e.time||(ok?d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'')}}
 function stampHTML(e){const t=stamp(e);return(t.md?`<span>${t.md}</span><span class="yr">${t.yr}</span>`:'')+`<span>${esc(t.time)}</span><span>${esc(e.tag)}</span>`}
 function stampText(e){const t=stamp(e);return(t.md?t.md+'/'+t.yr+' · ':'')+t.time+' '+e.tag}
-const originId=()=>S.stars.some(s=>s.id===S.origin)?S.origin:(S.stars.length?S.stars[S.stars.length-1].id:'');
-function blocked(id){const b=new Set();if(id)S.edges.forEach(e=>{if(e.fromStarId===id)b.add(norm(e.angle));if(e.toStarId===id)b.add(norm(e.angle+180))});return b}
-function counts(){const c={'-1':0,'0':0,'1':0,Align:0,Drift:0,Anchor:0};S.wake.forEach(l=>{if(c[l.energy]!==undefined)c[l.energy]++;if(c[l.actionType]!==undefined)c[l.actionType]++});return c}
-function resonant(c){const n=S.wake.length;return n>0&&[-1,0,1].every(k=>c[k]>0&&c[k]/n>.15)}
+const originId=ch=>{ch=ch||S.ch;return ch.stars.some(x=>x.id===ch.origin)?ch.origin:(ch.stars.length?ch.stars[ch.stars.length-1].id:'')};
+const parentOf=(ch,v)=>ch.stars.find(x=>x.id===v.origin)||(ch.stars.length?ch.stars[ch.stars.length-1]:null);
+function blocked(id,ch,ex){ch=ch||S.ch;const b=new Set();if(!id)return b;
+ ch.edges.forEach(e=>{if(e.fromStarId===id)b.add(norm(e.angle));if(e.toStarId===id)b.add(norm(e.angle+180))});
+ S.voyages.forEach(o=>{if(o.id===ex||o.chart!==ch.id)return;const p=parentOf(ch,o);if(p&&p.id===id)b.add(norm(o.target))}); // headings taken by voyages still forming
+ return b}
+function counts(w){w=w||S.wake;const c={'-1':0,'0':0,'1':0,Align:0,Drift:0,Anchor:0};w.forEach(l=>{if(c[l.energy]!==undefined)c[l.energy]++;if(c[l.actionType]!==undefined)c[l.actionType]++});return c}
+function resonant(c,n){n=n===undefined?S.wake.length:n;return n>0&&[-1,0,1].every(k=>c[k]>0&&c[k]/n>.15)}
 
 const ENGINE={
- setDisp(deg){S.targetDisp+=shortest(deg,S.targetDisp)},
- setTarget(deg){if(blocked(originId()).has(norm(deg)))return;const go=UI.afterCourse;S.horizon=($('goal-input').value.trim()||'PRIMARY VOYAGE').slice(0,20);S.target=deg;this.setDisp(deg);Store.saveActive();$('goal-input').value='';UI.close();UI.header();UI.compass();if(go)UI.sextant()},
- setOrigin(id){S.origin=id;Store.saveSky();UI.fillCourse();SKY.markOrigin()},
- resetNeedle(){const base=S.needle-norm(S.needle);let c=base+180;if(c-S.needle>180)c-=360;if(S.needle-c>180)c+=360;S.needle=c},
- resetVoyage(){S.wake=[];S.horizon=NONE;S.target=0;this.setDisp(0);this.resetNeedle()},
- abandon(){this.resetVoyage();Store.saveActive();UI.refresh();UI.close();UI.fillCourse();$('m-course').classList.add('show')},
+ setTarget(deg){
+  const ch=UI.cch(),oid=originId(ch);if(blocked(oid,ch).has(norm(deg)))return;const go=UI.afterCourse;
+  this.newVoyage(($('goal-input').value.trim()||'PRIMARY VOYAGE').slice(0,20),deg,ch.id,oid);
+  S.cur=ch.id;Store.saveActive();Store.saveSky();$('goal-input').value='';UI.close();UI.refresh();if(go)UI.sextant()},
+ newVoyage(name,deg,chart,origin){const now=Date.now(),v={id:'v'+now+Math.random().toString(36).slice(2,6),name,chart,origin:origin||'',target:deg,needle:180,toggle:1,wake:[],created:now,updated:now};S.voyages.push(v);S.focus=v.id;return v},
+ endVoyage(id){S.voyages=S.voyages.filter(v=>v.id!==id);if(S.focus===id){const n=[...S.voyages].sort((a,b)=>b.updated-a.updated)[0];S.focus=n?n.id:''}},
+ focusVoyage(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;S.focus=id;if(S.charts.some(c=>c.id===v.chart))S.cur=v.chart;Store.saveActive();Store.saveSky();UI.refresh()},
+ abandonVoyage(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;
+  Dlg.ask(`Abandon "${v.name}"? Its ${v.wake.length} log ${v.wake.length===1?'entry':'entries'} will be dissolved.`,'ABANDON',()=>{this.endVoyage(id);Store.saveActive();UI.refresh();SKY.render()})},
+ setOrigin(id){UI.cch().origin=id;Store.saveSky();UI.fillCourse();SKY.markOrigin()},
  advance(n,type,tide,tog){
   const mult=tide===-1?.5:tide===1?2.2:1.1,diff=shortest(S.target,n);
   if(type==='Align'){n+=Math.abs(diff)<=TOL?diff:Math.sign(diff)*Math.min(Math.abs(diff),16*mult)}
@@ -261,7 +292,7 @@ const ENGINE={
   UI.close();const inp=$('log-input'),text=inp.value.trim();if(!text)return;
   S.tide=S.pending;UI.theme();
   const o=this.advance(S.needle,type,S.tide,S.toggle);S.needle=o.n;S.toggle=o.tog;
-  const now=Date.now();S.wake.unshift({id:now,ts:now,text,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),energy:String(S.tide),actionType:type,tag:icon,color:COLORS[S.tide]});
+  const now=Date.now();S.v.updated=now;S.wake.unshift({id:now,ts:now,text,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),energy:String(S.tide),actionType:type,tag:icon,color:COLORS[S.tide]});
   Store.saveActive();inp.value='';UI.refresh();
  }
 };
@@ -274,10 +305,14 @@ const UI={
  fitGoal(){const g=$('goal');g.style.fontSize='';let f=parseFloat(getComputedStyle(g).fontSize)||15;while(g.scrollWidth>g.clientWidth&&f>10){f-=.5;g.style.fontSize=f+'px'}},
  canForge(){return Math.abs(shortest(S.target,S.needle))<=TOL&&S.horizon!==NONE&&S.wake.some(l=>l.actionType==='Align')},
  compass(){
-  $('needle').style.transform=`rotate(${S.needle}deg)`;$('target').style.transform=`rotate(${S.targetDisp}deg)`;$('target').style.opacity=S.horizon===NONE?0:1;
+  const has=S.horizon!==NONE;
+  if(this.vn===undefined){this.vn=S.needle;this.vt=S.target}
+  this.vn+=shortest(S.needle,this.vn);this.vt+=shortest(S.target,this.vt);   // dial always turns the short way when you switch voyage
+  $('needle').style.transform=`rotate(${this.vn}deg)`;$('target').style.transform=`rotate(${this.vt}deg)`;$('target').style.opacity=has?1:0;
   const on=this.canForge(),hub=$('hub');
   $('title').textContent=on?'HORIZON ALIGNED':'TERNARY NAVIGATOR';
   hub.style.boxShadow=on?'0 0 25px #fff':`0 0 12px ${COLORS[S.tide]}`;hub.style.backgroundColor=on?'#fff':'var(--bg)';
+  $('course').textContent=S.voyages.length?'VOYAGES':'VOYAGE';
   $('course').style.display=on?'none':'block';$('forge').style.display=on?'block':'none';this.fitGoal();
  },
  balance(){
@@ -342,19 +377,35 @@ const UI={
   addEventListener('resize',onResize);
   if(window.visualViewport)window.visualViewport.addEventListener('resize',onResize);
  },
- course(){if(S.wake.length&&S.horizon!==NONE)return $('m-abandon').classList.add('show');this.fillCourse();$('m-course').classList.add('show')},
+ course(){if(S.voyages.length)return this.voyages();this.newVoyage()},
+ newVoyage(keep){if(!keep)this.courseChart=S.cur;this.close();this.fillCourse();$('m-course').classList.add('show')},
+ voyages(){
+  const box=$('vlist');box.innerHTML='';
+  [...S.voyages].sort((a,b)=>((b.id===S.focus)-(a.id===S.focus))||b.updated-a.updated).forEach(v=>{
+   const ch=S.charts.find(c=>c.id===v.chart),row=document.createElement('div');row.className='vrow'+(v.id===S.focus?' f':'');
+   const m=document.createElement('button');m.className='vmain';
+   const a=document.createElement('span');a.className='vn';a.textContent=v.name;
+   const b=document.createElement('span');b.className='vs';b.textContent=`${ch?ch.name:'?'} · ${v.wake.length} log${v.wake.length===1?'':'s'} · ${Math.round(Math.abs(shortest(v.target,v.needle)))}° off`;
+   m.append(a,b);m.onclick=()=>{UI.close();ENGINE.focusVoyage(v.id)};
+   const x=document.createElement('button');x.className='x';x.textContent='×';x.setAttribute('aria-label','Abandon voyage');x.onclick=()=>{UI.close();ENGINE.abandonVoyage(v.id)};
+   row.append(m,x);box.appendChild(row)});
+  $('m-vlist').classList.add('show')},
+ cch(){return S.charts.find(c=>c.id===this.courseChart)||S.ch},
+ setCourseChart(id){this.courseChart=id;this.fillCourse()},
  fillCourse(){
-  const g=$('dirgrid'),oid=originId(),bl=blocked(oid),sel=$('origin-sel');
-  $('branch-wrap').style.display=S.stars.length?'block':'none';$('chart-cap').textContent='In constellation: '+S.ch.name;sel.innerHTML='';
-  S.stars.forEach((st,i)=>{const o=document.createElement('option');o.value=st.id;o.textContent=(i+1)+'. '+st.voyageName+(i===S.stars.length-1?' (latest)':'');sel.appendChild(o)});sel.value=oid;
+  const ch=this.cch(),g=$('dirgrid'),oid=originId(ch),bl=blocked(oid,ch),sel=$('origin-sel'),cs=$('chart-sel'),many=S.charts.length>1;
+  $('chart-wrap').style.display=many?'block':'none';cs.innerHTML='';
+  S.charts.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name;cs.appendChild(o)});cs.value=ch.id;
+  $('branch-wrap').style.display=ch.stars.length?'block':'none';$('chart-cap').textContent='In constellation: '+ch.name;$('chart-cap').style.display=many?'none':'block';sel.innerHTML='';
+  ch.stars.forEach((st,i)=>{const o=document.createElement('option');o.value=st.id;o.textContent=(i+1)+'. '+st.voyageName+(i===ch.stars.length-1?' (latest)':'');sel.appendChild(o)});sel.value=oid;
   g.innerHTML='';DIRS.forEach(d=>{if(!d){g.appendChild(document.createElement('div'));return}
    const b=document.createElement('button');b.className='mb';const x=bl.has(d[1]);b.textContent=d[0]+(x?' ✕':'');
    if(x){b.disabled=true;b.style.opacity=.3}else b.onclick=()=>ENGINE.setTarget(d[1]);g.appendChild(b)});
   $('blocked-hint').style.display=bl.size?'block':'none'},
- sextant(){if(!$('log-input').value.trim())return;if(S.horizon===NONE){this.afterCourse=true;this.fillCourse();$('m-course').classList.add('show');return}S.pending=S.tide;this.energy(S.tide);$('m-sextant').classList.add('show')},
+ sextant(){if(!$('log-input').value.trim())return;if(S.horizon===NONE){this.afterCourse=true;this.courseChart=S.cur;this.fillCourse();$('m-course').classList.add('show');return}S.pending=S.tide;this.energy(S.tide);$('m-sextant').classList.add('show')},
  energy(t){S.pending=t;[-1,0,1].forEach(k=>$('e'+k).className='chip'+(k===t?' s'+k:''));$('e-cap').textContent=CAP[t]},
  close(){this.afterCourse=false;document.querySelectorAll('.ov').forEach(m=>m.classList.remove('show'))},
- sky(on,fit){if(on){$('sky').classList.add('on');SKY.show(fit);requestAnimationFrame(()=>requestAnimationFrame(()=>SKY.repaint()))}else $('sky').classList.remove('on')},
+ sky(on,fit){if(on){if(!fit&&S.v&&S.charts.some(c=>c.id===S.v.chart))S.cur=S.v.chart;$('sky').classList.add('on');SKY.show(fit);requestAnimationFrame(()=>requestAnimationFrame(()=>SKY.repaint()))}else $('sky').classList.remove('on')},
  collapse(li,slide,done){
   li.style.maxHeight=li.scrollHeight+'px';li.style.transition='none';void li.offsetHeight;
   li.style.transition='transform .2s ease-out,opacity .2s ease-out,max-height .3s ease '+(slide?'.15s':'0s')+',padding .3s ease '+(slide?'.15s':'0s')+',margin .3s ease '+(slide?'.15s':'0s');
@@ -380,23 +431,15 @@ const UI={
    li.querySelector('.x').onclick=()=>UI.remove(li,e.id,0);this.swipe(li,e.id);ul.appendChild(li)});
  },
  forge(){
-  if(!this.canForge())return;
-  if(blocked(originId()).has(norm(S.target))){Dlg.note('That heading is already explored from the branch star. Choose a different vector.');return}
-  const c=counts(),n=S.wake.length,id='star_'+Date.now();
-  const dom=['-1','0','1'].reduce((a,b)=>c[b]>c[a]?b:a);
-  let x=ORI,y=ORI;
-  if(S.stars.length){
-   const last=S.stars.find(x=>x.id===originId())||S.stars[S.stars.length-1],r=S.target*Math.PI/180,D=Math.min(260,Math.max(120,80+n*6));
-   x=last.x+D*Math.sin(r);y=last.y-D*Math.cos(r);
-   for(let i=0;i<12;i++)S.stars.forEach(s=>{let dx=x-s.x,dy=y-s.y,d=Math.hypot(dx,dy);
-    if(d<60){if(d<.001){dx=Math.sin(r);dy=-Math.cos(r);d=1}x+=dx/d*(60-d);y+=dy/d*(60-d)}});
-   S.edges.push({fromStarId:last.id,toStarId:id,angle:S.target});
-  }
-  S.stars.push({id,voyageName:S.horizon,completionDate:new Date().toLocaleDateString(),headingAngle:S.target,x,y,spectralClass:dom,
-   size:Math.min(28,Math.max(10,8+Math.sqrt(n)*3.5)),glowRadius:Math.min(38,12+n*1.5),harmonicResonance:resonant(c),
-   metrics:{totalActions:n,alignCount:c.Align,driftCount:c.Drift,anchorCount:c.Anchor,characterVolume:S.wake.reduce((a,l)=>a+l.text.length,0),
-    tideDistribution:{ton:c['-1'],sil:c['0'],qina:c['1']}},logArchive:[...S.wake]});
-  S.origin=id;Store.saveSky();ENGINE.resetVoyage();Store.saveActive();this.refresh();this.sky(true,true);
+  const v=S.v;if(!v||!this.canForge())return;
+  const p=SKY.placement(v);if(!p)return;
+  const ch=p.ch,c=counts(v.wake),n=v.wake.length,id='star_'+Date.now(),dom=['-1','0','1'].reduce((a,b)=>c[b]>c[a]?b:a);
+  if(p.parent)ch.edges.push({fromStarId:p.parent.id,toStarId:id,angle:p.heading});
+  ch.stars.push({id,voyageName:v.name,completionDate:new Date().toLocaleDateString(),headingAngle:p.heading,x:p.x,y:p.y,spectralClass:dom,
+   size:Math.min(28,Math.max(10,8+Math.sqrt(n)*3.5)),glowRadius:Math.min(38,12+n*1.5),harmonicResonance:resonant(c,n),
+   metrics:{totalActions:n,alignCount:c.Align,driftCount:c.Drift,anchorCount:c.Anchor,characterVolume:v.wake.reduce((a,l)=>a+l.text.length,0),
+    tideDistribution:{ton:c['-1'],sil:c['0'],qina:c['1']}},logArchive:[...v.wake]});
+  ch.origin=id;ENGINE.endVoyage(v.id);S.cur=ch.id;Store.saveSky();Store.saveActive();this.refresh();this.sky(true,true);
  }
 };
 
@@ -408,20 +451,34 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
   this.mode=m;const n=this.view[m];this.panX=n.x;this.panY=n.y;this.scale=n.s;this.placing=false;this.linking='';$('ghost').style.display='none';
   $('field').style.display=m==='chart'?'block':'none';$('gfield').style.display=m==='galaxy'?'block':'none';
   $('btn-new').textContent=m==='galaxy'?(this.placing?'CANCEL':'+ NEW'):'+ VOYAGE';
-  $('btn-mode').textContent=m==='galaxy'?'CHART':'GALAXY';
+  $('btn-mode').textContent=m==='galaxy'?'CHART':'GALAXY';$('btn-focus').style.display='none';
   $('sky-title').textContent=m==='galaxy'?'GALAXY':S.ch.name+' ✎';this.apply(0);
   const L=this.layer();if(L.animate)L.animate([{opacity:0},{opacity:1}],{duration:350})},
- show(fit){if(this.mode!=='chart')this.setMode('chart');this.apply(0);this.render();const first=!this.fitted;this.fitted=true;if(fit||first)this.fit(first?0:350)},
+ show(fit){if(this.mode!=='chart')this.setMode('chart');this.apply(0);this.render();const first=!this.fitted;this.fitted=true;
+  if(fit)this.fit(first?0:350);else if(S.v&&S.v.chart===S.cur)this.centerFocus(true);else if(first)this.fit(0)},
+ centerFocus(instant){const v=S.v;if(!v||v.chart!==S.cur||this.mode!=='chart')return;const p=this.placement(v);if(!p)return;this.scale=1;this.panX=-(p.x-ORI);this.panY=-(p.y-ORI);this.apply(instant?0:350)},
+ formingPts(){return S.voyages.filter(v=>v.chart===S.cur).map(v=>this.placement(v)).filter(Boolean)},
+ freeHeading(ch,pid,v){const bl=blocked(pid,ch,v.id),t=norm(v.target);if(!bl.has(t))return t;for(const o of [45,-45,90,-90,135,-135,180]){const h=norm(t+o);if(!bl.has(h))return h}return t},
+ basePos(v){const ch=S.charts.find(c=>c.id===v.chart);if(!ch)return null;
+  const n=v.wake.length,parent=parentOf(ch,v),heading=parent?this.freeHeading(ch,parent.id,v):norm(v.target);let x=ORI,y=ORI;
+  if(parent){const r=heading*Math.PI/180,D=Math.min(260,Math.max(120,80+n*6));x=parent.x+D*Math.sin(r);y=parent.y-D*Math.cos(r)}
+  return{ch,parent,heading,x,y}},
+ placement(v){ // where this voyage's star will land; also where its forming star is drawn
+  const b=this.basePos(v);if(!b)return null;const r=b.heading*Math.PI/180,others=b.ch.stars.map(t=>({x:t.x,y:t.y}));
+  S.voyages.forEach(o=>{if(o.id!==v.id&&o.chart===v.chart){const q=this.basePos(o);if(q)others.push({x:q.x,y:q.y})}});
+  for(let i=0;i<12;i++)others.forEach(t=>{let dx=b.x-t.x,dy=b.y-t.y,d=Math.hypot(dx,dy);if(d<60){if(d<.001){dx=Math.sin(r);dy=-Math.cos(r);d=1}b.x+=dx/d*(60-d);b.y+=dy/d*(60-d)}});
+  return b},
+ openVoyageMenu(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;this.vid=id;$('vm-title').textContent=v.name;
+  $('vm-info').textContent=`Heading ${norm(v.target)}° · ${v.wake.length} log${v.wake.length===1?'':'s'} · ${Math.round(Math.abs(shortest(v.target,v.needle)))}° off course${id===S.focus?' · in focus':''}`;$('m-vmenu').classList.add('show')},
+ vmFocus(){UI.close();ENGINE.focusVoyage(this.vid);UI.sky(false)},
+ vmAbandon(){UI.close();ENGINE.abandonVoyage(this.vid)},
  back(){if(this.mode==='galaxy')this.enter(S.cur);else UI.sky(false)},
  toggleMode(){if(this.mode==='chart'){this.setMode('galaxy');this.renderGalaxy();this.fit()}else this.enter(S.cur)},
  actionNew(){
-  if(this.mode==='chart'){UI.sky(false);UI.course()}
+  if(this.mode==='chart'){UI.sky(false);UI.newVoyage()}
   else{this.startPlace()}
  },
- enter(id){
-  if(id!==S.cur){if(S.wake.length&&S.horizon!==NONE)return Dlg.note('Finish or abandon your current voyage before switching constellations.');
-   S.cur=id;Store.saveSky();UI.refresh()}
-  this.setMode('chart');this.render();this.fit()},
+ enter(id){if(id!==S.cur){S.cur=id;Store.saveSky()}this.setMode('chart');this.render();this.fit()},
  headerClick(){
   if(this.mode==='chart')this.renameTarget(S.cur);
  },
@@ -435,16 +492,14 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
  },
  deleteTarget(cid){
   if(S.charts.length<=1)return Dlg.note('You must keep at least one constellation in your galaxy.');
-  const c=S.charts.find(x=>x.id===cid);if(!c)return;
-  if(cid===S.cur&&S.wake.length&&S.horizon!==NONE)return Dlg.note('Finish or abandon your current voyage before deleting this constellation.');
-  Dlg.ask(`Delete constellation "${c.name}" and all of its ${c.stars.length} stars?`,'DELETE',()=>{
-   S.charts=S.charts.filter(x=>x.id!==cid);S.links=S.links.filter(l=>l.a!==cid&&l.b!==cid);
-   if(S.cur===cid){S.cur=S.charts[0].id;Store.saveSky();UI.refresh()}else{Store.saveSky()}
-   UI.close();this.renderGalaxy();Dlg.note('Constellation removed.');
-  });
- },
+  const c=S.charts.find(x=>x.id===cid);if(!c)return;const k=S.voyages.filter(v=>v.chart===cid).length;
+  Dlg.ask(`Delete constellation "${c.name}", its ${c.stars.length} stars${k?` and ${k} voyage${k>1?'s':''} in progress`:''}?`,'DELETE',()=>{
+   S.charts=S.charts.filter(x=>x.id!==cid);S.links=S.links.filter(l=>l.a!==cid&&l.b!==cid);S.voyages=S.voyages.filter(v=>v.chart!==cid);
+   if(!S.voyages.some(v=>v.id===S.focus))S.focus=S.voyages[0]?S.voyages[0].id:'';
+   if(S.cur===cid)S.cur=S.charts[0].id;
+   Store.saveSky();Store.saveActive();UI.refresh();UI.close();this.renderGalaxy();Dlg.note('Constellation removed.')})},
  render(){
-  const field=$('field'),svg=$('lines');field.querySelectorAll('.star').forEach(x=>x.remove());svg.innerHTML='';this.lines=[];
+  const field=$('field'),svg=$('lines');field.querySelectorAll('.star,.fstar').forEach(x=>x.remove());svg.innerHTML='';this.lines=[];
   if(this.mode==='chart')$('sky-title').textContent=S.ch.name+' ✎';
   S.edges.forEach(e=>{const a=S.stars.find(x=>x.id===e.fromStarId),b=S.stars.find(x=>x.id===e.toStarId);if(!a||!b)return;
    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
@@ -462,6 +517,22 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
    o.addEventListener('pointerup',()=>{if(!down)return;down=false;if(moved)SKY.spring(star,o,cx,cy);else setTimeout(()=>SKY.inspect(star),POPUP_DELAY)});
    o.addEventListener('pointercancel',()=>{if(down){down=false;if(moved)SKY.spring(star,o,cx,cy)}});
    field.appendChild(o)});
+  S.voyages.filter(v=>v.chart===S.cur).forEach(v=>{
+   const p=this.placement(v);if(!p)return;
+   const c=counts(v.wake),n=v.wake.length,dom=['-1','0','1'].reduce((a,b)=>c[b]>c[a]?b:a),col=COLORS[n?dom:'0'],sz=Math.min(30,Math.max(12,10+Math.sqrt(n)*4));
+   const ready=Math.abs(shortest(v.target,v.needle))<=TOL&&v.wake.some(l=>l.actionType==='Align');
+   if(p.parent){const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    [['x1',p.parent.x],['y1',p.parent.y],['x2',p.x],['y2',p.y],['stroke',col+'66'],['stroke-width',1.5],['stroke-dasharray','2,6']].forEach(([k,q])=>l.setAttribute(k,q));svg.appendChild(l)}
+   const o=document.createElement('div');o.className='fstar'+(v.id===S.focus?' focus':'')+(ready?' ready':'');o.dataset.vid=v.id;
+   o.style.cssText=`left:${p.x}px;top:${p.y}px;width:${sz}px;height:${sz}px;--fc:${col};background:radial-gradient(circle,rgba(255,255,255,.4) 0%,${col}44 55%,transparent 75%);box-shadow:0 0 ${8+Math.min(n,20)}px ${col}66`;
+   const lb=document.createElement('div');lb.className='fl';lb.textContent=v.name+(ready?' ✦':'');o.appendChild(lb);
+   let sx=0,sy=0,down=false,moved=false;
+   o.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();down=true;moved=false;sx=e.clientX;sy=e.clientY;o.setPointerCapture(e.pointerId)});
+   o.addEventListener('pointermove',e=>{if(down&&Math.hypot(e.clientX-sx,e.clientY-sy)>8)moved=true});
+   o.addEventListener('pointerup',()=>{if(!down)return;down=false;if(!moved)setTimeout(()=>SKY.openVoyageMenu(v.id),POPUP_DELAY)});
+   o.addEventListener('pointercancel',()=>{down=false});
+   field.appendChild(o)});
+  const bf=$('btn-focus');if(bf)bf.style.display=this.mode==='chart'&&S.v&&S.v.chart===S.cur?'block':'none';
   this.markOrigin();if(S.stars.length<=1)this.fit();
  },
  renderGalaxy(){
@@ -475,10 +546,10 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
    const col=COLORS[n?['-1','0','1'][t.indexOf(Math.max(...t))]:'0'],sz=this.shape(c).sz,d=document.createElement('div');
    d.className='gdot'+(c.id===S.cur?' cur':'');d.dataset.id=c.id;this.dots[c.id]=d;
    d.style.cssText=`left:${ORI+c.gx}px;top:${ORI+c.gy}px;width:${sz}px;height:${sz}px;border:1.5px solid ${col}99;background:radial-gradient(circle,${col}38 0%,${col}1a 60%,transparent 74%),rgba(5,0,10,.6);box-shadow:0 0 ${Math.max(sz*.7,10)}px ${col}44,inset 0 0 ${sz/3}px ${col}33`;
-   d.innerHTML=this.emblem(c)+`<div class="orbit" style="border-color:${col}77"></div>`;
+   d.innerHTML=this.emblem(c);
    const l=document.createElement('div');l.className='gl';
    const nm=document.createElement('span');nm.className='nm';nm.textContent=c.name;
-   const ct=document.createElement('span');ct.className='ct';ct.textContent=n+'★';l.append(nm,ct);d.appendChild(l);
+   const ct=document.createElement('span');ct.className='ct';ct.textContent=n+'★';l.append(nm,ct);const k=S.voyages.filter(v=>v.chart===c.id).length;if(k){const fc=document.createElement('span');fc.className='fc';fc.textContent='◐'+k;l.append(fc)}d.appendChild(l);
    let sx=0,sy=0,down=false,moved=false,linkMode=false,pressT=null,ids=null,cdx=0,cdy=0;
    const clear=()=>{if(pressT){clearTimeout(pressT);pressT=null}};
    d.addEventListener('pointerdown',e=>{
@@ -515,7 +586,7 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
   this.markOrigin();
  },
  toGal(sx,sy){const r=$('universe').getBoundingClientRect();return{x:(sx-r.left-r.width/2-this.panX)/this.scale,y:(sy-r.top-r.height/2-this.panY)/this.scale}},
- geom(c,x,y){const sz=this.shape(c).sz,R=sz/2+9,w=Math.min(124,(c.name.length+String(c.stars.length).length+2)*7),t=y+sz/2+12;return{x,y,R,l:x-w/2,r:x+w/2,t,b:t+14}},
+ geom(c,x,y){const sz=this.shape(c).sz,R=sz/2+9,w=Math.min(124,(c.name.length+String(c.stars.length).length+2+(S.voyages.some(v=>v.chart===c.id)?3:0))*7),t=y+sz/2+12;return{x,y,R,l:x-w/2,r:x+w/2,t,b:t+14}},
  hit(a,b){
   if(Math.hypot(a.x-b.x,a.y-b.y)<a.R+b.R+3)return true;
   const cr=(c,q)=>Math.hypot(c.x-Math.max(q.l,Math.min(c.x,q.r)),c.y-Math.max(q.t,Math.min(c.y,q.b)))<c.R;
@@ -570,8 +641,7 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
   if(!this.free(p))return Dlg.note('Too close to another constellation, or off perimeter. Pick an open spot.');
   Dlg.name('NAME YOUR NEW CONSTELLATION','',n=>{
    const c={id:'c'+Date.now(),name:n,gx:Math.round(p.x),gy:Math.round(p.y),stars:[],edges:[],origin:''};
-   S.charts.push(c);this.placing=false;$('btn-new').textContent='+ NEW';Store.saveSky();
-   if(S.wake.length&&S.horizon!==NONE){this.renderGalaxy();Dlg.note('Created. Finish or abandon current voyage to open it.')}else this.enter(c.id)})},
+   S.charts.push(c);this.placing=false;$('btn-new').textContent='+ NEW';Store.saveSky();this.renderGalaxy();this.say('Created '+c.name)})},
  place(star,o,dx,dy,sc){
   o.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(${sc})`;
   this.lines.forEach(L=>{if(L.f===star.id){L.el.setAttribute('x1',star.x+dx);L.el.setAttribute('y1',star.y+dy)}if(L.t===star.id){L.el.setAttribute('x2',star.x+dx);L.el.setAttribute('y2',star.y+dy)}})},
@@ -622,7 +692,7 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
  apply(ms){const f=this.layer();f.style.transition=ms?`transform ${ms}ms cubic-bezier(.2,.8,.2,1)`:'none';f.style.transform=`translate(${-1500+this.panX}px,${-1500+this.panY}px) scale(${this.scale})`},
  repaint(){const L=this.layer();L.style.willChange='auto';void L.offsetWidth;L.style.willChange='transform';this.apply(0)},
  fit(ms){
-  const pts=this.mode==='galaxy'?S.charts.map(c=>({x:ORI+c.gx,y:ORI+c.gy})):S.stars;
+  const pts=this.mode==='galaxy'?S.charts.map(c=>({x:ORI+c.gx,y:ORI+c.gy})):S.stars.concat(this.formingPts());
   if(!pts.length){this.panX=this.panY=0;this.scale=1;return this.apply(ms===undefined?350:ms)}
   const xs=pts.map(t=>t.x),ys=pts.map(t=>t.y),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
   const sc=Math.min(1.4,Math.max(MINZ,Math.min((innerWidth-120)/(x1-x0+120),(innerHeight-260)/(y1-y0+120))));
@@ -636,9 +706,8 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
   const box=$('s-logs');box.innerHTML='';
   star.logArchive.forEach(l=>{const d=document.createElement('div');d.style.cssText=`border-left:2px solid ${/^#[0-9a-f]{6}$/i.test(l.color)?l.color:'#888'};padding:5px 8px;margin-bottom:6px;background:rgba(255,255,255,.03)`;
    d.innerHTML=`<span style="color:#777;font-size:.6rem">${esc(stampText(l))}</span><br>${esc(l.text)}`;box.appendChild(d)});
-  const br=$('branch'),busy=S.wake.length>0&&S.horizon!==NONE;br.disabled=busy;br.style.opacity=busy?.4:1;
-  br.textContent=busy?'FINISH CURRENT VOYAGE TO BRANCH':'↳ BRANCH VOYAGE FROM HERE';
-  br.onclick=()=>{if(busy)return;ENGINE.setOrigin(star.id);UI.close();UI.sky(false);UI.course()};
+  const br=$('branch');br.disabled=false;br.style.opacity=1;br.textContent='↳ BRANCH VOYAGE FROM HERE';
+  br.onclick=()=>{UI.courseChart=S.cur;ENGINE.setOrigin(star.id);UI.close();UI.sky(false);UI.newVoyage(true)};
   $('purge').onclick=()=>Dlg.ask(`Purge "${star.voyageName}" from the sky?`,'PURGE',()=>{
    const inc=S.edges.find(e=>e.toStarId===star.id),outs=S.edges.filter(e=>e.fromStarId===star.id);
    S.edges=S.edges.filter(e=>e.fromStarId!==star.id&&e.toStarId!==star.id);
