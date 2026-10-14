@@ -61,7 +61,7 @@ h1{font-size:1.05rem;letter-spacing:3px;color:var(--accent);text-shadow:0 0 5px 
 .ecard small{font-size:.65rem;color:#999}
 .ecard.s-1{border-color:var(--ton);background:rgba(74,95,193,.2)}.ecard.s0{border-color:var(--sil);background:rgba(0,255,157,.2)}.ecard.s1{border-color:var(--qina);background:rgba(255,176,0,.2)}
 .mb{width:100%;padding:12px;margin-bottom:6px;background:rgba(255,255,255,.05);border:1px solid #333;color:#fff;font-size:.85rem;border-radius:4px;font-weight:bold}
-.mb:active{background:var(--accent);color:var(--bg)}.mb.danger{border-color:#f44;color:#f44;margin-top:8px}.mb.danger:active{background:#f44;color:#000}
+.mb:active{background:var(--accent);color:var(--bg)}.mb.danger{border-color:#f44;color:#f44}.mb.danger:active{background:#f44;color:#000}
 .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:15px}.grid .mb{margin:0;padding:12px 0}
 .cancel{background:transparent;border:none;color:#888;font-size:.8rem;padding:8px;width:100%}
 @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}.core{animation:none!important}}
@@ -301,9 +301,9 @@ const UI={
   a.style.left='50%';
  },
  drawer(){
-  const d=$('drawer');let y0=0,dy=0,open=false,moved=false,act=false,tapOK=false,kbOpened=false,shown=false,lift=0,rt=null;
+  const d=$('drawer');let y0=0,dy=0,open=false,moved=false,act=false,tapOK=false,kbOpened=false,shown=false,rt=null;
   const max=()=>innerHeight*DH-PEEK,closed=`translateY(calc(100% - ${PEEK}px))`;
-  const settle=()=>{lift=0;d.style.transition='transform .35s cubic-bezier(.2,.8,.2,1)';d.style.transform=open?'translateY(0)':closed;UI.layout(open?1:0,true)};
+  const settle=()=>{d.style.transition='transform .35s cubic-bezier(.2,.8,.2,1)';d.style.transform=open?'translateY(0)':closed;UI.layout(open?1:0,true)};
   
   const startDrag=(e)=>{
    if(kbVisible()||e.target.closest('#loglist,.x'))return;
@@ -332,13 +332,10 @@ const UI={
   d.addEventListener('pointercancel',()=>{act=false;settle()});
   
   const inp=$('log-input'),touchDev=()=>!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
-  const relift=()=>{ // keep the input above the keyboard if the open drawer would leave it covered
-   if(!open||!kbVisible()){if(lift){lift=0;d.style.transition='transform .25s ease';d.style.transform='translateY(0)'}return}
-   const need=Math.max(0,Math.round(inp.getBoundingClientRect().bottom+lift-visibleH()+14));
-   if(need!==lift){lift=need;d.style.transition='transform .25s ease';d.style.transform=`translateY(${-need}px)`}};
-  inp.addEventListener('focus',()=>{clearTimeout(rt);shown=false;if(touchDev()&&!open){open=true;kbOpened=true;settle()}setTimeout(relift,450)});
-  inp.addEventListener('blur',()=>{shown=false;rt=setTimeout(()=>{if(kbOpened&&open){open=false;settle()}kbOpened=false;relift()},250)});
-  const onKb=()=>{if(kbVisible())shown=true;else if(shown&&document.activeElement===inp){inp.blur();return}relift()};  // keyboard hidden -> release the box
+  // Closed drawer: tapping the box slides it open, and it closes again when the keyboard goes. Open drawer: never moved by the keyboard.
+  inp.addEventListener('focus',()=>{clearTimeout(rt);shown=false;if(touchDev()&&!open){open=true;kbOpened=true;settle()}});
+  inp.addEventListener('blur',()=>{shown=false;rt=setTimeout(()=>{if(kbOpened&&open){open=false;settle()}kbOpened=false},250)});
+  const onKb=()=>{if(kbVisible())shown=true;else if(shown&&document.activeElement===inp)inp.blur()};  // keyboard hidden -> release the box
   if(VK)VK.addEventListener('geometrychange',onKb);
   if(window.visualViewport)visualViewport.addEventListener('resize',onKb);
   const onResize=()=>{if(document.activeElement!==$('log-input'))UI.layout(UI.p||0,false)};
@@ -357,7 +354,7 @@ const UI={
  sextant(){if(!$('log-input').value.trim())return;if(S.horizon===NONE){this.afterCourse=true;this.fillCourse();$('m-course').classList.add('show');return}S.pending=S.tide;this.energy(S.tide);$('m-sextant').classList.add('show')},
  energy(t){S.pending=t;[-1,0,1].forEach(k=>$('e'+k).className='chip'+(k===t?' s'+k:''));$('e-cap').textContent=CAP[t]},
  close(){this.afterCourse=false;document.querySelectorAll('.ov').forEach(m=>m.classList.remove('show'))},
- sky(on,fit){if(on){SKY.show(fit);$('sky').classList.add('on')}else $('sky').classList.remove('on')},
+ sky(on,fit){if(on){$('sky').classList.add('on');SKY.show(fit);requestAnimationFrame(()=>requestAnimationFrame(()=>SKY.repaint()))}else $('sky').classList.remove('on')},
  collapse(li,slide,done){
   li.style.maxHeight=li.scrollHeight+'px';li.style.transition='none';void li.offsetHeight;
   li.style.transition='transform .2s ease-out,opacity .2s ease-out,max-height .3s ease '+(slide?'.15s':'0s')+',padding .3s ease '+(slide?'.15s':'0s')+',margin .3s ease '+(slide?'.15s':'0s');
@@ -403,7 +400,7 @@ const UI={
  }
 };
 
-const MINZ=.4,MAXZ=2.2;
+const MINZ=.4,MAXZ=2.2,POPUP_DELAY=60;   // popup opens just after the tap's own mouse events, which fire within a frame or two
 const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,panY:0,scale:1,bound:false,lines:[],placing:false,sw:false,targetCId:'',
  layer(){return $(this.mode==='galaxy'?'gfield':'field')},
  setMode(m){
@@ -414,7 +411,7 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
   $('btn-mode').textContent=m==='galaxy'?'CHART':'GALAXY';
   $('sky-title').textContent=m==='galaxy'?'GALAXY':S.ch.name+' ✎';this.apply(0);
   const L=this.layer();if(L.animate)L.animate([{opacity:0},{opacity:1}],{duration:350})},
- show(fit){if(this.mode!=='chart')this.setMode('chart');this.render();if(fit)this.fit()},
+ show(fit){if(this.mode!=='chart')this.setMode('chart');this.apply(0);this.render();const first=!this.fitted;this.fitted=true;if(fit||first)this.fit(first?0:350)},
  back(){if(this.mode==='galaxy')this.enter(S.cur);else UI.sky(false)},
  toggleMode(){if(this.mode==='chart'){this.setMode('galaxy');this.renderGalaxy();this.fit()}else this.enter(S.cur)},
  actionNew(){
@@ -459,10 +456,10 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
    o.innerHTML=`<div class="core${star.harmonicResonance?' r':''}" style="background:radial-gradient(circle,#fff 25%,${col} 75%);box-shadow:0 0 ${star.glowRadius}px ${col},0 0 ${star.glowRadius*1.8}px ${col}66"></div>`+
     (star.harmonicResonance?`<div class="flare" style="box-shadow:0 0 6px ${col}"></div><div class="flare v" style="box-shadow:0 0 6px ${col}"></div>`:'');
    let sx=0,sy=0,cx=0,cy=0,down=false,moved=false;
-   o.addEventListener('pointerdown',e=>{e.stopPropagation();o._sp=(o._sp||0)+1;down=true;moved=false;sx=e.clientX;sy=e.clientY;cx=cy=0;o.setPointerCapture(e.pointerId)});
+   o.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();o._sp=(o._sp||0)+1;down=true;moved=false;sx=e.clientX;sy=e.clientY;cx=cy=0;o.setPointerCapture(e.pointerId)});
    o.addEventListener('pointermove',e=>{if(!down)return;const dx=(e.clientX-sx)/SKY.scale,dy=(e.clientY-sy)/SKY.scale;
     if(!moved&&Math.hypot(dx,dy)*SKY.scale<6)return;moved=true;cx=dx;cy=dy;SKY.place(star,o,dx,dy,1.15)});
-   o.addEventListener('pointerup',()=>{if(!down)return;down=false;if(moved)SKY.spring(star,o,cx,cy);else SKY.inspect(star)});
+   o.addEventListener('pointerup',()=>{if(!down)return;down=false;if(moved)SKY.spring(star,o,cx,cy);else setTimeout(()=>SKY.inspect(star),POPUP_DELAY)});
    o.addEventListener('pointercancel',()=>{if(down){down=false;if(moved)SKY.spring(star,o,cx,cy)}});
    field.appendChild(o)});
   this.markOrigin();if(S.stars.length<=1)this.fit();
@@ -486,7 +483,7 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
    const clear=()=>{if(pressT){clearTimeout(pressT);pressT=null}};
    d.addEventListener('pointerdown',e=>{
     if(SKY.placing)return;
-    e.stopPropagation();SKY.stopDrag();down=true;moved=false;linkMode=false;cdx=cdy=0;sx=e.clientX;sy=e.clientY;ids=SKY.group(c.id);d.setPointerCapture(e.pointerId);
+    e.preventDefault();e.stopPropagation();SKY.stopDrag();down=true;moved=false;linkMode=false;cdx=cdy=0;sx=e.clientX;sy=e.clientY;ids=SKY.group(c.id);d.setPointerCapture(e.pointerId);
     pressT=setTimeout(()=>{pressT=null;if(!moved&&down){linkMode=true;SKY.beginLinkDrag(c.id,sx,sy);if(navigator.vibrate)navigator.vibrate(15)}},380)});
    d.addEventListener('pointermove',e=>{
     if(!down)return;
@@ -501,7 +498,7 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
      const rx=Math.round(cdx),ry=Math.round(cdy);
      const ok=[...ids].every(id=>{const m=S.charts.find(x=>x.id===id);return SKY.free({x:m.gx+rx,y:m.gy+ry},ids,m)});
      SKY.endDrag(ok?{x:rx,y:ry}:null);
-    }else SKY.openConstellationMenu(c.id)});
+    }else setTimeout(()=>SKY.openConstellationMenu(c.id),POPUP_DELAY)});
    d.addEventListener('pointercancel',()=>{clear();if(linkMode){linkMode=false;SKY.cancelLinkDrag()}if(down){down=false;if(moved)SKY.endDrag(null)}});
    g.appendChild(d);
   });
@@ -623,12 +620,13 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
   const n=Math.min(MAXZ,Math.max(MINZ,z)),r=n/this.scale;this.panX*=r;this.panY*=r;this.scale=n;this.apply(ms||0)},
  zoom(d){this.setScale(this.scale*(1+d),350)},
  apply(ms){const f=this.layer();f.style.transition=ms?`transform ${ms}ms cubic-bezier(.2,.8,.2,1)`:'none';f.style.transform=`translate(${-1500+this.panX}px,${-1500+this.panY}px) scale(${this.scale})`},
- fit(){
+ repaint(){const L=this.layer();L.style.willChange='auto';void L.offsetWidth;L.style.willChange='transform';this.apply(0)},
+ fit(ms){
   const pts=this.mode==='galaxy'?S.charts.map(c=>({x:ORI+c.gx,y:ORI+c.gy})):S.stars;
-  if(!pts.length){this.panX=this.panY=0;this.scale=1;return this.apply(350)}
+  if(!pts.length){this.panX=this.panY=0;this.scale=1;return this.apply(ms===undefined?350:ms)}
   const xs=pts.map(t=>t.x),ys=pts.map(t=>t.y),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
   const sc=Math.min(1.4,Math.max(MINZ,Math.min((innerWidth-120)/(x1-x0+120),(innerHeight-260)/(y1-y0+120))));
-  this.scale=sc;this.panX=-((x0+x1)/2-ORI)*sc;this.panY=-((y0+y1)/2-ORI)*sc;this.apply(350)},
+  this.scale=sc;this.panX=-((x0+x1)/2-ORI)*sc;this.panY=-((y0+y1)/2-ORI)*sc;this.apply(ms===undefined?350:ms)},
  inspect(star){
   const m=star.metrics,t=m.tideDistribution;
   $('s-title').textContent=star.voyageName;$('s-meta').textContent=`${star.completionDate} · Heading ${star.headingAngle}° · ${m.totalActions} actions`;
@@ -656,18 +654,19 @@ if('serviceWorker' in navigator){
 const VK=navigator.virtualKeyboard;if(VK)VK.overlaysContent=true;
 let BASEH=innerHeight;
 const vkH=()=>VK&&VK.boundingRect?VK.boundingRect.height:0;
-const visibleH=()=>(window.visualViewport?visualViewport.height:innerHeight)-vkH();   // area not covered by the keyboard, any mode
+const kbTop=()=>{const v=window.visualViewport,vv=v?v.height+v.offsetTop:innerHeight,r=VK&&VK.boundingRect,vk=r&&r.height>0?(r.top>0?r.top:innerHeight-r.height):innerHeight;return Math.min(vv,vk,innerHeight)};
+const visibleH=kbTop;   // y where the keyboard begins: the smallest of every signal, so it can never be subtracted twice
 const kbHeight=()=>vkH()>0?vkH():Math.max(0,BASEH-(window.visualViewport?visualViewport.height:innerHeight));
 const kbVisible=()=>kbHeight()>80;
 addEventListener('resize',()=>{if(!/INPUT|TEXTAREA/.test((document.activeElement||{}).tagName||''))BASEH=Math.max(innerHeight,window.visualViewport?visualViewport.height:0)});
-function fitOv(){const v=window.visualViewport,h=visibleH();document.querySelectorAll('.ov').forEach(o=>{o.style.top=(v?v.offsetTop:0)+'px';o.style.height=h+'px';o.style.bottom='auto'})}
+function fitOv(){const v=window.visualViewport,h=visibleH()-(v?v.offsetTop:0);document.querySelectorAll('.ov').forEach(o=>{o.style.top=(v?v.offsetTop:0)+'px';o.style.height=h+'px';o.style.bottom='auto'})}
 if(window.visualViewport){visualViewport.addEventListener('resize',fitOv);visualViewport.addEventListener('scroll',fitOv)}
 if(VK)VK.addEventListener('geometrychange',fitOv);
 fitOv();
 // A tap that opens a popup is followed by a synthetic click at the same spot, which used to land on the popup's buttons.
 (function(){let t=0;
  new MutationObserver(ms=>ms.forEach(m=>{if(m.target.classList.contains('show')&&!(m.oldValue||'').includes('show'))t=performance.now()})).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class'],attributeOldValue:true});
- document.addEventListener('click',e=>{if(performance.now()-t<450&&e.target.closest&&e.target.closest('.ov')){e.stopPropagation();e.preventDefault()}},true)})();
+ document.addEventListener('click',e=>{if(performance.now()-t<350&&e.target.closest&&e.target.closest('.ov')){e.stopPropagation();e.preventDefault()}},true)})();
 function stepDrag(t){
  const D=SKY.drag;if(!D)return;const dt=Math.min(.032,Math.max(.001,(t-D.t0)/1000));D.t0=t;let rest=true;
  D.order.forEach(id=>{const s=D.st[id];let tx=0,ty=0,k=150,c=17;
@@ -677,5 +676,5 @@ function stepDrag(t){
  D.sc+=((D.held?1.08:1)-D.sc)*Math.min(1,dt*12);SKY.paint(D);
  if(!D.held&&rest&&Math.abs(D.sc-1)<.003){D.order.forEach(id=>{D.st[id].x=D.st[id].y=0});D.sc=1;SKY.paint(D);SKY.drag=null;return}
  D.raf=requestAnimationFrame(stepDrag)}
-addEventListener('DOMContentLoaded',()=>{UI.init();SKY.bind()});
+addEventListener('DOMContentLoaded',()=>{UI.init();SKY.bind();SKY.apply(0)});
 </script></body></html>
