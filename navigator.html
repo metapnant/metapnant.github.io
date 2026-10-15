@@ -97,7 +97,7 @@ select.in{background:#0a0514;appearance:auto}
 .star::before{content:'';position:absolute;inset:-8px;border-radius:50%}
 #ghost{width:32px!important;height:32px!important}
 .gdot.linking{filter:brightness(1.7) drop-shadow(0 0 8px #fff)}
-.gdot.linkhover{outline:2px solid #00ff9d;outline-offset:10px}
+.gdot.linkhover{outline:2px solid var(--accent);outline-offset:10px}
 #goal{cursor:pointer}
 #vlist{max-height:45vh;overflow-y:auto;margin-bottom:6px}
 .vrow{display:flex;align-items:center;margin-bottom:6px;border:1px solid #333;border-radius:6px;background:rgba(255,255,255,.04)}.vrow.f{border-color:var(--accent)}
@@ -111,10 +111,27 @@ select.in{background:#0a0514;appearance:auto}
 @keyframes forming{0%,100%{opacity:.55}50%{opacity:1}}
 .gdot .gl .fc{flex:none;color:var(--accent)}
 @media (prefers-reduced-motion:reduce){.fstar{animation:none}}
+#goal{cursor:pointer}
+.hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px}.hdr h1{margin:0;flex:1;min-width:0;overflow:hidden;white-space:nowrap;letter-spacing:2px}.hdr .btn{flex:none}
+.iconbtn{flex:none;width:38px;height:34px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:4px;font-size:1.1rem;line-height:1}.iconbtn:active{background:rgba(255,255,255,.25)}
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:21;opacity:0;pointer-events:none}
+#side{position:fixed;top:0;left:0;bottom:0;width:min(82vw,300px);z-index:22;background:rgba(10,5,20,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-right:1px solid rgba(255,255,255,.15);transform:translateX(-100%);display:flex;flex-direction:column;padding:calc(18px + env(safe-area-inset-top,0px)) 0 18px;touch-action:pan-y}
+#side:not(.vis){visibility:hidden}
+.side-h{padding:0 20px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:8px}.side-h b{display:block;color:var(--accent);letter-spacing:2px;font-size:.9rem;margin-bottom:4px}.side-h span{font-size:.65rem;color:#888}
+.side-i{display:flex;align-items:center;gap:14px;width:100%;padding:14px 20px;background:none;border:none;color:#e0dced;font-size:.9rem;text-align:left}.side-i:active{background:rgba(255,255,255,.08)}.side-i i{font-style:normal;width:20px;text-align:center;opacity:.8}
+.side-sep{height:1px;background:rgba(255,255,255,.1);margin:8px 0}.side-f{margin-top:auto;padding:0 20px;font-size:.62rem;color:#777;line-height:1.5}
+#edge{position:fixed;left:0;top:96px;bottom:150px;width:14px;z-index:6;touch-action:none}
+#cp-sv{position:relative;height:170px;border-radius:6px;touch-action:none;margin-bottom:12px;cursor:crosshair;background:linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,hsl(var(--h,150),100%,50%))}
+#cp-hue{position:relative;height:22px;border-radius:11px;touch-action:none;margin-bottom:14px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+.cp-k{position:absolute;width:20px;height:20px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 6px rgba(0,0,0,.6);transform:translate(-50%,-50%);pointer-events:none}
+.cp-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}#cp-sw{width:44px;height:44px;border-radius:6px;border:1px solid rgba(255,255,255,.4);flex:none}
+.cp-row .in{margin:0;flex:1;min-width:0;text-align:center;font-size:.9rem;text-transform:uppercase;padding:10px}
+.rgb label{flex:1;min-width:0;font-size:.65rem;color:#999;text-align:center}.rgb .in{margin-top:3px;padding:8px 4px}
+.tog{display:flex;align-items:center;gap:10px;font-size:.75rem;color:#ccc;margin:10px 0 14px;line-height:1.4}.tog input{width:20px;height:20px;flex:none}
 </style></head><body>
 <div id="astrolabe"><div id="target"></div><div id="needle"></div><div id="hub"></div></div>
 <div id="ui-top">
- <div class="row"><h1 id="title">TERNARY NAVIGATOR</h1><button class="btn ghost" style="margin-bottom:12px" onclick="UI.sky(true)">★ SKY</button></div>
+ <div class="hdr"><button id="menu-btn" class="iconbtn" aria-label="Menu" onclick="Side.open()">☰</button><h1 id="title">TERNARY NAVIGATOR</h1><button class="btn ghost" onclick="UI.sky(true)">★ SKY</button></div>
  <div class="row"><span class="lbl">CURRENT HORIZON</span><span id="res">RESONANCE [rél]</span></div>
  <div class="row"><div id="goal" onclick="UI.course()">NO HORIZON SET</div><button id="course" class="btn" onclick="UI.course()">VOYAGE</button><button id="forge" class="btn" onclick="UI.forge()">FORGE STAR</button></div>
  <div class="bar"><div id="b-1"></div><div id="b0"></div><div id="b1"></div></div>
@@ -154,6 +171,24 @@ select.in{background:#0a0514;appearance:auto}
  <button class="mb" id="branch"></button><button class="mb danger" id="purge">PURGE STAR FROM SKY</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
 <div id="m-confirm" class="ov" style="z-index:30"><div class="box"><p id="c-msg" style="font-size:.85rem;line-height:1.5;color:#ddd;margin-bottom:16px"></p><button class="mb" id="c-ok">OK</button><button class="cancel" id="c-cancel">CANCEL</button></div></div>
 <div id="m-name" class="ov" style="z-index:30"><div class="box"><p class="mt" id="n-title"></p><input id="n-input" class="in" maxlength="24"><button class="mb" id="n-ok">SAVE</button><button class="cancel" id="n-cancel">CANCEL</button></div></div>
+<div id="scrim" onclick="Side.close()"></div>
+<div id="side"><div class="side-h"><b>TERNARY NAVIGATOR</b><span>Local profile · saved on this device</span></div>
+ <button class="side-i" onclick="Side.go('voyages')"><i>◐</i>Voyages</button>
+ <button class="side-i" onclick="Side.go('chart')"><i>★</i>Constellation chart</button>
+ <button class="side-i" onclick="Side.go('galaxy')"><i>✦</i>Galaxy</button>
+ <div class="side-sep"></div>
+ <button class="side-i" onclick="Side.go('settings')"><i>⚙</i>Settings</button>
+ <button class="side-i" onclick="Side.go('data')"><i>⇅</i>Data &amp; backup</button>
+ <div class="side-f">Accounts and sync don't exist yet. Everything lives in this browser, so use Data &amp; backup to keep a copy.</div></div>
+<div id="edge"></div>
+<div id="m-settings" class="ov"><div class="box" style="text-align:left"><p class="mt" style="text-align:center">SETTINGS</p>
+ <p class="mt">THEME COLOUR</p>
+ <div id="cp-sv"><div class="cp-k" id="cp-sv-k"></div></div>
+ <div id="cp-hue"><div class="cp-k" id="cp-hue-k" style="top:50%"></div></div>
+ <div class="cp-row"><div id="cp-sw"></div><input id="cp-hex" class="in" maxlength="7" autocomplete="off" spellcheck="false" aria-label="Hex colour"><button class="mb" id="cp-reset" style="margin:0;width:auto;padding:10px 14px">RESET</button></div>
+ <div class="cp-row rgb"><label>R<input id="cp-r" class="in" type="number" inputmode="numeric" min="0" max="255"></label><label>G<input id="cp-g" class="in" type="number" inputmode="numeric" min="0" max="255"></label><label>B<input id="cp-b" class="in" type="number" inputmode="numeric" min="0" max="255"></label></div>
+ <label class="tog"><input type="checkbox" id="set-follow"><span>Accent follows energy: blue for ,ton and gold for ;qına, your theme colour for .síl</span></label>
+ <button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
 <div id="m-vlist" class="ov"><div class="box"><p class="mt">VOYAGES IN PROGRESS</p><div id="vlist"></div><button class="mb" onclick="UI.newVoyage()">+ NEW VOYAGE</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
 <div id="m-vmenu" class="ov" style="z-index:30"><div class="box"><p class="mt" id="vm-title">VOYAGE</p><p id="vm-info" class="cap" style="min-height:0;margin:0 0 14px"></p>
  <button class="mb" onclick="SKY.vmFocus()">FOCUS THIS VOYAGE</button><button class="mb danger" onclick="SKY.vmAbandon()">ABANDON VOYAGE</button><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
@@ -174,7 +209,7 @@ const norm=a=>((a%360)+360)%360, shortest=(t,c)=>((norm(t)-norm(c)+540)%360)-180
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 const $=id=>document.getElementById(id);
 const PEEK=126,DH=.6,DIRS=[['NW',315],['N',0],['NE',45],['W',270],null,['E',90],['SW',225],['S',180],['SE',135]],CAP={'-1':'Ground: rest, stillness, recovery','0':'Flow: sustained habit, smooth transition','1':'Fire: sprint, deep work'};
-const S={tide:0,pending:0,charts:[],cur:'',links:[],voyages:[],focus:'',
+const S={tide:0,pending:0,charts:[],cur:'',links:[],voyages:[],focus:'',settings:{theme:'#00ff9d',follow:true},
  get v(){return this.voyages.find(x=>x.id===this.focus)||null},
  get horizon(){const v=this.v;return v?v.name:NONE},
  get target(){const v=this.v;return v?v.target:0},set target(x){const v=this.v;if(v)v.target=x},
@@ -211,17 +246,17 @@ const Store={
   }
   const w=this.read('ternary_nav_wake',null)??this.read('nav_wake_logs',[]);
   const c=this.read('ternary_nav_galaxy',null)??this.read('ternary_nav_constellation',null)??this.read('nav_constellation',null)??{};
-  this.apply(a,w,c,this.read('ternary_nav_voyages',null));
+  this.apply(a,w,c,this.read('ternary_nav_voyages',null),this.read('ternary_nav_settings',null));
   this.write('ternary_nav_schema',3);
-  this.saveActive();this.saveSky();
+  this.saveActive();this.saveSky();this.saveSettings();
  },
  normChart(c,i){
   const stars=(c.stars||[]).filter(x=>x&&x.id).map(x=>this.normStar(x)),ids=new Set(stars.map(x=>x.id));
   const edges=(c.edges||[]).map(e=>this.normEdge(e)).filter(e=>ids.has(e.fromStarId)&&ids.has(e.toStarId));
   edges.forEach(e=>{if(typeof e.angle!=='number'){const A=stars.find(x=>x.id===e.fromStarId),B=stars.find(x=>x.id===e.toStarId);e.angle=norm(Math.round(Math.atan2(B.x-A.x,-(B.y-A.y))*180/Math.PI/45)*45)}});
   return{id:c.id||('c'+i+'_'+Date.now()),name:String(c.name||'MY CONSTELLATION').slice(0,39),gx:+c.gx||0,gy:+c.gy||0,stars,edges,origin:c.origin||''}},
- apply(a,w,g,vs){
-  g=g||{};S.tide=[-1,0,1].includes(a.lastTide)?a.lastTide:0;
+ apply(a,w,g,vs,st){
+  g=g||{};S.settings={theme:st&&/^#[0-9a-f]{6}$/i.test(st.theme||'')?st.theme.toLowerCase():'#00ff9d',follow:st&&typeof st.follow==='boolean'?st.follow:true};S.tide=[-1,0,1].includes(a.lastTide)?a.lastTide:0;
   const list=Array.isArray(g.charts)?g.charts:[{name:'MY CONSTELLATION',stars:g.stars||[],edges:g.edges||[],origin:a.origin||''}];
   S.charts=list.map((c,i)=>this.normChart(c,i));
   if(!S.charts.length)S.charts=[{id:'c'+Date.now(),name:'MY CONSTELLATION',gx:0,gy:0,stars:[],edges:[],origin:''}];
@@ -236,22 +271,75 @@ const Store={
   S.focus=vs&&S.voyages.some(v=>v.id===vs.focus)?vs.focus:(S.voyages[0]?S.voyages[0].id:'');
  },
  saveActive(){this.write('ternary_nav_active',{lastTide:S.tide});this.write('ternary_nav_voyages',{focus:S.focus,voyages:S.voyages})},
+ saveSettings(){this.write('ternary_nav_settings',S.settings)},
  saveSky(){this.write('ternary_nav_galaxy',{cur:S.cur,charts:S.charts,links:S.links})},
  resetDefault(){
   Dlg.ask('Are you sure you want to reset all constellations, voyages, and data to default? This cannot be undone.','RESET ALL',()=>{
    localStorage.clear();
    S.tide=0;S.pending=0;S.voyages=[];S.focus='';S.charts=[];S.cur='';UI.vn=undefined;
-   Store.init();UI.refresh();SKY.setMode('chart');SKY.render();UI.close();Dlg.note('Application data restored to defaults.');
+   Store.init();UI.theme();UI.refresh();SKY.setMode('chart');SKY.render();UI.close();Dlg.note('Application data restored to defaults.');
   });
  },
- export(){const blob=new Blob([JSON.stringify({app:'ternary-navigator',active:{lastTide:S.tide},voyages:{focus:S.focus,voyages:S.voyages},galaxy:{cur:S.cur,charts:S.charts,links:S.links}},null,2)],{type:'application/json'});
+ export(){const blob=new Blob([JSON.stringify({app:'ternary-navigator',active:{lastTide:S.tide},voyages:{focus:S.focus,voyages:S.voyages},settings:S.settings,galaxy:{cur:S.cur,charts:S.charts,links:S.links}},null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ternary-navigator-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)},
  import(inp){const f=inp.files[0];inp.value='';if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const j=JSON.parse(r.result),g=j.galaxy||j.constellation;if(!g||!(Array.isArray(g.charts)||Array.isArray(g.stars)))throw 0;
    const n=Array.isArray(g.charts)?g.charts.reduce((t,c)=>t+(c.stars||[]).length,0):(g.stars||[]).length;
-   Dlg.ask(`Replace current data with this backup (${n} stars)?`,'REPLACE',()=>{this.apply(j.active||{},j.wake,g,j.voyages);this.saveActive();this.saveSky();UI.refresh();SKY.setMode('chart');SKY.render();UI.close();Dlg.note('Backup restored.')})}
+   Dlg.ask(`Replace current data with this backup (${n} stars)?`,'REPLACE',()=>{this.apply(j.active||{},j.wake,g,j.voyages,j.settings);this.saveActive();this.saveSky();this.saveSettings();UI.theme();UI.refresh();SKY.setMode('chart');SKY.render();UI.close();Dlg.note('Backup restored.')})}
    catch(e){Dlg.note('That file is not a valid Ternary Navigator backup.')}};r.readAsText(f)}
 };
+
+const Side={t:0,p:0,W(){return Math.min(innerWidth*.82,300)},
+ set(p,anim){p=Math.max(0,Math.min(1,p));this.p=p;const e=$('side'),sc=$('scrim');
+  e.style.transition=anim?'transform .28s cubic-bezier(.2,.8,.2,1)':'none';sc.style.transition=anim?'opacity .28s':'none';
+  e.style.transform=`translateX(${(p-1)*100}%)`;sc.style.opacity=p;sc.style.pointerEvents=p>.02?'auto':'none';
+  clearTimeout(this.t);if(p>.001)e.classList.add('vis');else this.t=setTimeout(()=>{if(this.p<=.001)e.classList.remove('vis')},320)},
+ open(){UI.close();this.set(1,true)},close(){this.set(0,true)},
+ go(w){this.close();setTimeout(()=>{if(w==='voyages')UI.course();else if(w==='chart')UI.sky(true);else if(w==='galaxy'){UI.sky(true);SKY.go('galaxy')}else if(w==='settings')CP.open();else if(w==='data'){UI.close();$('m-data').classList.add('show')}},120)},
+ bind(){
+  const e=$('side'),edge=$('edge');let x0=0,y0=0,mode='';
+  edge.addEventListener('pointerdown',ev=>{x0=ev.clientX;mode='open';edge.setPointerCapture(ev.pointerId)});
+  edge.addEventListener('pointermove',ev=>{if(mode==='open')this.set((ev.clientX-x0)/this.W())});
+  const endOpen=()=>{if(mode!=='open')return;mode='';this.set(this.p>.35?1:0,true)};
+  edge.addEventListener('pointerup',endOpen);edge.addEventListener('pointercancel',endOpen);
+  e.addEventListener('pointerdown',ev=>{if(this.p<.9)return;x0=ev.clientX;y0=ev.clientY;mode='maybe'});
+  e.addEventListener('pointermove',ev=>{if(mode!=='maybe'&&mode!=='close')return;const dx=ev.clientX-x0,dy=ev.clientY-y0;
+   if(mode==='maybe'){if(dx<-10&&Math.abs(dx)>Math.abs(dy)){mode='close';e.setPointerCapture(ev.pointerId)}else return}
+   this.set(1+dx/this.W())});
+  const endClose=()=>{if(mode==='close')this.set(this.p<.65?0:1,true);mode=''};
+  e.addEventListener('pointerup',endClose);e.addEventListener('pointercancel',endClose);
+  addEventListener('keydown',ev=>{if(ev.key==='Escape'){if(this.p>.5)this.close();else UI.close()}});
+ }};
+const Settings={DEFAULT:{theme:'#00ff9d',follow:true},valid(h){return /^#[0-9a-f]{6}$/i.test(h)},
+ set(k,v,save){S.settings[k]=v;UI.theme();if(save!==false)Store.saveSettings()}};
+const CP={h:150,s:1,v:1,
+ hsv2rgb(h,s,v){const f=n=>{const k=(n+h/60)%6;return v-v*s*Math.max(0,Math.min(k,4-k,1))};return[f(5),f(3),f(1)].map(x=>Math.round(x*255))},
+ rgb2hsv(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;let h=0;if(d){if(mx===r)h=((g-b)/d)%6;else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;if(h<0)h+=360}return{h,s:mx?d/mx:0,v:mx}},
+ hex(){return'#'+this.hsv2rgb(this.h,this.s,this.v).map(x=>x.toString(16).padStart(2,'0')).join('')},
+ setHSV(o){if(o.s>0&&o.v>0)this.h=o.h;this.s=o.s;this.v=o.v},   // greys keep the hue you had
+ fromHex(hx){const n=parseInt(hx.slice(1),16);this.setHSV(this.rgb2hsv(n>>16&255,n>>8&255,n&255))},
+ paint(skipHex){const rgb=this.hsv2rgb(this.h,this.s,this.v),hx=this.hex();
+  $('cp-sv').style.setProperty('--h',this.h);$('cp-sv-k').style.left=this.s*100+'%';$('cp-sv-k').style.top=(1-this.v)*100+'%';
+  $('cp-hue-k').style.left=this.h/360*100+'%';$('cp-sw').style.background=hx;
+  if(!skipHex)$('cp-hex').value=hx.toUpperCase();
+  ['r','g','b'].forEach((c,i)=>{const el=$('cp-'+c);if(document.activeElement!==el)el.value=rgb[i]})},
+ drag(el,fn){let on=false;
+  const f=e=>{const r=el.getBoundingClientRect();fn(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),Math.max(0,Math.min(1,(e.clientY-r.top)/r.height)))};
+  el.addEventListener('pointerdown',e=>{on=true;el.setPointerCapture(e.pointerId);f(e);e.preventDefault()});
+  el.addEventListener('pointermove',e=>{if(on)f(e)});
+  const end=()=>{if(on){on=false;Store.saveSettings()}};el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end)},
+ bind(){
+  this.drag($('cp-sv'),(x,y)=>{this.s=x;this.v=1-y;this.paint();Settings.set('theme',this.hex(),false)});
+  this.drag($('cp-hue'),x=>{this.h=Math.min(359.99,x*360);this.paint();Settings.set('theme',this.hex(),false)});
+  $('cp-hex').addEventListener('input',e=>{let t=e.target.value.trim();if(t[0]!=='#')t='#'+t;if(t.length===4)t='#'+t.slice(1).split('').map(c=>c+c).join('');
+   if(Settings.valid(t)){this.fromHex(t);this.paint(true);Settings.set('theme',t.toLowerCase())}});
+  ['cp-r','cp-g','cp-b'].forEach(id=>$(id).addEventListener('input',()=>{
+   const v=['cp-r','cp-g','cp-b'].map(k=>Math.max(0,Math.min(255,parseInt($(k).value)||0)));
+   this.setHSV(this.rgb2hsv(...v));this.paint();Settings.set('theme','#'+v.map(x=>x.toString(16).padStart(2,'0')).join(''))}));
+  $('set-follow').addEventListener('change',e=>Settings.set('follow',e.target.checked));
+  $('cp-reset').addEventListener('click',()=>{this.fromHex(Settings.DEFAULT.theme);this.paint();Settings.set('theme',Settings.DEFAULT.theme)});
+ },
+ open(){UI.close();this.fromHex(S.settings.theme);this.paint();$('set-follow').checked=!!S.settings.follow;$('m-settings').classList.add('show')}};
 
 function stamp(e){
  const t=+(e.ts||e.id),d=new Date(t),ok=t>1e12&&!isNaN(d);
@@ -300,9 +388,10 @@ const ENGINE={
 const UI={
  init(){Store.init();this.drawer();this.theme();this.refresh();this.layout(0,false);addEventListener('resize',()=>UI.fitGoal());addEventListener('load',()=>{UI.layout(UI.p||0,false);UI.fitGoal()})},
  refresh(){this.header();this.compass();this.logs();this.balance()},
- theme(){const c=COLORS[S.tide];document.documentElement.style.setProperty('--accent',c);$('astrolabe').style.boxShadow=`0 0 35px ${c}25`},
+ accent(){return S.settings.follow&&S.tide!==0?COLORS[S.tide]:S.settings.theme},
+ theme(){const c=this.accent();document.documentElement.style.setProperty('--accent',c);$('astrolabe').style.boxShadow=`0 0 35px ${c}25`},
  header(){$('goal').textContent=S.horizon;this.fitGoal()},
- fitGoal(){const g=$('goal');g.style.fontSize='';let f=parseFloat(getComputedStyle(g).fontSize)||15;while(g.scrollWidth>g.clientWidth&&f>10){f-=.5;g.style.fontSize=f+'px'}},
+ fitGoal(){['goal','title'].forEach(id=>{const g=$(id);g.style.fontSize='';let f=parseFloat(getComputedStyle(g).fontSize)||15;while(g.scrollWidth>g.clientWidth&&f>9.5){f-=.5;g.style.fontSize=f+'px'}})},
  canForge(){return Math.abs(shortest(S.target,S.needle))<=TOL&&S.horizon!==NONE&&S.wake.some(l=>l.actionType==='Align')},
  compass(){
   const has=S.horizon!==NONE;
@@ -311,7 +400,7 @@ const UI={
   $('needle').style.transform=`rotate(${this.vn}deg)`;$('target').style.transform=`rotate(${this.vt}deg)`;$('target').style.opacity=has?1:0;
   const on=this.canForge(),hub=$('hub');
   $('title').textContent=on?'HORIZON ALIGNED':'TERNARY NAVIGATOR';
-  hub.style.boxShadow=on?'0 0 25px #fff':`0 0 12px ${COLORS[S.tide]}`;hub.style.backgroundColor=on?'#fff':'var(--bg)';
+  hub.style.boxShadow=on?'0 0 25px #fff':`0 0 12px ${this.accent()}`;hub.style.backgroundColor=on?'#fff':'var(--bg)';
   $('course').textContent=S.voyages.length?'VOYAGES':'VOYAGE';
   $('course').style.display=on?'none':'block';$('forge').style.display=on?'block':'none';this.fitGoal();
  },
@@ -405,7 +494,7 @@ const UI={
  sextant(){if(!$('log-input').value.trim())return;if(S.horizon===NONE){this.afterCourse=true;this.courseChart=S.cur;this.fillCourse();$('m-course').classList.add('show');return}S.pending=S.tide;this.energy(S.tide);$('m-sextant').classList.add('show')},
  energy(t){S.pending=t;[-1,0,1].forEach(k=>$('e'+k).className='chip'+(k===t?' s'+k:''));$('e-cap').textContent=CAP[t]},
  close(){this.afterCourse=false;document.querySelectorAll('.ov').forEach(m=>m.classList.remove('show'))},
- sky(on,fit){if(on){if(!fit&&S.v&&S.charts.some(c=>c.id===S.v.chart))S.cur=S.v.chart;$('sky').classList.add('on');SKY.show(fit);requestAnimationFrame(()=>requestAnimationFrame(()=>SKY.repaint()))}else $('sky').classList.remove('on')},
+ sky(on,fit){if(on){if(!fit&&S.v&&S.charts.some(c=>c.id===S.v.chart))S.cur=S.v.chart;$('sky').classList.add('on');SKY.show(fit);requestAnimationFrame(()=>requestAnimationFrame(()=>SKY.repaint()))}else{SKY.stack=[];$('sky').classList.remove('on')}},
  collapse(li,slide,done){
   li.style.maxHeight=li.scrollHeight+'px';li.style.transition='none';void li.offsetHeight;
   li.style.transition='transform .2s ease-out,opacity .2s ease-out,max-height .3s ease '+(slide?'.15s':'0s')+',padding .3s ease '+(slide?'.15s':'0s')+',margin .3s ease '+(slide?'.15s':'0s');
@@ -444,7 +533,7 @@ const UI={
 };
 
 const MINZ=.4,MAXZ=2.2,POPUP_DELAY=60;   // popup opens just after the tap's own mouse events, which fire within a frame or two
-const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,panY:0,scale:1,bound:false,lines:[],placing:false,sw:false,targetCId:'',
+const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,panY:0,scale:1,bound:false,lines:[],placing:false,sw:false,targetCId:'',
  layer(){return $(this.mode==='galaxy'?'gfield':'field')},
  setMode(m){
   const v=this.view[this.mode];v.x=this.panX;v.y=this.panY;v.s=this.scale;
@@ -454,7 +543,7 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
   $('btn-mode').textContent=m==='galaxy'?'CHART':'GALAXY';$('btn-focus').style.display='none';
   $('sky-title').textContent=m==='galaxy'?'GALAXY':S.ch.name+' ✎';this.apply(0);
   const L=this.layer();if(L.animate)L.animate([{opacity:0},{opacity:1}],{duration:350})},
- show(fit){if(this.mode!=='chart')this.setMode('chart');this.apply(0);this.render();const first=!this.fitted;this.fitted=true;
+ show(fit){this.stack=[{m:'chart',c:S.cur}];if(this.mode!=='chart')this.setMode('chart');this.apply(0);this.render();const first=!this.fitted;this.fitted=true;
   if(fit)this.fit(first?0:350);else if(S.v&&S.v.chart===S.cur)this.centerFocus(true);else if(first)this.fit(0)},
  centerFocus(instant){const v=S.v;if(!v||v.chart!==S.cur||this.mode!=='chart')return;const p=this.placement(v);if(!p)return;this.scale=1;this.panX=-(p.x-ORI);this.panY=-(p.y-ORI);this.apply(instant?0:350)},
  formingPts(){return S.voyages.filter(v=>v.chart===S.cur).map(v=>this.placement(v)).filter(Boolean)},
@@ -472,13 +561,23 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
   $('vm-info').textContent=`Heading ${norm(v.target)}° · ${v.wake.length} log${v.wake.length===1?'':'s'} · ${Math.round(Math.abs(shortest(v.target,v.needle)))}° off course${id===S.focus?' · in focus':''}`;$('m-vmenu').classList.add('show')},
  vmFocus(){UI.close();ENGINE.focusVoyage(this.vid);UI.sky(false)},
  vmAbandon(){UI.close();ENGINE.abandonVoyage(this.vid)},
- back(){if(this.mode==='galaxy')this.enter(S.cur);else UI.sky(false)},
- toggleMode(){if(this.mode==='chart'){this.setMode('galaxy');this.renderGalaxy();this.fit()}else this.enter(S.cur)},
+ snap(){const t=this.stack[this.stack.length-1];if(t){t.x=this.panX;t.y=this.panY;t.s=this.scale}},
+ restore(t){this.panX=t.x;this.panY=t.y;this.scale=t.s;this.apply(0)},
+ showEntry(t){ // show one entry of the history
+  if(t.m==='galaxy'){this.setMode('galaxy');this.renderGalaxy()}
+  else{if(S.charts.some(c=>c.id===t.c))S.cur=t.c;Store.saveSky();this.setMode('chart');this.render()}
+  if(t.s)this.restore(t);else this.fit()},
+ go(m,c){ // forward; stepping onto the screen just below counts as going back, so toggling never piles up history
+  const st=this.stack,below=st[st.length-2];
+  if(below&&below.m===m&&(m==='galaxy'||below.c===c)){this.back();return}
+  this.snap();const e={m,c};st.push(e);this.showEntry(e)},
+ back(){if(this.stack.length>1){this.stack.pop();this.showEntry(this.stack[this.stack.length-1])}else UI.sky(false)},
+ toggleMode(){if(this.mode==='chart')this.go('galaxy');else this.go('chart',S.cur)},
  actionNew(){
   if(this.mode==='chart'){UI.sky(false);UI.newVoyage()}
   else{this.startPlace()}
  },
- enter(id){if(id!==S.cur){S.cur=id;Store.saveSky()}this.setMode('chart');this.render();this.fit()},
+ enter(id){this.go('chart',id)},
  headerClick(){
   if(this.mode==='chart')this.renameTarget(S.cur);
  },
@@ -503,7 +602,7 @@ const SKY={mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,p
   if(this.mode==='chart')$('sky-title').textContent=S.ch.name+' ✎';
   S.edges.forEach(e=>{const a=S.stars.find(x=>x.id===e.fromStarId),b=S.stars.find(x=>x.id===e.toStarId);if(!a||!b)return;
    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
-   [['x1',a.x],['y1',a.y],['x2',b.x],['y2',b.y],['stroke','rgba(0,255,157,.35)'],['stroke-width',1.5],['stroke-dasharray','5,5']].forEach(([k,v])=>l.setAttribute(k,v));
+   [['x1',a.x],['y1',a.y],['x2',b.x],['y2',b.y],['stroke',UI.accent()+'59'],['stroke-width',1.5],['stroke-dasharray','5,5']].forEach(([k,v])=>l.setAttribute(k,v));
    svg.appendChild(l);this.lines.push({el:l,f:a.id,t:b.id})});
   S.stars.forEach(star=>{
    const col=COLORS[star.spectralClass]||COLORS['0'],o=document.createElement('div');o.className='star';o.dataset.id=star.id;
@@ -745,5 +844,5 @@ function stepDrag(t){
  D.sc+=((D.held?1.08:1)-D.sc)*Math.min(1,dt*12);SKY.paint(D);
  if(!D.held&&rest&&Math.abs(D.sc-1)<.003){D.order.forEach(id=>{D.st[id].x=D.st[id].y=0});D.sc=1;SKY.paint(D);SKY.drag=null;return}
  D.raf=requestAnimationFrame(stepDrag)}
-addEventListener('DOMContentLoaded',()=>{UI.init();SKY.bind();SKY.apply(0)});
+addEventListener('DOMContentLoaded',()=>{UI.init();SKY.bind();SKY.apply(0);Side.bind();CP.bind()});
 </script></body></html>
