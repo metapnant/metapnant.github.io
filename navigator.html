@@ -92,7 +92,7 @@ select.in{background:#0a0514;appearance:auto}
 .gdot .emb{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 .gdot .gl{display:flex;justify-content:center;gap:5px;width:max-content;max-width:124px;overflow:visible;text-overflow:clip}
-.gdot .gl .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gdot .gl .ct{flex:none;color:#9ab}
+.gdot .gl{flex-direction:column;align-items:center;gap:3px;max-width:150px}.gl .nm{min-width:0;max-width:150px;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;text-align:center;line-height:1.25}.gl .cs{display:flex;gap:7px;justify-content:center}.gl .bh{flex:none;color:#a99bd0}.gdot .gl .ct{flex:none;color:#9ab}
 .box>*{flex-shrink:0}
 #sky-origin{overflow-wrap:anywhere}
 .star::before{content:'';position:absolute;inset:-8px;border-radius:50%}
@@ -152,9 +152,9 @@ select.in{background:#0a0514;appearance:auto}
  <p class="mt">CHART YOUR VOYAGE</p><input id="goal-input" class="in" placeholder="e.g. Theory Test" maxlength="20">
  <div id="chart-wrap" style="display:none"><p class="mt">CONSTELLATION</p><select id="chart-sel" class="in" onchange="UI.setCourseChart(this.value)"></select></div>
  <p id="chart-cap" class="cap" style="margin:0 0 12px;min-height:0"></p>
- <div id="branch-wrap" style="display:none"><p class="mt">BRANCH FROM STAR</p><select id="origin-sel" class="in" onchange="ENGINE.setOrigin(this.value)"></select></div>
+ <div id="branch-wrap" style="display:none"><p class="mt">CENTRE ON</p><select id="origin-sel" class="in" onchange="ENGINE.setOrigin(this.value)"></select><div style="display:flex;gap:8px;margin:8px 0 4px"><button class="mb" id="lk1" onclick="ENGINE.setLink(true)" style="margin:0">↳ BRANCH</button><button class="mb" id="lk0" onclick="ENGINE.setLink(false)" style="margin:0">∙ SEPARATE</button></div><p class="cap" style="margin:0 0 10px">Branch draws a line to the centre. Separate sits the same distance away with no line.</p></div>
  <p class="mt">SET CARDINAL VECTOR</p>
- <div class="grid" id="dirgrid"></div><p id="blocked-hint" class="cap" style="display:none;margin:-6px 0 12px">✕ = heading already explored from this star</p><button class="mb" id="course-ok" onclick="UI.confirmCourse()" disabled>CONFIRM VOYAGE</button><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
+ <div class="grid" id="dirgrid"></div><p id="blocked-hint" class="cap" style="display:none;margin:-6px 0 12px">✕ = would overlap or cross a star, a forming voyage or a line</p><button class="mb" id="course-ok" onclick="UI.confirmCourse()" disabled>CONFIRM VOYAGE</button><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
 <div id="m-sextant" class="ov"><div class="box">
  <p class="mt">ENERGY</p>
  <div class="chips"><button class="chip" id="e-1" onclick="UI.energy(-1)">,ton</button><button class="chip" id="e0" onclick="UI.energy(0)">.síl</button><button class="chip" id="e1" onclick="UI.energy(1)">;qına</button></div>
@@ -375,10 +375,37 @@ function stamp(e){
  return{md:ok?String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'):'',yr:ok?d.getFullYear():'',time:e.time||(ok?d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'')}}
 function stampHTML(e){const t=stamp(e);return(t.md?`<span>${t.md}</span><span class="yr">${t.yr}</span>`:'')+`<span>${esc(t.time)}</span><span>${esc(e.tag)}</span>`}
 function stampText(e){const t=stamp(e);return(t.md?t.md+'/'+t.yr+' · ':'')+t.time+' '+e.tag}
-const originId=ch=>{ch=ch||S.ch;return (ch.stars.some(x=>x.id===ch.origin)||S.voyages.some(v=>v.id===ch.origin&&v.chart===ch.id))?ch.origin:(ch.stars.length?ch.stars[ch.stars.length-1].id:'')};
-const parentIdOf=(ch,v)=>{if(ch.stars.some(x=>x.id===v.origin)||S.voyages.some(x=>x.id===v.origin&&x.id!==v.id&&x.chart===ch.id))return v.origin;return ch.stars.length?ch.stars[ch.stars.length-1].id:''};
+const originId=ch=>{ch=ch||S.ch;const ok=id=>ch.stars.some(x=>x.id===id)||S.voyages.some(v=>v.id===id&&v.chart===ch.id);if(ok(ch.origin))return ch.origin;if(S.v&&S.v.chart===ch.id)return S.v.id;return ch.stars.length?ch.stars[ch.stars.length-1].id:''};
+const parentIdOf=(ch,v)=>{if(v.origin==='-')return '';if(ch.stars.some(x=>x.id===v.origin)||S.voyages.some(x=>x.id===v.origin&&x.id!==v.id&&x.chart===ch.id))return v.origin;return ch.stars.length?ch.stars[ch.stars.length-1].id:''};
+const SW0=120,SW1=260,CLN=60,CLL=34; // a forming star travels along its heading from SW0 to SW1; CLN = min gap between stars, CLL = min gap star-to-line
+const dv=deg=>{const r=norm(deg)*Math.PI/180;return{x:Math.sin(r),y:-Math.cos(r)}};
+const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y}),dot=(a,b)=>a.x*b.x+a.y*b.y;
+function ptSeg(p,a,b){const d=sub(b,a),l=dot(d,d),t=l?Math.max(0,Math.min(1,dot(sub(p,a),d)/l)):0;return Math.hypot(p.x-a.x-d.x*t,p.y-a.y-d.y*t)}
+function segX(a,b,c,d){const o=(p,q,r)=>(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x);return o(a,b,c)*o(a,b,d)<0&&o(c,d,a)*o(c,d,b)<0}
+function segDist(a,b,c,d){return segX(a,b,c,d)?0:Math.min(ptSeg(a,c,d),ptSeg(b,c,d),ptSeg(c,a,b),ptSeg(d,a,b))}
+function geoModel(ch,anchorId,exId){ // everything already on the chart as keep-clear regions: stars/forming reach = segments, lines = segments
+ const nodes=[],lines=[],pos={};
+ ch.stars.forEach(s=>{pos[s.id]={x:s.x,y:s.y};if(s.id!==anchorId)nodes.push([pos[s.id],pos[s.id]])});
+ ch.edges.forEach(e=>{const a=pos[e.fromStarId],b=pos[e.toStarId];if(a&&b)lines.push([a,b])});
+ const fv=S.voyages.filter(v=>v.chart===ch.id&&v.id!==exId);
+ fv.forEach(v=>{const c=SKY.placement(v);if(c)pos[v.id]=c});
+ fv.forEach(v=>{const cur=pos[v.id];if(!cur)return;let p=cur,q=cur;const par=parentOf(ch,v);
+  const A=v.geo&&!v.lockPos&&v.id!==anchorId?(par||SKY.anchorObj(ch,v)):null;
+  if(A){const u=dv(v.target);p={x:A.x+u.x*SW0,y:A.y+u.y*SW0};q={x:A.x+u.x*SW1,y:A.y+u.y*SW1}}
+  if(v.id!==anchorId)nodes.push([p,q]);
+  if(par)lines.push([{x:par.x,y:par.y},A?q:cur])});
+ return{nodes,lines,pos}}
+function dirFree(ch,anchorId,linked,deg,exId){
+ const M=geoModel(ch,anchorId,exId),A=anchorId?(ch.stars.find(s=>s.id===anchorId)||M.pos[anchorId]):null;
+ if(!A)return !M.nodes.length&&!M.lines.length;
+ const u=dv(deg),AA={x:A.x,y:A.y},S0={x:A.x+u.x*SW0,y:A.y+u.y*SW0},S1={x:A.x+u.x*SW1,y:A.y+u.y*SW1};
+ for(const [p,q] of M.nodes){if(segDist(S0,S1,p,q)<CLN)return false;if(linked&&segDist(AA,S1,p,q)<CLL)return false}
+ for(const [p,q] of M.lines){if(segDist(S0,S1,p,q)<CLL)return false;
+  if(linked){const inc=Math.hypot(p.x-A.x,p.y-A.y)<1?q:Math.hypot(q.x-A.x,q.y-A.y)<1?p:null;
+   if(inc){const w=sub(inc,A),l=Math.hypot(w.x,w.y)||1;if(dot(w,u)/l>.866)return false}else if(segDist(AA,S1,p,q)<CLL)return false}}
+ return true}
 let PD=0;
-const parentOf=(ch,v)=>{const s=ch.stars.find(x=>x.id===v.origin);if(s)return s;
+const parentOf=(ch,v)=>{if(v.origin==='-')return null;const s=ch.stars.find(x=>x.id===v.origin);if(s)return s;
  const pv=PD<30&&S.voyages.find(x=>x.id===v.origin&&x.id!==v.id&&x.chart===ch.id);
  if(pv){PD++;try{const p=SKY.placement(pv);if(p)return{id:pv.id,name:pv.name,x:p.x,y:p.y,voyage:true}}finally{PD--}}
  return ch.stars.length?ch.stars[ch.stars.length-1]:null};
@@ -391,18 +418,19 @@ function resonant(c,n){n=n===undefined?S.wake.length:n;return n>0&&[-1,0,1].ever
 
 const ENGINE={
  setTarget(deg){
-  const ch=UI.cch(),oid=originId(ch);if(blocked(oid,ch).has(norm(deg)))return;const go=UI.afterCourse;
-  this.newVoyage(($('goal-input').value.trim()||'PRIMARY VOYAGE').slice(0,20),deg,ch.id,oid);
+  const ch=UI.cch(),cen=originId(ch),link=ch.link!==false&&!!cen;if(!dirFree(ch,cen,link,deg))return;const go=UI.afterCourse;
+  this.newVoyage(($('goal-input').value.trim()||'PRIMARY VOYAGE').slice(0,20),deg,ch.id,link?cen:'',cen);
   S.cur=ch.id;Store.saveActive();Store.saveSky();$('goal-input').value='';UI.close();UI.refresh();if(go)UI.sextant()},
- newVoyage(name,deg,chart,origin){const now=Date.now(),v={id:'v'+now+Math.random().toString(36).slice(2,6),name,chart,origin:origin||'',target:deg,needle:0,toggle:1,wake:[],created:now,updated:now};
-  let st=(norm(deg)+180)%360;const ch=S.charts.find(c=>c.id===chart),ps=ch&&ch.stars.find(x=>x.id===origin),pv=S.voyages.find(x=>x.id===origin);
-  if(ps&&typeof ps.endNeedle==='number')st=ps.endNeedle;else if(pv)st=pv.needle;
+ newVoyage(name,deg,chart,origin,anchor){const now=Date.now(),v={id:'v'+now+Math.random().toString(36).slice(2,6),name,chart,origin:origin||'-',anchor:anchor||origin||'',geo:true,target:deg,needle:0,toggle:1,wake:[],created:now,updated:now};
+  const st=(norm(deg)+180)%360; // every voyage starts in the void, branched or not
+  const aw=S.voyages.find(x=>x.id===v.anchor);if(aw&&!aw.lockPos){const q=SKY.placement(aw);if(q)aw.lockPos={x:q.x,y:q.y}} // a star others are placed around stays put
   v.start=st;v.needle=st;S.voyages.push(v);S.focus=v.id;return v},
- endVoyage(id){const e=S.voyages.find(v=>v.id===id);if(e){S.voyages.forEach(o=>{if(o.origin===id)o.origin=e.origin});S.charts.forEach(c=>{if(c.origin===id)c.origin=e.origin})}S.voyages=S.voyages.filter(v=>v.id!==id);if(S.focus===id){const n=[...S.voyages].sort((a,b)=>b.updated-a.updated)[0];S.focus=n?n.id:''}},
+ endVoyage(id){const e=S.voyages.find(v=>v.id===id);if(e){S.voyages.forEach(o=>{if(o.origin===id)o.origin=e.origin;if(o.anchor===id)o.anchor=e.anchor||(e.origin==='-'?'':e.origin)});S.charts.forEach(c=>{if(c.origin===id)c.origin=e.origin})}S.voyages=S.voyages.filter(v=>v.id!==id);if(S.focus===id){const n=[...S.voyages].sort((a,b)=>b.updated-a.updated)[0];S.focus=n?n.id:''}},
  focusVoyage(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;S.focus=id;if(S.charts.some(c=>c.id===v.chart))S.cur=v.chart;Store.saveActive();Store.saveSky();UI.refresh()},
  renameVoyage(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;Dlg.name('RENAME VOYAGE',v.name,n=>{v.name=n.slice(0,24);Store.saveActive();UI.header();if($('m-vlist').classList.contains('show'))UI.voyages();if($('sky').classList.contains('on'))SKY.render()})},
  abandonVoyage(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;
   Dlg.ask(`Abandon "${v.name}"? Its ${v.wake.length} log ${v.wake.length===1?'entry':'entries'} will be dissolved.`,'ABANDON',()=>{this.endVoyage(id);Store.saveActive();UI.refresh();SKY.render()})},
+ setLink(b){UI.cch().link=!!b;Store.saveSky();UI.fillCourse();SKY.markOrigin()},
  setOrigin(id){UI.cch().origin=id;Store.saveSky();UI.fillCourse();SKY.markOrigin()},
  advance(n,type,tide,tog,target){target=target===undefined?S.target:target;
   const mult=tide===-1?.5:tide===1?2.2:1.1,diff=shortest(target,n);
@@ -530,16 +558,16 @@ const UI={
  cch(){return S.charts.find(c=>c.id===this.courseChart)||S.ch},
  setCourseChart(id){this.courseChart=id;this.fillCourse()},
  fillCourse(){
-  const ch=this.cch(),g=$('dirgrid'),oid=originId(ch),bl=blocked(oid,ch),sel=$('origin-sel'),cs=$('chart-sel'),many=S.charts.length>1;
+  const ch=this.cch(),g=$('dirgrid'),oid=originId(ch),link=ch.link!==false&&!!oid,sel=$('origin-sel'),cs=$('chart-sel'),many=S.charts.length>1;
   $('chart-wrap').style.display=many?'block':'none';cs.innerHTML='';
   S.charts.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name;cs.appendChild(o)});cs.value=ch.id;
   $('branch-wrap').style.display=(ch.stars.length||S.voyages.some(v=>v.chart===ch.id))?'block':'none';$('chart-cap').textContent='In constellation: '+ch.name;$('chart-cap').style.display=many?'none':'block';sel.innerHTML='';
-  ch.stars.forEach((st,i)=>{const o=document.createElement('option');o.value=st.id;o.textContent=(i+1)+'. '+st.voyageName+(i===ch.stars.length-1?' (latest)':'');sel.appendChild(o)});
+  ch.stars.forEach((st,i)=>{const o=document.createElement('option');o.value=st.id;o.textContent=(i+1)+'. '+st.voyageName+(st.collapsed?' (black hole)':'')+(i===ch.stars.length-1?' (latest)':'');sel.appendChild(o)});
   S.voyages.filter(v=>v.chart===ch.id).forEach(v=>{const o=document.createElement('option');o.value=v.id;o.textContent='◌ '+v.name+' (forming)';sel.appendChild(o)});sel.value=oid;
-  g.innerHTML='';this.cdir=null;$('course-ok').disabled=true;DIRS.forEach(d=>{if(!d){g.appendChild(document.createElement('div'));return}
-   const b=document.createElement('button');b.className='mb';const x=bl.has(d[1]);b.textContent=d[0]+(x?' ✕':'');
+  let nb=0;$('lk1').classList.toggle('on',link);$('lk0').classList.toggle('on',!link);g.innerHTML='';this.cdir=null;$('course-ok').disabled=true;DIRS.forEach(d=>{if(!d){g.appendChild(document.createElement('div'));return}
+   const b=document.createElement('button');b.className='mb';const x=!dirFree(ch,oid,link,d[1]);if(x)nb++;b.textContent=d[0]+(x?' ✕':'');
    if(x){b.disabled=true;b.style.opacity=.3}else b.onclick=()=>{this.cdir=d[1];[...g.children].forEach(c=>c.classList.remove('on'));b.classList.add('on');$('course-ok').disabled=false};g.appendChild(b)});
-  $('blocked-hint').style.display=bl.size?'block':'none'},
+  $('blocked-hint').style.display=nb?'block':'none'},
  sextant(){if(!$('log-input').value.trim())return;if(S.horizon===NONE){this.afterCourse=true;this.courseChart=S.cur;this.fillCourse();$('m-course').classList.add('show');return}S.pending=S.tide;this.energy(S.tide);this.pickDir(null);$('m-sextant').classList.add('show')},
  pickDir(t,i,el){this.dir=t?{t,i}:null;document.querySelectorAll('#m-sextant .chip.act').forEach(c=>c.classList.toggle('on',c===el));$('emit-ok').disabled=!this.dir},
  confirmEmit(){if(this.dir)ENGINE.act(this.dir.t,this.dir.i)},
@@ -585,7 +613,7 @@ const UI={
    size:Math.min(28,Math.max(10,8+Math.sqrt(n)*3.5)),glowRadius:Math.min(38,12+n*1.5),harmonicResonance:resonant(c,n),
    metrics:{totalActions:n,alignCount:c.Align,driftCount:c.Drift+c.Squall,anchorCount:c.Anchor,characterVolume:v.wake.reduce((a,l)=>a+l.text.length,0),
     tideDistribution:{ton:c['-1'],sil:c['0'],qina:c['1']}},logArchive:[...v.wake]});
-  S.voyages.forEach(o=>{if(o.origin===v.id)o.origin=id});ch.origin=id;ENGINE.endVoyage(v.id);S.cur=ch.id;Store.saveSky();Store.saveActive();this.refresh();this.sky(true,true);
+  S.voyages.forEach(o=>{if(o.origin===v.id)o.origin=id;if(o.anchor===v.id)o.anchor=id});ch.origin=id;ENGINE.endVoyage(v.id);S.cur=ch.id;Store.saveSky();Store.saveActive();this.refresh();this.sky(true,true);
  }
 };
 
@@ -602,18 +630,22 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
   const L=this.layer();if(L.animate)L.animate([{opacity:0},{opacity:1}],{duration:350})},
  show(fit){this.stack=[{m:'chart',c:S.cur}];if(this.mode!=='chart')this.setMode('chart');this.apply(0);this.render();const first=!this.fitted;this.fitted=true;
   if(fit)this.fit(first?0:350);else if(S.v&&S.v.chart===S.cur)this.centerFocus(true);else if(first)this.fit(0)},
- focusVis(m){const bf=$('btn-focus');if(bf)bf.style.display=S.v&&(m==='galaxy'?S.charts.some(c=>c.id===S.v.chart):S.v.chart===S.cur)?'block':'none'},
+ focusVis(m){const bf=$('btn-focus');if(bf)bf.style.display=S.v&&S.charts.some(c=>c.id===S.v.chart)?'block':'none'},
  centerFocus(instant){const v=S.v;if(!v)return;
   if(this.mode==='galaxy'){const c=S.charts.find(x=>x.id===v.chart);if(!c)return;this.scale=1;this.panX=-c.gx;this.panY=-c.gy;this.apply(instant?0:350);return}
-  if(v.chart!==S.cur||this.mode!=='chart')return;const p=this.placement(v);if(!p)return;this.scale=1;this.panX=-(p.x-ORI);this.panY=-(p.y-ORI);this.apply(instant?0:350)},
+  if(this.mode!=='chart')return;if(v.chart!==S.cur){this.go('chart',v.chart);instant=true;if(S.cur!==v.chart)return}const p=this.placement(v);if(!p)return;this.scale=1;this.panX=-(p.x-ORI);this.panY=-(p.y-ORI);this.apply(instant?0:350)},
  formingPts(){return S.voyages.filter(v=>v.chart===S.cur).map(v=>this.placement(v)).filter(Boolean)},
  freeHeading(ch,pid,v){const bl=blocked(pid,ch,v.id),t=norm(v.target);if(!bl.has(t))return t;for(const o of [45,-45,90,-90,135,-135,180]){const h=norm(t+o);if(!bl.has(h))return h}return t},
+ anchorObj(ch,v){const s=ch.stars.find(x=>x.id===v.anchor);if(s)return s;const w=S.voyages.find(x=>x.id===v.anchor&&x.id!==v.id&&x.chart===ch.id);if(w&&PD<30){PD++;try{const q=this.placement(w);if(q)return{id:w.id,x:q.x,y:q.y,voyage:true}}finally{PD--}}return null},
  basePos(v){const ch=S.charts.find(c=>c.id===v.chart);if(!ch)return null;
-  const n=v.wake.length,parent=parentOf(ch,v),heading=parent?this.freeHeading(ch,parent.id,v):norm(v.target);let x=ORI,y=ORI;
+  const n=v.wake.length,parent=parentOf(ch,v);
+  if(v.lockPos)return{ch,parent,heading:norm(v.target),x:v.lockPos.x,y:v.lockPos.y};
+  if(v.geo){const A=parent||this.anchorObj(ch,v),heading=norm(v.target);let x=ORI,y=ORI;if(A){const u=dv(heading),D=Math.min(SW1,Math.max(SW0,80+n*6));x=A.x+u.x*D;y=A.y+u.y*D}return{ch,parent,heading,x,y}}
+  const heading=parent?this.freeHeading(ch,parent.id,v):norm(v.target);let x=ORI,y=ORI;
   if(parent){const r=heading*Math.PI/180,D=Math.min(260,Math.max(120,80+n*6));x=parent.x+D*Math.sin(r);y=parent.y-D*Math.cos(r)}
   return{ch,parent,heading,x,y}},
  placement(v){ // where this voyage's star will land; also where its forming star is drawn
-  const b=this.basePos(v);if(!b)return null;const r=b.heading*Math.PI/180,others=b.ch.stars.map(t=>({x:t.x,y:t.y}));
+  const b=this.basePos(v);if(!b)return null;if(v.geo||v.lockPos)return b;const r=b.heading*Math.PI/180,others=b.ch.stars.map(t=>({x:t.x,y:t.y}));
   S.voyages.forEach(o=>{if(o.id!==v.id&&o.chart===v.chart){const q=this.basePos(o);if(q)others.push({x:q.x,y:q.y})}});
   for(let i=0;i<12;i++)others.forEach(t=>{let dx=b.x-t.x,dy=b.y-t.y,d=Math.hypot(dx,dy);if(d<60){if(d<.001){dx=Math.sin(r);dy=-Math.cos(r);d=1}b.x+=dx/d*(60-d);b.y+=dy/d*(60-d)}});
   return b},
@@ -703,14 +735,14 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
    [['x1',ORI+A.gx],['y1',ORI+A.gy],['x2',ORI+B.gx],['y2',ORI+B.gy],['stroke','rgba(255,255,255,.3)'],['stroke-width',1.5],['stroke-dasharray','6,6']].forEach(([k,v])=>l.setAttribute(k,v));
    sv.appendChild(l);this.glines.push({el:l,a:lk.a,b:lk.b})});
-  S.charts.forEach(c=>{const n=c.stars.length,t=[0,0,0];c.stars.forEach(st=>{t[(+st.spectralClass||0)+1]++});
+  S.charts.forEach(c=>{const n=c.stars.length,nb=c.stars.filter(x=>x.collapsed).length,ns=n-nb,t=[0,0,0];c.stars.forEach(st=>{t[(+st.spectralClass||0)+1]++});
    const col=COLORS[n?['-1','0','1'][t.indexOf(Math.max(...t))]:'0'],sz=this.shape(c).sz,d=document.createElement('div');
    d.className='gdot'+(c.id===S.cur?' cur':'');d.dataset.id=c.id;this.dots[c.id]=d;
    d.style.cssText=`left:${ORI+c.gx}px;top:${ORI+c.gy}px;width:${sz}px;height:${sz}px;border:1.5px solid ${col}99;background:radial-gradient(circle,${col}38 0%,${col}1a 60%,transparent 74%),rgba(5,0,10,.6);box-shadow:0 0 ${Math.max(sz*.7,10)}px ${col}44,inset 0 0 ${sz/3}px ${col}33`;
    d.innerHTML=this.emblem(c);
    const l=document.createElement('div');l.className='gl';
    const nm=document.createElement('span');nm.className='nm';nm.textContent=c.name;
-   const ct=document.createElement('span');ct.className='ct';ct.textContent=n+'★';l.append(nm,ct);const k=S.voyages.filter(v=>v.chart===c.id).length;if(k){const fc=document.createElement('span');fc.className='fc';fc.textContent='◐'+k;l.append(fc)}d.appendChild(l);
+   const ct=document.createElement('span');ct.className='ct';ct.textContent=ns+'★';const row=document.createElement('div');row.className='cs';row.append(ct);const k=S.voyages.filter(v=>v.chart===c.id).length;if(k){const fc=document.createElement('span');fc.className='fc';fc.textContent='◐'+k;row.append(fc)}if(nb){const bh=document.createElement('span');bh.className='bh';bh.textContent='●'+nb;row.append(bh)}l.append(nm,row);d.appendChild(l);
    let sx=0,sy=0,down=false,moved=false,linkMode=false,pressT=null,ids=null,cdx=0,cdy=0;
    const clear=()=>{if(pressT){clearTimeout(pressT);pressT=null}};
    d.addEventListener('pointerdown',e=>{
@@ -816,7 +848,7 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
  markOrigin(){
   if(this.mode==='galaxy'){const la=S.charts.find(x=>x.id===this.linking);$('sky-origin').textContent=la?`Tap the constellation to link or unlink with ${la.name}.`:this.placing?'Touch & hold an empty spot to preview, release to create.':'Tap a constellation for options. Drag to move it (linked ones follow). Hold, then drag onto another to link or unlink.';return}
   const oid=originId();document.querySelectorAll('.star,.fstar').forEach(o=>o.classList.toggle('origin',(o.dataset.id||o.dataset.vid)===oid));
-  const st=S.stars.find(x=>x.id===oid),fv=S.voyages.find(x=>x.id===oid);$('sky-origin').textContent=st?`Next voyage branches from: ${st.voyageName}. Tap another star to change.`:fv?`Next voyage branches from: ${fv.name} (still forming).`:'Forge your first star to begin this constellation.'},
+  const st=S.stars.find(x=>x.id===oid),fv=S.voyages.find(x=>x.id===oid);$('sky-origin').textContent=st?`Next voyage ${S.ch.link===false?'sits beside':'branches from'}: ${st.voyageName}. Tap another star to change.`:fv?`Next voyage ${S.ch.link===false?'sits beside':'branches from'}: ${fv.name} (still forming).`:(S.stars.length||S.voyages.some(v=>v.chart===S.cur))?'Next voyage starts on its own. Tap a star to branch from it.':'Forge your first star to begin this constellation.'},
  bind(){
   if(this.bound)return;this.bound=true;const u=$('universe'),P=new Map();let d0=0,s0=1,px=0,py=0,tap=null;
   const dist=()=>{const [a,b]=[...P.values()];return Math.hypot(a.x-b.x,a.y-b.y)};
