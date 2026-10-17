@@ -170,6 +170,8 @@ select.in{background:#0a0514;appearance:auto}
  <p class="mt" style="margin-bottom:6px">VOYAGE LOG ARCHIVE</p>
  <div id="s-logs" style="overflow-y:auto;max-height:25vh;font-size:.75rem;margin-bottom:12px"></div>
  <button class="mb" id="branch"></button><button class="mb danger" id="purge">PURGE STAR FROM SKY</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
+<div id="m-restore" class="ov" style="z-index:30"><div class="box"><p class="mt">RESTORE BACKUP</p><p class="cap" id="rs-info" style="text-align:center;margin-bottom:14px"></p><button class="mb" id="rs-new">ADD AS NEW PROFILE</button><button class="mb danger" id="rs-rep">REPLACE THIS PROFILE</button><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
+<div id="m-pass" class="ov" style="z-index:30"><div class="box"><p class="mt" id="pw-title">PASSPHRASE</p><p class="cap" id="pw-cap" style="text-align:center;margin-bottom:12px"></p><input id="pw-1" class="in" type="password" autocomplete="off" placeholder="Passphrase"><input id="pw-2" class="in" type="password" autocomplete="off" placeholder="Repeat passphrase" style="display:none"><p id="pw-err" class="cap" style="color:#f66;display:none;text-align:center"></p><button class="mb" id="pw-ok">OK</button><button class="cancel" id="pw-cancel">CANCEL</button></div></div>
 <div id="m-prof" class="ov"><div class="box"><p class="mt">PROFILES</p><div id="plist"></div><button class="mb" onclick="Prof.edit('')">+ NEW PROFILE</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
 <div id="m-pedit" class="ov" style="z-index:30"><div class="box"><p class="mt" id="pe-title"></p><button id="pe-av" class="av big" aria-label="Choose photo"></button><input id="pe-file" type="file" accept="image/*" hidden><p class="cap" style="text-align:center;margin-bottom:12px">Tap the circle to choose a photo</p><input id="pe-name" class="in" maxlength="20" placeholder="Profile name"><button class="mb" id="pe-rm">REMOVE PHOTO</button><button class="mb" id="pe-ok">SAVE</button><button class="mb danger" id="pe-del">DELETE PROFILE</button><button class="cancel" id="pe-cancel">CANCEL</button></div></div>
 <div id="m-confirm" class="ov" style="z-index:30"><div class="box"><p id="c-msg" style="font-size:.85rem;line-height:1.5;color:#ddd;margin-bottom:16px"></p><button class="mb" id="c-ok">OK</button><button class="cancel" id="c-cancel">CANCEL</button></div></div>
@@ -199,8 +201,8 @@ select.in{background:#0a0514;appearance:auto}
 <div id="m-vmenu" class="ov" style="z-index:30"><div class="box"><p class="mt" id="vm-title">VOYAGE</p><p id="vm-info" class="cap" style="min-height:0;margin:0 0 14px"></p>
  <button class="mb" onclick="SKY.vmFocus()">FOCUS THIS VOYAGE</button><button class="mb" onclick="SKY.vmBranch()">↳ BRANCH FROM HERE</button><button class="mb" onclick="SKY.vmRename()">RENAME VOYAGE</button><button class="mb danger" onclick="SKY.vmAbandon()">ABANDON VOYAGE</button><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
 <div id="m-data" class="ov"><div class="box"><p class="mt">YOUR DATA</p>
- <p style="font-size:.75rem;line-height:1.5;color:#bbb;margin-bottom:14px;text-align:left">Everything saves automatically on this device, in this browser. A backup file keeps a copy you can restore later or move to another device.</p>
- <button class="mb" onclick="Store.export()">⬇ DOWNLOAD BACKUP FILE</button><button class="mb" onclick="$('imp').click()">⬆ RESTORE FROM BACKUP</button>
+ <p style="font-size:.75rem;line-height:1.5;color:#bbb;margin-bottom:14px;text-align:left">Everything saves automatically on this device, in this browser. A backup file keeps a copy you can restore later, into this profile or a new one, or move to another device. An encrypted backup needs its passphrase to open.</p>
+ <button class="mb" onclick="Store.export()">⬇ DOWNLOAD BACKUP FILE</button><button class="mb" onclick="Store.exportEnc()">🔒 DOWNLOAD ENCRYPTED BACKUP</button><button class="mb" onclick="$('imp').click()">⬆ RESTORE FROM BACKUP</button>
  <input id="imp" type="file" accept="application/json,.json" hidden onchange="Store.import(this)">
  <button class="mb danger" onclick="Store.resetDefault()">⚠ RESET TO DEFAULTS</button>
  <button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
@@ -248,8 +250,8 @@ const Profiles={
  update(id,name,photo){const p=this.get(id);if(p){p.name=name;p.photo=photo||'';this.save()}},
  owns(k,id){const pf=this.prefOf(id);return pf?k.startsWith(pf):(k!==this.KEY&&!k.startsWith('tnp_')&&(k.startsWith('ternary_nav_')||k.startsWith('nav_')))},
  wipe(id){Object.keys(localStorage).forEach(k=>{if(this.owns(k,id))localStorage.removeItem(k)})},
- switchTo(id){if(!this.get(id))return;this._r.cur=id;this.save();location.reload()},
- del(id){const R=this.reg();if(R.list.length<2)return;this.wipe(id);R.list=R.list.filter(p=>p.id!==id);if(R.cur===id){R.cur=R.list[0].id;this.save();location.reload()}else{this.save();Prof.list()}}
+ switchTo(id){if(!this.get(id))return;this._r.cur=id;this.save();Nav.stop();location.reload()},
+ del(id){const R=this.reg();if(R.list.length<2)return;this.wipe(id);R.list=R.list.filter(p=>p.id!==id);if(R.cur===id){R.cur=R.list[0].id;this.save();Nav.stop();location.reload()}else{this.save();Prof.list()}}
 };
 const Store={
  read(k,fb){try{const v=localStorage.getItem(Profiles.pref()+k);return v==null?fb:JSON.parse(v)}catch(e){return fb}},
@@ -304,20 +306,31 @@ const Store={
    Store.init();UI.theme();UI.refresh();SKY.setMode('chart');SKY.render();UI.close();Dlg.note('Application data restored to defaults.');
   });
  },
- export(){const blob=new Blob([JSON.stringify({app:'ternary-navigator',profile:Profiles.cur().name,active:{lastTide:S.tide},voyages:{focus:S.focus,voyages:S.voyages},settings:S.settings,galaxy:{cur:S.cur,charts:S.charts,links:S.links}},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ternary-navigator-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)},
- import(inp){const f=inp.files[0];inp.value='';if(!f)return;const r=new FileReader();
-  r.onload=()=>{try{const j=JSON.parse(r.result),g=j.galaxy||j.constellation;if(!g||!(Array.isArray(g.charts)||Array.isArray(g.stars)))throw 0;
-   const n=Array.isArray(g.charts)?g.charts.reduce((t,c)=>t+(c.stars||[]).length,0):(g.stars||[]).length;
-   Dlg.ask(`Replace current data with this backup (${n} stars)?`,'REPLACE',()=>{this.apply(j.active||{},j.wake,g,j.voyages,j.settings);this.saveActive();this.saveSky();this.saveSettings();UI.theme();UI.refresh();SKY.setMode('chart');SKY.render();UI.close();Dlg.note('Backup restored.')})}
-   catch(e){Dlg.note('That file is not a valid Ternary Navigator backup.')}};r.readAsText(f)}
+ snap(){return{app:'ternary-navigator',profile:Profiles.cur().name,active:{lastTide:S.tide},voyages:{focus:S.focus,voyages:S.voyages},settings:S.settings,galaxy:{cur:S.cur,charts:S.charts,links:S.links}}},
+ save(text,name){const blob=new Blob([text],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)},
+ export(){this.save(JSON.stringify(this.snap(),null,2),'ternary-navigator-backup.json')},
+ exportEnc(){if(!(window.crypto&&crypto.subtle))return Dlg.note('Encryption is not available here (the browser needs a secure https page).');
+  Pass.ask('ENCRYPT BACKUP','Choose a passphrase. Without it the backup cannot be opened, and it cannot be recovered.',true,async pw=>{const o=await Vault.seal(pw,JSON.stringify(this.snap()));this.save(JSON.stringify(o),'ternary-navigator-backup.encrypted.json');return true})},
+ import(inp){const f=inp.files[0];inp.value='';if(!f)return;const r=new FileReader();r.onload=()=>this.openBackup(String(r.result));r.readAsText(f)},
+ openBackup(text){let j;try{j=JSON.parse(text)}catch(e){return Dlg.note('That file is not a valid Ternary Navigator backup.')}
+  if(j&&j.app==='ternary-navigator-encrypted'){if(!(window.crypto&&crypto.subtle))return Dlg.note('Decryption is not available here (the browser needs a secure https page).');
+   return Pass.ask('ENCRYPTED BACKUP','Enter the passphrase this backup was saved with.',false,async pw=>{let t;try{t=JSON.parse(await Vault.open(pw,j))}catch(e){return false}this.offer(t);return true})}
+  this.offer(j)},
+ offer(j){const g=j&&(j.galaxy||j.constellation);if(!g||!(Array.isArray(g.charts)||Array.isArray(g.stars)))return Dlg.note('That file is not a valid Ternary Navigator backup.');
+  const n=Array.isArray(g.charts)?g.charts.reduce((t,c)=>t+(c.stars||[]).length,0):(g.stars||[]).length;
+  $('rs-info').textContent=`This backup has ${n} star${n===1?'':'s'}${j.profile?' and comes from the profile "'+String(j.profile).slice(0,20)+'"':''}.`;
+  $('rs-new').onclick=()=>{$('m-restore').classList.remove('show');this.intoNew(j,g)};
+  $('rs-rep').onclick=()=>{$('m-restore').classList.remove('show');Dlg.ask(`Replace the data of this profile with the backup (${n} stars)?`,'REPLACE',()=>{this.apply(j.active||{},j.wake,g,j.voyages,j.settings);this.saveActive();this.saveSky();this.saveSettings();UI.theme();UI.refresh();SKY.setMode('chart');SKY.render();UI.close();Dlg.note('Backup restored.')})};
+  UI.close();$('m-restore').classList.add('show')},
+ intoNew(j,g){let nm=String(j.profile||'RESTORED').slice(0,20)||'RESTORED';if(Profiles.reg().list.some(x=>x.name===nm))nm=nm.slice(0,16)+' (copy)';const id=Profiles.add(nm,'');Profiles.reg().cur=id;
+  this.apply(j.active||{},j.wake,g,j.voyages,j.settings);this.saveActive();this.saveSky();this.saveSettings();Profiles.save();Nav.stop();location.reload()}
 };
 
 const Side={t:0,p:0,W(){return Math.min(innerWidth*.82,300)},
  set(p,anim){p=Math.max(0,Math.min(1,p));this.p=p;const e=$('side'),sc=$('scrim');
   e.style.transition=anim?'transform .28s cubic-bezier(.2,.8,.2,1)':'none';sc.style.transition=anim?'opacity .28s':'none';
   e.style.transform=`translateX(${(p-1)*100}%)`;sc.style.opacity=p;sc.style.pointerEvents=p>.02?'auto':'none';
-  clearTimeout(this.t);if(p>.001)e.classList.add('vis');else this.t=setTimeout(()=>{if(this.p<=.001)e.classList.remove('vis')},320)},
+  clearTimeout(this.t);if(p>.001)e.classList.add('vis');else this.t=setTimeout(()=>{if(this.p<=.001)e.classList.remove('vis')},320);Nav.sync()},
  open(){UI.close();this.set(1,true)},close(){this.set(0,true)},
  go(w){this.close();setTimeout(()=>{if(w==='voyages'){UI.sky(false);UI.course()}else if(w==='chart')UI.sky(true);else if(w==='galaxy'){UI.sky(true);SKY.stack=[{m:'galaxy'}];SKY.showEntry(SKY.stack[0])}else if(w==='settings')CP.open();else if(w==='data'){UI.close();$('m-data').classList.add('show')}},120)},
  bind(){
@@ -607,7 +620,7 @@ const UI={
  forgeNow(){
   const v=S.v;if(!v||!this.canForge())return;
   const p=SKY.placement(v);if(!p)return;
-  const ch=p.ch,c=counts(v.wake),n=v.wake.length,id='star_'+Date.now(),dom=['-1','0','1'].reduce((a,b)=>c[b]>c[a]?b:a);
+  const ch=p.ch,c=counts(v.wake),n=v.wake.length,id='star_'+Date.now()+Math.random().toString(36).slice(2,6),dom=['-1','0','1'].reduce((a,b)=>c[b]>c[a]?b:a);
   if(p.parent)ch.edges.push({fromStarId:p.parent.id,toStarId:id,angle:p.heading});
   ch.stars.push({id,voyageName:v.name,completionDate:new Date().toLocaleDateString(),headingAngle:p.heading,x:p.x,y:p.y,spectralClass:dom,collapsed:this.collapsing(),endNeedle:v.needle,
    size:Math.min(28,Math.max(10,8+Math.sqrt(n)*3.5)),glowRadius:Math.min(38,12+n*1.5),harmonicResonance:resonant(c,n),
@@ -948,6 +961,37 @@ function stepDrag(t){
  D.sc+=((D.held?1.08:1)-D.sc)*Math.min(1,dt*12);SKY.paint(D);
  if(!D.held&&rest&&Math.abs(D.sc-1)<.003){D.order.forEach(id=>{D.st[id].x=D.st[id].y=0});D.sc=1;SKY.paint(D);SKY.drag=null;return}
  D.raf=requestAnimationFrame(stepDrag)}
+const Vault={ // passphrase -> PBKDF2-SHA256 -> AES-256-GCM, all through the browser's own crypto
+ b64(a){let s='';new Uint8Array(a).forEach(c=>s+=String.fromCharCode(c));return btoa(s)},unb64(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0))},
+ async key(pw,salt,iter){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])},
+ async seal(pw,text){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),iter=250000,key=await this.key(pw,salt,iter);
+  const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(text));return{app:'ternary-navigator-encrypted',v:1,kdf:'PBKDF2-SHA256',iter,salt:this.b64(salt),iv:this.b64(iv),data:this.b64(ct)}},
+ async open(pw,o){if(!o||o.v!==1||!(o.iter>=1e4&&o.iter<=2e6))throw 0;const key=await this.key(pw,this.unb64(o.salt),o.iter);return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:this.unb64(o.iv)},key,this.unb64(o.data)))}
+};
+const Pass={
+ ask(title,cap,confirm,cb){const m=$('m-pass'),a=$('pw-1'),b=$('pw-2'),e=$('pw-err'),ok=$('pw-ok');$('pw-title').textContent=title;$('pw-cap').textContent=cap;a.value=b.value='';b.style.display=confirm?'block':'none';e.style.display='none';ok.disabled=false;
+  const fail=t=>{e.textContent=t;e.style.display='block';ok.disabled=false};
+  ok.onclick=async()=>{const pw=a.value;if(!pw)return fail('Enter a passphrase.');if(confirm){if(pw.length<8)return fail('Use at least 8 characters.');if(pw!==b.value)return fail('The two passphrases do not match.')}
+   ok.disabled=true;e.style.display='none';let res;try{res=await cb(pw)}catch(x){res=false}if(res===false)return fail(confirm?'Could not encrypt the backup.':'Wrong passphrase or damaged file.');m.classList.remove('show');a.value=b.value=''};
+  $('pw-cancel').onclick=()=>{m.classList.remove('show');a.value=b.value=''};m.classList.add('show');setTimeout(()=>a.focus(),80)}
+};
+const Nav={ // the phone's back gesture closes the top-most layer (popup, menu, sky) instead of leaving the app
+ sid:Date.now(),pushed:0,skip:false,dead:false,t:0,
+ stop(){this.dead=true;clearTimeout(this.t)},
+ layers(){return document.querySelectorAll('.ov.show').length+(Side.p>.5?1:0)+($('sky').classList.contains('on')?1:0)},
+ sync(){clearTimeout(this.t);this.t=setTimeout(()=>this.apply(),30)},
+ apply(){if(this.skip||this.dead)return;const n=this.layers();
+  if(this.pushed<n){while(this.pushed<n){history.pushState({tn:this.sid},'');this.pushed++}}
+  else if(this.pushed>n){const k=this.pushed-n;this.pushed=n;this.skip=true;history.go(-k)}},
+ closeTop(){const o=[...document.querySelectorAll('.ov.show')].sort((a,b)=>(+getComputedStyle(a).zIndex||0)-(+getComputedStyle(b).zIndex||0));
+  if(o.length){o[o.length-1].classList.remove('show');return}
+  if(Side.p>.5){Side.close();return}
+  if($('sky').classList.contains('on'))UI.sky(false)},
+ pop(e){if(this.skip){this.skip=false;this.sync();return}
+  if(this.pushed>0){this.pushed--;this.closeTop();this.sync();return}
+  const st=e.state;if(st&&st.tn&&st.tn!==this.sid&&!this.layers())history.back()},
+ bind(){addEventListener('popstate',e=>this.pop(e));new MutationObserver(()=>this.sync()).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']})}
+};
 const Prof={
  d:null,
  av(el,p){el.textContent='';el.style.backgroundImage='';if(p.photo)el.style.backgroundImage=`url(${p.photo})`;else el.textContent=((p.name||'').trim()[0]||'?').toUpperCase()},
@@ -971,5 +1015,5 @@ const Prof={
   $('pe-name').oninput=()=>this.draw();$('pe-rm').onclick=()=>{this.d.photo='';this.draw()};$('pe-ok').onclick=()=>this.save();$('pe-cancel').onclick=()=>$('m-pedit').classList.remove('show');
   $('pe-del').onclick=()=>{const id=this.d.id,p=Profiles.get(id);$('m-pedit').classList.remove('show');Dlg.ask(`Delete profile "${p.name}" and all its constellations, voyages and settings? This cannot be undone.`,'DELETE',()=>Profiles.del(id))}}
 };
-addEventListener('DOMContentLoaded',()=>{UI.init();SKY.bind();SKY.apply(0);Side.bind();CP.bind();Prof.bind();Prof.sync()});
+addEventListener('DOMContentLoaded',()=>{UI.init();SKY.bind();SKY.apply(0);Side.bind();CP.bind();Prof.bind();Prof.sync();Nav.bind()});
 </script></body></html>
