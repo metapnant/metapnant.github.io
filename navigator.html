@@ -82,7 +82,7 @@ select.in{background:#0a0514;appearance:auto}
 .gdot{position:absolute;transform:translate(-50%,-50%);border-radius:50%;cursor:pointer;touch-action:none}
 .gdot::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:max(56px,100%);height:max(56px,100%);border-radius:50%}
 .gdot .gl{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:12px;font-size:.7rem;color:#ccc;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;pointer-events:none;letter-spacing:1px}
-.drg .gdot{will-change:transform,translate,scale}.drg .gdot,.drg .gdot *{box-shadow:none!important;filter:none!important;text-shadow:none!important}.drg #glines line{stroke-dasharray:none!important}#glines{shape-rendering:optimizeSpeed}#sky.trans .sky-h,#sky.trans #zoomctl,#sky.trans #sky-origin{opacity:var(--ch,1)}#sky.trans .sky-h *,#sky.trans #zoomctl *{pointer-events:none!important}#ui-top,#drawer{opacity:var(--mf,1)}#astrolabe{opacity:var(--mf,1);scale:var(--ms,1)}.fstar.aim::after{content:'';position:absolute;inset:-9.5px;border:1px solid var(--accent);border-radius:50%;pointer-events:none}.gdot.aim::after{content:'';position:absolute;inset:-9.5px;border:1px solid var(--accent);border-radius:50%;pointer-events:none}.gdot.cur{outline:1px dashed rgba(255,255,255,.55);outline-offset:8px}
+#sky.trans .sky-h,#sky.trans #zoomctl,#sky.trans #sky-origin{opacity:var(--ch,1)}#sky.trans .sky-h *,#sky.trans #zoomctl *{pointer-events:none!important}#ui-top,#drawer{opacity:var(--mf,1)}#astrolabe{opacity:var(--mf,1);scale:var(--ms,1)}.fstar.aim::after{content:'';position:absolute;inset:-9.5px;border:1px solid var(--accent);border-radius:50%;pointer-events:none}.gdot.aim::after{content:'';position:absolute;inset:-9.5px;border:1px solid var(--accent);border-radius:50%;pointer-events:none}.gdot.cur{outline:1px dashed rgba(255,255,255,.55);outline-offset:8px}
 #ghost{position:absolute;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;display:none;border:2px dashed #0f8;width:52px;height:52px}#ghost.bad{border-color:#f44}
 #m-confirm,#m-name{z-index:40!important}
 #goal{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:10px}
@@ -118,10 +118,10 @@ select.in{background:#0a0514;appearance:auto}
 #scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:21;opacity:0;pointer-events:none}
 #side{position:fixed;top:0;left:0;bottom:0;width:min(82vw,300px);z-index:22;background:rgba(10,5,20,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-right:1px solid rgba(255,255,255,.15);transform:translateX(-100%);display:flex;flex-direction:column;padding:calc(18px + env(safe-area-inset-top,0px)) 0 18px;touch-action:pan-y}
 #side:not(.vis){visibility:hidden}
-.dots{display:flex;justify-content:center;align-items:center;height:18px;margin-top:6px}.dots button{width:20px;height:18px;background:none;border:none;padding:0;position:relative;flex:none}.dots button::after{content:'';position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#555;transition:none}.dots button.sm::after{transform:scale(.6)}.dots button.on::after{width:8px;height:8px;margin:-4px 0 0 -4px;background:var(--accent);box-shadow:0 0 6px var(--accent)}.duebtn{background:none;border:none;padding:0;text-align:left;font-family:inherit;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}.duebtn.over{color:#ff8a8a}.rhrow{display:flex;gap:8px}.rhrow .in{margin-bottom:12px}.rhrow input{flex:1;min-width:0}.rhrow select{flex:1}#toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:min(92vw,420px);z-index:40;background:#0d0a18;border:1px solid var(--accent);color:#fff;padding:12px 16px;border-radius:10px;font-size:.78rem;line-height:1.35;box-shadow:0 6px 24px rgba(0,0,0,.6);text-align:center;cursor:pointer}.av{width:40px;height:40px;flex:none;border-radius:50%;background:#1a1226 center/cover no-repeat;border:1px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1rem}.av.big{width:96px;height:96px;font-size:2.2rem;margin:0 auto 12px;padding:0}.side-h.prof{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid rgba(255,255,255,.1);color:#fff}.side-h.prof .pm{min-width:0}.side-h.prof b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px}.prow{display:flex;align-items:center;gap:12px}.side-h{padding:0 20px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:8px}.side-h b{display:block;color:var(--accent);letter-spacing:2px;font-size:.9rem;margin-bottom:4px}.side-h span{font-size:.65rem;color:#888}
+.dots{display:flex;justify-content:center;align-items:center;height:18px;margin-top:6px}.dots button{width:20px;height:18px;background:none;border:none;padding:0;position:relative;flex:none}.dots button::after{content:'';position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#555;transition:none}.dots button.sm::after{transform:scale(.6)}.dots button.on::after{width:8px;height:8px;margin:-4px 0 0 -4px;background:var(--accent);box-shadow:0 0 6px var(--accent)}.duebtn{background:none;border:none;padding:0;text-align:left;font-family:inherit;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}.duebtn.over{color:#ff8a8a}.rhrow{display:flex;gap:10px;align-items:center}.rhu{color:#aaa;font-size:.8rem;margin-bottom:12px}input[type=date],input[type=time]{color-scheme:dark}.rhrow{display:flex;gap:8px}.rhrow .in{margin-bottom:12px}.rhrow input{flex:1;min-width:0}.rhrow select{flex:1}#toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:min(92vw,420px);z-index:40;background:#0d0a18;border:1px solid var(--accent);color:#fff;padding:12px 16px;border-radius:10px;font-size:.78rem;line-height:1.35;box-shadow:0 6px 24px rgba(0,0,0,.6);text-align:center;cursor:pointer}.av{width:40px;height:40px;flex:none;border-radius:50%;background:#1a1226 center/cover no-repeat;border:1px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1rem}.av.big{width:96px;height:96px;font-size:2.2rem;margin:0 auto 12px;padding:0}.side-h.prof{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid rgba(255,255,255,.1);color:#fff}.side-h.prof .pm{min-width:0}.side-h.prof b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px}.prow{display:flex;align-items:center;gap:12px}.side-h{padding:0 20px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:8px}.side-h b{display:block;color:var(--accent);letter-spacing:2px;font-size:.9rem;margin-bottom:4px}.side-h span{font-size:.65rem;color:#888}
 .side-i{display:flex;align-items:center;gap:14px;width:100%;padding:14px 20px;background:none;border:none;color:#e0dced;font-size:.9rem;text-align:left}.side-i.pr{background:rgba(255,255,255,.08)}.side-i i{font-style:normal;width:20px;text-align:center;opacity:.8}
 .side-sep{height:1px;background:rgba(255,255,255,.1);margin:8px 0}.side-f{margin-top:auto;padding:0 20px;font-size:.62rem;color:#777;line-height:1.5}
-#edge{position:fixed;left:0;top:96px;bottom:150px;width:14px;z-index:12;touch-action:none}
+#edge{display:none;position:fixed;left:0;top:96px;bottom:150px;width:14px;z-index:12;touch-action:none}
 #cp-sv{position:relative;height:170px;border-radius:6px;touch-action:none;margin-bottom:12px;cursor:crosshair;background:linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,hsl(var(--h,150),100%,50%))}
 #cp-hue{position:relative;height:22px;border-radius:11px;touch-action:none;margin-bottom:14px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
 .cp-k{position:absolute;width:20px;height:20px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 6px rgba(0,0,0,.6);transform:translate(-50%,-50%);pointer-events:none}
@@ -173,10 +173,11 @@ select.in{background:#0a0514;appearance:auto}
  <button class="mb" id="branch"></button><button class="mb danger" id="purge">PURGE STAR FROM SKY</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
 <div id="m-restore" class="ov" style="z-index:30"><div class="box"><p class="mt">RESTORE BACKUP</p><p class="cap" id="rs-info" style="text-align:center;margin-bottom:14px"></p><button class="mb" id="rs-new">ADD AS NEW PROFILE</button><button class="mb danger" id="rs-rep">REPLACE THIS PROFILE</button><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
 <div id="m-pass" class="ov" style="z-index:30"><div class="box"><p class="mt" id="pw-title">PASSPHRASE</p><p class="cap" id="pw-cap" style="text-align:center;margin-bottom:12px"></p><input id="pw-1" class="in" type="password" autocomplete="off" placeholder="Passphrase"><input id="pw-2" class="in" type="password" autocomplete="off" placeholder="Repeat passphrase" style="display:none"><p id="pw-err" class="cap" style="color:#f66;display:none;text-align:center"></p><button class="mb" id="pw-ok">OK</button><button class="cancel" id="pw-cancel">CANCEL</button></div></div>
-<div id="m-rhythm" class="ov" style="z-index:30"><div class="box"><p class="mt">LOG RHYTHM</p><p class="cap" id="rh-name" style="text-align:center;margin:0 0 12px"></p>
-<p class="cap" style="margin:0 0 4px">LOG EVERY</p><div class="rhrow"><input id="rh-n" class="in" type="number" inputmode="decimal" min="1" step="any"><select id="rh-u" class="in"><option value="60000">minutes</option><option value="3600000">hours</option><option value="86400000">days</option><option value="604800000">weeks</option></select></div>
-<p class="cap" style="margin:0 0 4px">WARN ME BEFORE IT DRIFTS</p><div class="rhrow"><input id="rh-wn" class="in" type="number" inputmode="decimal" min="0" step="any"><select id="rh-wu" class="in"><option value="60000">minutes</option><option value="3600000">hours</option><option value="86400000">days</option></select></div>
-<label class="tog"><input type="checkbox" id="rh-rem"><span>Remind me. A banner shows while the app is open, plus a system notification where your browser allows it.</span></label>
+<div id="m-rhythm" class="ov" style="z-index:30"><div class="box"><p class="mt">LOG RHYTHM</p><p class="cap" id="rh-name" style="text-align:center;margin:0 0 10px"></p>
+<p class="cap" style="margin:0 0 4px">DRIFT EVERY</p><div class="rhrow"><input id="rh-n" class="in" type="number" inputmode="numeric" min="1" max="365" step="1"><span class="rhu">days</span></div>
+<p class="cap" style="margin:0 0 4px">NEXT DRIFT DAY</p><input id="rh-d" class="in" type="date">
+<label class="tog"><input type="checkbox" id="rh-rem"><span>Remind me on drift days at</span></label><input id="rh-at" class="in" type="time">
+<label class="tog"><input type="checkbox" id="rh-last"><span>Last call, if I have not logged yet, at</span></label><input id="rh-lat" class="in" type="time">
 <p class="cap" id="rh-info" style="text-align:center;margin:0 0 12px"></p><p id="rh-err" class="cap" style="color:#f66;display:none;text-align:center"></p>
 <button class="mb" id="rh-ok">SAVE</button><button class="mb" id="rh-ics">ADD REMINDERS TO CALENDAR (.ics)</button><button class="mb" id="rh-daily">BACK TO DAILY</button><button class="cancel" id="rh-cancel">CANCEL</button></div></div>
 <div id="m-prof" class="ov"><div class="box"><p class="mt">PROFILES</p><div id="plist"></div><button class="mb" onclick="Prof.edit('')">+ NEW PROFILE</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
@@ -302,7 +303,8 @@ const Store={
   S.voyages=vl.filter(v=>v&&v.name).map((v,i)=>({id:v.id||('v'+now+'_'+i),name:String(v.name).slice(0,39),chart:S.charts.some(c=>c.id===v.chart)?v.chart:S.cur,origin:v.origin||'',
    ...(v.start!=null&&!isNaN(+v.start)?{start:+v.start}:{}),target:+v.target||0,needle:isNaN(+v.needle)||v.needle==null?180:+v.needle,toggle:v.toggle||1,wake:Array.isArray(v.wake)?v.wake:[],created:v.created||now,updated:v.updated||now,
    ...(typeof v.anchor==='string'?{anchor:v.anchor}:{}),...(v.geo===true?{geo:true}:{}),...(v.lockPos&&isFinite(+v.lockPos.x)&&isFinite(+v.lockPos.y)?{lockPos:{x:+v.lockPos.x,y:+v.lockPos.y}}:{}),
-   ...(+v.period>=6e4&&+v.period<=3.2e10?{period:+v.period}:{}),...(v.warn!=null&&isFinite(+v.warn)&&+v.warn>=0?{warn:+v.warn}:{}),...(v.remind===true?{remind:true}:{}),...(+v.notified>0?{notified:+v.notified}:{})}));
+   ...(+v.every>=2&&+v.every<=365?{every:Math.round(+v.every)}:(+v.period>=1.5*864e5?{every:Math.min(365,Math.round(+v.period/864e5))}:{})),...(v.dueDay!=null&&Number.isInteger(+v.dueDay)?{dueDay:+v.dueDay}:{}),
+   ...(v.remind===true?{remind:true}:{}),...(v.remindAt!=null&&+v.remindAt>=0&&+v.remindAt<1440?{remindAt:Math.round(+v.remindAt)}:{}),...(v.last===true?{last:true}:{}),...(v.lastAt!=null&&+v.lastAt>=0&&+v.lastAt<1440?{lastAt:Math.round(+v.lastAt)}:{}),...(Number.isInteger(+v.nr)&&v.nr?{nr:+v.nr}:{}),...(Number.isInteger(+v.nl)&&v.nl?{nl:+v.nl}:{})}));
   S.focus=vs&&S.voyages.some(v=>v.id===vs.focus)?vs.focus:(S.voyages[0]?S.voyages[0].id:'');
  },
  saveActive(){this.write('ternary_nav_active',{lastTide:S.tide});this.write('ternary_nav_voyages',{focus:S.focus,voyages:S.voyages})},
@@ -465,20 +467,15 @@ const ENGINE={
   return{n,tog}},
  DRIFT:6,dk(t){const d=new Date(t);return Math.floor((t-d.getTimezoneOffset()*6e4)/864e5)},
  drift(n,target){const d=shortest(target,n),a=Math.abs(d);if(a>=179.99)return n;return n+(a<.5?1:-Math.sign(d))*Math.min(this.DRIFT,180-a)},
- replayRolling(v){ // custom rhythm: one drift step for every full period that passes after the last Align or Anchor (or the start)
-  const P=v.period,T=l=>+l.ts||+l.id||0,L=[...v.wake].sort((a,b)=>T(a)-T(b)),now=Date.now();
-  let n=v.start==null?180:v.start,tog=1,r=Math.min(v.created||now,L.length?T(L[0]):now);
-  const miss=t=>{const k=Math.floor((t-r)/P);if(k>0){for(let i=0;i<Math.min(k,60);i++)n=this.drift(n,v.target);r+=k*P}};
-  for(const l of L){miss(T(l));const o=this.advance(n,l.actionType,+l.energy,tog,v.target);n=o.n;tog=o.tog;if(l.actionType==='Align'||l.actionType==='Anchor')r=Math.max(r,T(l))}
-  miss(now);return{n,tog}},
- replay(v){ // needle is derived: logs in order, plus drift. Default rhythm: one drift step for every finished day without an Align or Anchor
-  if(v.period)return this.replayRolling(v);
+ isDrift(v,d){ // is day d (a local day number) one of this voyage's drift days?
+  if(!v.every&&v.dueDay==null)return true;const N=v.every||1,ref=v.dueDay!=null?v.dueDay:this.dk(+v.created||0)+N-1;return d>=ref&&(d-ref)%N===0},
+ replay(v){ // needle is derived: logs in order, plus one drift step for every finished DRIFT day without an Align or Anchor on that day
   let n=v.start==null?180:v.start,tog=1;const T=l=>+l.ts||+l.id||0,L=[...v.wake].sort((a,b)=>T(a)-T(b)),now=Date.now(),today=this.dk(now);
   const t0=Math.min(v.created||now,L.length?T(L[0]):now);let i=0;
   const app=l=>{const o=this.advance(n,l.actionType,+l.energy,tog,v.target);n=o.n;tog=o.tog};
   for(let d=this.dk(t0);d<=today;d++){let prot=false;
    while(i<L.length&&this.dk(T(L[i]))<=d){const l=L[i++];if(l.actionType==='Align'||l.actionType==='Anchor')prot=true;app(l)}
-   if(d<today&&!prot)n=this.drift(n,v.target)}
+   if(d<today&&!prot&&this.isDrift(v,d))n=this.drift(n,v.target)}
   while(i<L.length)app(L[i++]);
   return{n,tog}},
  rewind(){const o=this.replay(S.v);S.needle=o.n;S.toggle=o.tog},
@@ -830,16 +827,13 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
   return Math.abs(p.x)<1380&&Math.abs(p.y)<1380&&S.charts.every(c=>ig.has(c.id)||(self&&c.id===self.id)||!this.hit(me,this.geom(c,c.gx,c.gy)))},
  group(id){const g=new Set([id]);let ch=true;while(ch){ch=false;S.links.forEach(l=>{if(g.has(l.a)&&!g.has(l.b)){g.add(l.b);ch=true}else if(g.has(l.b)&&!g.has(l.a)){g.add(l.a);ch=true}})}return g},
  tree(id){const par=new Map([[id,null]]),order=[],q=[id];while(q.length){const x=q.shift();order.push(x);S.links.forEach(l=>{const y=l.a===x?l.b:l.b===x?l.a:null;if(y&&!par.has(y)){par.set(y,x);q.push(y)}})}return{par,order}},
- beginDrag(id){const T=this.tree(id);$('gfield').classList.add('drg');this.drag={lead:id,par:T.par,order:T.order,st:Object.fromEntries(T.order.map(i=>[i,{x:0,y:0,vx:0,vy:0}])),tx:0,ty:0,held:true,sc:1,t0:performance.now(),raf:0};this.drag.raf=requestAnimationFrame(stepDrag)},
+ beginDrag(id){const T=this.tree(id);this.drag={lead:id,par:T.par,order:T.order,st:Object.fromEntries(T.order.map(i=>[i,{x:0,y:0,vx:0,vy:0}])),tx:0,ty:0,held:true,sc:1,t0:performance.now(),raf:0};this.drag.raf=requestAnimationFrame(stepDrag)},
  endDrag(commit){const D=this.drag;if(!D)return;D.held=false;
   if(commit){D.order.forEach(i=>{const m=S.charts.find(x=>x.id===i),s=D.st[i],d=this.dots[i];m.gx+=commit.x;m.gy+=commit.y;s.x-=commit.x;s.y-=commit.y;if(d){d.style.left=(ORI+m.gx)+'px';d.style.top=(ORI+m.gy)+'px'}});Store.saveSky()}},
- stopDrag(){const D=this.drag;$('gfield').classList.remove('drg');if(!D)return;cancelAnimationFrame(D.raf);D.order.forEach(i=>{D.st[i].x=D.st[i].y=0});D.sc=1;this.paint(D);this.drag=null},
- paint(D){ // only the dragged group is touched; independent translate/scale properties avoid re-resolving calc() transforms every frame
-  D.order.forEach(i=>{const d=this.dots[i],s=D.st[i];if(!d)return;
-   if(!s.x&&!s.y&&D.sc===1){if(d.style.translate)d.style.translate='';if(d.style.scale)d.style.scale='';return}
-   d.style.translate=s.x.toFixed(1)+'px '+s.y.toFixed(1)+'px';d.style.scale=D.sc===1?'':D.sc.toFixed(3)});
-  const G=D.set||(D.set=new Set(D.order));
-  this.glines.forEach(L=>{if(!G.has(L.a)&&!G.has(L.b))return;const A=S.charts.find(x=>x.id===L.a),B=S.charts.find(x=>x.id===L.b);if(!A||!B)return;const a=D.st[L.a]||{x:0,y:0},b=D.st[L.b]||{x:0,y:0};
+ stopDrag(){const D=this.drag;if(!D)return;cancelAnimationFrame(D.raf);D.order.forEach(i=>{D.st[i].x=D.st[i].y=0});D.sc=1;this.paint(D);this.drag=null},
+ paint(D){
+  D.order.forEach(i=>{const d=this.dots[i],s=D.st[i];if(d)d.style.transform=`translate(calc(-50% + ${s.x}px),calc(-50% + ${s.y}px)) scale(${D.sc})`});
+  this.glines.forEach(L=>{const A=S.charts.find(x=>x.id===L.a),B=S.charts.find(x=>x.id===L.b);if(!A||!B)return;const a=D.st[L.a]||{x:0,y:0},b=D.st[L.b]||{x:0,y:0};
    L.el.setAttribute('x1',ORI+A.gx+a.x);L.el.setAttribute('y1',ORI+A.gy+a.y);L.el.setAttribute('x2',ORI+B.gx+b.x);L.el.setAttribute('y2',ORI+B.gy+b.y)})},
  shape(c){
   const T=c.stars;if(!T.length)return{sz:14,k:0,cx:0,cy:0};
@@ -1079,55 +1073,57 @@ function stepDrag(t){
   s.vx+=(k*(tx-s.x)-c*s.vx)*dt;s.vy+=(k*(ty-s.y)-c*s.vy)*dt;s.x+=s.vx*dt;s.y+=s.vy*dt;
   if(Math.abs(tx-s.x)+Math.abs(ty-s.y)+Math.abs(s.vx)+Math.abs(s.vy)>.5)rest=false});
  D.sc+=((D.held?1.08:1)-D.sc)*Math.min(1,dt*12);SKY.paint(D);
- if(!D.held&&rest&&Math.abs(D.sc-1)<.003){D.order.forEach(id=>{D.st[id].x=D.st[id].y=0});D.sc=1;SKY.paint(D);SKY.drag=null;$('gfield').classList.remove('drg');return}
+ if(!D.held&&rest&&Math.abs(D.sc-1)<.003){D.order.forEach(id=>{D.st[id].x=D.st[id].y=0});D.sc=1;SKY.paint(D);SKY.drag=null;return}
  D.raf=requestAnimationFrame(stepDrag)}
-const Rhythm={
- DAY:864e5,
- per(v){return v.period||864e5},
- defWarn(P){return Math.max(0,Math.min(Math.round(P/4),6*36e5))},
- warnOf(v){return v.warn!=null?v.warn:this.defWarn(this.per(v))},
- fmt(ms){const t=Math.max(0,Math.round(ms/6e4)),d=Math.floor(t/1440),h=Math.floor(t%1440/60),m=t%60;if(d)return d+'d'+(h?' '+h+'h':'');if(h)return h+'h'+(m?' '+m+'m':'');return m+'m'},
- every(P){return P%6048e5===0?P/6048e5+'w':P%864e5===0?P/864e5+'d':P%36e5===0?P/36e5+'h':Math.round(P/6e4)+'m'},
- label(v){return v.period?'every '+this.every(v.period):'daily'},
+const Rhythm={ // rhythm is in whole days: drift happens on drift days only, and only a log (Align or Anchor) on that very day prevents it
+ N(v){return v.every||1},
+ per(v){return this.N(v)},
  prot(l){return l.actionType==='Align'||l.actionType==='Anchor'},
- last(v){let t=+v.created||0;v.wake.forEach(l=>{if(this.prot(l))t=Math.max(t,+l.ts||+l.id||0)});return t},
- due(v){ // when the next log is needed, and whether the compass is already drifting
-  const now=Date.now();
-  if(!v.period){const d=new Date(now);d.setHours(24,0,0,0);let due=d.getTime();const today=ENGINE.dk(now),done=v.wake.some(l=>this.prot(l)&&ENGINE.dk(+l.ts||+l.id||0)===today);if(done)due+=864e5;return{due,left:due-now,over:false,P:864e5,done}}
-  const r=this.last(v),P=v.period;let due=r+P,over=false,since=0;if(now>=due){over=true;since=now-due;due=r+P*(Math.floor((now-r)/P)+1)}
-  return{due,left:due-now,over,since,P}},
+ protectedOn(v,d){return v.wake.some(l=>this.prot(l)&&ENGINE.dk(+l.ts||+l.id||0)===d)},
+ nextDrift(v,from){const t=from!=null?from:ENGINE.dk(Date.now());for(let d=t;d<t+800;d++)if(ENGINE.isDrift(v,d))return d;return null},
+ label(v){const N=this.N(v);return N===1?'daily':'every '+N+'d'},
+ dstr(d){return new Date(d*864e5).toISOString().slice(0,10)},
+ dnum(x){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(x||'');return m?Date.UTC(+m[1],+m[2]-1,+m[3])/864e5:null},
+ tstr(m){return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')},
+ tnum(x){const m=/^(\d{1,2}):(\d{2})$/.exec(x||'');return m&&+m[1]<24&&+m[2]<60?+m[1]*60+ +m[2]:null},
+ nice(d){return new Date(d*864e5).toLocaleDateString([],{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})},
  paint(){const b=$('due');if(!b)return;const v=S.v;b.classList.remove('over');if(!v){b.textContent='CURRENT HORIZON';return}
-  const i=this.due(v);let t;if(i.over){b.classList.add('over');t='OVERDUE '+this.fmt(i.since)}else if(i.done)t='LOGGED TODAY';else t='LOG DUE IN '+this.fmt(i.left);
-  b.textContent='CURRENT HORIZON · '+t},
+  const t=ENGINE.dk(Date.now()),nd=this.nextDrift(v);let x='';
+  if(nd===t){if(this.protectedOn(v,t))x='SAFE TODAY';else{x='LOG TODAY';b.classList.add('over')}}
+  else if(nd!=null)x=nd-t===1?'DRIFT TOMORROW':'DRIFT IN '+(nd-t)+' DAYS';
+  b.textContent='CURRENT HORIZON'+(x?' · '+x:'')},
  toast(msg,id){const t=$('toast');t.textContent=msg;t.style.display='block';t.onclick=()=>{t.style.display='none';if(id)ENGINE.focusVoyage(id)};clearTimeout(this._tt);this._tt=setTimeout(()=>{t.style.display='none'},12000)},
  sys(title,body,tag){if(!('Notification' in window)||Notification.permission!=='granted')return;try{new Notification(title,{body,tag})}catch(e){try{navigator.serviceWorker&&navigator.serviceWorker.getRegistration().then(r=>r&&r.showNotification(title,{body,tag}))}catch(x){}}},
- fire(v,i){const left=i.due-Date.now(),msg=left>45000?v.name+': log due in '+this.fmt(left)+', before the compass drifts':v.name+': log due now, or the compass drifts';this.toast(msg,v.id);this.sys('Ternary Navigator',msg,v.id)},
- tick(){ENGINE.settle();const now=Date.now();let changed=false;
-  S.voyages.forEach(v=>{if(!v.remind)return;const i=this.due(v),w=this.warnOf(v);
-   if(v.notified!==i.due){if(now>=i.due-w&&now<i.due+60000){this.fire(v,i);v.notified=i.due;changed=true}else if(now>=i.due+60000){v.notified=i.due;changed=true}}});
-  if(changed)Store.saveActive();this.paint()},
- unit(ms,opts){for(const u of opts){if(ms>0&&ms%u===0)return u}return opts[opts.length-1]},
- open(id){const v=S.voyages.find(x=>x.id===(id||S.focus));if(!v)return;this.vid=v.id;const P=this.per(v),w=this.warnOf(v);
-  $('rh-name').textContent=v.name;const u=this.unit(P,[6048e5,864e5,36e5,6e4]);$('rh-u').value=String(u);$('rh-n').value=+(P/u).toFixed(2);
-  const wu=this.unit(w,[864e5,36e5,6e4]);$('rh-wu').value=String(wu);$('rh-wn').value=+(w/wu).toFixed(2);$('rh-rem').checked=!!v.remind;$('rh-err').style.display='none';this.info();
-  ['rh-n','rh-u','rh-wn','rh-wu'].forEach(k=>{$(k).oninput=()=>this.info()});
+ fire(v,kind){const msg=kind==='last'?v.name+': last call. Log before midnight or the compass drifts.':v.name+': drift day. Add an Align or Anchor log today to hold the compass.';this.toast(msg,v.id);this.sys('Ternary Navigator',msg,v.id)},
+ tick(){ENGINE.settle();const now=new Date(Date.now()),t=ENGINE.dk(now.getTime()),mins=now.getHours()*60+now.getMinutes();let ch=false;
+  S.voyages.forEach(v=>{if(!v.remind||!ENGINE.isDrift(v,t)||this.protectedOn(v,t))return;
+   const ra=v.remindAt!=null?v.remindAt:540,la=v.lastAt!=null?v.lastAt:1260,dueL=v.last&&mins>=la&&v.nl!==t,dueR=mins>=ra&&v.nr!==t;
+   if(dueL){v.nl=t;v.nr=t;ch=true;this.fire(v,'last')}else if(dueR&&!(v.last&&mins>=la)){v.nr=t;ch=true;this.fire(v,'today')}});
+  if(ch)Store.saveActive();this.paint()},
+ open(id){const v=S.voyages.find(x=>x.id===(id||S.focus));if(!v)return;this.vid=v.id;
+  $('rh-name').textContent=v.name;$('rh-n').value=this.N(v);$('rh-d').value=this.dstr(this.nextDrift(v));$('rh-rem').checked=!!v.remind;$('rh-at').value=this.tstr(v.remindAt!=null?v.remindAt:540);$('rh-last').checked=!!v.last;$('rh-lat').value=this.tstr(v.lastAt!=null?v.lastAt:1260);
+  $('rh-err').style.display='none';this.info();['rh-n','rh-d','rh-at','rh-lat'].forEach(k=>{$(k).oninput=()=>this.info()});
   $('rh-ok').onclick=()=>this.save();$('rh-daily').onclick=()=>this.daily();$('rh-ics').onclick=()=>this.exportIcs();$('rh-cancel').onclick=()=>$('m-rhythm').classList.remove('show');
   $('m-rhythm').classList.add('show')},
- read(){const P=+$('rh-n').value*+$('rh-u').value,w=+$('rh-wn').value*+$('rh-wu').value;if(!(P>=6e4))return{err:'Pick at least 1 minute.'};if(P>3.1536e10)return{err:'The longest rhythm is 365 days.'};if(!(w>=0))return{err:'Enter a warning time (0 for none).'};if(w>P)return{err:'The warning cannot be longer than the rhythm.'};return{P:Math.round(P),w:Math.round(w)}},
- info(){const r=this.read(),e=$('rh-err'),v=S.voyages.find(x=>x.id===this.vid);if(r.err){e.textContent=r.err;e.style.display='block';$('rh-info').textContent='';return}e.style.display='none';
-  const fake={...v,period:r.P},i=this.due(fake),when=new Date(i.due);$('rh-info').textContent=`Next log needed by ${when.toLocaleString([],{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}. The warning comes ${this.fmt(r.w)} before.`},
+ read(){const N=Math.round(+$('rh-n').value),d=this.dnum($('rh-d').value),at=this.tnum($('rh-at').value),lat=this.tnum($('rh-lat').value),t=ENGINE.dk(Date.now());
+  if(!(N>=1&&N<=365))return{err:'Drift every 1 to 365 days.'};if(N>1&&(d==null||d<t))return{err:'Pick today or a later day for the next drift day.'};
+  if(at==null||lat==null)return{err:'Enter the reminder times.'};return{N,d,at,lat}},
+ info(){const r=this.read(),e=$('rh-err');if(r.err){e.textContent=r.err;e.style.display='block';$('rh-info').textContent='';return}e.style.display='none';
+  $('rh-info').textContent=r.N===1?'Every day is a drift day: log each day to hold the compass.':`Drift days: ${this.nice(r.d)}, then every ${r.N} days. Log on that day to hold the compass. On other days you can log as much as you like, or nothing.`},
  save(){const v=S.voyages.find(x=>x.id===this.vid),r=this.read();if(!v)return;if(r.err){$('rh-err').textContent=r.err;$('rh-err').style.display='block';return}
-  const was=v.period||0;if(!(was===0&&r.P===864e5))v.period=r.P;v.warn=r.w;v.remind=$('rh-rem').checked;delete v.notified;
-  if(v.remind&&'Notification' in window&&Notification.permission==='default'){try{Notification.requestPermission()}catch(e){}}
+  if(r.N===1){delete v.every;delete v.dueDay}else{v.every=r.N;v.dueDay=r.d}
+  v.remind=$('rh-rem').checked;v.remindAt=r.at;v.last=$('rh-last').checked;v.lastAt=r.lat;delete v.nr;delete v.nl;
+  if((v.remind||v.last)&&'Notification' in window&&Notification.permission==='default'){try{Notification.requestPermission()}catch(e){}}
   $('m-rhythm').classList.remove('show');Store.saveActive();ENGINE.settle();UI.refresh();if($('m-vlist').classList.contains('show'))UI.voyages();if($('sky').classList.contains('on'))SKY.render()},
- daily(){const v=S.voyages.find(x=>x.id===this.vid);if(!v)return;delete v.period;delete v.warn;delete v.notified;$('m-rhythm').classList.remove('show');Store.saveActive();ENGINE.settle();UI.refresh();if($('m-vlist').classList.contains('show'))UI.voyages()},
+ daily(){const v=S.voyages.find(x=>x.id===this.vid);if(!v)return;delete v.every;delete v.dueDay;delete v.nr;delete v.nl;$('m-rhythm').classList.remove('show');Store.saveActive();ENGINE.settle();UI.refresh();if($('m-vlist').classList.contains('show'))UI.voyages()},
  ie(t){return String(t).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n')},
- ics(v){const i=this.due(v),P=this.per(v),w=this.warnOf(v),z=t=>new Date(t).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
-  const f=P%6048e5===0?['WEEKLY',P/6048e5]:P%864e5===0?['DAILY',P/864e5]:P%36e5===0?['HOURLY',P/36e5]:['MINUTELY',Math.round(P/6e4)];
-  const cnt=f[0]==='MINUTELY'?120:f[0]==='HOURLY'?200:f[0]==='DAILY'?Math.max(10,Math.floor(365/f[1])):Math.max(6,Math.floor(52/f[1]));
-  return['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Ternary Navigator//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT','UID:'+v.id+'@ternary-navigator','DTSTAMP:'+z(Date.now()),'DTSTART:'+z(i.due),'DTEND:'+z(i.due+Math.min(P,9e5)),
-   'RRULE:FREQ='+f[0]+';INTERVAL='+f[1]+';COUNT='+cnt,'SUMMARY:'+this.ie('Log: '+v.name),'DESCRIPTION:'+this.ie('Add a log to keep the compass from drifting.'),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+this.ie('Log due: '+v.name),'TRIGGER:'+(w>0?'-PT'+Math.round(w/6e4)+'M':'PT0S'),'END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n')},
- exportIcs(){const v=S.voyages.find(x=>x.id===this.vid),r=this.read();if(!v)return;if(r.err)return;const fake={...v,period:r.P,warn:r.w};Store.save(this.ics(fake),'log-reminder-'+(v.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()||'voyage')+'.ics','text/calendar')}
+ ics(v){const N=this.N(v),nd=this.nextDrift(v),at=v.remindAt!=null?v.remindAt:540,la=v.lastAt!=null?v.lastAt:1260,ds=this.dstr(nd).replace(/-/g,''),hm=m=>String(Math.floor(m/60)).padStart(2,'0')+String(m%60).padStart(2,'0')+'00';
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Ternary Navigator//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT','UID:'+v.id+'@ternary-navigator','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''),
+   'DTSTART:'+ds+'T'+hm(at),'DTEND:'+ds+'T'+hm(Math.min(1439,at+15)),'RRULE:FREQ=DAILY;INTERVAL='+N+';COUNT='+Math.max(8,Math.floor(365/N)),'SUMMARY:'+this.ie('Drift day: log '+v.name),'DESCRIPTION:'+this.ie('Add an Align or Anchor log today to hold the compass.'),
+   'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+this.ie('Drift day: '+v.name),'TRIGGER:PT0S','END:VALARM'];
+  if(v.last&&la>at)L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+this.ie('Last call: '+v.name),'TRIGGER;RELATED=START:PT'+(la-at)+'M','END:VALARM');
+  L.push('END:VEVENT','END:VCALENDAR');return L.join('\r\n')},
+ exportIcs(){const v=S.voyages.find(x=>x.id===this.vid),r=this.read();if(!v||r.err)return;const f={...v,every:r.N>1?r.N:undefined,dueDay:r.N>1?r.d:undefined,remindAt:r.at,last:$('rh-last').checked,lastAt:r.lat};Store.save(this.ics(f),'drift-reminder-'+(v.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()||'voyage')+'.ics','text/calendar')}
 };
 const Vault={ // passphrase -> PBKDF2-SHA256 -> AES-256-GCM, all through the browser's own crypto
  b64(a){let s='';new Uint8Array(a).forEach(c=>s+=String.fromCharCode(c));return btoa(s)},unb64(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0))},
