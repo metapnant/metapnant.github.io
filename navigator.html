@@ -82,7 +82,7 @@ select.in{background:#0a0514;appearance:auto}
 .gdot{position:absolute;transform:translate(-50%,-50%);border-radius:50%;cursor:pointer;touch-action:none}
 .gdot::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:max(56px,100%);height:max(56px,100%);border-radius:50%}
 .gdot .gl{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:12px;font-size:.7rem;color:#ccc;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;pointer-events:none;letter-spacing:1px}
-.gdot.aim{outline:1px solid var(--accent);outline-offset:8px;border-radius:50%}.gdot.cur{outline:1px dashed rgba(255,255,255,.55);outline-offset:8px}
+.drg .gdot{will-change:transform,translate,scale}.drg .gdot,.drg .gdot *{box-shadow:none!important;filter:none!important;text-shadow:none!important}.drg #glines line{stroke-dasharray:none!important}#glines{shape-rendering:optimizeSpeed}#sky.trans .sky-h,#sky.trans #zoomctl,#sky.trans #sky-origin{opacity:var(--ch,1)}#sky.trans .sky-h *,#sky.trans #zoomctl *{pointer-events:none!important}#ui-top,#drawer{opacity:var(--mf,1)}#astrolabe{opacity:var(--mf,1);scale:var(--ms,1)}.fstar.aim::after{content:'';position:absolute;inset:-9.5px;border:1px solid var(--accent);border-radius:50%;pointer-events:none}.gdot.aim::after{content:'';position:absolute;inset:-9.5px;border:1px solid var(--accent);border-radius:50%;pointer-events:none}.gdot.cur{outline:1px dashed rgba(255,255,255,.55);outline-offset:8px}
 #ghost{position:absolute;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;display:none;border:2px dashed #0f8;width:52px;height:52px}#ghost.bad{border-color:#f44}
 #m-confirm,#m-name{z-index:40!important}
 #goal{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:10px}
@@ -118,7 +118,7 @@ select.in{background:#0a0514;appearance:auto}
 #scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:21;opacity:0;pointer-events:none}
 #side{position:fixed;top:0;left:0;bottom:0;width:min(82vw,300px);z-index:22;background:rgba(10,5,20,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-right:1px solid rgba(255,255,255,.15);transform:translateX(-100%);display:flex;flex-direction:column;padding:calc(18px + env(safe-area-inset-top,0px)) 0 18px;touch-action:pan-y}
 #side:not(.vis){visibility:hidden}
-.dots{display:flex;justify-content:center;align-items:center;height:18px;margin-top:6px}.dots button{width:20px;height:18px;background:none;border:none;padding:0;position:relative;flex:none}.dots button::after{content:'';position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#555;transition:none}.dots button.sm::after{transform:scale(.6)}.dots button.on::after{width:8px;height:8px;margin:-4px 0 0 -4px;background:var(--accent);box-shadow:0 0 6px var(--accent)}.av{width:40px;height:40px;flex:none;border-radius:50%;background:#1a1226 center/cover no-repeat;border:1px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1rem}.av.big{width:96px;height:96px;font-size:2.2rem;margin:0 auto 12px;padding:0}.side-h.prof{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid rgba(255,255,255,.1);color:#fff}.side-h.prof .pm{min-width:0}.side-h.prof b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px}.prow{display:flex;align-items:center;gap:12px}.side-h{padding:0 20px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:8px}.side-h b{display:block;color:var(--accent);letter-spacing:2px;font-size:.9rem;margin-bottom:4px}.side-h span{font-size:.65rem;color:#888}
+.dots{display:flex;justify-content:center;align-items:center;height:18px;margin-top:6px}.dots button{width:20px;height:18px;background:none;border:none;padding:0;position:relative;flex:none}.dots button::after{content:'';position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#555;transition:none}.dots button.sm::after{transform:scale(.6)}.dots button.on::after{width:8px;height:8px;margin:-4px 0 0 -4px;background:var(--accent);box-shadow:0 0 6px var(--accent)}.duebtn{background:none;border:none;padding:0;text-align:left;font-family:inherit;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}.duebtn.over{color:#ff8a8a}.rhrow{display:flex;gap:8px}.rhrow .in{margin-bottom:12px}.rhrow input{flex:1;min-width:0}.rhrow select{flex:1}#toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:min(92vw,420px);z-index:40;background:#0d0a18;border:1px solid var(--accent);color:#fff;padding:12px 16px;border-radius:10px;font-size:.78rem;line-height:1.35;box-shadow:0 6px 24px rgba(0,0,0,.6);text-align:center;cursor:pointer}.av{width:40px;height:40px;flex:none;border-radius:50%;background:#1a1226 center/cover no-repeat;border:1px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1rem}.av.big{width:96px;height:96px;font-size:2.2rem;margin:0 auto 12px;padding:0}.side-h.prof{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid rgba(255,255,255,.1);color:#fff}.side-h.prof .pm{min-width:0}.side-h.prof b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px}.prow{display:flex;align-items:center;gap:12px}.side-h{padding:0 20px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:8px}.side-h b{display:block;color:var(--accent);letter-spacing:2px;font-size:.9rem;margin-bottom:4px}.side-h span{font-size:.65rem;color:#888}
 .side-i{display:flex;align-items:center;gap:14px;width:100%;padding:14px 20px;background:none;border:none;color:#e0dced;font-size:.9rem;text-align:left}.side-i.pr{background:rgba(255,255,255,.08)}.side-i i{font-style:normal;width:20px;text-align:center;opacity:.8}
 .side-sep{height:1px;background:rgba(255,255,255,.1);margin:8px 0}.side-f{margin-top:auto;padding:0 20px;font-size:.62rem;color:#777;line-height:1.5}
 #edge{position:fixed;left:0;top:96px;bottom:150px;width:14px;z-index:12;touch-action:none}
@@ -133,7 +133,7 @@ select.in{background:#0a0514;appearance:auto}
 <div id="astrolabe"><div id="target"></div><div id="void"></div><div id="needle"></div><div id="hub"></div></div>
 <div id="ui-top">
  <div class="hdr"><button id="menu-btn" class="iconbtn" aria-label="Menu" onclick="Side.open()">☰</button><h1 id="title">TERNARY NAVIGATOR</h1><button id="course" class="btn" onclick="UI.course()">VOYAGE</button></div>
- <div class="row"><span class="lbl">CURRENT HORIZON</span><span id="res">RESONANCE [rél]</span></div>
+ <div class="row"><button id="due" class="lbl duebtn" onclick="Rhythm.open()">CURRENT HORIZON</button><span id="res">RESONANCE [rél]</span></div>
  <div class="row"><div id="goal" onclick="UI.course()">NO HORIZON SET</div><button id="forge" class="btn ghost" onclick="UI.forge()" disabled>★ FORGE</button></div>
  <div class="bar"><div id="b-1"></div><div id="b0"></div><div id="b1"></div></div>
  <div id="vdots" class="dots" style="display:none"></div>
@@ -173,10 +173,17 @@ select.in{background:#0a0514;appearance:auto}
  <button class="mb" id="branch"></button><button class="mb danger" id="purge">PURGE STAR FROM SKY</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
 <div id="m-restore" class="ov" style="z-index:30"><div class="box"><p class="mt">RESTORE BACKUP</p><p class="cap" id="rs-info" style="text-align:center;margin-bottom:14px"></p><button class="mb" id="rs-new">ADD AS NEW PROFILE</button><button class="mb danger" id="rs-rep">REPLACE THIS PROFILE</button><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
 <div id="m-pass" class="ov" style="z-index:30"><div class="box"><p class="mt" id="pw-title">PASSPHRASE</p><p class="cap" id="pw-cap" style="text-align:center;margin-bottom:12px"></p><input id="pw-1" class="in" type="password" autocomplete="off" placeholder="Passphrase"><input id="pw-2" class="in" type="password" autocomplete="off" placeholder="Repeat passphrase" style="display:none"><p id="pw-err" class="cap" style="color:#f66;display:none;text-align:center"></p><button class="mb" id="pw-ok">OK</button><button class="cancel" id="pw-cancel">CANCEL</button></div></div>
+<div id="m-rhythm" class="ov" style="z-index:30"><div class="box"><p class="mt">LOG RHYTHM</p><p class="cap" id="rh-name" style="text-align:center;margin:0 0 12px"></p>
+<p class="cap" style="margin:0 0 4px">LOG EVERY</p><div class="rhrow"><input id="rh-n" class="in" type="number" inputmode="decimal" min="1" step="any"><select id="rh-u" class="in"><option value="60000">minutes</option><option value="3600000">hours</option><option value="86400000">days</option><option value="604800000">weeks</option></select></div>
+<p class="cap" style="margin:0 0 4px">WARN ME BEFORE IT DRIFTS</p><div class="rhrow"><input id="rh-wn" class="in" type="number" inputmode="decimal" min="0" step="any"><select id="rh-wu" class="in"><option value="60000">minutes</option><option value="3600000">hours</option><option value="86400000">days</option></select></div>
+<label class="tog"><input type="checkbox" id="rh-rem"><span>Remind me. A banner shows while the app is open, plus a system notification where your browser allows it.</span></label>
+<p class="cap" id="rh-info" style="text-align:center;margin:0 0 12px"></p><p id="rh-err" class="cap" style="color:#f66;display:none;text-align:center"></p>
+<button class="mb" id="rh-ok">SAVE</button><button class="mb" id="rh-ics">ADD REMINDERS TO CALENDAR (.ics)</button><button class="mb" id="rh-daily">BACK TO DAILY</button><button class="cancel" id="rh-cancel">CANCEL</button></div></div>
 <div id="m-prof" class="ov"><div class="box"><p class="mt">PROFILES</p><div id="plist"></div><button class="mb" onclick="Prof.edit('')">+ NEW PROFILE</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
 <div id="m-pedit" class="ov" style="z-index:30"><div class="box"><p class="mt" id="pe-title"></p><button id="pe-av" class="av big" aria-label="Choose photo"></button><input id="pe-file" type="file" accept="image/*" hidden><p class="cap" style="text-align:center;margin-bottom:12px">Tap the circle to choose a photo</p><input id="pe-name" class="in" maxlength="20" placeholder="Profile name"><button class="mb" id="pe-rm">REMOVE PHOTO</button><button class="mb" id="pe-ok">SAVE</button><button class="mb danger" id="pe-del">DELETE PROFILE</button><button class="cancel" id="pe-cancel">CANCEL</button></div></div>
 <div id="m-confirm" class="ov" style="z-index:30"><div class="box"><p id="c-msg" style="font-size:.85rem;line-height:1.5;color:#ddd;margin-bottom:16px"></p><button class="mb" id="c-ok">OK</button><button class="cancel" id="c-cancel">CANCEL</button></div></div>
 <div id="m-logedit" class="ov" style="z-index:30"><div class="box"><p class="mt">EDIT ENTRY</p><textarea id="le-text" class="in" rows="5" style="text-align:left;resize:none"></textarea><button class="mb" id="le-ok">SAVE</button><button class="cancel" id="le-cancel">CANCEL</button></div></div>
+<div id="toast" style="display:none"></div>
 <div id="m-name" class="ov" style="z-index:30"><div class="box"><p class="mt" id="n-title"></p><input id="n-input" class="in" maxlength="24"><button class="mb" id="n-ok">SAVE</button><button class="cancel" id="n-cancel">CANCEL</button></div></div>
 <div id="scrim" onclick="Side.close()"></div>
 <div id="side"><button class="side-h prof" onclick="Prof.open()" aria-label="Switch profile"><div id="side-av" class="av"></div><div class="pm"><b id="side-pn"></b><span>Local profile · tap to switch</span></div></button>
@@ -199,7 +206,7 @@ select.in{background:#0a0514;appearance:auto}
  <button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
 <div id="m-vlist" class="ov"><div class="box"><p class="mt">VOYAGES IN PROGRESS</p><div id="vlist"></div><button class="mb" onclick="UI.newVoyage()">+ NEW VOYAGE</button><button class="cancel" onclick="UI.close()">CLOSE</button></div></div>
 <div id="m-vmenu" class="ov" style="z-index:30"><div class="box"><p class="mt" id="vm-title">VOYAGE</p><p id="vm-info" class="cap" style="min-height:0;margin:0 0 14px"></p>
- <button class="mb" onclick="SKY.vmFocus()">FOCUS THIS VOYAGE</button><button class="mb" onclick="SKY.vmBranch()">↳ BRANCH FROM HERE</button><button class="mb" onclick="SKY.vmRename()">RENAME VOYAGE</button><button class="mb danger" onclick="SKY.vmAbandon()">ABANDON VOYAGE</button><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
+ <button class="mb" onclick="SKY.vmFocus()">FOCUS THIS VOYAGE</button><button class="mb" onclick="SKY.vmBranch()">↳ BRANCH FROM HERE</button><button class="mb" onclick="SKY.vmRhythm()">LOG RHYTHM</button><button class="mb" onclick="SKY.vmRename()">RENAME VOYAGE</button><button class="mb danger" onclick="SKY.vmAbandon()">ABANDON VOYAGE</button><button class="cancel" onclick="UI.close()">CANCEL</button></div></div>
 <div id="m-data" class="ov"><div class="box"><p class="mt">YOUR DATA</p>
  <p style="font-size:.75rem;line-height:1.5;color:#bbb;margin-bottom:14px;text-align:left">Everything saves automatically on this device, in this browser. A backup file keeps a copy you can restore later, into this profile or a new one, or move to another device. An encrypted backup needs its passphrase to open.</p>
  <button class="mb" onclick="Store.export()">⬇ DOWNLOAD BACKUP FILE</button><button class="mb" onclick="Store.exportEnc()">🔒 DOWNLOAD ENCRYPTED BACKUP</button><button class="mb" onclick="$('imp').click()">⬆ RESTORE FROM BACKUP</button>
@@ -293,7 +300,9 @@ const Store={
   else if(a.horizonName&&a.horizonName!==NONE)vl=[{name:a.horizonName,chart:S.cur,origin:a.origin||'',target:a.targetAngle,needle:a.needleAngle,toggle:a.toggle,wake:w}]; // single voyage from older saves
   const now=Date.now();
   S.voyages=vl.filter(v=>v&&v.name).map((v,i)=>({id:v.id||('v'+now+'_'+i),name:String(v.name).slice(0,39),chart:S.charts.some(c=>c.id===v.chart)?v.chart:S.cur,origin:v.origin||'',
-   ...(v.start!=null&&!isNaN(+v.start)?{start:+v.start}:{}),target:+v.target||0,needle:isNaN(+v.needle)||v.needle==null?180:+v.needle,toggle:v.toggle||1,wake:Array.isArray(v.wake)?v.wake:[],created:v.created||now,updated:v.updated||now}));
+   ...(v.start!=null&&!isNaN(+v.start)?{start:+v.start}:{}),target:+v.target||0,needle:isNaN(+v.needle)||v.needle==null?180:+v.needle,toggle:v.toggle||1,wake:Array.isArray(v.wake)?v.wake:[],created:v.created||now,updated:v.updated||now,
+   ...(typeof v.anchor==='string'?{anchor:v.anchor}:{}),...(v.geo===true?{geo:true}:{}),...(v.lockPos&&isFinite(+v.lockPos.x)&&isFinite(+v.lockPos.y)?{lockPos:{x:+v.lockPos.x,y:+v.lockPos.y}}:{}),
+   ...(+v.period>=6e4&&+v.period<=3.2e10?{period:+v.period}:{}),...(v.warn!=null&&isFinite(+v.warn)&&+v.warn>=0?{warn:+v.warn}:{}),...(v.remind===true?{remind:true}:{}),...(+v.notified>0?{notified:+v.notified}:{})}));
   S.focus=vs&&S.voyages.some(v=>v.id===vs.focus)?vs.focus:(S.voyages[0]?S.voyages[0].id:'');
  },
  saveActive(){this.write('ternary_nav_active',{lastTide:S.tide});this.write('ternary_nav_voyages',{focus:S.focus,voyages:S.voyages})},
@@ -307,7 +316,7 @@ const Store={
   });
  },
  snap(){return{app:'ternary-navigator',profile:Profiles.cur().name,active:{lastTide:S.tide},voyages:{focus:S.focus,voyages:S.voyages},settings:S.settings,galaxy:{cur:S.cur,charts:S.charts,links:S.links}}},
- save(text,name){const blob=new Blob([text],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)},
+ save(text,name,type){const blob=new Blob([text],{type:type||'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)},
  export(){this.save(JSON.stringify(this.snap(),null,2),'ternary-navigator-backup.json')},
  exportEnc(){if(!(window.crypto&&crypto.subtle))return Dlg.note('Encryption is not available here (the browser needs a secure https page).');
   Pass.ask('ENCRYPT BACKUP','Choose a passphrase. Without it the backup cannot be opened, and it cannot be recovered.',true,async pw=>{const o=await Vault.seal(pw,JSON.stringify(this.snap()));this.save(JSON.stringify(o),'ternary-navigator-backup.encrypted.json');return true})},
@@ -332,7 +341,7 @@ const Side={t:0,p:0,W(){return Math.min(innerWidth*.82,300)},
   e.style.transform=`translateX(${(p-1)*100}%)`;sc.style.opacity=p;sc.style.pointerEvents=p>.02?'auto':'none';
   clearTimeout(this.t);if(p>.001)e.classList.add('vis');else this.t=setTimeout(()=>{if(this.p<=.001)e.classList.remove('vis')},320);Nav.sync()},
  open(){UI.close();this.set(1,true)},close(){this.set(0,true)},
- go(w){this.close();setTimeout(()=>{if(w==='voyages'){UI.sky(false);UI.course()}else if(w==='chart')UI.sky(true);else if(w==='galaxy'){UI.sky(true);SKY.stack=[{m:'galaxy'}];SKY.showEntry(SKY.stack[0])}else if(w==='settings')CP.open();else if(w==='data'){UI.close();$('m-data').classList.add('show')}},120)},
+ go(w){this.close();setTimeout(()=>{if(w==='voyages'){UI.sky(false);UI.course()}else if(w==='chart')SKY.travel(1);else if(w==='galaxy')SKY.travel(0);else if(w==='settings')CP.open();else if(w==='data'){UI.close();$('m-data').classList.add('show')}},120)},
  bind(){
   const e=$('side'),edge=$('edge');let x0=0,y0=0,mode='';
   edge.addEventListener('pointerdown',ev=>{x0=ev.clientX;mode='open';edge.setPointerCapture(ev.pointerId)});
@@ -431,15 +440,16 @@ function resonant(c,n){n=n===undefined?S.wake.length:n;return n>0&&[-1,0,1].ever
 
 const ENGINE={
  setTarget(deg){
-  const ch=UI.cch(),cen=originId(ch),link=ch.link!==false&&!!cen;if(!dirFree(ch,cen,link,deg))return;const go=UI.afterCourse;
-  this.newVoyage(($('goal-input').value.trim()||'PRIMARY VOYAGE').slice(0,20),deg,ch.id,link?cen:'',cen);
-  S.cur=ch.id;Store.saveActive();Store.saveSky();$('goal-input').value='';UI.close();UI.refresh();if(go)UI.sextant()},
+  const ch=UI.cch(),cen=originId(ch),link=ch.link!==false&&!!cen;if(!dirFree(ch,cen,link,deg))return;const go=UI.afterCourse,before=S.voyages.slice(),lk=S.voyages.map(v=>v.lockPos);
+  try{this.newVoyage(($('goal-input').value.trim()||'PRIMARY VOYAGE').slice(0,20),deg,ch.id,link?cen:'',cen);
+   S.cur=ch.id;Store.saveActive();Store.saveSky();$('goal-input').value='';UI.close();UI.refresh();if(go)UI.sextant()}
+  catch(e){console.error(e);S.voyages=before;before.forEach((v,i)=>{if(lk[i])v.lockPos=lk[i];else delete v.lockPos});UI.close();Dlg.note('Could not create that voyage ('+(e&&e.message||'error')+'). Nothing was changed.')}},
  newVoyage(name,deg,chart,origin,anchor){const now=Date.now(),v={id:'v'+now+Math.random().toString(36).slice(2,6),name,chart,origin:origin||'-',anchor:anchor||origin||'',geo:true,target:deg,needle:0,toggle:1,wake:[],created:now,updated:now};
   const st=(norm(deg)+180)%360; // every voyage starts in the void, branched or not
   const aw=S.voyages.find(x=>x.id===v.anchor);if(aw&&!aw.lockPos){const q=SKY.placement(aw);if(q)aw.lockPos={x:q.x,y:q.y}} // a star others are placed around stays put
   v.start=st;v.needle=st;S.voyages.push(v);S.focus=v.id;return v},
  endVoyage(id){const e=S.voyages.find(v=>v.id===id);if(e){S.voyages.forEach(o=>{if(o.origin===id)o.origin=e.origin;if(o.anchor===id)o.anchor=e.anchor||(e.origin==='-'?'':e.origin)});S.charts.forEach(c=>{if(c.origin===id)c.origin=e.origin})}S.voyages=S.voyages.filter(v=>v.id!==id);if(S.focus===id){const n=[...S.voyages].sort((a,b)=>b.updated-a.updated)[0];S.focus=n?n.id:''}},
- ordered(){return[...S.voyages].sort((a,b)=>(b.updated-a.updated)||(b.created-a.created)||(a.id<b.id?-1:1))},
+ ordered(){return[...S.voyages].sort((a,b)=>(Rhythm.per(a)-Rhythm.per(b))||(b.updated-a.updated)||(b.created-a.created)||(a.id<b.id?-1:1))}, // most frequent rhythm first, then most recently updated
  step(d){const L=this.ordered();if(L.length<2)return;let i=L.findIndex(v=>v.id===S.focus);if(i<0)i=0;const j=i+d;if(j<0||j>=L.length)return;if(navigator.vibrate)try{navigator.vibrate(8)}catch(e){}this.focusVoyage(L[j].id)},
  focusVoyage(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;S.focus=id;if(S.charts.some(c=>c.id===v.chart))S.cur=v.chart;Store.saveActive();Store.saveSky();UI.refresh()},
  renameVoyage(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;Dlg.name('RENAME VOYAGE',v.name,n=>{v.name=n.slice(0,24);Store.saveActive();UI.header();if($('m-vlist').classList.contains('show'))UI.voyages();if($('sky').classList.contains('on'))SKY.render()})},
@@ -455,7 +465,14 @@ const ENGINE={
   return{n,tog}},
  DRIFT:6,dk(t){const d=new Date(t);return Math.floor((t-d.getTimezoneOffset()*6e4)/864e5)},
  drift(n,target){const d=shortest(target,n),a=Math.abs(d);if(a>=179.99)return n;return n+(a<.5?1:-Math.sign(d))*Math.min(this.DRIFT,180-a)},
- replay(v){ // needle is derived: logs in order, plus one drift step for every finished day without an Align or Anchor
+ replayRolling(v){ // custom rhythm: one drift step for every full period that passes after the last Align or Anchor (or the start)
+  const P=v.period,T=l=>+l.ts||+l.id||0,L=[...v.wake].sort((a,b)=>T(a)-T(b)),now=Date.now();
+  let n=v.start==null?180:v.start,tog=1,r=Math.min(v.created||now,L.length?T(L[0]):now);
+  const miss=t=>{const k=Math.floor((t-r)/P);if(k>0){for(let i=0;i<Math.min(k,60);i++)n=this.drift(n,v.target);r+=k*P}};
+  for(const l of L){miss(T(l));const o=this.advance(n,l.actionType,+l.energy,tog,v.target);n=o.n;tog=o.tog;if(l.actionType==='Align'||l.actionType==='Anchor')r=Math.max(r,T(l))}
+  miss(now);return{n,tog}},
+ replay(v){ // needle is derived: logs in order, plus drift. Default rhythm: one drift step for every finished day without an Align or Anchor
+  if(v.period)return this.replayRolling(v);
   let n=v.start==null?180:v.start,tog=1;const T=l=>+l.ts||+l.id||0,L=[...v.wake].sort((a,b)=>T(a)-T(b)),now=Date.now(),today=this.dk(now);
   const t0=Math.min(v.created||now,L.length?T(L[0]):now);let i=0;
   const app=l=>{const o=this.advance(n,l.actionType,+l.energy,tog,v.target);n=o.n;tog=o.tog};
@@ -465,7 +482,7 @@ const ENGINE={
   while(i<L.length)app(L[i++]);
   return{n,tog}},
  rewind(){const o=this.replay(S.v);S.needle=o.n;S.toggle=o.tog},
- settle(){let ch=false;S.voyages.forEach(v=>{const o=this.replay(v);if(Math.abs(o.n-v.needle)>1e-6||o.tog!==v.toggle){v.needle=o.n;v.toggle=o.tog;ch=true}});if(ch){Store.saveActive();UI.refresh()}},
+ settle(){let ch=false;S.voyages.forEach(v=>{if(!v.geo&&!v.lockPos){try{const q=SKY.placement(v);if(q){v.lockPos={x:q.x,y:q.y};ch=true}}catch(e){console.error(e)}}});S.voyages.forEach(v=>{const o=this.replay(v);if(Math.abs(o.n-v.needle)>1e-6||o.tog!==v.toggle){v.needle=o.n;v.toggle=o.tog;ch=true}});if(ch){Store.saveActive();UI.refresh()}},
  act(type,icon){
   UI.close();const inp=$('log-input'),text=inp.value.trim();if(!text)return;
   S.tide=S.pending;UI.theme();
@@ -475,8 +492,8 @@ const ENGINE={
 };
 
 const UI={
- init(){Store.init();ENGINE.settle();document.addEventListener('visibilitychange',()=>{if(!document.hidden)ENGINE.settle()});this.drawer();this.theme();this.refresh();this.layout(0,false);addEventListener('resize',()=>UI.fitGoal());addEventListener('load',()=>{UI.layout(UI.p||0,false);UI.fitGoal()})},
- refresh(){this.theme();this.header();this.compass();this.logs();this.balance();this.dots()},
+ init(){Store.init();ENGINE.settle();document.addEventListener('visibilitychange',()=>{if(!document.hidden){ENGINE.settle();Rhythm.tick()}});setInterval(()=>Rhythm.tick(),20000);this.drawer();this.theme();this.refresh();this.layout(0,false);addEventListener('resize',()=>UI.fitGoal());addEventListener('load',()=>{UI.layout(UI.p||0,false);UI.fitGoal()})},
+ refresh(){this.theme();this.header();this.compass();this.logs();this.balance();this.dots();Rhythm.paint()},
  dots(){const box=$('vdots'),L=ENGINE.ordered(),n=L.length,i=L.findIndex(v=>v.id===S.focus),h0=box.offsetHeight;box.innerHTML='';
   if(n<2){box.style.display='none'}else{box.style.display='flex';const W=9,st=Math.max(0,Math.min(n-W,i-Math.floor(W/2))),en=Math.min(n,st+W);
    for(let k=st;k<en;k++){const b=document.createElement('button');b.setAttribute('aria-label','Voyage '+(k+1)+' of '+n+': '+L[k].name);if(k===i)b.className='on';else if((k===st&&st>0)||(k===en-1&&en<n))b.className='sm';b.onclick=()=>ENGINE.focusVoyage(L[k].id);box.appendChild(b)}}
@@ -565,14 +582,14 @@ const UI={
  newVoyage(keep){if(!keep)this.courseChart=S.cur;this.close();this.fillCourse();$('m-course').classList.add('show')},
  voyages(){
   const box=$('vlist');box.innerHTML='';
-  [...S.voyages].sort((a,b)=>(b.updated-a.updated)||(b.created-a.created)||(a.id<b.id?-1:1)).forEach(v=>{
+  ENGINE.ordered().forEach(v=>{
    const ch=S.charts.find(c=>c.id===v.chart),row=document.createElement('div');row.className='vrow'+(v.id===S.focus?' f':'');
    const m=document.createElement('button');m.className='vmain';
    const a=document.createElement('span');a.className='vn';a.textContent=v.name;
-   const b=document.createElement('span');b.className='vs';b.textContent=`${ch?ch.name:'?'} · ${v.wake.length} log${v.wake.length===1?'':'s'} · ${Math.round(Math.abs(shortest(v.target,v.needle)))}° off`;
+   const b=document.createElement('span');b.className='vs';b.textContent=`${ch?ch.name:'?'} · ${v.wake.length} log${v.wake.length===1?'':'s'} · ${Math.round(Math.abs(shortest(v.target,v.needle)))}° off · ${Rhythm.label(v)}`;
    m.append(a,b);m.onclick=()=>{UI.close();ENGINE.focusVoyage(v.id)};
    const x=document.createElement('button');x.className='x';x.textContent='×';x.setAttribute('aria-label','Abandon voyage');x.onclick=()=>{UI.close();ENGINE.abandonVoyage(v.id)};
-   const e=document.createElement('button');e.className='x pen';e.textContent='✎';e.setAttribute('aria-label','Rename voyage');e.onclick=()=>ENGINE.renameVoyage(v.id);row.append(m,e,x);box.appendChild(row)});
+   const e=document.createElement('button');e.className='x pen';e.textContent='✎';e.setAttribute('aria-label','Rename voyage');e.onclick=()=>ENGINE.renameVoyage(v.id);const rb=document.createElement('button');rb.className='x';rb.textContent='⏱';rb.setAttribute('aria-label','Log rhythm');rb.onclick=()=>Rhythm.open(v.id);row.append(m,rb,e,x);box.appendChild(row)});
   $('m-vlist').classList.add('show')},
  cch(){return S.charts.find(c=>c.id===this.courseChart)||S.ch},
  setCourseChart(id){this.courseChart=id;this.fillCourse()},
@@ -636,17 +653,16 @@ const UI={
  }
 };
 
-const ZK=1.0,AIMR=64,MINZ=.4,MAXZ=2.2,POPUP_DELAY=60;   // popup opens just after the tap's own mouse events, which fire within a frame or two
+const TZ=1.8,ZK=1.0,AIMR=64,MINZ=.4,MAXZ=2.2,POPUP_DELAY=60;   // popup opens just after the tap's own mouse events, which fire within a frame or two
 const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}},panX:0,panY:0,scale:1,bound:false,lines:[],placing:false,sw:false,targetCId:'',
  layer(){return $(this.mode==='galaxy'?'gfield':'field')},
  setMode(m){
   const v=this.view[this.mode];v.x=this.panX;v.y=this.panY;v.s=this.scale;
   this.mode=m;this.over=1;const n=this.view[m];this.panX=n.x;this.panY=n.y;this.scale=n.s;this.placing=false;this.linking='';$('ghost').style.display='none';
   $('field').style.display=m==='chart'?'block':'none';$('gfield').style.display=m==='galaxy'?'block':'none';
-  $('btn-new').textContent=m==='galaxy'?(this.placing?'CANCEL':'+ NEW'):'+ VOYAGE';
-  $('btn-mode').textContent=m==='galaxy'?'CHART':'GALAXY';this.focusVis(m);
-  $('sky-title').innerHTML=m==='galaxy'?'GALAXY':esc(S.ch.name)+' <span class="pen">✎</span>';this.apply(0);
-  const L=this.layer();if(L.animate)L.animate([{opacity:0},{opacity:1}],{duration:350})},
+  if(!this.quiet)this.chrome(m);this.apply(0);
+  const L=this.layer();if(L.animate&&!this.quiet)L.animate([{opacity:0},{opacity:1}],{duration:350})},
+
  show(fit){this.stack=[{m:'chart',c:S.cur}];if(this.mode!=='chart')this.setMode('chart');this.apply(0);this.render();const first=!this.fitted;this.fitted=true;
   if(fit)this.fit(first?0:350);else if(S.v&&S.v.chart===S.cur)this.centerFocus(true);else if(first)this.fit(0)},
  focusVis(m){const bf=$('btn-focus');if(bf)bf.style.display=m==='galaxy'?(S.charts.length?'block':'none'):'block'},
@@ -664,7 +680,11 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
   const heading=parent?this.freeHeading(ch,parent.id,v):norm(v.target);let x=ORI,y=ORI;
   if(parent){const r=heading*Math.PI/180,D=Math.min(260,Math.max(120,80+n*6));x=parent.x+D*Math.sin(r);y=parent.y-D*Math.cos(r)}
   return{ch,parent,heading,x,y}},
- placement(v){ // where this voyage's star will land; also where its forming star is drawn
+ placement(v){ // memoised: each voyage is worked out once per top-level call, so chains of forming voyages cannot multiply the work
+  const top=!this._pc;if(top)this._pc=new Map();const pc=this._pc;
+  try{if(pc.has(v.id)){const c=pc.get(v.id);return c||this.basePos(v)}pc.set(v.id,null);const r=this._placement(v);pc.set(v.id,r);return r}
+  finally{if(top)this._pc=null}},
+ _placement(v){ // where this voyage's star will land; also where its forming star is drawn
   const b=this.basePos(v);if(!b)return null;if(v.geo||v.lockPos)return b;const r=b.heading*Math.PI/180,others=b.ch.stars.map(t=>({x:t.x,y:t.y}));
   S.voyages.forEach(o=>{if(o.id!==v.id&&o.chart===v.chart){const q=this.basePos(o);if(q)others.push({x:q.x,y:q.y})}});
   for(let i=0;i<12;i++)others.forEach(t=>{let dx=b.x-t.x,dy=b.y-t.y,d=Math.hypot(dx,dy);if(d<60){if(d<.001){dx=Math.sin(r);dy=-Math.cos(r);d=1}b.x+=dx/d*(60-d);b.y+=dy/d*(60-d)}});
@@ -673,6 +693,7 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
   $('vm-info').textContent=`Heading ${norm(v.target)}° · ${v.wake.length} log${v.wake.length===1?'':'s'} · ${Math.round(Math.abs(shortest(v.target,v.needle)))}° off course${id===S.focus?' · in focus':''}`;$('m-vmenu').classList.add('show')},
  vmFocus(){UI.close();ENGINE.focusVoyage(this.vid);UI.sky(false)},
  vmBranch(){const v=S.voyages.find(x=>x.id===this.vid);if(!v)return;UI.courseChart=v.chart;ENGINE.setOrigin(v.id);UI.close();UI.sky(false);UI.newVoyage(true)},
+ vmRhythm(){const id=this.vid;UI.close();Rhythm.open(id)},
  vmRename(){UI.close();ENGINE.renameVoyage(this.vid)},
  vmAbandon(){UI.close();ENGINE.abandonVoyage(this.vid)},
  snap(){const t=this.stack[this.stack.length-1];if(t){t.x=this.panX;t.y=this.panY;t.s=this.scale}},
@@ -685,13 +706,13 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
   const st=this.stack,below=st[st.length-2];
   if(below&&below.m===m&&(m==='galaxy'||below.c===c)){this.stack.pop();this.showEntry(this.stack[this.stack.length-1]);return}
   this.snap();const e={m,c};st.push(e);this.showEntry(e)},
- back(){UI.sky(false)},
- toggleMode(){if(this.mode==='chart')this.go('galaxy');else this.go('chart',S.cur)},
+ back(){this.travel(2)},
+ toggleMode(){this.travel(this.mode==='galaxy'?1:0)},
  actionNew(){
   if(this.mode==='chart'){UI.sky(false);UI.newVoyage()}
   else{this.startPlace()}
  },
- enter(id){this.go('chart',id)},
+ enter(id){if(!S.charts.some(c=>c.id===id))return;if(this.level()===0){S.cur=id;Store.saveSky();this.travel(1)}else this.go('chart',id)},
  headerClick(){
   if(this.mode==='chart')this.renameTarget(S.cur);
  },
@@ -809,13 +830,16 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
   return Math.abs(p.x)<1380&&Math.abs(p.y)<1380&&S.charts.every(c=>ig.has(c.id)||(self&&c.id===self.id)||!this.hit(me,this.geom(c,c.gx,c.gy)))},
  group(id){const g=new Set([id]);let ch=true;while(ch){ch=false;S.links.forEach(l=>{if(g.has(l.a)&&!g.has(l.b)){g.add(l.b);ch=true}else if(g.has(l.b)&&!g.has(l.a)){g.add(l.a);ch=true}})}return g},
  tree(id){const par=new Map([[id,null]]),order=[],q=[id];while(q.length){const x=q.shift();order.push(x);S.links.forEach(l=>{const y=l.a===x?l.b:l.b===x?l.a:null;if(y&&!par.has(y)){par.set(y,x);q.push(y)}})}return{par,order}},
- beginDrag(id){const T=this.tree(id);this.drag={lead:id,par:T.par,order:T.order,st:Object.fromEntries(T.order.map(i=>[i,{x:0,y:0,vx:0,vy:0}])),tx:0,ty:0,held:true,sc:1,t0:performance.now(),raf:0};this.drag.raf=requestAnimationFrame(stepDrag)},
+ beginDrag(id){const T=this.tree(id);$('gfield').classList.add('drg');this.drag={lead:id,par:T.par,order:T.order,st:Object.fromEntries(T.order.map(i=>[i,{x:0,y:0,vx:0,vy:0}])),tx:0,ty:0,held:true,sc:1,t0:performance.now(),raf:0};this.drag.raf=requestAnimationFrame(stepDrag)},
  endDrag(commit){const D=this.drag;if(!D)return;D.held=false;
   if(commit){D.order.forEach(i=>{const m=S.charts.find(x=>x.id===i),s=D.st[i],d=this.dots[i];m.gx+=commit.x;m.gy+=commit.y;s.x-=commit.x;s.y-=commit.y;if(d){d.style.left=(ORI+m.gx)+'px';d.style.top=(ORI+m.gy)+'px'}});Store.saveSky()}},
- stopDrag(){const D=this.drag;if(!D)return;cancelAnimationFrame(D.raf);D.order.forEach(i=>{D.st[i].x=D.st[i].y=0});D.sc=1;this.paint(D);this.drag=null},
- paint(D){
-  D.order.forEach(i=>{const d=this.dots[i],s=D.st[i];if(d)d.style.transform=`translate(calc(-50% + ${s.x}px),calc(-50% + ${s.y}px)) scale(${D.sc})`});
-  this.glines.forEach(L=>{const A=S.charts.find(x=>x.id===L.a),B=S.charts.find(x=>x.id===L.b);if(!A||!B)return;const a=D.st[L.a]||{x:0,y:0},b=D.st[L.b]||{x:0,y:0};
+ stopDrag(){const D=this.drag;$('gfield').classList.remove('drg');if(!D)return;cancelAnimationFrame(D.raf);D.order.forEach(i=>{D.st[i].x=D.st[i].y=0});D.sc=1;this.paint(D);this.drag=null},
+ paint(D){ // only the dragged group is touched; independent translate/scale properties avoid re-resolving calc() transforms every frame
+  D.order.forEach(i=>{const d=this.dots[i],s=D.st[i];if(!d)return;
+   if(!s.x&&!s.y&&D.sc===1){if(d.style.translate)d.style.translate='';if(d.style.scale)d.style.scale='';return}
+   d.style.translate=s.x.toFixed(1)+'px '+s.y.toFixed(1)+'px';d.style.scale=D.sc===1?'':D.sc.toFixed(3)});
+  const G=D.set||(D.set=new Set(D.order));
+  this.glines.forEach(L=>{if(!G.has(L.a)&&!G.has(L.b))return;const A=S.charts.find(x=>x.id===L.a),B=S.charts.find(x=>x.id===L.b);if(!A||!B)return;const a=D.st[L.a]||{x:0,y:0},b=D.st[L.b]||{x:0,y:0};
    L.el.setAttribute('x1',ORI+A.gx+a.x);L.el.setAttribute('y1',ORI+A.gy+a.y);L.el.setAttribute('x2',ORI+B.gx+b.x);L.el.setAttribute('y2',ORI+B.gy+b.y)})},
  shape(c){
   const T=c.stars;if(!T.length)return{sz:14,k:0,cx:0,cy:0};
@@ -884,7 +908,7 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
    if(!P.has(e.pointerId))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});
    if(P.size===1){
     if(SKY.placing){SKY.ghostAt(e.clientX,e.clientY);if(tap&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>12)tap.m=true}
-    else{SKY.panX=e.clientX-px;SKY.panY=e.clientY-py;SKY.apply()}
+    else if(!SKY.tr){SKY.panX=e.clientX-px;SKY.panY=e.clientY-py;SKY.apply()}
    }
    else if(P.size===2&&d0>0){SKY.setScale(s0*dist()/d0);if(SKY.sw)d0=0}});
   const up=e=>{
@@ -893,26 +917,105 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
     $('ghost').style.display='none';
     if(e.type==='pointerup'&&t){SKY.tryPlace(e.clientX,e.clientY)}
    }
+   if(P.size<2)SKY.release();
    if(P.size===1){const p=[...P.values()][0];px=p.x-SKY.panX;py=p.y-SKY.panY}};
   u.addEventListener('pointerup',up);u.addEventListener('pointercancel',up);
-  u.addEventListener('wheel',e=>{e.preventDefault();SKY.setScale(SKY.scale*(e.deltaY<0?1.1:.91),120,true)},{passive:false});
+  u.addEventListener('wheel',e=>{e.preventDefault();SKY.setScale(SKY.scale*(e.deltaY<0?1.1:.91),120,true);clearTimeout(SKY._wt);SKY._wt=setTimeout(()=>SKY.release(),170)},{passive:false});
  },
  aimed(){if(this.mode!=='galaxy')return null;let best=null,bd=1e9;S.charts.forEach(c=>{const d=Math.hypot(c.gx*this.scale+this.panX,c.gy*this.scale+this.panY);if(d<bd){bd=d;best=c}});return best&&bd<=AIMR?best:null},
- aim(){if(this.mode!=='galaxy')return;const t=this.scale>=1.4?this.aimed():null;Object.keys(this.dots||{}).forEach(id=>{const d=this.dots[id];if(d)d.classList.toggle('aim',!!t&&t.id===id)})},
+ aimedStar(){if(this.mode!=='chart')return null;let best=null,bd=1e9;S.voyages.forEach(v=>{if(v.chart!==S.cur)return;const q=this.placement(v);if(!q)return;const d=Math.hypot((q.x-ORI)*this.scale+this.panX,(q.y-ORI)*this.scale+this.panY);if(d<bd){bd=d;best=v}});return best&&bd<=AIMR?best:null},
+ aim(){if(this.tr)return;
+  if(this.mode==='galaxy'){const t=this.scale>=1.4?this.aimed():null;Object.keys(this.dots||{}).forEach(id=>{const d=this.dots[id];if(d)d.classList.toggle('aim',!!t&&t.id===id)});return}
+  if(this.mode==='chart'){const t=this.scale>=1.4?this.aimedStar():null;document.querySelectorAll('.fstar').forEach(o=>o.classList.toggle('aim',!!t&&o.dataset.vid===t.id))}},
+ level(){return !$('sky').classList.contains('on')?2:(this.mode==='galaxy'?0:1)},
+ ez(x){x=Math.max(0,Math.min(1,x));return x*x*(3-2*x)},
+ chrome(m){$('btn-new').textContent=m==='galaxy'?(this.placing?'CANCEL':'+ NEW'):'+ VOYAGE';$('btn-mode').textContent=m==='galaxy'?'CHART':'GALAXY';this.focusVis(m);$('sky-title').innerHTML=m==='galaxy'?'GALAXY':esc(S.ch.name)+' <span class="pen">✎</span>'},
+ // ---- seamless zoom between galaxy (0), constellation (1) and voyage screen (2): two screens are shown together and cross-faded.
+ // p runs from 0 (the lower level fully shown) to 1 (the higher level). A gesture drives p directly; buttons animate it.
+ trBegin(lo,hi,p0,id,sv,ev){
+  const sky=$('sky'),T=this.tr={lo,hi,p:p0,p0,id,anim:false,g:false,labHi:p0===1,prevCur:S.cur,prevFocus:S.focus,R:null,G:null,vid:'',sv:sv!=null?sv:(lo===0?true:p0===0),ev:ev!=null?ev:(lo===0?true:p0===1)};
+  sky.style.transition='none';sky.classList.add('trans');this.quiet=true;
+  try{
+   if(lo===0){
+    if(p0===0){T.G={x:this.panX,y:this.panY,s:this.scale};S.cur=id;this.setMode('chart');$('gfield').style.display='block';this.render();this.fit(0);T.R={x:this.panX,y:this.panY,s:this.scale}}
+    else{T.R={x:this.panX,y:this.panY,s:this.scale};const c=S.charts.find(x=>x.id===S.cur);T.G={x:-c.gx*MAXZ,y:-c.gy*MAXZ,s:MAXZ};this.view.galaxy={x:T.G.x,y:T.G.y,s:T.G.s};this.setMode('galaxy');$('field').style.display='block';this.renderGalaxy()}
+   }else{
+    T.vid=id;
+    if(p0===0){T.R={x:this.panX,y:this.panY,s:this.scale};if(id&&id!==S.focus)ENGINE.focusVoyage(id)}
+    else{UI.sky(true);T.R={x:this.panX,y:this.panY,s:this.scale}}
+   }
+  }catch(e){console.error(e);this.quiet=false;this.tr=null;this.trClean();return null}
+  this.quiet=false;this.chrome(lo===0&&p0===0?'galaxy':'chart');this.trSet(p0);return T},
+ chA(T,p){const f=T.p0===0?p:1-p;return Math.min(1,(T.sv?Math.max(0,1-f/.35):0)+(T.ev?Math.max(0,(f-.65)/.35):0))}, // header and buttons: fade out leaving a visible screen, fade in arriving at one, stay hidden in between
+ trSet(p){const T=this.tr;if(!T)return;p=Math.max(0,Math.min(1,p));T.p=p;const e=this.ez,sky=$('sky'),G=$('gfield'),F=$('field'),root=document.documentElement.style;
+  const tf=(el,px,py,s)=>{el.style.transform=`translate(${-1500+px}px,${-1500+py}px) scale(${s})`};
+  if(T.lo===0){
+   const c=S.charts.find(x=>x.id===S.cur)||{gx:0,gy:0},g=T.G,r=T.R,sg=g.s*Math.exp(p*Math.log(3)),k=sg/g.s,h=e(p);
+   tf(G,g.x*k+(-c.gx*sg-g.x*k)*h,g.y*k+(-c.gy*sg-g.y*k)*h,sg);G.style.opacity=1-e((p-.1)/.55);
+   const sc=r.s*Math.exp((p-1)*Math.log(4)),kc=sc/r.s;tf(F,r.x*kc,r.y*kc,sc);F.style.opacity=e((p-.3)/.6);
+   sky.style.setProperty('--ch',this.chA(T,p));
+   const hi=p>=.5;if(hi!==T.labHi){T.labHi=hi;this.chrome(hi?'chart':'galaxy')}
+  }else{
+   const r=T.R,v=S.voyages.find(x=>x.id===T.vid),q=v&&v.chart===S.cur?this.placement(v):null,sc=r.s*Math.exp(p*Math.log(5)),k=sc/r.s;let px=r.x*k,py=r.y*k;
+   if(q){const h=e(p);px+=(-(q.x-ORI)*sc-px)*h;py+=(-(q.y-ORI)*sc-py)*h}
+   tf(F,px,py,sc);sky.style.opacity=1-e((p-.15)/.7);sky.style.setProperty('--ch',this.chA(T,p));
+   root.setProperty('--mf',e((p-.45)/.5));root.setProperty('--ms',.8+.2*e(p))}},
+ trAbort(to){ // never leave the interface locked half-way through a transition
+  this.tr=null;this.quiet=false;this.trClean();$('field').style.display=this.mode==='chart'?'block':'none';$('gfield').style.display=this.mode==='galaxy'?'block':'none';
+  if(to===2)UI.sky(false);else if(!$('sky').classList.contains('on'))UI.sky(true);try{this.chrome(this.mode);this.apply(0)}catch(e){}},
+ trClean(){const sky=$('sky');$('gfield').style.opacity='';$('field').style.opacity='';sky.style.opacity='';sky.style.transition='';sky.classList.remove('trans');sky.style.removeProperty('--ch');
+  const r=document.documentElement.style;r.removeProperty('--mf');r.removeProperty('--ms')},
+ trEnd(pf){const T=this.tr;if(!T)return;this.tr=null;this.quiet=true;const done=pf!==T.p0;
+  if(T.lo===0){const fin=pf===1?'chart':'galaxy';
+   if(fin==='galaxy'&&T.p0===0)S.cur=T.prevCur;
+   if(this.mode!==fin)this.setMode(fin);
+   (fin==='chart'?$('gfield'):$('field')).style.display='none';(fin==='chart'?$('field'):$('gfield')).style.display='block';
+   this.stack=[fin==='chart'?{m:'chart',c:S.cur}:{m:'galaxy'}];if(fin==='chart')Store.saveSky()}
+  else if(pf===1){UI.sky(false)}
+  else if(T.p0===0){if(T.prevFocus!==S.focus&&S.voyages.some(v=>v.id===T.prevFocus))ENGINE.focusVoyage(T.prevFocus);S.cur=T.prevCur}
+  this.quiet=false;this.trClean();
+  if(this.level()<2){this.chrome(this.mode);this.apply(0);this.markOrigin();this.aim()}
+  if(done){this.sw=true;setTimeout(()=>this.sw=false,500)}},
+ animTr(to,ms,cb){const T=this.tr;if(!T)return;T.anim=true;const from=T.p,t0=performance.now(),d=Math.max(1,ms);
+  const f=n=>{if(this.tr!==T)return;try{const x=Math.max(0,Math.min(1,(performance.now()-t0)/d));this.trSet(from+(to-from)*this.ez(x));if(x<1)requestAnimationFrame(f);else{this.trEnd(to);if(cb)cb()}}catch(e){console.error(e);this.trAbort(to>.5?1:0)}};requestAnimationFrame(f)},
+ release(){const T=this.tr;if(!T||!T.g||T.anim)return;const moved=T.p0===0?T.p:1-T.p,side=moved>=.6?1-T.p0:T.p0;this.over=1;this.animTr(side,side===T.p0?240:280)},
+ travel(to,ms){ // any level to any level as ONE continuous movement (consecutive crossings share one clock, so there is no stop in between)
+  if(this.tr)return;const c0=this.level();if(c0===to)return;const dir=to>c0?1:-1,segs=[];
+  for(let c=c0;c!==to;c+=dir){
+   if(dir>0){if(c===0)segs.push({lo:0,hi:1,p0:0,id:S.cur});else{if(!(S.v&&(segs.length?S.v.chart===S.cur:S.v.chart===S.cur)))break;segs.push({lo:1,hi:2,p0:0,id:S.v.id})}}
+   else segs.push(c===2?{lo:1,hi:2,p0:1,id:S.v?S.v.id:''}:{lo:0,hi:1,p0:1,id:S.cur})}
+  const n=segs.length;if(!n){if(dir>0)UI.sky(false);return}
+  const dur=ms||(n===1?300:480),ez=n===1?(x=>this.ez(x)):(x=>.3*this.ez(x)+.7*x),endP=i=>segs[i].p0===0?1:0,t0=performance.now();let k=-1,T=null;
+  const begin=i=>{const sg=segs[i],a=sg.p0===0?sg.lo:sg.hi,b=sg.p0===0?sg.hi:sg.lo,t=this.trBegin(sg.lo,sg.hi,sg.p0,sg.id,i===0&&a<2,i===n-1&&b<2);if(t)t.anim=true;return t};
+  const frame=now=>{try{const x=Math.max(0,Math.min(1,(performance.now()-t0)/dur)),g=x>=1?n:ez(x)*n;let i=Math.max(0,Math.min(n-1,Math.floor(g))),l=x>=1?1:Math.max(0,g-i);
+   while(k<i){if(k>=0&&T)this.trEnd(endP(k));k++;T=begin(k);if(!T){this.trAbort(to);return}}
+   this.trSet(segs[i].p0===0?l:1-l);
+   if(x<1)requestAnimationFrame(frame);else{this.trEnd(endP(i));if(dir>0&&this.level()!==to)UI.sky(false)}}catch(e){console.error(e);this.trAbort(to)}};
+  requestAnimationFrame(frame)},
  setScale(z,ms,inc){ // z = wanted scale; inc = z is relative to the current scale (wheel, hold) rather than an absolute pinch size
-  const gal=this.mode==='galaxy',top=gal&&this.scale>=MAXZ-.02&&z>this.scale+1e-9,bot=this.mode==='chart'&&this.scale<=MINZ+.02&&z<this.scale-1e-9,tgt=top?this.aimed():null;
-  if(top&&!tgt){this.over=1;const n=performance.now();if(!this.hintT||n-this.hintT>4000){this.hintT=n;this.say('Centre a constellation to go inside it')}}
-  let ov=1;if((top&&tgt)||bot)ov=inc?(this.over||1)*(z/this.scale):z/(top?MAXZ:MINZ); // zooming past the end of the range builds up "overshoot"
-  if(((top&&tgt)&&ov>1.15)||(bot&&ov<.85)){this.over=1;if(!this.sw){this.sw=true;setTimeout(()=>this.sw=false,700);if(top)this.enter(tgt.id);else this.toggleMode()}return true}
-  this.over=((top&&tgt)||bot)?ov:1;
-  const n=Math.min(MAXZ,Math.max(MINZ,z)),r=n/this.scale;this.panX*=r;this.panY*=r;this.scale=n;
-  this.apply(ms||0)},
+  const T=this.tr;if(T&&T.anim)return true;
+  const live=!!(T&&T.g);let edge=0,zin=false;
+  if(live){edge=T.p0===0?MAXZ:MINZ;zin=T.p0===0}
+  else if(!this.sw){if(this.scale>=MAXZ-.02&&z>this.scale+1e-9){edge=MAXZ;zin=true}else if(this.mode==='chart'&&this.scale<=MINZ+.02&&z<this.scale-1e-9)edge=MINZ}
+  if(edge){ // pushing past the end of the zoom range crosses into the next level, as long as there is something centred to go into
+   const ov=inc?(this.over||1)*(z/this.scale):z/edge,q=(zin?Math.log(ov):-Math.log(ov))/Math.log(TZ);
+   if(!live){
+    const tg=zin?(this.mode==='galaxy'?this.aimed():this.aimedStar()):true;
+    if(!tg){this.over=1;const n=performance.now();if((this.mode==='galaxy'||S.voyages.some(v=>v.chart===S.cur))&&(!this.hintT||n-this.hintT>4000)){this.hintT=n;this.say(this.mode==='galaxy'?'Centre a constellation to go inside it':'Centre a forming voyage to go inside it')}}
+    else if(q>0){this.over=ov;if(!(zin?(this.mode==='galaxy'?this.trBegin(0,1,0,tg.id):this.trBegin(1,2,0,tg.id)):this.trBegin(0,1,1,S.cur)))return;this.tr.g=true;this.trSet(zin?Math.min(1,q):1-Math.min(1,q));return}
+    else this.over=1}
+   else{
+    if(q<=0){this.over=1;this.trEnd(T.p0);return}
+    if(q>=1){this.over=1;this.trEnd(zin?1:0);return true}
+    this.over=ov;this.trSet(zin?q:1-q);return}}
+  else if(!live)this.over=1;
+  const n=Math.min(MAXZ,Math.max(MINZ,z)),r=n/this.scale;this.panX*=r;this.panY*=r;this.scale=n;this.apply(ms||0)},
  hold(dir){this.stopHold();const H=this._h={raf:0};let last=performance.now();
   const tick=n=>{if(this._h!==H)return;const dt=Math.min(.05,(n-last)/1000);last=n;if(this.setScale(this.scale*Math.exp(dir*ZK*dt),0,true)===true){this.stopHold();return}H.raf=requestAnimationFrame(tick)};
   H.raf=requestAnimationFrame(tick);H.off=()=>this.stopHold();['pointerup','pointercancel'].forEach(t=>addEventListener(t,H.off,true));addEventListener('blur',H.off)},
- stopHold(){const H=this._h;if(!H)return;this._h=null;cancelAnimationFrame(H.raf);['pointerup','pointercancel'].forEach(t=>removeEventListener(t,H.off,true));removeEventListener('blur',H.off)},
+ stopHold(){const H=this._h;if(!H)return;this._h=null;cancelAnimationFrame(H.raf);['pointerup','pointercancel'].forEach(t=>removeEventListener(t,H.off,true));removeEventListener('blur',H.off);this.release()},
  zoom(d){this.setScale(this.scale*(1+d),350)},
- apply(ms){this.aim();const f=this.layer();f.style.transition=ms?`transform ${ms}ms cubic-bezier(.2,.8,.2,1)`:'none';f.style.transform=`translate(${-1500+this.panX}px,${-1500+this.panY}px) scale(${this.scale})`},
+ apply(ms){if(this.tr)return;this.aim();const f=this.layer();f.style.transition=ms?`transform ${ms}ms cubic-bezier(.2,.8,.2,1)`:'none';f.style.transform=`translate(${-1500+this.panX}px,${-1500+this.panY}px) scale(${this.scale})`},
  repaint(){const L=this.layer();L.style.willChange='auto';void L.offsetWidth;L.style.willChange='transform';this.apply(0)},
  fit(ms){
   const pts=this.mode==='galaxy'?S.charts.map(c=>({x:ORI+c.gx,y:ORI+c.gy})):S.stars.concat(this.formingPts());
@@ -976,8 +1079,56 @@ function stepDrag(t){
   s.vx+=(k*(tx-s.x)-c*s.vx)*dt;s.vy+=(k*(ty-s.y)-c*s.vy)*dt;s.x+=s.vx*dt;s.y+=s.vy*dt;
   if(Math.abs(tx-s.x)+Math.abs(ty-s.y)+Math.abs(s.vx)+Math.abs(s.vy)>.5)rest=false});
  D.sc+=((D.held?1.08:1)-D.sc)*Math.min(1,dt*12);SKY.paint(D);
- if(!D.held&&rest&&Math.abs(D.sc-1)<.003){D.order.forEach(id=>{D.st[id].x=D.st[id].y=0});D.sc=1;SKY.paint(D);SKY.drag=null;return}
+ if(!D.held&&rest&&Math.abs(D.sc-1)<.003){D.order.forEach(id=>{D.st[id].x=D.st[id].y=0});D.sc=1;SKY.paint(D);SKY.drag=null;$('gfield').classList.remove('drg');return}
  D.raf=requestAnimationFrame(stepDrag)}
+const Rhythm={
+ DAY:864e5,
+ per(v){return v.period||864e5},
+ defWarn(P){return Math.max(0,Math.min(Math.round(P/4),6*36e5))},
+ warnOf(v){return v.warn!=null?v.warn:this.defWarn(this.per(v))},
+ fmt(ms){const t=Math.max(0,Math.round(ms/6e4)),d=Math.floor(t/1440),h=Math.floor(t%1440/60),m=t%60;if(d)return d+'d'+(h?' '+h+'h':'');if(h)return h+'h'+(m?' '+m+'m':'');return m+'m'},
+ every(P){return P%6048e5===0?P/6048e5+'w':P%864e5===0?P/864e5+'d':P%36e5===0?P/36e5+'h':Math.round(P/6e4)+'m'},
+ label(v){return v.period?'every '+this.every(v.period):'daily'},
+ prot(l){return l.actionType==='Align'||l.actionType==='Anchor'},
+ last(v){let t=+v.created||0;v.wake.forEach(l=>{if(this.prot(l))t=Math.max(t,+l.ts||+l.id||0)});return t},
+ due(v){ // when the next log is needed, and whether the compass is already drifting
+  const now=Date.now();
+  if(!v.period){const d=new Date(now);d.setHours(24,0,0,0);let due=d.getTime();const today=ENGINE.dk(now),done=v.wake.some(l=>this.prot(l)&&ENGINE.dk(+l.ts||+l.id||0)===today);if(done)due+=864e5;return{due,left:due-now,over:false,P:864e5,done}}
+  const r=this.last(v),P=v.period;let due=r+P,over=false,since=0;if(now>=due){over=true;since=now-due;due=r+P*(Math.floor((now-r)/P)+1)}
+  return{due,left:due-now,over,since,P}},
+ paint(){const b=$('due');if(!b)return;const v=S.v;b.classList.remove('over');if(!v){b.textContent='CURRENT HORIZON';return}
+  const i=this.due(v);let t;if(i.over){b.classList.add('over');t='OVERDUE '+this.fmt(i.since)}else if(i.done)t='LOGGED TODAY';else t='LOG DUE IN '+this.fmt(i.left);
+  b.textContent='CURRENT HORIZON · '+t},
+ toast(msg,id){const t=$('toast');t.textContent=msg;t.style.display='block';t.onclick=()=>{t.style.display='none';if(id)ENGINE.focusVoyage(id)};clearTimeout(this._tt);this._tt=setTimeout(()=>{t.style.display='none'},12000)},
+ sys(title,body,tag){if(!('Notification' in window)||Notification.permission!=='granted')return;try{new Notification(title,{body,tag})}catch(e){try{navigator.serviceWorker&&navigator.serviceWorker.getRegistration().then(r=>r&&r.showNotification(title,{body,tag}))}catch(x){}}},
+ fire(v,i){const left=i.due-Date.now(),msg=left>45000?v.name+': log due in '+this.fmt(left)+', before the compass drifts':v.name+': log due now, or the compass drifts';this.toast(msg,v.id);this.sys('Ternary Navigator',msg,v.id)},
+ tick(){ENGINE.settle();const now=Date.now();let changed=false;
+  S.voyages.forEach(v=>{if(!v.remind)return;const i=this.due(v),w=this.warnOf(v);
+   if(v.notified!==i.due){if(now>=i.due-w&&now<i.due+60000){this.fire(v,i);v.notified=i.due;changed=true}else if(now>=i.due+60000){v.notified=i.due;changed=true}}});
+  if(changed)Store.saveActive();this.paint()},
+ unit(ms,opts){for(const u of opts){if(ms>0&&ms%u===0)return u}return opts[opts.length-1]},
+ open(id){const v=S.voyages.find(x=>x.id===(id||S.focus));if(!v)return;this.vid=v.id;const P=this.per(v),w=this.warnOf(v);
+  $('rh-name').textContent=v.name;const u=this.unit(P,[6048e5,864e5,36e5,6e4]);$('rh-u').value=String(u);$('rh-n').value=+(P/u).toFixed(2);
+  const wu=this.unit(w,[864e5,36e5,6e4]);$('rh-wu').value=String(wu);$('rh-wn').value=+(w/wu).toFixed(2);$('rh-rem').checked=!!v.remind;$('rh-err').style.display='none';this.info();
+  ['rh-n','rh-u','rh-wn','rh-wu'].forEach(k=>{$(k).oninput=()=>this.info()});
+  $('rh-ok').onclick=()=>this.save();$('rh-daily').onclick=()=>this.daily();$('rh-ics').onclick=()=>this.exportIcs();$('rh-cancel').onclick=()=>$('m-rhythm').classList.remove('show');
+  $('m-rhythm').classList.add('show')},
+ read(){const P=+$('rh-n').value*+$('rh-u').value,w=+$('rh-wn').value*+$('rh-wu').value;if(!(P>=6e4))return{err:'Pick at least 1 minute.'};if(P>3.1536e10)return{err:'The longest rhythm is 365 days.'};if(!(w>=0))return{err:'Enter a warning time (0 for none).'};if(w>P)return{err:'The warning cannot be longer than the rhythm.'};return{P:Math.round(P),w:Math.round(w)}},
+ info(){const r=this.read(),e=$('rh-err'),v=S.voyages.find(x=>x.id===this.vid);if(r.err){e.textContent=r.err;e.style.display='block';$('rh-info').textContent='';return}e.style.display='none';
+  const fake={...v,period:r.P},i=this.due(fake),when=new Date(i.due);$('rh-info').textContent=`Next log needed by ${when.toLocaleString([],{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}. The warning comes ${this.fmt(r.w)} before.`},
+ save(){const v=S.voyages.find(x=>x.id===this.vid),r=this.read();if(!v)return;if(r.err){$('rh-err').textContent=r.err;$('rh-err').style.display='block';return}
+  const was=v.period||0;if(!(was===0&&r.P===864e5))v.period=r.P;v.warn=r.w;v.remind=$('rh-rem').checked;delete v.notified;
+  if(v.remind&&'Notification' in window&&Notification.permission==='default'){try{Notification.requestPermission()}catch(e){}}
+  $('m-rhythm').classList.remove('show');Store.saveActive();ENGINE.settle();UI.refresh();if($('m-vlist').classList.contains('show'))UI.voyages();if($('sky').classList.contains('on'))SKY.render()},
+ daily(){const v=S.voyages.find(x=>x.id===this.vid);if(!v)return;delete v.period;delete v.warn;delete v.notified;$('m-rhythm').classList.remove('show');Store.saveActive();ENGINE.settle();UI.refresh();if($('m-vlist').classList.contains('show'))UI.voyages()},
+ ie(t){return String(t).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n')},
+ ics(v){const i=this.due(v),P=this.per(v),w=this.warnOf(v),z=t=>new Date(t).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+  const f=P%6048e5===0?['WEEKLY',P/6048e5]:P%864e5===0?['DAILY',P/864e5]:P%36e5===0?['HOURLY',P/36e5]:['MINUTELY',Math.round(P/6e4)];
+  const cnt=f[0]==='MINUTELY'?120:f[0]==='HOURLY'?200:f[0]==='DAILY'?Math.max(10,Math.floor(365/f[1])):Math.max(6,Math.floor(52/f[1]));
+  return['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Ternary Navigator//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT','UID:'+v.id+'@ternary-navigator','DTSTAMP:'+z(Date.now()),'DTSTART:'+z(i.due),'DTEND:'+z(i.due+Math.min(P,9e5)),
+   'RRULE:FREQ='+f[0]+';INTERVAL='+f[1]+';COUNT='+cnt,'SUMMARY:'+this.ie('Log: '+v.name),'DESCRIPTION:'+this.ie('Add a log to keep the compass from drifting.'),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+this.ie('Log due: '+v.name),'TRIGGER:'+(w>0?'-PT'+Math.round(w/6e4)+'M':'PT0S'),'END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n')},
+ exportIcs(){const v=S.voyages.find(x=>x.id===this.vid),r=this.read();if(!v)return;if(r.err)return;const fake={...v,period:r.P,warn:r.w};Store.save(this.ics(fake),'log-reminder-'+(v.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()||'voyage')+'.ics','text/calendar')}
+};
 const Vault={ // passphrase -> PBKDF2-SHA256 -> AES-256-GCM, all through the browser's own crypto
  b64(a){let s='';new Uint8Array(a).forEach(c=>s+=String.fromCharCode(c));return btoa(s)},unb64(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0))},
  async key(pw,salt,iter){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])},
@@ -1015,6 +1166,26 @@ const Swipe={ // sideways drag on the compass area moves between voyages: follow
    o.onfinish=()=>{fin();ENGINE.step(d);el.animate([{translate:(-out)+'px 0',opacity:0},{translate:'0px 0',opacity:1}],{duration:210,easing:'cubic-bezier(.2,.8,.2,1)'});o.cancel()}};
   document.addEventListener('pointerup',end,true);document.addEventListener('pointercancel',()=>end(null),true);
   document.addEventListener('keydown',e=>{if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&!e.target.closest('input,textarea,select')&&!$('sky').classList.contains('on')&&Side.p<=.02&&!document.querySelector('.ov.show'))ENGINE.step(e.key==='ArrowRight'?1:-1)})}
+};
+const Pinch={ // two fingers pinching in on the voyage screen zoom out to the constellation, with the same rubber band as every other crossing
+ P:new Map(),d0:0,on:false,wq:0,
+ ok(e){return !e.target.closest('#drawer,#side,.ov,#sky,#scrim,input,textarea,select')&&!$('sky').classList.contains('on')&&Side.p<=.02&&!document.querySelector('.ov.show')&&!SKY.tr},
+ drive(q){ // q: 0 = nothing, 1 = fully zoomed out
+  if(q<=0.03&&!SKY.tr)return;
+  if(!SKY.tr){if(!SKY.trBegin(1,2,1,S.v?S.v.id:''))return;SKY.tr.g=true}
+  const T=SKY.tr;if(!T||!T.g||T.anim)return;
+  if(q>=1){SKY.trEnd(0);this.on=false;this.wq=0;return}
+  if(q<=0){SKY.trEnd(1);this.on=false;this.wq=0;return}
+  SKY.trSet(1-q)},
+ bind(){
+  document.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;if(this.P.size===0&&!this.ok(e))return;this.P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   if(this.P.size===2){const[a,b]=[...this.P.values()];this.d0=Math.hypot(a.x-b.x,a.y-b.y);this.on=this.d0>20;Swipe.on=false}},true);
+  document.addEventListener('pointermove',e=>{if(!this.P.has(e.pointerId))return;this.P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   if(!this.on||this.P.size<2)return;const[a,b]=[...this.P.values()],d=Math.hypot(a.x-b.x,a.y-b.y);this.drive(Math.log(this.d0/Math.max(10,d))/Math.log(TZ))},true);
+  const up=e=>{if(!this.P.has(e.pointerId))return;this.P.delete(e.pointerId);if(this.P.size<2&&this.on){this.on=false;SKY.release()}if(!this.P.size)this.on=false};
+  document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',up,true);
+  document.addEventListener('wheel',e=>{if(!(this.ok(e)||(SKY.tr&&SKY.tr.g&&SKY.tr.lo===1&&$('sky').classList.contains('trans'))))return;this.wq=Math.max(0,this.wq+Math.max(-80,Math.min(80,e.deltaY))/450);
+   if(this.wq>0||SKY.tr)this.drive(this.wq);clearTimeout(this._wt);this._wt=setTimeout(()=>{this.wq=0;SKY.release()},170)},{passive:true})}
 };
 const Nav={ // the phone's back gesture closes the top-most layer (popup, menu, sky) instead of leaving the app
  sid:Date.now(),pushed:0,skip:false,dead:false,t:0,
@@ -1056,6 +1227,7 @@ const Prof={
   $('pe-name').oninput=()=>this.draw();$('pe-rm').onclick=()=>{this.d.photo='';this.draw()};$('pe-ok').onclick=()=>this.save();$('pe-cancel').onclick=()=>$('m-pedit').classList.remove('show');
   $('pe-del').onclick=()=>{const id=this.d.id,p=Profiles.get(id);$('m-pedit').classList.remove('show');Dlg.ask(`Delete profile "${p.name}" and all its constellations, voyages and settings? This cannot be undone.`,'DELETE',()=>Profiles.del(id))}}
 };
+let __et=0;addEventListener('error',e=>{if(!e||!e.message||/ResizeObserver/.test(e.message)||performance.now()-__et<4000)return;__et=performance.now();try{Dlg.note('Something went wrong: '+e.message+'. If it keeps happening, download a backup and send it to me.')}catch(x){}});
 document.addEventListener('contextmenu',e=>{if(!e.target.closest||!e.target.closest('input,textarea'))e.preventDefault()});
-addEventListener('DOMContentLoaded',()=>{UI.init();SKY.bind();SKY.apply(0);Side.bind();CP.bind();Prof.bind();Prof.sync();Nav.bind();Swipe.bind()});
+addEventListener('DOMContentLoaded',()=>{UI.init();SKY.bind();SKY.apply(0);Side.bind();CP.bind();Prof.bind();Prof.sync();Nav.bind();Swipe.bind();Pinch.bind()});
 </script></body></html>
