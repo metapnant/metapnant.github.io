@@ -82,7 +82,7 @@ select.in{background:#0a0514;appearance:auto}
 .gdot{position:absolute;transform:translate(-50%,-50%);border-radius:50%;cursor:pointer;touch-action:none}
 .gdot::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:max(56px,100%);height:max(56px,100%);border-radius:50%}
 .gdot .gl{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:12px;font-size:.7rem;color:#ccc;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;pointer-events:none;letter-spacing:1px}
-#sky.trans .sky-h,#sky.trans #zoomctl,#sky.trans #sky-origin{opacity:var(--ch,1)}#sky.trans .sky-h *,#sky.trans #zoomctl *{pointer-events:none!important}#ui-top,#drawer{opacity:var(--mf,1)}#astrolabe{opacity:var(--mf,1);scale:var(--ms,1)}.fstar.aim::after{content:'';position:absolute;inset:-9.5px;border:1px solid var(--accent);border-radius:50%;pointer-events:none}.gdot.aim::after{content:'';position:absolute;inset:-9.5px;border:1px solid var(--accent);border-radius:50%;pointer-events:none}.gdot.cur{outline:1px dashed rgba(255,255,255,.55);outline-offset:8px}
+#sky.trans .sky-h *,#sky.trans #zoomctl *{pointer-events:none!important}.drg .gdot{will-change:transform}#field.wc,#gfield.wc{will-change:transform,opacity}.pstar{position:absolute;width:26px;height:26px;transform:translate(-50%,-50%);border:1px dashed rgba(255,255,255,.3);border-radius:50%;opacity:.55;cursor:pointer;touch-action:none}.pstar::before{content:'';position:absolute;inset:-14px;border-radius:50%}.pstar .fl{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:8px;font-size:.6rem;color:#8a8a9a;white-space:nowrap;letter-spacing:1px;pointer-events:none}.pstar.aim::after{content:'';position:absolute;inset:-9.5px;border:1px solid var(--accent);border-radius:50%;pointer-events:none}.fstar.aim::after{content:'';position:absolute;inset:-9.5px;border:1px solid var(--accent);border-radius:50%;pointer-events:none}.gdot.aim::after{content:'';position:absolute;inset:-9.5px;border:1px solid var(--accent);border-radius:50%;pointer-events:none}.gdot.cur{outline:1px dashed rgba(255,255,255,.55);outline-offset:8px}
 #ghost{position:absolute;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;display:none;border:2px dashed #0f8;width:52px;height:52px}#ghost.bad{border-color:#f44}
 #m-confirm,#m-name{z-index:40!important}
 #goal{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:10px}
@@ -489,7 +489,7 @@ const ENGINE={
 };
 
 const UI={
- init(){Store.init();ENGINE.settle();document.addEventListener('visibilitychange',()=>{if(!document.hidden){ENGINE.settle();Rhythm.tick()}});setInterval(()=>Rhythm.tick(),20000);this.drawer();this.theme();this.refresh();this.layout(0,false);addEventListener('resize',()=>UI.fitGoal());addEventListener('load',()=>{UI.layout(UI.p||0,false);UI.fitGoal()})},
+ init(){Store.init();ENGINE.settle();document.addEventListener('visibilitychange',()=>{if(!document.hidden){ENGINE.settle();Rhythm.tick()}});setInterval(()=>Rhythm.tick(),20000);setInterval(()=>SKY.guard(),400);this.drawer();this.theme();this.refresh();this.layout(0,false);addEventListener('resize',()=>UI.fitGoal());addEventListener('load',()=>{UI.layout(UI.p||0,false);UI.fitGoal()})},
  refresh(){this.theme();this.header();this.compass();this.logs();this.balance();this.dots();Rhythm.paint()},
  dots(){const box=$('vdots'),L=ENGINE.ordered(),n=L.length,i=L.findIndex(v=>v.id===S.focus),h0=box.offsetHeight;box.innerHTML='';
   if(n<2){box.style.display='none'}else{box.style.display='flex';const W=9,st=Math.max(0,Math.min(n-W,i-Math.floor(W/2))),en=Math.min(n,st+W);
@@ -688,7 +688,7 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
   return b},
  openVoyageMenu(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;this.vid=id;$('vm-title').textContent=v.name;
   $('vm-info').textContent=`Heading ${norm(v.target)}° · ${v.wake.length} log${v.wake.length===1?'':'s'} · ${Math.round(Math.abs(shortest(v.target,v.needle)))}° off course${id===S.focus?' · in focus':''}`;$('m-vmenu').classList.add('show')},
- vmFocus(){UI.close();ENGINE.focusVoyage(this.vid);UI.sky(false)},
+ vmFocus(){UI.close();ENGINE.focusVoyage(this.vid);this.travel(2)},
  vmBranch(){const v=S.voyages.find(x=>x.id===this.vid);if(!v)return;UI.courseChart=v.chart;ENGINE.setOrigin(v.id);UI.close();UI.sky(false);UI.newVoyage(true)},
  vmRhythm(){const id=this.vid;UI.close();Rhythm.open(id)},
  vmRename(){UI.close();ENGINE.renameVoyage(this.vid)},
@@ -730,7 +730,7 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
    if(S.cur===cid)S.cur=S.charts[0].id;
    Store.saveSky();Store.saveActive();UI.refresh();UI.close();this.renderGalaxy();Dlg.note('Constellation removed.')})},
  render(){
-  const field=$('field'),svg=$('lines');field.querySelectorAll('.star,.fstar').forEach(x=>x.remove());svg.innerHTML='';this.lines=[];
+  const field=$('field'),svg=$('lines');field.querySelectorAll('.star,.fstar,.pstar').forEach(x=>x.remove());svg.innerHTML='';this.lines=[];
   if(this.mode==='chart')$('sky-title').innerHTML=esc(S.ch.name)+' <span class="pen">✎</span>';
   S.edges.forEach(e=>{const a=S.stars.find(x=>x.id===e.fromStarId),b=S.stars.find(x=>x.id===e.toStarId);if(!a||!b)return;
    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
@@ -763,6 +763,11 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
    o.addEventListener('pointerup',()=>{if(!down)return;down=false;if(!moved)setTimeout(()=>SKY.openVoyageMenu(v.id),POPUP_DELAY)});
    o.addEventListener('pointercancel',()=>{down=false});
    field.appendChild(o)});
+  if(this.emptyChart()){const o=document.createElement('div');o.className='pstar';o.style.cssText=`left:${ORI}px;top:${ORI}px`;
+   const lb=document.createElement('div');lb.className='fl';lb.textContent='no horizon set';o.appendChild(lb);let sx=0,sy=0,down=false,moved=false;
+   o.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();down=true;moved=false;sx=e.clientX;sy=e.clientY;o.setPointerCapture(e.pointerId)});
+   o.addEventListener('pointermove',e=>{if(down&&Math.hypot(e.clientX-sx,e.clientY-sy)>8)moved=true});
+   o.addEventListener('pointerup',()=>{if(!down)return;down=false;if(!moved)setTimeout(()=>SKY.actionNew(),POPUP_DELAY)});o.addEventListener('pointercancel',()=>{down=false});field.appendChild(o)}
   this.focusVis(this.mode);
   this.markOrigin();if(S.stars.length<=1)this.fit();
  },
@@ -827,10 +832,10 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
   return Math.abs(p.x)<1380&&Math.abs(p.y)<1380&&S.charts.every(c=>ig.has(c.id)||(self&&c.id===self.id)||!this.hit(me,this.geom(c,c.gx,c.gy)))},
  group(id){const g=new Set([id]);let ch=true;while(ch){ch=false;S.links.forEach(l=>{if(g.has(l.a)&&!g.has(l.b)){g.add(l.b);ch=true}else if(g.has(l.b)&&!g.has(l.a)){g.add(l.a);ch=true}})}return g},
  tree(id){const par=new Map([[id,null]]),order=[],q=[id];while(q.length){const x=q.shift();order.push(x);S.links.forEach(l=>{const y=l.a===x?l.b:l.b===x?l.a:null;if(y&&!par.has(y)){par.set(y,x);q.push(y)}})}return{par,order}},
- beginDrag(id){const T=this.tree(id);this.drag={lead:id,par:T.par,order:T.order,st:Object.fromEntries(T.order.map(i=>[i,{x:0,y:0,vx:0,vy:0}])),tx:0,ty:0,held:true,sc:1,t0:performance.now(),raf:0};this.drag.raf=requestAnimationFrame(stepDrag)},
+ beginDrag(id){const T=this.tree(id);$('gfield').classList.add('drg');this.drag={lead:id,par:T.par,order:T.order,st:Object.fromEntries(T.order.map(i=>[i,{x:0,y:0,vx:0,vy:0}])),tx:0,ty:0,held:true,sc:1,t0:performance.now(),raf:0};this.drag.raf=requestAnimationFrame(stepDrag)},
  endDrag(commit){const D=this.drag;if(!D)return;D.held=false;
   if(commit){D.order.forEach(i=>{const m=S.charts.find(x=>x.id===i),s=D.st[i],d=this.dots[i];m.gx+=commit.x;m.gy+=commit.y;s.x-=commit.x;s.y-=commit.y;if(d){d.style.left=(ORI+m.gx)+'px';d.style.top=(ORI+m.gy)+'px'}});Store.saveSky()}},
- stopDrag(){const D=this.drag;if(!D)return;cancelAnimationFrame(D.raf);D.order.forEach(i=>{D.st[i].x=D.st[i].y=0});D.sc=1;this.paint(D);this.drag=null},
+ stopDrag(){const D=this.drag;$('gfield').classList.remove('drg');if(!D)return;cancelAnimationFrame(D.raf);D.order.forEach(i=>{D.st[i].x=D.st[i].y=0});D.sc=1;this.paint(D);this.drag=null},
  paint(D){
   D.order.forEach(i=>{const d=this.dots[i],s=D.st[i];if(d)d.style.transform=`translate(calc(-50% + ${s.x}px),calc(-50% + ${s.y}px)) scale(${D.sc})`});
   this.glines.forEach(L=>{const A=S.charts.find(x=>x.id===L.a),B=S.charts.find(x=>x.id===L.b);if(!A||!B)return;const a=D.st[L.a]||{x:0,y:0},b=D.st[L.b]||{x:0,y:0};
@@ -897,37 +902,39 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
     px=e.clientX-SKY.panX;py=e.clientY-SKY.panY;
     if(SKY.placing){tap={x:e.clientX,y:e.clientY,m:false};SKY.ghostAt(e.clientX,e.clientY)}else tap=null;
    }
-   else if(P.size===2){tap=null;d0=dist();s0=SKY.scale;$('ghost').style.display='none'}});
+   else if(P.size===2){tap=null;d0=dist();s0=SKY.scale;SKY.pinching=true;$('ghost').style.display='none'}});
   u.addEventListener('pointermove',e=>{
    if(!P.has(e.pointerId))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});
    if(P.size===1){
     if(SKY.placing){SKY.ghostAt(e.clientX,e.clientY);if(tap&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>12)tap.m=true}
-    else if(!SKY.tr){SKY.panX=e.clientX-px;SKY.panY=e.clientY-py;SKY.apply()}
+    else if(!SKY.tr&&SKY.level()!==2)SKY.panTo(e.clientX-px,e.clientY-py)
    }
-   else if(P.size===2&&d0>0){SKY.setScale(s0*dist()/d0);if(SKY.sw)d0=0}});
+   else if(P.size===2&&d0>0){if(SKY.pinchRebase){SKY.pinchRebase=false;s0=SKY.scale;d0=dist()}SKY.pinchZ(s0*dist()/d0)}});
   const up=e=>{
-   const t=tap;tap=null;P.delete(e.pointerId);
+   const t=tap;tap=null;P.delete(e.pointerId);SKY.pinching=P.size>=2;
    if(SKY.placing){
     $('ghost').style.display='none';
     if(e.type==='pointerup'&&t){SKY.tryPlace(e.clientX,e.clientY)}
    }
-   if(P.size<2)SKY.release();
+   if(P.size<2){SKY.flushPinch();SKY.release()}
    if(P.size===1){const p=[...P.values()][0];px=p.x-SKY.panX;py=p.y-SKY.panY}};
   u.addEventListener('pointerup',up);u.addEventListener('pointercancel',up);
-  u.addEventListener('wheel',e=>{e.preventDefault();SKY.setScale(SKY.scale*(e.deltaY<0?1.1:.91),120,true);clearTimeout(SKY._wt);SKY._wt=setTimeout(()=>SKY.release(),170)},{passive:false});
+  u.addEventListener('wheel',e=>{e.preventDefault();SKY.wheelIn(e)},{passive:false});
  },
  aimed(){if(this.mode!=='galaxy')return null;let best=null,bd=1e9;S.charts.forEach(c=>{const d=Math.hypot(c.gx*this.scale+this.panX,c.gy*this.scale+this.panY);if(d<bd){bd=d;best=c}});return best&&bd<=AIMR?best:null},
- aimedStar(){if(this.mode!=='chart')return null;let best=null,bd=1e9;S.voyages.forEach(v=>{if(v.chart!==S.cur)return;const q=this.placement(v);if(!q)return;const d=Math.hypot((q.x-ORI)*this.scale+this.panX,(q.y-ORI)*this.scale+this.panY);if(d<bd){bd=d;best=v}});return best&&bd<=AIMR?best:null},
+ emptyChart(){return !S.stars.length&&!S.voyages.some(v=>v.chart===S.cur)},
+ aimedStar(){if(this.mode!=='chart')return null;let best=null,bd=1e9;S.voyages.forEach(v=>{if(v.chart!==S.cur)return;const q=this.placement(v);if(!q)return;const d=Math.hypot((q.x-ORI)*this.scale+this.panX,(q.y-ORI)*this.scale+this.panY);if(d<bd){bd=d;best=v}});
+  if(!best&&this.emptyChart())return Math.hypot(this.panX,this.panY)<=AIMR?{id:'',phantom:true}:null;return best&&bd<=AIMR?best:null},
  aim(){if(this.tr)return;
   if(this.mode==='galaxy'){const t=this.scale>=1.4?this.aimed():null;Object.keys(this.dots||{}).forEach(id=>{const d=this.dots[id];if(d)d.classList.toggle('aim',!!t&&t.id===id)});return}
-  if(this.mode==='chart'){const t=this.scale>=1.4?this.aimedStar():null;document.querySelectorAll('.fstar').forEach(o=>o.classList.toggle('aim',!!t&&o.dataset.vid===t.id))}},
+  if(this.mode==='chart'){const t=this.scale>=1.4?this.aimedStar():null;document.querySelectorAll('.fstar').forEach(o=>o.classList.toggle('aim',!!t&&!t.phantom&&o.dataset.vid===t.id));const ps=document.querySelector('.pstar');if(ps)ps.classList.toggle('aim',!!t&&!!t.phantom)}},
  level(){return !$('sky').classList.contains('on')?2:(this.mode==='galaxy'?0:1)},
  ez(x){x=Math.max(0,Math.min(1,x));return x*x*(3-2*x)},
  chrome(m){$('btn-new').textContent=m==='galaxy'?(this.placing?'CANCEL':'+ NEW'):'+ VOYAGE';$('btn-mode').textContent=m==='galaxy'?'CHART':'GALAXY';this.focusVis(m);$('sky-title').innerHTML=m==='galaxy'?'GALAXY':esc(S.ch.name)+' <span class="pen">✎</span>'},
  // ---- seamless zoom between galaxy (0), constellation (1) and voyage screen (2): two screens are shown together and cross-faded.
  // p runs from 0 (the lower level fully shown) to 1 (the higher level). A gesture drives p directly; buttons animate it.
  trBegin(lo,hi,p0,id,sv,ev){
-  const sky=$('sky'),T=this.tr={lo,hi,p:p0,p0,id,anim:false,g:false,labHi:p0===1,prevCur:S.cur,prevFocus:S.focus,R:null,G:null,vid:'',sv:sv!=null?sv:(lo===0?true:p0===0),ev:ev!=null?ev:(lo===0?true:p0===1)};
+  const sky=$('sky'),T=this.tr={lo,hi,p:p0,p0,id,anim:false,g:false,labHi:p0===1,prevCur:S.cur,prevFocus:S.focus,R:null,G:null,vid:'',floor:MINZ,tz:TZ,src:'',rel:false,raf:0,ts:performance.now(),sv:sv!=null?sv:(lo===0?true:p0===0),ev:ev!=null?ev:(lo===0?true:p0===1)};
   sky.style.transition='none';sky.classList.add('trans');this.quiet=true;
   try{
    if(lo===0){
@@ -939,26 +946,31 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
     else{UI.sky(true);T.R={x:this.panX,y:this.panY,s:this.scale}}
    }
   }catch(e){console.error(e);this.quiet=false;this.tr=null;this.trClean();return null}
+  T.qpos=lo===1?this.targetPos(T.vid):null;this.warm();
   this.quiet=false;this.chrome(lo===0&&p0===0?'galaxy':'chart');this.trSet(p0);return T},
+ chSet(v){(this._ch||(this._ch=[document.querySelector('.sky-h'),$('zoomctl'),$('sky-origin')])).forEach(e=>{if(e)e.style.opacity=v})},
+ mainSet(mf,ms){(this._mn||(this._mn=[$('ui-top'),$('drawer'),$('astrolabe')])).forEach(e=>{e.style.opacity=mf});$('astrolabe').style.scale=ms},
+ warm(){$('field').classList.add('wc');$('gfield').classList.add('wc');clearTimeout(this._wm);this._wm=setTimeout(()=>{$('field').classList.remove('wc');$('gfield').classList.remove('wc')},400)},
+ targetPos(vid){const v=S.voyages.find(x=>x.id===vid);if(v&&v.chart===S.cur)return this.placement(v);return vid===''&&this.emptyChart()?{x:ORI,y:ORI}:null},
  chA(T,p){const f=T.p0===0?p:1-p;return Math.min(1,(T.sv?Math.max(0,1-f/.35):0)+(T.ev?Math.max(0,(f-.65)/.35):0))}, // header and buttons: fade out leaving a visible screen, fade in arriving at one, stay hidden in between
- trSet(p){const T=this.tr;if(!T)return;p=Math.max(0,Math.min(1,p));T.p=p;const e=this.ez,sky=$('sky'),G=$('gfield'),F=$('field'),root=document.documentElement.style;
+ trSet(p){const T=this.tr;if(!T)return;p=Math.max(0,Math.min(1,p));T.p=p;T.ts=performance.now();const e=this.ez,sky=$('sky'),G=$('gfield'),F=$('field'),root=document.documentElement.style;
   const tf=(el,px,py,s)=>{el.style.transform=`translate(${-1500+px}px,${-1500+py}px) scale(${s})`};
   if(T.lo===0){
    const c=S.charts.find(x=>x.id===S.cur)||{gx:0,gy:0},g=T.G,r=T.R,sg=g.s*Math.exp(p*Math.log(3)),k=sg/g.s,h=e(p);
    tf(G,g.x*k+(-c.gx*sg-g.x*k)*h,g.y*k+(-c.gy*sg-g.y*k)*h,sg);G.style.opacity=1-e((p-.1)/.55);
    const sc=r.s*Math.exp((p-1)*Math.log(4)),kc=sc/r.s;tf(F,r.x*kc,r.y*kc,sc);F.style.opacity=e((p-.3)/.6);
-   sky.style.setProperty('--ch',this.chA(T,p));
+   this.chSet(this.chA(T,p));
    const hi=p>=.5;if(hi!==T.labHi){T.labHi=hi;this.chrome(hi?'chart':'galaxy')}
   }else{
-   const r=T.R,v=S.voyages.find(x=>x.id===T.vid),q=v&&v.chart===S.cur?this.placement(v):null,sc=r.s*Math.exp(p*Math.log(5)),k=sc/r.s;let px=r.x*k,py=r.y*k;
+   const r=T.R,q=T.qpos,sc=r.s*Math.exp(p*Math.log(5)),k=sc/r.s;let px=r.x*k,py=r.y*k;
    if(q){const h=e(p);px+=(-(q.x-ORI)*sc-px)*h;py+=(-(q.y-ORI)*sc-py)*h}
-   tf(F,px,py,sc);sky.style.opacity=1-e((p-.15)/.7);sky.style.setProperty('--ch',this.chA(T,p));
-   root.setProperty('--mf',e((p-.45)/.5));root.setProperty('--ms',.8+.2*e(p))}},
+   tf(F,px,py,sc);sky.style.opacity=1-e((p-.15)/.7);this.chSet(this.chA(T,p));
+   this.mainSet(e((p-.45)/.5),.8+.2*e(p))}},
  trAbort(to){ // never leave the interface locked half-way through a transition
   this.tr=null;this.quiet=false;this.trClean();$('field').style.display=this.mode==='chart'?'block':'none';$('gfield').style.display=this.mode==='galaxy'?'block':'none';
   if(to===2)UI.sky(false);else if(!$('sky').classList.contains('on'))UI.sky(true);try{this.chrome(this.mode);this.apply(0)}catch(e){}},
- trClean(){const sky=$('sky');$('gfield').style.opacity='';$('field').style.opacity='';sky.style.opacity='';sky.style.transition='';sky.classList.remove('trans');sky.style.removeProperty('--ch');
-  const r=document.documentElement.style;r.removeProperty('--mf');r.removeProperty('--ms')},
+ trClean(){const sky=$('sky');$('gfield').style.opacity='';$('field').style.opacity='';sky.style.opacity='';sky.style.transition='';sky.classList.remove('trans');
+  this.chSet('');if(this._mn){this._mn.forEach(e=>{e.style.opacity=''});$('astrolabe').style.scale=''}},
  trEnd(pf){const T=this.tr;if(!T)return;this.tr=null;this.quiet=true;const done=pf!==T.p0;
   if(T.lo===0){const fin=pf===1?'chart':'galaxy';
    if(fin==='galaxy'&&T.p0===0)S.cur=T.prevCur;
@@ -970,13 +982,16 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
   this.quiet=false;this.trClean();
   if(this.level()<2){this.chrome(this.mode);this.apply(0);this.markOrigin();this.aim()}
   if(done){this.sw=true;setTimeout(()=>this.sw=false,500)}},
- animTr(to,ms,cb){const T=this.tr;if(!T)return;T.anim=true;const from=T.p,t0=performance.now(),d=Math.max(1,ms);
-  const f=n=>{if(this.tr!==T)return;try{const x=Math.max(0,Math.min(1,(performance.now()-t0)/d));this.trSet(from+(to-from)*this.ez(x));if(x<1)requestAnimationFrame(f);else{this.trEnd(to);if(cb)cb()}}catch(e){console.error(e);this.trAbort(to>.5?1:0)}};requestAnimationFrame(f)},
- release(){const T=this.tr;if(!T||!T.g||T.anim)return;const moved=T.p0===0?T.p:1-T.p,side=moved>=.6?1-T.p0:T.p0;this.over=1;this.animTr(side,side===T.p0?240:280)},
+ animTr(to,ms,cb,rel){const T=this.tr;if(!T)return;T.anim=true;T.rel=!!rel;const from=T.p,t0=performance.now(),d=Math.max(1,ms);
+  const f=n=>{if(this.tr!==T||!T.anim)return;try{const x=Math.max(0,Math.min(1,(performance.now()-t0)/d));this.trSet(from+(to-from)*this.ez(x));if(x<1)T.raf=requestAnimationFrame(f);else{this.trEnd(to);if(cb)cb()}}catch(e){console.error(e);this.trAbort(to>.5?1:0)}};T.raf=requestAnimationFrame(f)},
+ interrupt(){const T=this.tr;if(!T||!T.anim||!T.rel)return false;cancelAnimationFrame(T.raf);T.anim=false;T.rel=false;const q=T.p0===0?T.p:1-T.p,L=Math.log(T.tz||TZ);this.over=T.p0===0?Math.exp(q*L):Math.exp(-q*L);if(performance.now()-(this.lastWheel||0)<1500)this.wSched();return true}, // new input takes over a springing-back transition
+ unstick(){const T=this.tr;if(T&&!T.anim&&performance.now()-(T.ts||0)>1500)this.trEnd(T.p<.5?0:1)},
+ guard(){const T=this.tr,n=performance.now();if(T&&T.g&&!T.anim&&T.src!=='pinch'&&!this._h&&!this.pinching&&n-(T.ts||0)>900&&n-(this.lastWheel||0)>700)this.release(.55)},
+ release(th){const T=this.tr;if(!T||!T.g||T.anim)return;const moved=T.p0===0?T.p:1-T.p,side=moved>=(th||.6)?1-T.p0:T.p0;this.over=1;this.animTr(side,side===T.p0?240:280,null,true)},
  travel(to,ms){ // any level to any level as ONE continuous movement (consecutive crossings share one clock, so there is no stop in between)
   if(this.tr)return;const c0=this.level();if(c0===to)return;const dir=to>c0?1:-1,segs=[];
   for(let c=c0;c!==to;c+=dir){
-   if(dir>0){if(c===0)segs.push({lo:0,hi:1,p0:0,id:S.cur});else{if(!(S.v&&(segs.length?S.v.chart===S.cur:S.v.chart===S.cur)))break;segs.push({lo:1,hi:2,p0:0,id:S.v.id})}}
+   if(dir>0){if(c===0)segs.push({lo:0,hi:1,p0:0,id:S.cur});else segs.push({lo:1,hi:2,p0:0,id:(S.v&&S.v.chart===S.cur)?S.v.id:''})}
    else segs.push(c===2?{lo:1,hi:2,p0:1,id:S.v?S.v.id:''}:{lo:0,hi:1,p0:1,id:S.cur})}
   const n=segs.length;if(!n){if(dir>0)UI.sky(false);return}
   const dur=ms||(n===1?300:480),ez=n===1?(x=>this.ez(x)):(x=>.3*this.ez(x)+.7*x),endP=i=>segs[i].p0===0?1:0,t0=performance.now();let k=-1,T=null;
@@ -986,26 +1001,44 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
    this.trSet(segs[i].p0===0?l:1-l);
    if(x<1)requestAnimationFrame(frame);else{this.trEnd(endP(i));if(dir>0&&this.level()!==to)UI.sky(false)}}catch(e){console.error(e);this.trAbort(to)}};
   requestAnimationFrame(frame)},
- setScale(z,ms,inc){ // z = wanted scale; inc = z is relative to the current scale (wheel, hold) rather than an absolute pinch size
-  const T=this.tr;if(T&&T.anim)return true;
-  const live=!!(T&&T.g);let edge=0,zin=false;
-  if(live){edge=T.p0===0?MAXZ:MINZ;zin=T.p0===0}
-  else if(!this.sw){if(this.scale>=MAXZ-.02&&z>this.scale+1e-9){edge=MAXZ;zin=true}else if(this.mode==='chart'&&this.scale<=MINZ+.02&&z<this.scale-1e-9)edge=MINZ}
+ pinchZ(z){this._pz=z;if(!this._pr)this._pr=requestAnimationFrame(()=>{this._pr=0;this.flushPinch()})},
+ flushPinch(){cancelAnimationFrame(this._pr);this._pr=0;const z=this._pz;this._pz=null;if(z!=null&&this.setScale(z)===true)this.pinchRebase=true},
+ panTo(x,y){this.panX=x;this.panY=y;if(!this._ar)this._ar=requestAnimationFrame(()=>{this._ar=0;if(!this.tr&&this.level()!==2)this.apply()})},
+ fitScale(){const pts=S.stars.concat(this.formingPts());if(!pts.length)return 1;const xs=pts.map(t=>t.x),ys=pts.map(t=>t.y),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);return Math.min(1.4,Math.max(MINZ,Math.min((innerWidth-120)/(x1-x0+120),(innerHeight-260)/(y1-y0+120))))},
+ tzNow(){return performance.now()<(this.wheelUntil||0)?1.45:TZ}, // a scroll wheel only moves in bursts, so it needs a shorter way through
+setScale(z,ms,inc){ // z = wanted scale; inc = z is relative to the current scale (wheel, hold) rather than an absolute pinch size
+  if(!isFinite(z)||!$('sky').classList.contains('on'))return false; // nothing to zoom once the constellation view is closed
+  if(!isFinite(this.scale)||this.scale<=0||!isFinite(this.panX)||!isFinite(this.panY)){this.scale=1;this.panX=this.panY=0}
+  let T=this.tr;if(T&&T.src==='pinch')return false; // the voyage-screen gesture owns that transition
+  if(T&&T.anim){if(T.rel&&T.g&&this.interrupt())T=this.tr;else return false}
+  const live=!!(T&&T.g),chart=this.mode==='chart',fl=live?(T.floor||MINZ):(chart?this.fitScale():MINZ);let edge=0,zin=false;
+  if(live){edge=T.p0===0?MAXZ:fl;zin=T.p0===0}
+  else{if(this.scale>=MAXZ-.02&&z>this.scale+1e-9){edge=MAXZ;zin=true}else if(chart&&this.scale<=fl+.02&&z<this.scale-1e-9)edge=fl}
   if(edge){ // pushing past the end of the zoom range crosses into the next level, as long as there is something centred to go into
-   const ov=inc?(this.over||1)*(z/this.scale):z/edge,q=(zin?Math.log(ov):-Math.log(ov))/Math.log(TZ);
+   const tz=live?(T.tz||TZ):this.tzNow(),ov=inc?(this.over||1)*(z/this.scale):z/edge,q=(zin?Math.log(ov):-Math.log(ov))/Math.log(tz);
    if(!live){
     const tg=zin?(this.mode==='galaxy'?this.aimed():this.aimedStar()):true;
     if(!tg){this.over=1;const n=performance.now();if((this.mode==='galaxy'||S.voyages.some(v=>v.chart===S.cur))&&(!this.hintT||n-this.hintT>4000)){this.hintT=n;this.say(this.mode==='galaxy'?'Centre a constellation to go inside it':'Centre a forming voyage to go inside it')}}
-    else if(q>0){this.over=ov;if(!(zin?(this.mode==='galaxy'?this.trBegin(0,1,0,tg.id):this.trBegin(1,2,0,tg.id)):this.trBegin(0,1,1,S.cur)))return;this.tr.g=true;this.trSet(zin?Math.min(1,q):1-Math.min(1,q));return}
+    else if(q>0){this.over=ov;if(!(zin?(this.mode==='galaxy'?this.trBegin(0,1,0,tg.id):this.trBegin(1,2,0,tg.id)):this.trBegin(0,1,1,S.cur)))return;this.tr.g=true;this.tr.tz=tz;this.tr.floor=fl;this.trSet(zin?Math.min(1,q):1-Math.min(1,q));return}
     else this.over=1}
    else{
     if(q<=0){this.over=1;this.trEnd(T.p0);return}
     if(q>=1){this.over=1;this.trEnd(zin?1:0);return true}
     this.over=ov;this.trSet(zin?q:1-q);return}}
   else if(!live)this.over=1;
-  const n=Math.min(MAXZ,Math.max(MINZ,z)),r=n/this.scale;this.panX*=r;this.panY*=r;this.scale=n;this.apply(ms||0)},
- hold(dir){this.stopHold();const H=this._h={raf:0};let last=performance.now();
-  const tick=n=>{if(this._h!==H)return;const dt=Math.min(.05,(n-last)/1000);last=n;if(this.setScale(this.scale*Math.exp(dir*ZK*dt),0,true)===true){this.stopHold();return}H.raf=requestAnimationFrame(tick)};
+  const n=Math.min(MAXZ,Math.max(chart?Math.min(fl,this.scale):MINZ,z)),r=n/this.scale;this.panX*=r;this.panY*=r;this.scale=n;this.warm();this.apply(ms||0)},
+ // ---- scroll wheel: eased so every notch glides, bursts carry through a crossing, and input is never dropped while something animates
+ wheelIn(e){if(this.level()===2)return;this.unstick();if(this.tr&&this.tr.src==='pinch'){Pinch.wheel(e);return}
+  let dy=e.deltaY;if(e.deltaMode===1)dy*=33;else if(e.deltaMode===2)dy*=400;dy=Math.max(-250,Math.min(250,dy))*(e.ctrlKey?3:1);
+  this.lastWheel=this.wheelUntil=performance.now();this.wheelUntil+=500;this.wPend=Math.max(-1.2,Math.min(1.2,(this.wPend||0)-dy*.0016));
+  if(!this._wr){this._wl=performance.now();this._wb=0;this._wr=requestAnimationFrame(()=>this.wheelStep())}this.wSched()},
+ wheelStep(){const n=performance.now(),dt=Math.min(50,n-this._wl);this._wl=n;this._wr=0;if(this.level()===2){this.wPend=0;return}
+  const T=this.tr,busy=T&&(T.src==='pinch'||(T.anim&&!(T.rel&&T.g)));this._wb=busy?(this._wb||0)+dt:0;if(this._wb>1500){this.wPend=0;return}
+  if(!busy){const st=this.wPend*(1-Math.exp(-dt/85));this.wPend-=st;if(Math.abs(st)>1e-5)this.setScale(this.scale*Math.exp(st),0,true)}
+  if(Math.abs(this.wPend)>.002)this._wr=requestAnimationFrame(()=>this.wheelStep());else this.wPend=0},
+ wSched(){clearTimeout(this._wt);const T=this.tr,q=T&&T.g?(T.p0===0?T.p:1-T.p):0;this._wt=setTimeout(()=>{if(Math.abs(this.wPend||0)>.01){this.wSched();return}this.release(.55)},q>=.55?220:650)},
+ hold(dir){this.stopHold();this.unstick();const H=this._h={raf:0};let last=performance.now();
+  const tick=n=>{if(this._h!==H)return;if(this.level()===2){this.stopHold();return}const dt=Math.min(.05,(n-last)/1000);last=n;this.setScale(this.scale*Math.exp(dir*ZK*dt),0,true);H.raf=requestAnimationFrame(tick)};
   H.raf=requestAnimationFrame(tick);H.off=()=>this.stopHold();['pointerup','pointercancel'].forEach(t=>addEventListener(t,H.off,true));addEventListener('blur',H.off)},
  stopHold(){const H=this._h;if(!H)return;this._h=null;cancelAnimationFrame(H.raf);['pointerup','pointercancel'].forEach(t=>removeEventListener(t,H.off,true));removeEventListener('blur',H.off);this.release()},
  zoom(d){this.setScale(this.scale*(1+d),350)},
@@ -1073,7 +1106,7 @@ function stepDrag(t){
   s.vx+=(k*(tx-s.x)-c*s.vx)*dt;s.vy+=(k*(ty-s.y)-c*s.vy)*dt;s.x+=s.vx*dt;s.y+=s.vy*dt;
   if(Math.abs(tx-s.x)+Math.abs(ty-s.y)+Math.abs(s.vx)+Math.abs(s.vy)>.5)rest=false});
  D.sc+=((D.held?1.08:1)-D.sc)*Math.min(1,dt*12);SKY.paint(D);
- if(!D.held&&rest&&Math.abs(D.sc-1)<.003){D.order.forEach(id=>{D.st[id].x=D.st[id].y=0});D.sc=1;SKY.paint(D);SKY.drag=null;return}
+ if(!D.held&&rest&&Math.abs(D.sc-1)<.003){D.order.forEach(id=>{D.st[id].x=D.st[id].y=0});D.sc=1;SKY.paint(D);SKY.drag=null;$('gfield').classList.remove('drg');return}
  D.raf=requestAnimationFrame(stepDrag)}
 const Rhythm={ // rhythm is in whole days: drift happens on drift days only, and only a log (Align or Anchor) on that very day prevents it
  N(v){return v.every||1},
@@ -1095,7 +1128,7 @@ const Rhythm={ // rhythm is in whole days: drift happens on drift days only, and
  toast(msg,id){const t=$('toast');t.textContent=msg;t.style.display='block';t.onclick=()=>{t.style.display='none';if(id)ENGINE.focusVoyage(id)};clearTimeout(this._tt);this._tt=setTimeout(()=>{t.style.display='none'},12000)},
  sys(title,body,tag){if(!('Notification' in window)||Notification.permission!=='granted')return;try{new Notification(title,{body,tag})}catch(e){try{navigator.serviceWorker&&navigator.serviceWorker.getRegistration().then(r=>r&&r.showNotification(title,{body,tag}))}catch(x){}}},
  fire(v,kind){const msg=kind==='last'?v.name+': last call. Log before midnight or the compass drifts.':v.name+': drift day. Add an Align or Anchor log today to hold the compass.';this.toast(msg,v.id);this.sys('Ternary Navigator',msg,v.id)},
- tick(){ENGINE.settle();const now=new Date(Date.now()),t=ENGINE.dk(now.getTime()),mins=now.getHours()*60+now.getMinutes();let ch=false;
+ tick(){ENGINE.settle();SKY.unstick();const now=new Date(Date.now()),t=ENGINE.dk(now.getTime()),mins=now.getHours()*60+now.getMinutes();let ch=false;
   S.voyages.forEach(v=>{if(!v.remind||!ENGINE.isDrift(v,t)||this.protectedOn(v,t))return;
    const ra=v.remindAt!=null?v.remindAt:540,la=v.lastAt!=null?v.lastAt:1260,dueL=v.last&&mins>=la&&v.nl!==t,dueR=mins>=ra&&v.nr!==t;
    if(dueL){v.nl=t;v.nr=t;ch=true;this.fire(v,'last')}else if(dueR&&!(v.last&&mins>=la)){v.nr=t;ch=true;this.fire(v,'today')}});
@@ -1168,10 +1201,11 @@ const Pinch={ // two fingers pinching in on the voyage screen zoom out to the co
  ok(e){return !e.target.closest('#drawer,#side,.ov,#sky,#scrim,input,textarea,select')&&!$('sky').classList.contains('on')&&Side.p<=.02&&!document.querySelector('.ov.show')&&!SKY.tr},
  drive(q){ // q: 0 = nothing, 1 = fully zoomed out
   if(q<=0.03&&!SKY.tr)return;
-  if(!SKY.tr){if(!SKY.trBegin(1,2,1,S.v?S.v.id:''))return;SKY.tr.g=true}
-  const T=SKY.tr;if(!T||!T.g||T.anim)return;
-  if(q>=1){SKY.trEnd(0);this.on=false;this.wq=0;return}
-  if(q<=0){SKY.trEnd(1);this.on=false;this.wq=0;return}
+  if(!SKY.tr){if(!SKY.trBegin(1,2,1,S.v?S.v.id:''))return;SKY.tr.g=true;SKY.tr.src='pinch'}
+  let T=SKY.tr;if(T&&T.anim&&T.rel&&T.g&&T.src==='pinch'&&SKY.interrupt()){this.wq=Math.max(0,1-T.p);this.wt=Math.max(this.wt||0,this.wq);this.sched();q=this.wq}
+  T=SKY.tr;if(!T||!T.g||T.anim)return;
+  if(q>=1){SKY.trEnd(0);this.on=false;this.wq=this.wt=0;return}
+  if(q<=0){SKY.trEnd(1);this.on=false;this.wq=this.wt=0;return}
   SKY.trSet(1-q)},
  bind(){
   document.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;if(this.P.size===0&&!this.ok(e))return;this.P.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -1180,8 +1214,12 @@ const Pinch={ // two fingers pinching in on the voyage screen zoom out to the co
    if(!this.on||this.P.size<2)return;const[a,b]=[...this.P.values()],d=Math.hypot(a.x-b.x,a.y-b.y);this.drive(Math.log(this.d0/Math.max(10,d))/Math.log(TZ))},true);
   const up=e=>{if(!this.P.has(e.pointerId))return;this.P.delete(e.pointerId);if(this.P.size<2&&this.on){this.on=false;SKY.release()}if(!this.P.size)this.on=false};
   document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',up,true);
-  document.addEventListener('wheel',e=>{if(!(this.ok(e)||(SKY.tr&&SKY.tr.g&&SKY.tr.lo===1&&$('sky').classList.contains('trans'))))return;this.wq=Math.max(0,this.wq+Math.max(-80,Math.min(80,e.deltaY))/450);
-   if(this.wq>0||SKY.tr)this.drive(this.wq);clearTimeout(this._wt);this._wt=setTimeout(()=>{this.wq=0;SKY.release()},170)},{passive:true})}
+  document.addEventListener('wheel',e=>{if(!(this.ok(e)||(SKY.tr&&SKY.tr.g&&SKY.tr.lo===1&&SKY.tr.p0===1&&$('sky').classList.contains('trans'))))return;this.wheel(e)},{passive:true})},
+ wheel(e){let dy=e.deltaY;if(e.deltaMode===1)dy*=33;else if(e.deltaMode===2)dy*=400;dy=Math.max(-250,Math.min(250,dy))*(e.ctrlKey?3:1);
+  this.wt=Math.max(0,Math.min(1.05,(this.wt||0)+dy/350));if(!this._r){this._l=performance.now();this._r=requestAnimationFrame(()=>this.step())}this.sched()},
+ step(){const n=performance.now(),dt=Math.min(50,n-this._l);this._l=n;this._r=0;if((SKY.tr&&SKY.tr.anim&&!(SKY.tr.rel&&SKY.tr.g&&SKY.tr.src==='pinch'))||(!SKY.tr&&$('sky').classList.contains('on'))){this.wt=this.wq=0;return}
+  this.wq+=(this.wt-this.wq)*(1-Math.exp(-dt/85));this.drive(this.wq);if(Math.abs(this.wt-this.wq)>.003)this._r=requestAnimationFrame(()=>this.step())},
+ sched(){clearTimeout(this._wto);this._wto=setTimeout(()=>{if(Math.abs((this.wt||0)-this.wq)>.02){this.sched();return}const had=this.wq>0;this.wt=this.wq=0;if(had)SKY.release(.55)},this.wq>=.55?220:650)}
 };
 const Nav={ // the phone's back gesture closes the top-most layer (popup, menu, sky) instead of leaving the app
  sid:Date.now(),pushed:0,skip:false,dead:false,t:0,
