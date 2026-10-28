@@ -82,7 +82,7 @@ select.in{background:#0a0514;appearance:auto}
 .gdot{position:absolute;transform:translate(-50%,-50%);border-radius:50%;cursor:pointer;touch-action:none}
 .gdot::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:max(56px,100%);height:max(56px,100%);border-radius:50%}
 .gdot .gl{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:12px;font-size:.7rem;color:#ccc;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;pointer-events:none;letter-spacing:1px}
-#sky.trans .sky-h *,#sky.trans #zoomctl *{pointer-events:none!important}.drg .gdot{will-change:transform}#field.wc,#gfield.wc{will-change:transform,opacity}.pstar{position:absolute;width:26px;height:26px;transform:translate(-50%,-50%);border:1px dashed rgba(255,255,255,.3);border-radius:50%;opacity:.55;cursor:pointer;touch-action:none}.pstar::before{content:'';position:absolute;inset:-14px;border-radius:50%}.pstar .fl{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:8px;font-size:.6rem;color:#8a8a9a;white-space:nowrap;letter-spacing:1px;pointer-events:none}.pstar.aim::after{content:'';position:absolute;inset:-9.5px;border:1px solid var(--accent);border-radius:50%;pointer-events:none}.fstar.aim::after{content:'';position:absolute;inset:-9.5px;border:1px solid var(--accent);border-radius:50%;pointer-events:none}.gdot.aim::after{content:'';position:absolute;inset:-9.5px;border:1px solid var(--accent);border-radius:50%;pointer-events:none}.gdot.cur{outline:1px dashed rgba(255,255,255,.55);outline-offset:8px}
+#sky.trans .sky-h *,#sky.trans #zoomctl *{pointer-events:none!important}.drg .gdot{will-change:transform}#gfield .gdot.aim,#field .fstar.aim,#field .pstar.aim{outline:1px solid var(--accent);outline-offset:8px}#field.wc,#gfield.wc{will-change:transform,opacity}.pstar{position:absolute;width:26px;height:26px;transform:translate(-50%,-50%);border:1px dashed rgba(255,255,255,.3);border-radius:50%;opacity:.55;cursor:pointer;touch-action:none}.pstar::before{content:'';position:absolute;inset:-14px;border-radius:50%}.pstar .fl{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:8px;font-size:.6rem;color:#8a8a9a;white-space:nowrap;letter-spacing:1px;pointer-events:none}.gdot.cur{outline:1px dashed rgba(255,255,255,.55);outline-offset:8px}
 #ghost{position:absolute;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;display:none;border:2px dashed #0f8;width:52px;height:52px}#ghost.bad{border-color:#f44}
 #m-confirm,#m-name{z-index:40!important}
 #goal{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:10px}
@@ -118,7 +118,7 @@ select.in{background:#0a0514;appearance:auto}
 #scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:21;opacity:0;pointer-events:none}
 #side{position:fixed;top:0;left:0;bottom:0;width:min(82vw,300px);z-index:22;background:rgba(10,5,20,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-right:1px solid rgba(255,255,255,.15);transform:translateX(-100%);display:flex;flex-direction:column;padding:calc(18px + env(safe-area-inset-top,0px)) 0 18px;touch-action:pan-y}
 #side:not(.vis){visibility:hidden}
-.dots{display:flex;justify-content:center;align-items:center;height:18px;margin-top:6px}.dots button{width:20px;height:18px;background:none;border:none;padding:0;position:relative;flex:none}.dots button::after{content:'';position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#555;transition:none}.dots button.sm::after{transform:scale(.6)}.dots button.on::after{width:8px;height:8px;margin:-4px 0 0 -4px;background:var(--accent);box-shadow:0 0 6px var(--accent)}.duebtn{background:none;border:none;padding:0;text-align:left;font-family:inherit;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}.duebtn.over{color:#ff8a8a}.rhrow{display:flex;gap:10px;align-items:center}.rhu{color:#aaa;font-size:.8rem;margin-bottom:12px}input[type=date],input[type=time]{color-scheme:dark}.rhrow{display:flex;gap:8px}.rhrow .in{margin-bottom:12px}.rhrow input{flex:1;min-width:0}.rhrow select{flex:1}#toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:min(92vw,420px);z-index:40;background:#0d0a18;border:1px solid var(--accent);color:#fff;padding:12px 16px;border-radius:10px;font-size:.78rem;line-height:1.35;box-shadow:0 6px 24px rgba(0,0,0,.6);text-align:center;cursor:pointer}.av{width:40px;height:40px;flex:none;border-radius:50%;background:#1a1226 center/cover no-repeat;border:1px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1rem}.av.big{width:96px;height:96px;font-size:2.2rem;margin:0 auto 12px;padding:0}.side-h.prof{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid rgba(255,255,255,.1);color:#fff}.side-h.prof .pm{min-width:0}.side-h.prof b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px}.prow{display:flex;align-items:center;gap:12px}.side-h{padding:0 20px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:8px}.side-h b{display:block;color:var(--accent);letter-spacing:2px;font-size:.9rem;margin-bottom:4px}.side-h span{font-size:.65rem;color:#888}
+.dots{display:flex;justify-content:center;align-items:center;height:18px;margin-top:6px}.dots button{width:20px;height:18px;background:none;border:none;padding:0;position:relative;flex:none}.dots button::after{content:'';position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#555;transition:none}.dots button.sm::after{transform:scale(.6)}.dots button.on::after{width:8px;height:8px;margin:-4px 0 0 -4px;background:var(--accent);box-shadow:0 0 6px var(--accent)}.duepill{display:flex;align-items:center;justify-content:center;margin:10px auto 0;min-height:34px;max-width:100%;padding:0 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.22);border-radius:999px;color:#cfcfda;font-family:inherit;font-size:.68rem;letter-spacing:1px;cursor:pointer;white-space:nowrap}.duepill::after{content:'›';margin-left:8px;opacity:.7;font-size:.95rem}.duepill.over{border-color:#ff8a8a;color:#ff8a8a}.duepill.pr{background:rgba(255,255,255,.14)}.duebtn{background:none;border:none;padding:0;text-align:left;font-family:inherit;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}.duebtn.over{color:#ff8a8a}.rhrow{display:flex;gap:10px;align-items:center}.rhu{color:#aaa;font-size:.8rem;margin-bottom:12px}input[type=date],input[type=time]{color-scheme:dark}.rhrow{display:flex;gap:8px}.rhrow .in{margin-bottom:12px}.rhrow input{flex:1;min-width:0}.rhrow select{flex:1}#toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:min(92vw,420px);z-index:40;background:#0d0a18;border:1px solid var(--accent);color:#fff;padding:12px 16px;border-radius:10px;font-size:.78rem;line-height:1.35;box-shadow:0 6px 24px rgba(0,0,0,.6);text-align:center;cursor:pointer}.av{width:40px;height:40px;flex:none;border-radius:50%;background:#1a1226 center/cover no-repeat;border:1px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1rem}.av.big{width:96px;height:96px;font-size:2.2rem;margin:0 auto 12px;padding:0}.side-h.prof{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid rgba(255,255,255,.1);color:#fff}.side-h.prof .pm{min-width:0}.side-h.prof b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px}.prow{display:flex;align-items:center;gap:12px}.side-h{padding:0 20px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:8px}.side-h b{display:block;color:var(--accent);letter-spacing:2px;font-size:.9rem;margin-bottom:4px}.side-h span{font-size:.65rem;color:#888}
 .side-i{display:flex;align-items:center;gap:14px;width:100%;padding:14px 20px;background:none;border:none;color:#e0dced;font-size:.9rem;text-align:left}.side-i.pr{background:rgba(255,255,255,.08)}.side-i i{font-style:normal;width:20px;text-align:center;opacity:.8}
 .side-sep{height:1px;background:rgba(255,255,255,.1);margin:8px 0}.side-f{margin-top:auto;padding:0 20px;font-size:.62rem;color:#777;line-height:1.5}
 #edge{display:none;position:fixed;left:0;top:96px;bottom:150px;width:14px;z-index:12;touch-action:none}
@@ -133,9 +133,10 @@ select.in{background:#0a0514;appearance:auto}
 <div id="astrolabe"><div id="target"></div><div id="void"></div><div id="needle"></div><div id="hub"></div></div>
 <div id="ui-top">
  <div class="hdr"><button id="menu-btn" class="iconbtn" aria-label="Menu" onclick="Side.open()">☰</button><h1 id="title">TERNARY NAVIGATOR</h1><button id="course" class="btn" onclick="UI.course()">VOYAGE</button></div>
- <div class="row"><button id="due" class="lbl duebtn" onclick="Rhythm.open()">CURRENT HORIZON</button><span id="res">RESONANCE [rél]</span></div>
+ <div class="row"><span class="lbl">CURRENT HORIZON</span><span id="res">RESONANCE [rél]</span></div>
  <div class="row"><div id="goal" onclick="UI.course()">NO HORIZON SET</div><button id="forge" class="btn ghost" onclick="UI.forge()" disabled>★ FORGE</button></div>
  <div class="bar"><div id="b-1"></div><div id="b0"></div><div id="b1"></div></div>
+ <button id="due" class="duepill" onclick="Rhythm.open()" style="display:none"></button>
  <div id="vdots" class="dots" style="display:none"></div>
 </div>
 <div id="drawer">
@@ -453,7 +454,7 @@ const ENGINE={
  endVoyage(id){const e=S.voyages.find(v=>v.id===id);if(e){S.voyages.forEach(o=>{if(o.origin===id)o.origin=e.origin;if(o.anchor===id)o.anchor=e.anchor||(e.origin==='-'?'':e.origin)});S.charts.forEach(c=>{if(c.origin===id)c.origin=e.origin})}S.voyages=S.voyages.filter(v=>v.id!==id);if(S.focus===id){const n=[...S.voyages].sort((a,b)=>b.updated-a.updated)[0];S.focus=n?n.id:''}},
  ordered(){return[...S.voyages].sort((a,b)=>(Rhythm.per(a)-Rhythm.per(b))||(b.updated-a.updated)||(b.created-a.created)||(a.id<b.id?-1:1))}, // most frequent rhythm first, then most recently updated
  step(d){const L=this.ordered();if(L.length<2)return;let i=L.findIndex(v=>v.id===S.focus);if(i<0)i=0;const j=i+d;if(j<0||j>=L.length)return;if(navigator.vibrate)try{navigator.vibrate(8)}catch(e){}this.focusVoyage(L[j].id)},
- focusVoyage(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;S.focus=id;if(S.charts.some(c=>c.id===v.chart))S.cur=v.chart;Store.saveActive();Store.saveSky();UI.refresh()},
+ focusVoyage(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;const L=this.ordered(),i0=L.findIndex(x=>x.id===S.focus),i1=L.findIndex(x=>x.id===id);UI.sense=i0<0||i1===i0?0:(i1>i0?-1:1);S.focus=id;if(S.charts.some(c=>c.id===v.chart))S.cur=v.chart;Store.saveActive();Store.saveSky();UI.refresh()},
  renameVoyage(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;Dlg.name('RENAME VOYAGE',v.name,n=>{v.name=n.slice(0,24);Store.saveActive();UI.header();if($('m-vlist').classList.contains('show'))UI.voyages();if($('sky').classList.contains('on'))SKY.render()})},
  abandonVoyage(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;
   Dlg.ask(`Abandon "${v.name}"? Its ${v.wake.length} log ${v.wake.length===1?'entry':'entries'} will be dissolved.`,'ABANDON',()=>{this.endVoyage(id);Store.saveActive();UI.refresh();SKY.render()})},
@@ -502,10 +503,12 @@ const UI={
  fitGoal(){['goal','title'].forEach(id=>{const g=$(id);g.style.fontSize='';let f=parseFloat(getComputedStyle(g).fontSize)||15;while(g.scrollWidth>g.clientWidth&&f>9.5){f-=.5;g.style.fontSize=f+'px'}})},
  collapsing(){return !!S.v&&Math.abs(shortest(S.target,S.needle))>90},
  canForge(){return !!S.v&&S.wake.length>0},
+ turn(goal,cur,sense){ // signed turn from cur to goal: the short way, except a big move (90 degrees or more) follows the shared sense (+1 clockwise, -1 counter-clockwise)
+  const d=shortest(goal,cur);if(!sense||Math.abs(d)<90)return d;if(Math.abs(Math.abs(d)-180)<1e-6)return 180*sense;return Math.sign(d)===sense?d:d-360*Math.sign(d)},
  compass(){
   const has=S.horizon!==NONE;
   if(this.vn===undefined){this.vn=S.needle;this.vt=S.target}
-  this.vn+=shortest(S.needle,this.vn);this.vt+=shortest(S.target,this.vt);   // dial always turns the short way when you switch voyage
+  const sn=this.sense||0;this.sense=0;this.vn+=this.turn(S.needle,this.vn,sn);this.vt+=this.turn(S.target,this.vt,sn);   // moving to another voyage turns the whole dial one way: next = counter-clockwise, previous = clockwise
   $('needle').style.transform=`rotate(${this.vn}deg)`;$('target').style.transform=`rotate(${this.vt}deg)`;$('target').style.opacity=has?1:0;$('void').style.transform=`rotate(${this.vt+180}deg)`;$('void').style.opacity=has?1:0;
   const on=this.canForge(),hub=$('hub');
   hub.style.boxShadow=`0 0 12px ${this.accent()}`;
@@ -790,8 +793,8 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
    const clear=()=>{if(pressT){clearTimeout(pressT);pressT=null}};
    d.addEventListener('pointerdown',e=>{
     if(SKY.placing)return;
-    e.preventDefault();e.stopPropagation();SKY.stopDrag();down=true;moved=false;linkMode=false;cdx=cdy=0;sx=e.clientX;sy=e.clientY;ids=SKY.group(c.id);d.setPointerCapture(e.pointerId);
-    pressT=setTimeout(()=>{pressT=null;if(!moved&&down){linkMode=true;SKY.beginLinkDrag(c.id,sx,sy);if(navigator.vibrate)navigator.vibrate(15)}},380)});
+    e.preventDefault();e.stopPropagation();SKY.stopDrag();down=true;moved=false;linkMode=false;cdx=cdy=0;sx=e.clientX;sy=e.clientY;ids=SKY.group(c.id);d.setPointerCapture(e.pointerId);const gen=SKY.pinchGen;
+    pressT=setTimeout(()=>{pressT=null;if(!moved&&down&&gen===SKY.pinchGen&&!SKY.pinching){linkMode=true;SKY.beginLinkDrag(c.id,sx,sy);if(navigator.vibrate)navigator.vibrate(15)}},380)});
    d.addEventListener('pointermove',e=>{
     if(!down)return;
     if(linkMode){SKY.updateLinkDrag(e.clientX,e.clientY);return}
@@ -893,23 +896,24 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
   const oid=originId();document.querySelectorAll('.star,.fstar').forEach(o=>o.classList.toggle('origin',(o.dataset.id||o.dataset.vid)===oid));
   const st=S.stars.find(x=>x.id===oid),fv=S.voyages.find(x=>x.id===oid);$('sky-origin').textContent=st?`Next voyage ${S.ch.link===false?'sits beside':'branches from'}: ${st.voyageName}. Tap another star to change.`:fv?`Next voyage ${S.ch.link===false?'sits beside':'branches from'}: ${fv.name} (still forming).`:(S.stars.length||S.voyages.some(v=>v.chart===S.cur))?'Next voyage starts on its own. Tap a star to branch from it.':'Forge your first star to begin this constellation.'},
  bind(){
-  if(this.bound)return;this.bound=true;const u=$('universe'),P=new Map();let d0=0,s0=1,px=0,py=0,tap=null;
+  if(this.bound)return;this.bound=true;const u=$('universe'),P=new Map();let d0=0,s0=1,px=0,py=0,tap=null; // px,py = where the panning finger was at the last event
   const dist=()=>{const [a,b]=[...P.values()];return Math.hypot(a.x-b.x,a.y-b.y)};
   u.addEventListener('pointerdown',e=>{
    if(e.target.closest('.star,.gdot'))return;
    u.setPointerCapture(e.pointerId);P.set(e.pointerId,{x:e.clientX,y:e.clientY});
    if(P.size===1){
-    px=e.clientX-SKY.panX;py=e.clientY-SKY.panY;
+    px=e.clientX;py=e.clientY;
     if(SKY.placing){tap={x:e.clientX,y:e.clientY,m:false};SKY.ghostAt(e.clientX,e.clientY)}else tap=null;
    }
    else if(P.size===2){tap=null;d0=dist();s0=SKY.scale;SKY.pinching=true;$('ghost').style.display='none'}});
-  u.addEventListener('pointermove',e=>{
+  const pm=e=>{
    if(!P.has(e.pointerId))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});
    if(P.size===1){
     if(SKY.placing){SKY.ghostAt(e.clientX,e.clientY);if(tap&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>12)tap.m=true}
-    else if(!SKY.tr&&SKY.level()!==2)SKY.panTo(e.clientX-px,e.clientY-py)
+    else{const dx=e.clientX-px,dy=e.clientY-py;px=e.clientX;py=e.clientY;if(!SKY.tr&&SKY.level()!==2)SKY.panTo(SKY.panX+dx,SKY.panY+dy)}
    }
-   else if(P.size===2&&d0>0){if(SKY.pinchRebase){SKY.pinchRebase=false;s0=SKY.scale;d0=dist()}SKY.pinchZ(s0*dist()/d0)}});
+   else if(P.size===2&&d0>0){if(SKY.pinchRebase){SKY.pinchRebase=false;s0=SKY.scale;d0=dist()}SKY.pinchZ(s0*dist()/d0)}};
+  u.addEventListener('pointermove',pm);
   const up=e=>{
    const t=tap;tap=null;P.delete(e.pointerId);SKY.pinching=P.size>=2;
    if(SKY.placing){
@@ -917,9 +921,18 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
     if(e.type==='pointerup'&&t){SKY.tryPlace(e.clientX,e.clientY)}
    }
    if(P.size<2){SKY.flushPinch();SKY.release()}
-   if(P.size===1){const p=[...P.values()][0];px=p.x-SKY.panX;py=p.y-SKY.panY}};
+   if(P.size===1){const p=[...P.values()][0];px=p.x;py=p.y}};
+  const T=new Map(); // every finger on the map, wherever it landed
+  u.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;T.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   if(T.size===2){e.stopPropagation();SKY.pinchGen++;SKY.stopDrag();P.clear();SKY.dead.clear();T.forEach((v,id)=>{P.set(id,{x:v.x,y:v.y});SKY.dead.add(id)});
+    try{u.setPointerCapture(e.pointerId)}catch(x){}d0=dist();s0=SKY.scale;tap=null;SKY.pinching=true;$('ghost').style.display='none'}
+   else if(T.size>2)e.stopPropagation()},true);
+  u.addEventListener('pointermove',e=>{const t=T.get(e.pointerId);if(t){t.x=e.clientX;t.y=e.clientY}if(SKY.dead.has(e.pointerId)){e.stopPropagation();pm(e)}},true);
+  const upC=e=>{T.delete(e.pointerId);if(SKY.dead.has(e.pointerId)){e.stopPropagation();SKY.dead.delete(e.pointerId);up(e)}};
+  u.addEventListener('pointerup',upC,true);u.addEventListener('pointercancel',upC,true);
   u.addEventListener('pointerup',up);u.addEventListener('pointercancel',up);
-  u.addEventListener('wheel',e=>{e.preventDefault();SKY.wheelIn(e)},{passive:false});
+  u.addEventListener('lostpointercapture',e=>{if(!SKY.dead.has(e.pointerId))T.delete(e.pointerId);if(P.delete(e.pointerId)){SKY.pinching=P.size>=2;if(P.size===1){const p=[...P.values()][0];px=p.x;py=p.y}}});
+  $('sky').addEventListener('wheel',e=>{e.preventDefault();SKY.wheelIn(e)},{passive:false});
  },
  aimed(){if(this.mode!=='galaxy')return null;let best=null,bd=1e9;S.charts.forEach(c=>{const d=Math.hypot(c.gx*this.scale+this.panX,c.gy*this.scale+this.panY);if(d<bd){bd=d;best=c}});return best&&bd<=AIMR?best:null},
  emptyChart(){return !S.stars.length&&!S.voyages.some(v=>v.chart===S.cur)},
@@ -933,13 +946,13 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
  chrome(m){$('btn-new').textContent=m==='galaxy'?(this.placing?'CANCEL':'+ NEW'):'+ VOYAGE';$('btn-mode').textContent=m==='galaxy'?'CHART':'GALAXY';this.focusVis(m);$('sky-title').innerHTML=m==='galaxy'?'GALAXY':esc(S.ch.name)+' <span class="pen">✎</span>'},
  // ---- seamless zoom between galaxy (0), constellation (1) and voyage screen (2): two screens are shown together and cross-faded.
  // p runs from 0 (the lower level fully shown) to 1 (the higher level). A gesture drives p directly; buttons animate it.
- trBegin(lo,hi,p0,id,sv,ev){
+ trBegin(lo,hi,p0,id,sv,ev,gs){
   const sky=$('sky'),T=this.tr={lo,hi,p:p0,p0,id,anim:false,g:false,labHi:p0===1,prevCur:S.cur,prevFocus:S.focus,R:null,G:null,vid:'',floor:MINZ,tz:TZ,src:'',rel:false,raf:0,ts:performance.now(),sv:sv!=null?sv:(lo===0?true:p0===0),ev:ev!=null?ev:(lo===0?true:p0===1)};
   sky.style.transition='none';sky.classList.add('trans');this.quiet=true;
   try{
    if(lo===0){
     if(p0===0){T.G={x:this.panX,y:this.panY,s:this.scale};S.cur=id;this.setMode('chart');$('gfield').style.display='block';this.render();this.fit(0);T.R={x:this.panX,y:this.panY,s:this.scale}}
-    else{T.R={x:this.panX,y:this.panY,s:this.scale};const c=S.charts.find(x=>x.id===S.cur);T.G={x:-c.gx*MAXZ,y:-c.gy*MAXZ,s:MAXZ};this.view.galaxy={x:T.G.x,y:T.G.y,s:T.G.s};this.setMode('galaxy');$('field').style.display='block';this.renderGalaxy()}
+    else{T.R={x:this.panX,y:this.panY,s:this.scale};const c=S.charts.find(x=>x.id===S.cur);const g0=gs||MAXZ;T.G={x:-c.gx*g0,y:-c.gy*g0,s:g0};this.view.galaxy={x:T.G.x,y:T.G.y,s:T.G.s};this.setMode('galaxy');$('field').style.display='block';this.renderGalaxy()}
    }else{
     T.vid=id;
     if(p0===0){T.R={x:this.panX,y:this.panY,s:this.scale};if(id&&id!==S.focus)ENGINE.focusVoyage(id)}
@@ -956,14 +969,14 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
  trSet(p){const T=this.tr;if(!T)return;p=Math.max(0,Math.min(1,p));T.p=p;T.ts=performance.now();const e=this.ez,sky=$('sky'),G=$('gfield'),F=$('field'),root=document.documentElement.style;
   const tf=(el,px,py,s)=>{el.style.transform=`translate(${-1500+px}px,${-1500+py}px) scale(${s})`};
   if(T.lo===0){
-   const c=S.charts.find(x=>x.id===S.cur)||{gx:0,gy:0},g=T.G,r=T.R,sg=g.s*Math.exp(p*Math.log(3)),k=sg/g.s,h=e(p);
+   const c=S.charts.find(x=>x.id===S.cur)||{gx:0,gy:0},g=T.G,r=T.R,K=T.K||Math.log(T.tz||TZ),sg=g.s*Math.exp(p*K),k=sg/g.s,h=p;
    tf(G,g.x*k+(-c.gx*sg-g.x*k)*h,g.y*k+(-c.gy*sg-g.y*k)*h,sg);G.style.opacity=1-e((p-.1)/.55);
-   const sc=r.s*Math.exp((p-1)*Math.log(4)),kc=sc/r.s;tf(F,r.x*kc,r.y*kc,sc);F.style.opacity=e((p-.3)/.6);
+   const sc=r.s*Math.exp((p-1)*K),kc=sc/r.s;tf(F,r.x*kc,r.y*kc,sc);F.style.opacity=e((p-.3)/.6);
    this.chSet(this.chA(T,p));
    const hi=p>=.5;if(hi!==T.labHi){T.labHi=hi;this.chrome(hi?'chart':'galaxy')}
   }else{
-   const r=T.R,q=T.qpos,sc=r.s*Math.exp(p*Math.log(5)),k=sc/r.s;let px=r.x*k,py=r.y*k;
-   if(q){const h=e(p);px+=(-(q.x-ORI)*sc-px)*h;py+=(-(q.y-ORI)*sc-py)*h}
+   const r=T.R,q=T.qpos,K=T.K||Math.log(T.tz||TZ),sc=r.s*Math.exp(p*K),k=sc/r.s;let px=r.x*k,py=r.y*k;
+   if(q){const h=p;px+=(-(q.x-ORI)*sc-px)*h;py+=(-(q.y-ORI)*sc-py)*h}
    tf(F,px,py,sc);sky.style.opacity=1-e((p-.15)/.7);this.chSet(this.chA(T,p));
    this.mainSet(e((p-.45)/.5),.8+.2*e(p))}},
  trAbort(to){ // never leave the interface locked half-way through a transition
@@ -983,19 +996,25 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
   if(this.level()<2){this.chrome(this.mode);this.apply(0);this.markOrigin();this.aim()}
   if(done){this.sw=true;setTimeout(()=>this.sw=false,500)}},
  animTr(to,ms,cb,rel){const T=this.tr;if(!T)return;T.anim=true;T.rel=!!rel;const from=T.p,t0=performance.now(),d=Math.max(1,ms);
-  const f=n=>{if(this.tr!==T||!T.anim)return;try{const x=Math.max(0,Math.min(1,(performance.now()-t0)/d));this.trSet(from+(to-from)*this.ez(x));if(x<1)T.raf=requestAnimationFrame(f);else{this.trEnd(to);if(cb)cb()}}catch(e){console.error(e);this.trAbort(to>.5?1:0)}};T.raf=requestAnimationFrame(f)},
+  const f=n=>{if(this.tr!==T||!T.anim)return;try{const x=Math.max(0,Math.min(1,(performance.now()-t0)/d));this.trSet(from+(to-from)*(T.rel?1-Math.pow(1-x,3):this.ez(x)));if(x<1)T.raf=requestAnimationFrame(f);else{this.trEnd(to);if(cb)cb()}}catch(e){console.error(e);this.trAbort(to>.5?1:0)}};T.raf=requestAnimationFrame(f)},
  interrupt(){const T=this.tr;if(!T||!T.anim||!T.rel)return false;cancelAnimationFrame(T.raf);T.anim=false;T.rel=false;const q=T.p0===0?T.p:1-T.p,L=Math.log(T.tz||TZ);this.over=T.p0===0?Math.exp(q*L):Math.exp(-q*L);if(performance.now()-(this.lastWheel||0)<1500)this.wSched();return true}, // new input takes over a springing-back transition
  unstick(){const T=this.tr;if(T&&!T.anim&&performance.now()-(T.ts||0)>1500)this.trEnd(T.p<.5?0:1)},
  guard(){const T=this.tr,n=performance.now();if(T&&T.g&&!T.anim&&T.src!=='pinch'&&!this._h&&!this.pinching&&n-(T.ts||0)>900&&n-(this.lastWheel||0)>700)this.release(.55)},
  release(th){const T=this.tr;if(!T||!T.g||T.anim)return;const moved=T.p0===0?T.p:1-T.p,side=moved>=(th||.6)?1-T.p0:T.p0;this.over=1;this.animTr(side,side===T.p0?240:280,null,true)},
- travel(to,ms){ // any level to any level as ONE continuous movement (consecutive crossings share one clock, so there is no stop in between)
-  if(this.tr)return;const c0=this.level();if(c0===to)return;const dir=to>c0?1:-1,segs=[];
-  for(let c=c0;c!==to;c+=dir){
-   if(dir>0){if(c===0)segs.push({lo:0,hi:1,p0:0,id:S.cur});else segs.push({lo:1,hi:2,p0:0,id:(S.v&&S.v.chart===S.cur)?S.v.id:''})}
-   else segs.push(c===2?{lo:1,hi:2,p0:1,id:S.v?S.v.id:''}:{lo:0,hi:1,p0:1,id:S.cur})}
+ trap(x,a){x=Math.max(0,Math.min(1,x));const v=1/(1-a);return x<a?.5*v*x*x/a:x<1-a?.5*v*a+v*(x-a):1-.5*v*(1-x)*(1-x)/a}, // steady speed with a short ramp at each end
+ planBack(){ // Back: to the constellation that holds the opened star (through the galaxy if we are somewhere else), then into the star
+  const c0=this.level(),home=S.v&&S.charts.some(c=>c.id===S.v.chart)?S.v.chart:null,segs=[];let chart=S.cur,lvl=c0;
+  if(lvl===1&&home&&home!==chart){segs.push({lo:0,hi:1,p0:1,id:chart,gs:1.2});lvl=0}
+  if(lvl===0){chart=home||chart;segs.push({lo:0,hi:1,p0:0,id:chart});lvl=1}
+  if(lvl===1)segs.push({lo:1,hi:2,p0:0,id:(S.v&&S.v.chart===chart)?S.v.id:''});
+  return segs},
+ travel(to,ms){ // any level to any level as ONE continuous movement (consecutive crossings share one clock and one zoom rate, so there is no stop in between)
+  if(this.tr)return;const c0=this.level();if(c0===to)return;const dir=to>c0?1:-1;let segs=[];
+  if(to===2)segs=this.planBack();
+  else for(let c=c0;c!==to;c+=dir){segs.push(dir>0?{lo:0,hi:1,p0:0,id:S.cur}:(c===2?{lo:1,hi:2,p0:1,id:S.v?S.v.id:''}:{lo:0,hi:1,p0:1,id:S.cur}))}
   const n=segs.length;if(!n){if(dir>0)UI.sky(false);return}
-  const dur=ms||(n===1?300:480),ez=n===1?(x=>this.ez(x)):(x=>.3*this.ez(x)+.7*x),endP=i=>segs[i].p0===0?1:0,t0=performance.now();let k=-1,T=null;
-  const begin=i=>{const sg=segs[i],a=sg.p0===0?sg.lo:sg.hi,b=sg.p0===0?sg.hi:sg.lo,t=this.trBegin(sg.lo,sg.hi,sg.p0,sg.id,i===0&&a<2,i===n-1&&b<2);if(t)t.anim=true;return t};
+  const dur=ms||(n===1?300:n===2?480:700),ez=x=>this.trap(x,n===1?.3:.1),endP=i=>segs[i].p0===0?1:0,t0=performance.now();let k=-1,T=null;
+  const begin=i=>{const sg=segs[i],a=sg.p0===0?sg.lo:sg.hi,b=sg.p0===0?sg.hi:sg.lo,t=this.trBegin(sg.lo,sg.hi,sg.p0,sg.id,i===0&&a<2,i===n-1&&b<2,sg.gs);if(t){t.anim=true;t.K=1}return t};
   const frame=now=>{try{const x=Math.max(0,Math.min(1,(performance.now()-t0)/dur)),g=x>=1?n:ez(x)*n;let i=Math.max(0,Math.min(n-1,Math.floor(g))),l=x>=1?1:Math.max(0,g-i);
    while(k<i){if(k>=0&&T)this.trEnd(endP(k));k++;T=begin(k);if(!T){this.trAbort(to);return}}
    this.trSet(segs[i].p0===0?l:1-l);
@@ -1004,6 +1023,7 @@ const SKY={stack:[],mode:'chart',view:{chart:{x:0,y:0,s:1},galaxy:{x:0,y:0,s:1}}
  pinchZ(z){this._pz=z;if(!this._pr)this._pr=requestAnimationFrame(()=>{this._pr=0;this.flushPinch()})},
  flushPinch(){cancelAnimationFrame(this._pr);this._pr=0;const z=this._pz;this._pz=null;if(z!=null&&this.setScale(z)===true)this.pinchRebase=true},
  panTo(x,y){this.panX=x;this.panY=y;if(!this._ar)this._ar=requestAnimationFrame(()=>{this._ar=0;if(!this.tr&&this.level()!==2)this.apply()})},
+ pinchGen:0,dead:new Set(),
  fitScale(){const pts=S.stars.concat(this.formingPts());if(!pts.length)return 1;const xs=pts.map(t=>t.x),ys=pts.map(t=>t.y),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);return Math.min(1.4,Math.max(MINZ,Math.min((innerWidth-120)/(x1-x0+120),(innerHeight-260)/(y1-y0+120))))},
  tzNow(){return performance.now()<(this.wheelUntil||0)?1.45:TZ}, // a scroll wheel only moves in bursts, so it needs a shorter way through
 setScale(z,ms,inc){ // z = wanted scale; inc = z is relative to the current scale (wheel, hold) rather than an absolute pinch size
@@ -1120,11 +1140,13 @@ const Rhythm={ // rhythm is in whole days: drift happens on drift days only, and
  tstr(m){return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')},
  tnum(x){const m=/^(\d{1,2}):(\d{2})$/.exec(x||'');return m&&+m[1]<24&&+m[2]<60?+m[1]*60+ +m[2]:null},
  nice(d){return new Date(d*864e5).toLocaleDateString([],{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})},
- paint(){const b=$('due');if(!b)return;const v=S.v;b.classList.remove('over');if(!v){b.textContent='CURRENT HORIZON';return}
-  const t=ENGINE.dk(Date.now()),nd=this.nextDrift(v);let x='';
-  if(nd===t){if(this.protectedOn(v,t))x='SAFE TODAY';else{x='LOG TODAY';b.classList.add('over')}}
-  else if(nd!=null)x=nd-t===1?'DRIFT TOMORROW':'DRIFT IN '+(nd-t)+' DAYS';
-  b.textContent='CURRENT HORIZON'+(x?' · '+x:'')},
+ paint(){const b=$('due');if(!b)return;const v=S.v,ui=$('ui-top'),h0=ui.offsetHeight;b.classList.remove('over');
+  if(!v){b.style.display='none'}
+  else{const t=ENGINE.dk(Date.now()),nd=this.nextDrift(v);let x='';
+   if(nd===t){if(this.protectedOn(v,t))x='SAFE TODAY';else{x='LOG TODAY';b.classList.add('over')}}
+   else if(nd!=null)x=nd-t===1?'DRIFT TOMORROW':'DRIFT IN '+(nd-t)+' DAYS';
+   b.style.display='flex';b.textContent='⏱ '+x+' · '+this.label(v).toUpperCase()}
+  if(ui.offsetHeight!==h0)UI.layout(UI.p||0,false)},
  toast(msg,id){const t=$('toast');t.textContent=msg;t.style.display='block';t.onclick=()=>{t.style.display='none';if(id)ENGINE.focusVoyage(id)};clearTimeout(this._tt);this._tt=setTimeout(()=>{t.style.display='none'},12000)},
  sys(title,body,tag){if(!('Notification' in window)||Notification.permission!=='granted')return;try{new Notification(title,{body,tag})}catch(e){try{navigator.serviceWorker&&navigator.serviceWorker.getRegistration().then(r=>r&&r.showNotification(title,{body,tag}))}catch(x){}}},
  fire(v,kind){const msg=kind==='last'?v.name+': last call. Log before midnight or the compass drifts.':v.name+': drift day. Add an Align or Anchor log today to hold the compass.';this.toast(msg,v.id);this.sys('Ternary Navigator',msg,v.id)},
